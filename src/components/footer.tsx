@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="w-full py-6 border-t">
       <div className="container flex items-center justify-center">
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Showcase Canvas. All rights reserved.
+          &copy; {new Date().getFullYear()} Codbbit. All rights reserved.
         </p>
       </div>
     </footer>
