@@ -47,7 +47,7 @@ export default function ProblemWorkspacePage() {
     const toggleFullScreen = () => {
         const panel = leftPanelRef.current;
         if (panel) {
-            if (panel.getCollapsed()) {
+            if (panel.isCollapsed()) {
                 panel.expand();
             } else {
                 panel.collapse();
@@ -358,5 +358,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
-    
