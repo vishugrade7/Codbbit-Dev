@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   uid: string;
@@ -58,8 +59,8 @@ export type Course = {
 };
 
 export type Example = {
-    id: string; // for react keys
-    input: string;
+    id?: string; // for react keys
+    input?: string;
     output: string;
     explanation?: string;
 }
