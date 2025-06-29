@@ -24,6 +24,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/AuthContext";
+import { executeApexCode } from "@/app/salesforce/actions";
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -31,9 +33,11 @@ export default function ProblemWorkspacePage() {
     const categoryName = decodeURIComponent(params.categoryName as string);
     const problemId = params.problemId as string;
     
+    const { user } = useAuth();
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isExecuting, setIsExecuting] = useState(false);
     const [code, setCode] = useState("");
     const [results, setResults] = useState("Run the code to see the results here.");
     const [solvedProblemIds, setSolvedProblemIds] = useState(new Set<string>()); // Mock solved status
@@ -112,19 +116,44 @@ export default function ProblemWorkspacePage() {
             });
     }, [allProblems, searchTerm, difficultyFilter]);
 
-    const handleRun = () => {
+    const handleRun = async () => {
+        if (!user) {
+            setResults("Please log in to run code.");
+            return;
+        }
+        setIsExecuting(true);
         setResults("Running tests...");
-        // In a real app, you would execute the code here and update the results.
-        setTimeout(() => {
-            setResults("Test run complete. 2/3 passed.");
-        }, 1500);
+        const response = await executeApexCode(user.uid, code);
+        
+        if (response.success && response.result) {
+            const { result } = response;
+            if (result.success) {
+                let output = `Compilation successful.\nExecution successful.\n\n`;
+                if(result.logs) {
+                    // Clean up logs for better readability
+                    output += `== Apex Logs ==\n${result.logs.split('\\n').slice(1,-1).join('\\n')}`;
+                }
+                setResults(output);
+            } else {
+                let errorOutput = `Compilation failed: ${result.compileProblem || 'N/A'}\n\n`;
+                if (result.exceptionMessage) {
+                    errorOutput += `Exception: ${result.exceptionMessage}\n`;
+                }
+                if (result.exceptionStackTrace) {
+                    errorOutput += `Stack Trace: ${result.exceptionStackTrace}\n`;
+                }
+                setResults(errorOutput);
+            }
+        } else {
+            setResults(`Error: ${response.error || 'An unknown error occurred during execution.'}`);
+        }
+        setIsExecuting(false);
     };
     
-    const handleSubmit = () => {
-        setResults("Submitting solution...");
-        setTimeout(() => {
-            setResults("Submission successful! All tests passed.");
-        }, 2000);
+    const handleSubmit = async () => {
+        // In a real app, this would run a more comprehensive test suite against `problem.testcases`.
+        // For now, it will behave the same as Run.
+        await handleRun();
     }
 
     if (loading) {
@@ -145,7 +174,7 @@ export default function ProblemWorkspacePage() {
     
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'bg-accent/20 text-accent border-accent/30';
+        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
         case 'medium': return 'bg-primary/20 text-primary border-primary/30';
         case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
         default: return 'bg-muted';
@@ -323,8 +352,14 @@ export default function ProblemWorkspacePage() {
                                             <TooltipContent><p>Reset Code</p></TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
-                                    <Button variant="outline" size="sm" onClick={handleRun}><Play className="mr-2" />Run</Button>
-                                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleSubmit}><Send className="mr-2" />Submit</Button>
+                                    <Button variant="outline" size="sm" onClick={handleRun} disabled={isExecuting}>
+                                        {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        <Play className="mr-2" />Run
+                                    </Button>
+                                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleSubmit} disabled={isExecuting}>
+                                        {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        <Send className="mr-2" />Submit
+                                    </Button>
                                 </div>
                             </div>
                             <div className="editor-container flex-1 w-full h-full overflow-auto">
@@ -346,8 +381,8 @@ export default function ProblemWorkspacePage() {
                                     <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Test Results</TabsTrigger>
                                     <TabsTrigger value="raw" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Raw Output</TabsTrigger>
                                 </TabsList>
-                                <TabsContent value="results" className="flex-1 p-4">
-                                    <p className="text-muted-foreground">{results}</p>
+                                <TabsContent value="results" className="flex-1 p-4 overflow-auto">
+                                    <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results}</pre>
                                 </TabsContent>
                                 <TabsContent value="raw" className="flex-1 p-4">
                                     <p className="text-muted-foreground">Raw output will appear here.</p>

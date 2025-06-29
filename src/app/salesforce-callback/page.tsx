@@ -1,71 +1,58 @@
+
 "use client";
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getSalesforceAccessToken } from '../salesforce/actions';
 
 export default function SalesforceCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     const code = searchParams.get('code');
 
+    if (loading) {
+        return; // Wait for user/loading state to resolve
+    }
+
     if (user && code) {
-      // Here you would typically send the code to your backend to exchange it for an access token
-      // and then store the necessary details in Firestore.
-      // For this example, we'll simulate storing dummy data.
-      
-      const storeSalesforceAuth = async () => {
-        try {
-          const userDocRef = doc(db, "users", user.uid); // Assumes 'users' collection
-          await updateDoc(userDocRef, {
-            sfdcAuth: {
-              // In a real app, these would come from your server after OAuth exchange
-              accessToken: `simulated_token_for_code_${code.substring(0, 10)}`,
-              instanceUrl: "https://your-instance.salesforce.com",
-              connected: true,
-            }
-          });
+      const handleAuth = async () => {
+        const result = await getSalesforceAccessToken(code, user.uid);
 
-          toast({
-            title: "Salesforce Connected!",
-            description: "Your account has been successfully linked.",
-          });
-
-          router.push('/settings');
-        } catch (error) {
-          console.error("Error updating document: ", error);
-          toast({
-            variant: "destructive",
-            title: "Connection Failed",
-            description: "Could not save Salesforce connection details.",
-          });
-          router.push('/settings');
+        if (result.success) {
+            toast({
+                title: "Salesforce Connected!",
+                description: "Your account has been successfully linked.",
+            });
+            router.push('/settings');
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Connection Failed",
+                description: result.error || "Could not save Salesforce connection details.",
+            });
+            router.push('/settings');
         }
       };
-
-      storeSalesforceAuth();
+      handleAuth();
 
     } else {
-        if (!user) {
-            // Wait for user context to be available
-            return;
+        if (!code) {
+             toast({
+                variant: "destructive",
+                title: "Callback Error",
+                description: "Invalid callback request. No authorization code found.",
+            });
+            router.push('/settings');
         }
-         toast({
-            variant: "destructive",
-            title: "Callback Error",
-            description: "Invalid callback request. No authorization code found.",
-          });
-        router.push('/settings');
     }
-  }, [user, searchParams, router, toast]);
+  }, [user, loading, searchParams, router, toast]);
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">

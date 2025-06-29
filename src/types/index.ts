@@ -17,6 +17,9 @@ export type User = {
   sfdcAuth?: {
     accessToken: string;
     instanceUrl: string;
+    refreshToken: string;
+    issuedAt: number;
+    connected: boolean;
   };
   isAdmin?: boolean;
   trailheadUrl?: string;

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -41,11 +42,18 @@ export default function SettingsPage() {
     }, [user, loading, router]);
 
     const handleSalesforceConnect = () => {
-        // Redirect to Salesforce for OAuth
-        // Replace with your actual Salesforce Connected App details
-        const clientId = 'YOUR_SALESFORCE_CLIENT_ID';
-        const redirectUri = `${window.location.origin}/salesforce-callback`;
-        const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
+        const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
+        if (!clientId || clientId === 'YOUR_SALESFORCE_CLIENT_ID') {
+            toast({
+                variant: "destructive",
+                title: "Configuration Missing",
+                description: "Salesforce Client ID is not configured. Please add it to your environment variables.",
+            });
+            return;
+        }
+
+        const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
+        const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=api%20refresh_token`;
         
         router.push(salesforceAuthUrl);
     };
@@ -55,9 +63,7 @@ export default function SettingsPage() {
         try {
             const userDocRef = doc(db, "users", user.uid);
             await updateDoc(userDocRef, {
-                "sfdcAuth.connected": false,
-                "sfdcAuth.accessToken": "",
-                "sfdcAuth.instanceUrl": ""
+                "sfdcAuth": {}
             });
             setIsSalesforceConnected(false);
             toast({

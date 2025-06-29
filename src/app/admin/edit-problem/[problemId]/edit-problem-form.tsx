@@ -6,7 +6,6 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
-import { crypto } from "crypto";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -55,7 +54,7 @@ export function EditProblemForm({ categoryName, problem }: EditProblemFormProps)
             title: problem?.title || "",
             description: problem?.description || "",
             difficulty: problem?.difficulty || "Easy",
-            sampleCode: problem?.sampleCode || "public class Solution {\n    // Start your code here\n}",
+            sampleCode: problem?.sampleCode || "public class Solution {\\n    // Start your code here\\n}",
             testcases: problem?.testcases || "",
             metadataType: problem?.metadataType || "Class",
             hints: problem?.hints.map(h => ({ id: crypto.randomUUID(), value: h })) || [],
