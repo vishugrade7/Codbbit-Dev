@@ -64,8 +64,8 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {loading ? (
             <div className="flex items-center gap-4">
-              <Skeleton className="h-9 w-20" />
-              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-8 w-12" />
+              <Skeleton className="h-9 w-9 rounded-full" />
             </div>
           ) : user && userData ? (
             <>
