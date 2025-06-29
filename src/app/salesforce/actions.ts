@@ -23,6 +23,7 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
   const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
 
   if (!clientId) {
+    console.error("SFDC_CLIENT_ID is not configured.");
     return { success: false, error: 'Salesforce client ID is not configured.' };
   }
 
@@ -32,6 +33,12 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
   params.append('client_id', clientId);
   params.append('redirect_uri', redirectUri);
   params.append('code_verifier', codeVerifier);
+
+  console.log("Attempting to exchange code for token with params:", {
+    grant_type: 'authorization_code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+  });
 
   try {
     const response = await fetch(`${loginUrl}/services/oauth2/token`, {
@@ -43,12 +50,14 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
     });
 
     const data: SalesforceTokenResponse = await response.json();
+    console.log("Received response from Salesforce token endpoint. Status:", response.status);
     
     if (!response.ok) {
       console.error('Salesforce Token Exchange Error:', data);
       throw new Error(data.error_description || 'Failed to fetch access token.');
     }
     
+    console.log("Successfully exchanged code for token. Storing credentials for user:", userId);
     const userDocRef = doc(db, 'users', userId);
     await updateDoc(userDocRef, {
       sfdcAuth: {

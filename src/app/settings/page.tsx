@@ -54,6 +54,8 @@ export default function SettingsPage() {
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists() && userDoc.data().sfdcAuth?.connected) {
                     setIsSalesforceConnected(true);
+                } else {
+                    setIsSalesforceConnected(false);
                 }
                 setIsCheckingConnection(false);
             };
@@ -89,6 +91,7 @@ export default function SettingsPage() {
             });
             
             const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?${params.toString()}`;
+            console.log("Redirecting to Salesforce for authorization:", salesforceAuthUrl);
             
             router.push(salesforceAuthUrl);
         } catch (error) {
@@ -106,7 +109,7 @@ export default function SettingsPage() {
         try {
             const userDocRef = doc(db, "users", user.uid);
             await updateDoc(userDocRef, {
-                "sfdcAuth": {}
+                "sfdcAuth": { connected: false }
             });
             setIsSalesforceConnected(false);
             toast({
@@ -163,7 +166,7 @@ export default function SettingsPage() {
                                         <Loader2 className="h-5 w-5 animate-spin" />
                                     ) : isSalesforceConnected ? (
                                         <div className="flex items-center justify-between">
-                                            <p className="text-green-400">Successfully connected to Salesforce.</p>
+                                            <p className="font-medium text-green-500">Successfully connected to Salesforce.</p>
                                             <Button variant="destructive" onClick={handleSalesforceDisconnect}>Disconnect</Button>
                                         </div>
                                     ) : (

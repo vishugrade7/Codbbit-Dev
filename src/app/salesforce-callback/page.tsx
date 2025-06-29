@@ -48,7 +48,10 @@ function SalesforceCallbackContent() {
     // If logged in and we have a code, process it
     if (code) {
       const handleAuth = async () => {
+        console.log("Salesforce callback received. Auth code:", code);
         const codeVerifier = sessionStorage.getItem('sfdc_code_verifier');
+        console.log("Retrieved code_verifier from session storage:", codeVerifier);
+        
         if (!codeVerifier) {
           toast({
             variant: "destructive",
