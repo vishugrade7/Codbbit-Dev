@@ -85,6 +85,7 @@ export default function SignupPage() {
 
   const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,16 +101,17 @@ export default function SignupPage() {
   const companyValue = form.watch("company");
 
   useEffect(() => {
-    if (!companyValue || companyValue.trim().length < 2) {
-      setSuggestions([]);
-      setIsSuggestionsOpen(false);
+    // If the user edits the company name after selecting one, clear the logo and selection.
+    if (companyValue !== selectedCompanyName) {
       setCompanyLogo(null);
-      return;
+      setSelectedCompanyName(null);
     }
     
-    // If user keeps typing after selecting a company, clear the logo
-    if (companyLogo && companyValue !== suggestions.find(s => s.logo === companyLogo)?.name) {
-       setCompanyLogo(null);
+    // Don't fetch suggestions if the input is too short, empty, or matches a selected company.
+    if (!companyValue || companyValue.trim().length < 2 || companyValue === selectedCompanyName) {
+      setSuggestions([]);
+      setIsSuggestionsOpen(false);
+      return;
     }
 
     const handler = setTimeout(async () => {
@@ -138,11 +140,12 @@ export default function SignupPage() {
     return () => {
       clearTimeout(handler);
     };
-  }, [companyValue, companyLogo, suggestions]);
+  }, [companyValue, selectedCompanyName]);
 
   const handleSuggestionClick = (suggestion: CompanySuggestion) => {
     form.setValue('company', suggestion.name, { shouldValidate: true });
     setCompanyLogo(suggestion.logo);
+    setSelectedCompanyName(suggestion.name);
     setLogoError(false);
     setIsSuggestionsOpen(false);
     setSuggestions([]);
@@ -390,4 +393,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
