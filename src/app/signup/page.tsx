@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,6 +34,8 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,6 +47,24 @@ export default function SignupPage() {
       password: "",
     },
   });
+
+  const companyValue = form.watch("company");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (companyValue) {
+        setCompanyLogo(`https://logo.clearbit.com/${companyValue.toLowerCase().replace(/\s/g, "")}`);
+        setLogoError(false);
+      } else {
+        setCompanyLogo(null);
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [companyValue]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -158,7 +179,18 @@ export default function SignupPage() {
                     <FormLabel>Company / College <span className="text-muted-foreground">(Optional)</span></FormLabel>
                     <FormControl>
                         <div className="relative">
-                            <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            {companyLogo && !logoError ? (
+                                <Image
+                                  src={companyLogo}
+                                  alt="Company Logo"
+                                  width={20}
+                                  height={20}
+                                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                                  onError={() => setLogoError(true)}
+                                />
+                            ) : (
+                                <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            )}
                             <Input placeholder="e.g. Apple" {...field} className="pl-10" />
                         </div>
                     </FormControl>
