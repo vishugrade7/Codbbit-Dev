@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -155,75 +156,74 @@ export default function ProblemWorkspacePage() {
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
-        <header className="flex h-14 items-center gap-2 border-b bg-card px-4 shrink-0">
-             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
-                <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Menu className="h-5 w-5" />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 max-w-sm flex flex-col">
-                    <SheetHeader className="p-4 border-b shrink-0">
-                        <SheetTitle>{categoryName}</SheetTitle>
-                    </SheetHeader>
-                    <div className="p-4 border-b space-y-4 shrink-0">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search problems..."
-                                className="w-full pl-9 h-9"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <span className="text-xs font-medium text-muted-foreground">DIFFICULTY</span>
-                            <div className="flex gap-2 mt-2">
-                                {["All", "Easy", "Medium", "Hard"].map((diff) => (
-                                    <Button
-                                        key={diff}
-                                        variant={difficultyFilter === diff ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => setDifficultyFilter(diff)}
-                                        className="flex-1"
-                                    >
-                                        {diff}
-                                    </Button>
-                                ))}
+        <header className="flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
+             <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col">
+                        <SheetHeader className="p-4 border-b shrink-0">
+                            <SheetTitle>{categoryName}</SheetTitle>
+                        </SheetHeader>
+                        <div className="p-4 border-b space-y-4 shrink-0">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search problems..."
+                                    className="w-full pl-9 h-9"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <span className="text-xs font-medium text-muted-foreground">DIFFICULTY</span>
+                                <div className="flex gap-2 mt-2">
+                                    {["All", "Easy", "Medium", "Hard"].map((diff) => (
+                                        <Button
+                                            key={diff}
+                                            variant={difficultyFilter === diff ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => setDifficultyFilter(diff)}
+                                            className="flex-1"
+                                        >
+                                            {diff}
+                                        </Button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="py-2 overflow-y-auto flex-1">
-                        {filteredProblems.length > 0 ? filteredProblems.map((p) => (
-                            <Link
-                                key={p.id}
-                                href={`/problems/apex/${encodeURIComponent(categoryName)}/${p.id}`}
-                                className={cn(
-                                    "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-accent",
-                                    p.id === problemId && "bg-accent"
-                                )}
-                            >
-                                <span className="truncate pr-4">{p.title}</span>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
-                                        {p.difficulty}
-                                    </Badge>
-                                    {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                                </div>
-                            </Link>
-                        )) : (
-                            <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
-                        )}
-                    </div>
-                </SheetContent>
-            </Sheet>
-
-            <h1 className="text-lg font-semibold truncate">{problem.title}</h1>
-
-            <div className="ml-auto flex items-center gap-2">
+                        <div className="py-2 overflow-y-auto flex-1">
+                            {filteredProblems.length > 0 ? filteredProblems.map((p) => (
+                                <Link
+                                    key={p.id}
+                                    href={`/problems/apex/${encodeURIComponent(categoryName)}/${p.id}`}
+                                    className={cn(
+                                        "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-accent",
+                                        p.id === problemId && "bg-accent"
+                                    )}
+                                >
+                                    <span className="truncate pr-4">{p.title}</span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
+                                            {p.difficulty}
+                                        </Badge>
+                                        {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                    </div>
+                                </Link>
+                            )) : (
+                                <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
+                            )}
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            </div>
+            <div className="flex items-center gap-2">
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -260,8 +260,10 @@ export default function ProblemWorkspacePage() {
                             <TabsTrigger value="submissions">Submissions</TabsTrigger>
                         </TabsList>
                         <TabsContent value="description" className="mt-4 space-y-6">
+                            <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
                             <div className="flex items-center gap-4">
                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                               <Badge variant="secondary">{categoryName}</Badge>
                                {isSolved && (
                                 <div className="flex items-center gap-1.5 text-sm text-green-400">
                                    <CheckCircle2 className="h-4 w-4" />
