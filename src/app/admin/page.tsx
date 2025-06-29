@@ -12,13 +12,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Loader2 } from "lucide-react";
+import { PlusCircle, Edit, Loader2, Trash2 } from "lucide-react";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { deleteCategory, deleteProblem } from "./actions";
+import { AddCategoryDialog } from "./add-category-dialog";
+
+type ItemToDelete = {
+  type: 'category' | 'problem';
+  id: string;
+  name: string;
+  categoryId?: string;
+}
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [problems, setProblems] = useState<{ [categoryId: string]: Problem[] }>({});
   const [loading, setLoading] = useState(true);
-  
+  const [itemToDelete, setItemToDelete] = useState<ItemToDelete | null>(null);
+  const { toast } = useToast();
+
   useEffect(() => {
     setLoading(true);
     const categoriesQuery = query(collection(db, "categories"));
@@ -27,7 +40,7 @@ export default function AdminPage() {
       snapshot.forEach((doc) => {
         fetchedCategories.push({ id: doc.id, ...doc.data() } as Category);
       });
-      setCategories(fetchedCategories);
+      setCategories(fetchedCategories.sort((a, b) => a.name.localeCompare(b.name)));
       setLoading(false); 
     }, (error) => {
       console.error("Error fetching categories:", error);
@@ -47,6 +60,9 @@ export default function AdminPage() {
                 fetchedProblems[categoryId].push(problem);
             }
         });
+        Object.keys(fetchedProblems).forEach(categoryId => {
+            fetchedProblems[categoryId].sort((a, b) => a.title.localeCompare(b.title));
+        });
         setProblems(fetchedProblems);
     });
 
@@ -56,8 +72,30 @@ export default function AdminPage() {
     };
   }, []);
 
+  const handleDeleteRequest = (item: ItemToDelete) => {
+    setItemToDelete(item);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    let result;
+    if (itemToDelete.type === 'category') {
+      result = await deleteCategory(itemToDelete.id);
+    } else if (itemToDelete.type === 'problem' && itemToDelete.categoryId) {
+      result = await deleteProblem(itemToDelete.id, itemToDelete.categoryId);
+    }
+
+    if (result?.success) {
+      toast({ title: `${itemToDelete.type.charAt(0).toUpperCase() + itemToDelete.type.slice(1)} deleted successfully!` });
+    } else {
+      toast({ variant: "destructive", title: `Failed to delete ${itemToDelete.type}`, description: result?.error });
+    }
+    setItemToDelete(null);
+  };
+
   const getDifficultyClass = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
+    switch (difficulty?.toLowerCase()) {
       case 'easy': return 'bg-green-600/20 text-green-400 border-green-600/30';
       case 'medium': return 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30';
       case 'hard': return 'bg-red-600/20 text-red-400 border-red-600/30';
@@ -66,6 +104,7 @@ export default function AdminPage() {
   }
 
   return (
+    <>
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex-1">
@@ -76,7 +115,7 @@ export default function AdminPage() {
                 <CardTitle className="font-headline text-2xl">Problem Management</CardTitle>
                 <CardDescription>Add, edit, or manage problems for Codbbit challenges.</CardDescription>
               </div>
-              <Button disabled><PlusCircle /> Add Category</Button>
+              <AddCategoryDialog />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -91,9 +130,16 @@ export default function AdminPage() {
                   return (
                   <AccordionItem value={category.id} key={category.id}>
                     <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center gap-4">
-                        <span className="font-bold text-lg">{category.name}</span>
-                        <Badge variant="secondary">{problemCount} problem{problemCount !== 1 ? 's' : ''}</Badge>
+                      <div className="flex justify-between w-full items-center">
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold text-lg">{category.name}</span>
+                          <Badge variant="secondary">{problemCount} problem{problemCount !== 1 ? 's' : ''}</Badge>
+                        </div>
+                        <div onClick={(e) => e.stopPropagation()} className="pr-2">
+                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'category', id: category.id, name: category.name })}>
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                        </div>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pl-4">
@@ -105,7 +151,12 @@ export default function AdminPage() {
                               <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Edit className="h-4 w-4" /></Button>
+                               <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+                                <Link href={`/admin/edit-problem/${problem.id}?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`}><Edit className="h-4 w-4" /></Link>
+                               </Button>
+                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'problem', id: problem.id, name: problem.title, categoryId: category.id })}>
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
                             </div>
                           </div>
                         )) : (
@@ -129,5 +180,13 @@ export default function AdminPage() {
       </main>
       <Footer />
     </div>
+    <ConfirmationDialog
+        open={!!itemToDelete}
+        onOpenChange={(open) => !open && setItemToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title={`Delete ${itemToDelete?.type}`}
+        description={`Are you sure you want to delete the ${itemToDelete?.type} "${itemToDelete?.name}"? This action cannot be undone.`}
+     />
+    </>
   );
 }
