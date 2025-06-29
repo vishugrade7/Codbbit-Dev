@@ -22,13 +22,13 @@ export default function HeroSection() {
               </p>
             </div>
             <div className="flex justify-center flex-col gap-4 min-[400px]:flex-row mx-auto">
-              <Button size="lg" asChild>
-                <Link href="/courses">
+              <Button asChild>
+                <Link href="/signup">
                     <Rocket className="mr-2 h-5 w-5" />
                     Get Started
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button variant="outline" asChild>
                 <Link href="/leaderboard">
                     <TrendingUp className="mr-2 h-5 w-5" />
                     View Leaderboard

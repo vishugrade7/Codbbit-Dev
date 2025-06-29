@@ -25,11 +25,9 @@ export default function FeatureSection() {
       <div className="container px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className="bg-card border-border/50 text-center p-6 transform transition-all duration-300 hover:scale-105 hover:shadow-primary/20 hover:shadow-lg">
+            <Card key={index} className="bg-card text-center transform transition-all duration-300 hover:scale-105 hover:shadow-primary/20 hover:shadow-lg">
               <CardHeader className="items-center">
-                <div className="p-4 bg-primary/10 rounded-full inline-block">
-                  <feature.icon className="h-8 w-8 text-primary" />
-                </div>
+                <feature.icon className="h-8 w-8 text-primary" />
                 <CardTitle className="font-headline text-2xl mt-4">{feature.title}</CardTitle>
               </CardHeader>
               <CardContent>
