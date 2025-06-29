@@ -220,22 +220,23 @@ export default function ProblemWorkspacePage() {
                     </div>
                 </SheetContent>
             </Sheet>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
-                            {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                             <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
 
             <h1 className="text-lg font-semibold truncate">{problem.title}</h1>
+
             <div className="ml-auto flex items-center gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
+                                {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                                <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
                  <Button variant="outline" size="sm"><Star className="mr-2 h-4 w-4" />Star</Button>
                  <Button variant="outline" size="sm"><Settings className="mr-2 h-4 w-4" />Settings</Button>
             </div>
