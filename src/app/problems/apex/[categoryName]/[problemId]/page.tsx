@@ -187,8 +187,13 @@ export default function ProblemWorkspacePage() {
                                     p.id === problemId && "bg-accent"
                                 )}
                             >
-                                <span className="truncate">{p.title}</span>
-                                {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                                <span className="truncate pr-4">{p.title}</span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
+                                        {p.difficulty}
+                                    </Badge>
+                                    {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                </div>
                             </Link>
                         )) : (
                             <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
