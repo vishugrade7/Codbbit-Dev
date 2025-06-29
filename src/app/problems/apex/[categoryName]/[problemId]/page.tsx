@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData } from "@/types";
+import type { ImperativePanelHandle } from "react-resizable-panels";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export default function ProblemWorkspacePage() {
@@ -35,6 +36,20 @@ export default function ProblemWorkspacePage() {
     // New state for filtering
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
+
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const leftPanelRef = useRef<ImperativePanelHandle>(null);
+
+    const toggleFullScreen = () => {
+        const panel = leftPanelRef.current;
+        if (panel) {
+            if (panel.getCollapsed()) {
+                panel.expand();
+            } else {
+                panel.collapse();
+            }
+        }
+    };
 
 
     useEffect(() => {
@@ -201,6 +216,20 @@ export default function ProblemWorkspacePage() {
                     </div>
                 </SheetContent>
             </Sheet>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
+                            {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                             <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
             <h1 className="text-lg font-semibold truncate">{problem.title}</h1>
             <div className="ml-auto flex items-center gap-2">
                  <Button variant="outline" size="sm"><Star className="mr-2 h-4 w-4" />Star</Button>
@@ -209,7 +238,16 @@ export default function ProblemWorkspacePage() {
         </header>
 
         <ResizablePanelGroup direction="horizontal" className="flex-1">
-            <ResizablePanel defaultSize={33} minSize={20}>
+            <ResizablePanel 
+                ref={leftPanelRef}
+                defaultSize={33}
+                minSize={20}
+                collapsible
+                collapsedSize={0}
+                onCollapse={() => setIsFullScreen(true)}
+                onExpand={() => setIsFullScreen(false)}
+                className={cn(isFullScreen && "transition-all duration-300 ease-in-out")}
+            >
                 <div className="p-4 h-full overflow-y-auto">
                     <Tabs defaultValue="description">
                         <TabsList className="grid w-full grid-cols-2">
@@ -313,3 +351,5 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
+    
