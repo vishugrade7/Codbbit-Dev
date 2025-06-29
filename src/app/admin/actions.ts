@@ -1,40 +1,34 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/firebase";
 import {
-  collection,
-  addDoc,
-  deleteDoc,
   doc,
-  getDocs,
-  writeBatch,
-  query,
-  where,
+  updateDoc,
   getDoc,
-  updateDoc
+  FieldValue,
+  arrayUnion,
+  deleteField,
 } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type { Problem } from "@/types";
 
-// In a production app, you would verify admin privileges here,
-// likely by decoding a Firebase ID token.
+// In a production app, you would verify admin privileges here.
 
-type ProblemInput = Omit<Problem, 'id' | 'examples' | 'hints'> & {
-  examples: { input?: string; output: string; explanation?: string }[];
-  hints: string[];
-};
+type ProblemInput = Omit<Problem, "id">;
+const apexDocRef = doc(db, "problems", "Apex");
 
 export async function addCategory(name: string) {
   try {
-    // Check if category already exists
-    const categoriesRef = collection(db, "categories");
-    const q = query(categoriesRef, where("name", "==", name));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
+    const docSnap = await getDoc(apexDocRef);
+    if (docSnap.exists() && docSnap.data().Category?.[name]) {
       return { success: false, error: "A category with this name already exists." };
     }
-    
-    await addDoc(categoriesRef, { name });
+
+    await updateDoc(apexDocRef, {
+      [`Category.${name}`]: { Questions: [] },
+    }, { merge: true });
+
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
@@ -43,12 +37,19 @@ export async function addCategory(name: string) {
   }
 }
 
-export async function addProblem(categoryId: string, problemData: ProblemInput) {
+export async function addProblem(categoryName: string, problemData: ProblemInput) {
   try {
-    const problemsRef = collection(db, "categories", categoryId, "problems");
-    await addDoc(problemsRef, problemData);
+    const newProblem: Problem = {
+      ...problemData,
+      id: crypto.randomUUID(), // Generate a unique ID for the problem
+    };
+
+    await updateDoc(apexDocRef, {
+      [`Category.${categoryName}.Questions`]: arrayUnion(newProblem),
+    });
+
     revalidatePath("/admin");
-    revalidatePath(`/problems/apex/${categoryId}`);
+    revalidatePath(`/problems/apex/${categoryName}`);
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
@@ -56,13 +57,31 @@ export async function addProblem(categoryId: string, problemData: ProblemInput) 
   }
 }
 
-export async function updateProblem(problemId: string, categoryId: string, problemData: Omit<ProblemInput, 'id'>) {
+export async function updateProblem(problemId: string, categoryName: string, problemData: ProblemInput) {
   try {
-    const problemRef = doc(db, "categories", categoryId, "problems", problemId);
-    await updateDoc(problemRef, problemData);
+    const docSnap = await getDoc(apexDocRef);
+    if (!docSnap.exists()) {
+      throw new Error("Apex problems document not found.");
+    }
+    const data = docSnap.data();
+    const questions = data.Category?.[categoryName]?.Questions || [];
+    
+    const problemIndex = questions.findIndex((p: Problem) => p.id === problemId);
+
+    if (problemIndex === -1) {
+      return { success: false, error: "Problem not found in the category." };
+    }
+
+    const updatedQuestions = [...questions];
+    updatedQuestions[problemIndex] = { ...problemData, id: problemId };
+
+    await updateDoc(apexDocRef, {
+      [`Category.${categoryName}.Questions`]: updatedQuestions,
+    });
+
     revalidatePath("/admin");
-    revalidatePath(`/problems/apex/${categoryId}`);
-    revalidatePath(`/problems/apex/${categoryId}/${problemId}`);
+    revalidatePath(`/problems/apex/${categoryName}`);
+    revalidatePath(`/problems/apex/${categoryName}/${problemId}`);
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
@@ -70,13 +89,27 @@ export async function updateProblem(problemId: string, categoryId: string, probl
   }
 }
 
-
-export async function deleteProblem(problemId: string, categoryId: string) {
+export async function deleteProblem(problemId: string, categoryName: string) {
   try {
-    const problemRef = doc(db, "categories", categoryId, "problems", problemId);
-    await deleteDoc(problemRef);
+    const docSnap = await getDoc(apexDocRef);
+    if (!docSnap.exists()) {
+      throw new Error("Apex problems document not found.");
+    }
+    const data = docSnap.data();
+    const questions = data.Category?.[categoryName]?.Questions || [];
+    
+    const updatedQuestions = questions.filter((p: Problem) => p.id !== problemId);
+
+    if (questions.length === updatedQuestions.length) {
+         return { success: false, error: "Problem not found to delete." };
+    }
+
+    await updateDoc(apexDocRef, {
+      [`Category.${categoryName}.Questions`]: updatedQuestions,
+    });
+
     revalidatePath("/admin");
-    revalidatePath(`/problems/apex/${categoryId}`);
+    revalidatePath(`/problems/apex/${categoryName}`);
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
@@ -84,20 +117,25 @@ export async function deleteProblem(problemId: string, categoryId: string) {
   }
 }
 
-export async function deleteCategory(categoryId: string) {
+export async function deleteCategory(categoryName: string) {
   try {
-    const problemsRef = collection(db, "categories", categoryId, "problems");
-    const problemsSnapshot = await getDocs(problemsRef);
+     const docSnap = await getDoc(apexDocRef);
+    if (!docSnap.exists()) {
+      throw new Error("Apex problems document not found.");
+    }
+    const data = docSnap.data();
+    const questions = data.Category?.[categoryName]?.Questions || [];
 
-    if (!problemsSnapshot.empty) {
+    if (questions.length > 0) {
       return {
         success: false,
         error: "Cannot delete category with existing problems. Please remove all problems first.",
       };
     }
 
-    const categoryRef = doc(db, "categories", categoryId);
-    await deleteDoc(categoryRef);
+    await updateDoc(apexDocRef, {
+      [`Category.${categoryName}`]: deleteField(),
+    });
 
     revalidatePath("/admin");
     return { success: true };
@@ -107,12 +145,13 @@ export async function deleteCategory(categoryId: string) {
   }
 }
 
-export async function getProblem(problemId: string, categoryId: string): Promise<Problem | null> {
+export async function getProblem(problemId: string, categoryName: string): Promise<Problem | null> {
     try {
-        const problemRef = doc(db, "categories", categoryId, "problems", problemId);
-        const docSnap = await getDoc(problemRef);
+        const docSnap = await getDoc(apexDocRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as Problem;
+            const problems = docSnap.data().Category?.[categoryName]?.Questions || [];
+            const problem = problems.find((p: Problem) => p.id === problemId);
+            return (problem as Problem) || null;
         }
         return null;
     } catch (error) {

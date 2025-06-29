@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { collection, onSnapshot, query, collectionGroup } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Category, Problem } from "@/types";
+import type { Problem, ApexProblemsData } from "@/types";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -18,58 +19,49 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteCategory, deleteProblem } from "./actions";
 import { AddCategoryDialog } from "./add-category-dialog";
 
+type CategoryItem = {
+    name: string;
+    problems: Problem[];
+};
+
 type ItemToDelete = {
   type: 'category' | 'problem';
-  id: string;
-  name: string;
-  categoryId?: string;
+  id: string; // problem id or category name
+  name: string; // title or name for display
+  categoryName?: string; // only for problems
 }
 
 export default function AdminPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [problems, setProblems] = useState<{ [categoryId: string]: Problem[] }>({});
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [itemToDelete, setItemToDelete] = useState<ItemToDelete | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     setLoading(true);
-    const categoriesQuery = query(collection(db, "categories"));
-    const unsubscribeCategories = onSnapshot(categoriesQuery, (snapshot) => {
-      const fetchedCategories: Category[] = [];
-      snapshot.forEach((doc) => {
-        fetchedCategories.push({ id: doc.id, ...doc.data() } as Category);
-      });
-      setCategories(fetchedCategories.sort((a, b) => a.name.localeCompare(b.name)));
-      setLoading(false); 
+    const apexDocRef = doc(db, "problems", "Apex");
+    const unsubscribe = onSnapshot(apexDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = (docSnap.data().Category || {}) as ApexProblemsData;
+            const fetchedCategories = Object.entries(data)
+                .map(([name, value]) => ({
+                    name,
+                    problems: (value.Questions || []).sort((a,b) => a.title.localeCompare(b.title)),
+                }))
+                .sort((a,b) => a.name.localeCompare(b.name));
+            setCategories(fetchedCategories);
+        } else {
+            // If the doc doesn't exist, you might want to create it or handle this case.
+            setCategories([]);
+            console.log("Apex problems document does not exist!");
+        }
+        setLoading(false);
     }, (error) => {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching Apex problems:", error);
       setLoading(false);
     });
 
-    const problemsQuery = query(collectionGroup(db, 'problems'));
-    const unsubscribeProblems = onSnapshot(problemsQuery, (snapshot) => {
-        const fetchedProblems: { [categoryId: string]: Problem[] } = {};
-        snapshot.forEach((doc) => {
-            const problem = { id: doc.id, ...doc.data() } as Problem;
-            const categoryId = doc.ref.parent.parent?.id;
-            if (categoryId) {
-                if (!fetchedProblems[categoryId]) {
-                    fetchedProblems[categoryId] = [];
-                }
-                fetchedProblems[categoryId].push(problem);
-            }
-        });
-        Object.keys(fetchedProblems).forEach(categoryId => {
-            fetchedProblems[categoryId].sort((a, b) => a.title.localeCompare(b.title));
-        });
-        setProblems(fetchedProblems);
-    });
-
-    return () => {
-        unsubscribeCategories();
-        unsubscribeProblems();
-    };
+    return () => unsubscribe();
   }, []);
 
   const handleDeleteRequest = (item: ItemToDelete) => {
@@ -82,8 +74,8 @@ export default function AdminPage() {
     let result;
     if (itemToDelete.type === 'category') {
       result = await deleteCategory(itemToDelete.id);
-    } else if (itemToDelete.type === 'problem' && itemToDelete.categoryId) {
-      result = await deleteProblem(itemToDelete.id, itemToDelete.categoryId);
+    } else if (itemToDelete.type === 'problem' && itemToDelete.categoryName) {
+      result = await deleteProblem(itemToDelete.id, itemToDelete.categoryName);
     }
 
     if (result?.success) {
@@ -125,10 +117,9 @@ export default function AdminPage() {
               ) : (
               <Accordion type="multiple" className="w-full">
                 {categories.map((category) => {
-                  const categoryProblems = problems[category.id] || [];
-                  const problemCount = categoryProblems.length;
+                  const problemCount = category.problems.length;
                   return (
-                  <AccordionItem value={category.id} key={category.id}>
+                  <AccordionItem value={category.name} key={category.name}>
                     <AccordionTrigger className="hover:no-underline">
                       <div className="flex justify-between w-full items-center">
                         <div className="flex items-center gap-4">
@@ -136,7 +127,7 @@ export default function AdminPage() {
                           <Badge variant="secondary">{problemCount} problem{problemCount !== 1 ? 's' : ''}</Badge>
                         </div>
                         <div onClick={(e) => e.stopPropagation()} className="pr-2">
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'category', id: category.id, name: category.name })}>
+                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'category', id: category.name, name: category.name })}>
                              <Trash2 className="h-4 w-4" />
                            </Button>
                         </div>
@@ -144,7 +135,7 @@ export default function AdminPage() {
                     </AccordionTrigger>
                     <AccordionContent className="pl-4">
                       <div className="space-y-2">
-                        {categoryProblems.length > 0 ? categoryProblems.map((problem) => (
+                        {category.problems.length > 0 ? category.problems.map((problem) => (
                           <div key={problem.id} className="flex items-center justify-between p-3 rounded-md bg-card/50">
                             <div className="flex items-center gap-4">
                               <span className="font-medium">{problem.title}</span>
@@ -152,9 +143,9 @@ export default function AdminPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                                <Link href={`/admin/edit-problem/${problem.id}?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`}><Edit className="h-4 w-4" /></Link>
+                                <Link href={`/admin/edit-problem/${problem.id}?categoryName=${encodeURIComponent(category.name)}`}><Edit className="h-4 w-4" /></Link>
                                </Button>
-                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'problem', id: problem.id, name: problem.title, categoryId: category.id })}>
+                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'problem', id: problem.id, name: problem.title, categoryName: category.name })}>
                                  <Trash2 className="h-4 w-4" />
                                </Button>
                             </div>
@@ -163,7 +154,7 @@ export default function AdminPage() {
                             <p className="text-muted-foreground text-center py-4">No problems in this category yet.</p>
                         )}
                          <Button asChild variant="outline" className="w-full mt-2">
-                            <Link href={`/admin/add-problem?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`}>
+                            <Link href={`/admin/add-problem?categoryName=${encodeURIComponent(category.name)}`}>
                                 <PlusCircle /> Add Problem to {category.name}
                             </Link>
                         </Button>

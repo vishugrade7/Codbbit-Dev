@@ -1,3 +1,4 @@
+
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { getProblem } from "@/app/admin/actions";
@@ -15,10 +16,9 @@ export default async function EditProblemPage({
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
     const { problemId } = params;
-    const categoryId = searchParams.categoryId as string;
     const categoryName = searchParams.categoryName as string;
 
-    const problem = await getProblem(problemId, categoryId);
+    const problem = await getProblem(problemId, categoryName);
 
     if (!problem) {
         return (
@@ -51,7 +51,7 @@ export default async function EditProblemPage({
                         <CardDescription>Editing &quot;{problem.title}&quot; in the &quot;{decodeURIComponent(categoryName)}&quot; category.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <EditProblemForm categoryId={categoryId} problem={problem} />
+                       <EditProblemForm categoryName={categoryName} problem={problem} />
                     </CardContent>
                 </Card>
                 </div>

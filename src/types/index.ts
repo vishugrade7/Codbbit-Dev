@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   uid: string;
@@ -57,13 +58,14 @@ export type Course = {
 };
 
 export type Example = {
+    id: string; // for react keys
     input: string;
     output: string;
     explanation?: string;
 }
 
 export type Problem = {
-  id: string;
+  id: string; // This will be a unique ID for the problem within the array
   title: string;
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
@@ -74,8 +76,9 @@ export type Problem = {
   testcases: string;
 };
 
-export type Category = {
-  id: string;
-  name: string;
-  problemCount?: number;
-};
+// This represents the structure of the data fetched from the `problems/Apex` document
+export type ApexProblemsData = {
+    [categoryName: string]: {
+        Questions: Problem[];
+    }
+}

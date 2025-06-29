@@ -21,6 +21,7 @@ import { addProblem } from "../actions";
 import { Loader2, PlusCircle, Trash2, ArrowLeft } from "lucide-react";
 
 const exampleSchema = z.object({
+  id: z.string(), // for useFieldArray
   input: z.string().optional(),
   output: z.string().min(1, "Output is required."),
   explanation: z.string().optional(),
@@ -33,7 +34,7 @@ const formSchema = z.object({
   sampleCode: z.string().min(10, "Sample code is required."),
   testcases: z.string().min(1, "Test cases are required."),
   metadataType: z.string().min(1, "Metadata type is required."),
-  hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })),
+  hints: z.array(z.object({ id: z.string(), value: z.string().min(1, "Hint cannot be empty.") })),
   examples: z.array(exampleSchema),
 });
 
@@ -41,7 +42,6 @@ const formSchema = z.object({
 export default function AddProblemPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const categoryId = searchParams.get('categoryId');
     const categoryName = searchParams.get('categoryName');
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +71,7 @@ export default function AddProblemPage() {
     });
 
 
-    if (!categoryId || !categoryName) {
+    if (!categoryName) {
         return (
             <div className="flex min-h-screen w-full flex-col bg-background">
                 <Header />
@@ -89,8 +89,10 @@ export default function AddProblemPage() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
+        // Strip the 'id' field from hints and examples before sending to server
         const hints = values.hints.map(h => h.value);
-        const result = await addProblem(categoryId as string, { ...values, hints });
+        const examples = values.examples.map(({id, ...rest}) => rest);
+        const result = await addProblem(categoryName, { ...values, hints, examples });
         setIsLoading(false);
 
         if (result.success) {
@@ -213,7 +215,7 @@ export default function AddProblemPage() {
                                         </div>
                                     ))}
                                 </div>
-                                <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendHint({ value: "" })}><PlusCircle className="mr-2" /> Add Hint</Button>
+                                <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendHint({ id: crypto.randomUUID(), value: "" })}><PlusCircle className="mr-2" /> Add Hint</Button>
                             </div>
                             
                             <div>
@@ -233,7 +235,7 @@ export default function AddProblemPage() {
                                         </Card>
                                      ))}
                                  </div>
-                                <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendExample({ input: "", output: "" })}><PlusCircle className="mr-2" /> Add Example</Button>
+                                <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendExample({ id: crypto.randomUUID(), input: "", output: "" })}><PlusCircle className="mr-2" /> Add Example</Button>
                             </div>
 
                              <div className="flex justify-end pt-4">

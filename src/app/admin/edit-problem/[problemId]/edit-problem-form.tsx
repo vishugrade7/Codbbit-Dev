@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -5,6 +6,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
+import { crypto } from "crypto";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,6 +20,7 @@ import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import type { Problem } from "@/types";
 
 const exampleSchema = z.object({
+  id: z.string(), // for useFieldArray
   input: z.string().optional(),
   output: z.string().min(1, "Output is required."),
   explanation: z.string().optional(),
@@ -30,18 +33,18 @@ const formSchema = z.object({
   sampleCode: z.string().min(10, "Sample code is required."),
   testcases: z.string().min(1, "Test cases are required."),
   metadataType: z.string().min(1, "Metadata type is required."),
-  hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })),
+  hints: z.array(z.object({ id: z.string(), value: z.string().min(1, "Hint cannot be empty.") })),
   examples: z.array(exampleSchema),
 });
 
 type ProblemFormValues = z.infer<typeof formSchema>;
 
 interface EditProblemFormProps {
-    categoryId: string;
+    categoryName: string;
     problem: Problem;
 }
 
-export function EditProblemForm({ categoryId, problem }: EditProblemFormProps) {
+export function EditProblemForm({ categoryName, problem }: EditProblemFormProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -55,8 +58,8 @@ export function EditProblemForm({ categoryId, problem }: EditProblemFormProps) {
             sampleCode: problem?.sampleCode || "public class Solution {\n    // Start your code here\n}",
             testcases: problem?.testcases || "",
             metadataType: problem?.metadataType || "Class",
-            hints: problem?.hints.map(h => ({ value: h })) || [],
-            examples: problem?.examples || [],
+            hints: problem?.hints.map(h => ({ id: crypto.randomUUID(), value: h })) || [],
+            examples: problem?.examples.map(e => ({...e, id: e.id || crypto.randomUUID()})) || [],
         },
     });
 
@@ -72,9 +75,13 @@ export function EditProblemForm({ categoryId, problem }: EditProblemFormProps) {
 
     async function onSubmit(values: ProblemFormValues) {
         setIsLoading(true);
-        const problemData = { ...values, hints: values.hints.map(h => h.value) };
+        const problemData = { 
+            ...values, 
+            hints: values.hints.map(h => h.value),
+            examples: values.examples.map(({id, ...rest}) => rest),
+        };
         
-        const result = await updateProblem(problem.id, categoryId, problemData);
+        const result = await updateProblem(problem.id, categoryName, problemData);
 
         setIsLoading(false);
 
@@ -184,7 +191,7 @@ export function EditProblemForm({ categoryId, problem }: EditProblemFormProps) {
                             </div>
                         ))}
                     </div>
-                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendHint({ value: "" })}><PlusCircle className="mr-2" /> Add Hint</Button>
+                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendHint({ id: crypto.randomUUID(), value: "" })}><PlusCircle className="mr-2" /> Add Hint</Button>
                 </div>
                 
                 <div>
@@ -204,7 +211,7 @@ export function EditProblemForm({ categoryId, problem }: EditProblemFormProps) {
                             </Card>
                             ))}
                         </div>
-                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendExample({ input: "", output: "" })}><PlusCircle className="mr-2" /> Add Example</Button>
+                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendExample({ id: crypto.randomUUID(), input: "", output: "" })}><PlusCircle className="mr-2" /> Add Example</Button>
                 </div>
 
                     <div className="flex justify-end pt-4">
