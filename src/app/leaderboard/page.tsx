@@ -5,10 +5,16 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { LeaderboardUser } from "@/types";
 import { Trophy, Loader2, Building } from "lucide-react";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
@@ -163,10 +169,17 @@ export default function LeaderboardPage() {
               </Card>
             )}
 
-            <div className="flex justify-center gap-2 mb-8">
-              <Button variant={filter === "Global" ? "default" : "outline"} onClick={() => setFilter("Global")}>Global</Button>
-              <Button variant={filter === "Country" ? "default" : "outline"} onClick={() => setFilter("Country")} disabled={!userData}>Country</Button>
-              <Button variant={filter === "Company" ? "default" : "outline"} onClick={() => setFilter("Company")} disabled={!userData || !userData.company}>Company</Button>
+            <div className="flex justify-center mb-8">
+              <Select onValueChange={setFilter} value={filter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Global">Global</SelectItem>
+                  <SelectItem value="Country" disabled={!userData}>My Country</SelectItem>
+                  <SelectItem value="Company" disabled={!userData || !userData.company}>My Company</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Card>
