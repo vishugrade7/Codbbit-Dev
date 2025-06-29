@@ -26,6 +26,7 @@ export type User = {
   linkedinUrl?: string;
   twitterUrl?: string;
   githubUrl?: string;
+  starredProblems?: string[];
 };
 
 export type LeaderboardUser = {

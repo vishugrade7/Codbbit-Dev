@@ -26,6 +26,8 @@ import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { executeApexCode } from "@/app/salesforce/actions";
+import { toggleStarProblem } from "@/app/profile/actions";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -33,7 +35,8 @@ export default function ProblemWorkspacePage() {
     const categoryName = decodeURIComponent(params.categoryName as string);
     const problemId = params.problemId as string;
     
-    const { user } = useAuth();
+    const { user, userData } = useAuth();
+    const { toast } = useToast();
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,6 +44,9 @@ export default function ProblemWorkspacePage() {
     const [code, setCode] = useState("");
     const [results, setResults] = useState("Run the code to see the results here.");
     const [solvedProblemIds, setSolvedProblemIds] = useState(new Set<string>()); // Mock solved status
+    const [isStarred, setIsStarred] = useState(false);
+    const [isStarring, setIsStarring] = useState(false);
+
 
     // New state for filtering
     const [searchTerm, setSearchTerm] = useState("");
@@ -105,6 +111,14 @@ export default function ProblemWorkspacePage() {
         return () => unsubscribe();
     }, [categoryName, problemId]);
     
+    useEffect(() => {
+        if (userData?.starredProblems) {
+            setIsStarred(userData.starredProblems.includes(problemId));
+        } else {
+            setIsStarred(false);
+        }
+    }, [userData, problemId]);
+
     const filteredProblems = useMemo(() => {
         return allProblems
             .filter((p) => {
@@ -148,6 +162,36 @@ export default function ProblemWorkspacePage() {
             setResults(`Error: ${response.error || 'An unknown error occurred during execution.'}`);
         }
         setIsExecuting(false);
+    };
+
+    const handleToggleStar = async () => {
+        if (!user) {
+            toast({
+                variant: "destructive",
+                title: "Authentication Required",
+                description: "You must be logged in to star a problem.",
+            });
+            return;
+        }
+        if (isStarring) return;
+
+        setIsStarring(true);
+        const result = await toggleStarProblem(user.uid, problemId, isStarred);
+
+        if (result.success) {
+            const newStarredStatus = !isStarred;
+            setIsStarred(newStarredStatus);
+            toast({
+                title: newStarredStatus ? "Problem Starred" : "Problem Unstarred",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.error,
+            });
+        }
+        setIsStarring(false);
     };
 
     if (loading) {
@@ -260,7 +304,14 @@ export default function ProblemWorkspacePage() {
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-                 <Button variant="outline" size="sm"><Star className="mr-2 h-4 w-4" />Star</Button>
+                 <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
+                    {isStarring ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Star className={cn("mr-2 h-4 w-4", isStarred && "fill-yellow-400 text-yellow-400")} />
+                    )}
+                    {isStarred ? 'Starred' : 'Star'}
+                </Button>
                  <Button variant="outline" size="sm" onClick={() => router.push('/settings')}><Settings className="mr-2 h-4 w-4" />Settings</Button>
             </div>
         </header>

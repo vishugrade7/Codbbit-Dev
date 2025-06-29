@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { User } from "@/types";
 
@@ -20,5 +20,23 @@ export async function updateUserProfile(userId: string, data: Partial<User>) {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
     return { success: false, error: `Failed to update profile: ${errorMessage}` };
+  }
+}
+
+export async function toggleStarProblem(userId: string, problemId: string, isCurrentlyStarred: boolean) {
+  try {
+    const userDocRef = doc(db, "users", userId);
+    await updateDoc(userDocRef, {
+      starredProblems: isCurrentlyStarred 
+        ? arrayRemove(problemId) 
+        : arrayUnion(problemId),
+    });
+    
+    revalidatePath("/profile");
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    return { success: false, error: `Failed to update star status: ${errorMessage}` };
   }
 }
