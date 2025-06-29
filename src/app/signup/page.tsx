@@ -51,7 +51,17 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
+      let avatarUrl = '';
+      const emailDomain = values.email.split('@')[1];
+      const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com'];
+
+      // Use Clearbit logo if a company name is given and it's not a common free email provider
+      if (values.company && emailDomain && !freeEmailDomains.includes(emailDomain.toLowerCase())) {
+        avatarUrl = `https://logo.clearbit.com/${emailDomain}`;
+      } else {
+        const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
+        avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
+      }
 
       // Create a document for the new user in Firestore
       await setDoc(doc(db, "users", user.uid), {
@@ -63,7 +73,7 @@ export default function SignupPage() {
           country: values.country,
           points: 0,
           rank: 0,
-          avatarUrl: `https://placehold.co/128x128.png?text=${userInitials}`,
+          avatarUrl: avatarUrl,
           achievements: [],
           contributions: [],
           isAdmin: false,
