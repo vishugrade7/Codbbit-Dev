@@ -83,7 +83,7 @@ async function sfdcFetch(auth: SfdcAuth, path: string, options: RequestInit = {}
         const errorMessage = Array.isArray(errorBody) ? errorBody[0]?.message : (errorBody.message || 'An unknown Salesforce API error occurred.');
         throw new Error(errorMessage);
     }
-    // For DELETE requests, response body might be empty
+    // For DELETE or PATCH requests, response body might be empty
     if (response.status === 204) {
         return null;
     }
@@ -103,14 +103,6 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
     });
 }
 
-async function deleteToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', id: string) {
-    return sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${id}`, {
-        method: 'DELETE',
-    });
-}
-
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/)?.[1];
 const POINTS_MAP = { Easy: 10, Medium: 25, Hard: 50 };
@@ -218,22 +210,34 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
-        // --- Deploy Main Object ---
+        // --- Deploy Main Object (Upsert) ---
         let existingRecord = await findToolingApiRecord(auth, objectType, mainObjectName);
         if (existingRecord) {
-            await deleteToolingApiRecord(auth, objectType, existingRecord.id);
-            await sleep(2000); // Wait for deletion to process
+            await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${existingRecord.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ Body: userCode }),
+            });
+        } else {
+            await createToolingApiRecord(auth, objectType, mainObjectName, userCode);
         }
-        await createToolingApiRecord(auth, objectType, mainObjectName, userCode);
 
-        // --- Deploy Test Class ---
+        // --- Deploy Test Class (Upsert) and get ID ---
+        let testClassId;
         let existingTest = await findToolingApiRecord(auth, 'ApexClass', testObjectName);
         if (existingTest) {
-            await deleteToolingApiRecord(auth, 'ApexClass', existingTest.id);
-            await sleep(2000);
+            await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/ApexClass/${existingTest.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ Body: problem.testcases }),
+            });
+            testClassId = existingTest.id;
+        } else {
+            const newTestRecord = await createToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
+            testClassId = newTestRecord.id;
         }
-        const newTestRecord = await createToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
-        const testClassId = newTestRecord.id;
+        
+        if (!testClassId) {
+            return { success: false, message: 'Could not determine test class ID after deployment.' };
+        }
 
         // --- Run Tests ---
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
@@ -245,7 +249,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         // Poll for results
         let testResult;
         for (let i = 0; i < 20; i++) { // Poll for up to 20 seconds
-            await sleep(1000);
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const query = `SELECT Status, ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
             const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
             if (result.records.length > 0 && ['Completed', 'Failed', 'Aborted'].includes(result.records[0].Status)) {
