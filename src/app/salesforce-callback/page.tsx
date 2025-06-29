@@ -17,6 +17,17 @@ function SalesforceCallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get('code');
+    const error = searchParams.get('error');
+
+    if (error) {
+       toast({
+        variant: "destructive",
+        title: "Salesforce Connection Error",
+        description: searchParams.get('error_description') || "An unknown error occurred.",
+      });
+      router.replace('/settings');
+      return;
+    }
     
     // Wait until the auth state is resolved
     if (loading) {
@@ -36,8 +47,21 @@ function SalesforceCallbackContent() {
 
     // If logged in and we have a code, process it
     if (code) {
+        const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
+        if (!codeVerifier) {
+             toast({
+                variant: "destructive",
+                title: "Connection Failed",
+                description: "Your session has expired or is invalid. Please try connecting again.",
+            });
+            router.replace('/settings');
+            return;
+        }
+
       const handleAuth = async () => {
-        const result = await getSalesforceAccessToken(code, user.uid);
+        // Remove the verifier from storage so it can't be reused
+        sessionStorage.removeItem('pkce_code_verifier');
+        const result = await getSalesforceAccessToken(code, user.uid, codeVerifier);
 
         if (result.success) {
           toast({

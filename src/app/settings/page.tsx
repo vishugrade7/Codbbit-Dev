@@ -14,6 +14,28 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ThemeToggle } from "@/components/theme-toggle";
 
+async function generateCodeChallenge(verifier: string) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
+    
+    // Base64-url-encode the digest
+    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+function generateCodeVerifier() {
+    const randomBytes = new Uint8Array(32);
+    window.crypto.getRandomValues(randomBytes);
+    return btoa(String.fromCharCode(...randomBytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+
 export default function SettingsPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -52,12 +74,20 @@ export default function SettingsPage() {
             return;
         }
 
+        const codeVerifier = generateCodeVerifier();
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
+        
+        // Store verifier in sessionStorage to retrieve it on the callback page
+        sessionStorage.setItem('pkce_code_verifier', codeVerifier);
+
         const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
         const params = new URLSearchParams({
             response_type: 'code',
             client_id: clientId,
             redirect_uri: redirectUri,
             scope: 'api refresh_token',
+            code_challenge: codeChallenge,
+            code_challenge_method: 'S256',
         });
         
         const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?${params.toString()}`;

@@ -17,22 +17,21 @@ type SalesforceTokenResponse = {
   error_description?: string;
 };
 
-export async function getSalesforceAccessToken(code: string, userId: string) {
+export async function getSalesforceAccessToken(code: string, userId: string, codeVerifier: string) {
   const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
   const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
-  const clientSecret = process.env.SFDC_CLIENT_SECRET;
   const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
 
-  if (!clientId || !clientSecret || clientSecret === "YOUR_SALESFORCE_CLIENT_SECRET") {
-    return { success: false, error: 'Salesforce client ID or secret is not configured.' };
+  if (!clientId) {
+    return { success: false, error: 'Salesforce client ID is not configured.' };
   }
 
   const params = new URLSearchParams();
   params.append('grant_type', 'authorization_code');
   params.append('code', code);
   params.append('client_id', clientId);
-  params.append('client_secret', clientSecret);
   params.append('redirect_uri', redirectUri);
+  params.append('code_verifier', codeVerifier);
 
   try {
     const response = await fetch(`${loginUrl}/services/oauth2/token`, {
