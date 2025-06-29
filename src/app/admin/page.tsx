@@ -9,7 +9,7 @@ import type { Problem, ApexProblemsData } from "@/types";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteCategory, deleteProblem } from "./actions";
 import { AddCategoryDialog } from "./add-category-dialog";
 import { BulkAddDialog } from "./bulk-add-dialog";
+import { cn } from "@/lib/utils";
 
 type CategoryItem = {
     name: string;
@@ -89,8 +90,8 @@ export default function AdminPage() {
 
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-accent/20 text-accent border-accent/30';
-      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+      case 'medium': return 'bg-blue-400/20 text-blue-400 border-blue-400/30';
       case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
       default: return 'bg-muted';
     }
@@ -130,11 +131,27 @@ export default function AdminPage() {
                           <span className="font-bold text-lg">{category.name}</span>
                           <Badge variant="secondary">{problemCount} problem{problemCount !== 1 ? 's' : ''}</Badge>
                         </div>
-                        <div onClick={(e) => e.stopPropagation()} className="pr-2">
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRequest({ type: 'category', id: category.name, name: category.name })}>
-                             <Trash2 className="h-4 w-4" />
-                           </Button>
-                        </div>
+                        <div
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Delete category ${category.name}`}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.stopPropagation();
+                                handleDeleteRequest({ type: 'category', id: category.name, name: category.name });
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRequest({ type: 'category', id: category.name, name: category.name });
+                            }}
+                            className={cn(
+                              buttonVariants({ variant: 'ghost', size: 'icon' }),
+                              'h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0'
+                            )}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </div>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pl-4">
