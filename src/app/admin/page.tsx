@@ -18,6 +18,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { deleteCategory, deleteProblem } from "./actions";
 import { AddCategoryDialog } from "./add-category-dialog";
+import { BulkAddDialog } from "./bulk-add-dialog";
 
 type CategoryItem = {
     name: string;
@@ -107,7 +108,10 @@ export default function AdminPage() {
                 <CardTitle className="font-headline text-2xl">Problem Management</CardTitle>
                 <CardDescription>Add, edit, or manage problems for Codbbit challenges.</CardDescription>
               </div>
-              <AddCategoryDialog />
+              <div className="flex gap-2">
+                <BulkAddDialog categories={categories} />
+                <AddCategoryDialog />
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (

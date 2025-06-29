@@ -57,6 +57,26 @@ export async function addProblem(categoryName: string, problemData: ProblemInput
   }
 }
 
+export async function bulkAddProblems(categoryName: string, problems: ProblemInput[]) {
+  try {
+    const newProblemsWithIds: Problem[] = problems.map(problem => ({
+      ...problem,
+      id: crypto.randomUUID(),
+    }));
+
+    await updateDoc(apexDocRef, {
+      [`Category.${categoryName}.Questions`]: arrayUnion(...newProblemsWithIds),
+    });
+
+    revalidatePath("/admin");
+    revalidatePath(`/problems/apex/${categoryName}`);
+    return { success: true, count: newProblemsWithIds.length };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    return { success: false, error: `Failed to bulk add problems: ${errorMessage}` };
+  }
+}
+
 export async function updateProblem(problemId: string, categoryName: string, problemData: ProblemInput) {
   try {
     const docSnap = await getDoc(apexDocRef);
