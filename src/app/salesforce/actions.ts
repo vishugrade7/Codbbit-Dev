@@ -111,3 +111,44 @@ export async function executeApexCode(userId: string, code: string) {
         return { success: false, error: errorMessage };
     }
 }
+
+export async function executeQuery(userId: string, query: string) {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists() || !userDoc.data().sfdcAuth?.connected) {
+        return { success: false, error: 'Salesforce account not connected.' };
+    }
+
+    const { accessToken, instanceUrl } = userDoc.data().sfdcAuth as NonNullable<User['sfdcAuth']>;
+
+    if (!accessToken || !instanceUrl) {
+         return { success: false, error: 'Invalid Salesforce credentials found.' };
+    }
+
+    const endpoint = `${instanceUrl}/services/data/v59.0/query?q=${encodeURIComponent(query)}`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+            const errorMessage = Array.isArray(result) ? result[0]?.message : (result.error_description || 'An unknown error occurred.');
+            throw new Error(errorMessage);
+        }
+
+        return { success: true, result };
+
+    } catch (error) {
+        console.error('Execute SOQL Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}

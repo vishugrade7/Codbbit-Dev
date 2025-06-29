@@ -87,3 +87,9 @@ export type ApexProblemsData = {
         Questions: Problem[];
     }
 }
+
+export type SOQLProblemsData = {
+    [categoryName: string]: {
+        Questions: Problem[];
+    }
+}
