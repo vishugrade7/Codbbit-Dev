@@ -157,15 +157,9 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      let avatarUrl = '';
       const companyLogoUrl = companyLogo || '';
-
-      if (companyLogoUrl) {
-        avatarUrl = companyLogoUrl;
-      } else {
-        const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
-        avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
-      }
+      const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
+      const avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
 
       // Create a document for the new user in Firestore
       await setDoc(doc(db, "users", user.uid), {
