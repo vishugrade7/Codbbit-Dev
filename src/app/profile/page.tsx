@@ -80,7 +80,7 @@ export default function ProfilePage() {
     const stats = [
         { label: "Points", value: user.points.toLocaleString() },
         { label: "Global Rank", value: `#${user.rank}` },
-        { label: "Problems Solved", value: user.contributions?.length || 0 }, 
+        { label: "Problems Solved", value: user.solvedProblems?.length || 0 }, 
         { label: "Solutions Submitted", value: "342" }, // static for now
     ];
 

@@ -176,6 +176,7 @@ export default function SignupPage() {
           achievements: [],
           contributions: [],
           isAdmin: false,
+          solvedProblems: [],
       });
 
       toast({

@@ -27,6 +27,7 @@ export type User = {
   twitterUrl?: string;
   githubUrl?: string;
   starredProblems?: string[];
+  solvedProblems?: string[];
 };
 
 export type LeaderboardUser = {

@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { executeApexCode } from "@/app/salesforce/actions";
+import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,10 +40,9 @@ export default function ProblemWorkspacePage() {
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isExecuting, setIsExecuting] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [code, setCode] = useState("");
-    const [results, setResults] = useState("Run the code to see the results here.");
-    const [solvedProblemIds, setSolvedProblemIds] = useState(new Set<string>()); // Mock solved status
+    const [results, setResults] = useState("Submit your solution to run tests and see results.");
     const [isStarred, setIsStarred] = useState(false);
     const [isStarring, setIsStarring] = useState(false);
 
@@ -103,11 +102,6 @@ export default function ProblemWorkspacePage() {
             setLoading(false);
         });
 
-        // Mock: In a real app, you would fetch the user's solved problems
-        // and update the solvedProblemIds set from user data.
-        const newSolved = new Set<string>();
-        setSolvedProblemIds(newSolved);
-
         return () => unsubscribe();
     }, [categoryName, problemId]);
     
@@ -117,6 +111,10 @@ export default function ProblemWorkspacePage() {
         } else {
             setIsStarred(false);
         }
+    }, [userData, problemId]);
+
+    const isSolved = useMemo(() => {
+        return userData?.solvedProblems?.includes(problemId) ?? false;
     }, [userData, problemId]);
 
     const filteredProblems = useMemo(() => {
@@ -130,38 +128,29 @@ export default function ProblemWorkspacePage() {
             });
     }, [allProblems, searchTerm, difficultyFilter]);
 
-    const handleRun = async () => {
-        if (!user) {
-            setResults("Please log in to run code.");
+    const handleSubmit = async () => {
+        if (!user || !problem) {
+            toast({ variant: "destructive", title: "Cannot Submit", description: "You must be logged in and viewing a problem to submit a solution." });
             return;
         }
-        setIsExecuting(true);
-        setResults("Running tests...");
-        const response = await executeApexCode(user.uid, code);
+        setIsSubmitting(true);
+        setResults("Submitting solution and running tests...");
+
+        const response = await submitApexSolution(user.uid, problem, code);
         
-        if (response.success && response.result) {
-            const { result } = response;
-            if (result.success) {
-                let output = `Compilation successful.\nExecution successful.\n\n`;
-                if(result.logs) {
-                    // Clean up logs for better readability
-                    output += `== Apex Logs ==\n${result.logs.split('\\n').slice(1,-1).join('\\n')}`;
-                }
-                setResults(output);
-            } else {
-                let errorOutput = `Compilation failed: ${result.compileProblem || 'N/A'}\n\n`;
-                if (result.exceptionMessage) {
-                    errorOutput += `Exception: ${result.exceptionMessage}\n`;
-                }
-                if (result.exceptionStackTrace) {
-                    errorOutput += `Stack Trace: ${result.exceptionStackTrace}\n`;
-                }
-                setResults(errorOutput);
-            }
-        } else {
-            setResults(`Error: ${response.error || 'An unknown error occurred during execution.'}`);
+        let resultText = `${response.message}`;
+        if (response.details) {
+            resultText += `\n\nDetails:\n${response.details}`;
         }
-        setIsExecuting(false);
+        setResults(resultText);
+
+        if (response.success) {
+            toast({ title: "Submission Successful!", description: response.message });
+        } else {
+            toast({ variant: "destructive", title: "Submission Failed", description: response.message });
+        }
+        
+        setIsSubmitting(false);
     };
 
     const handleToggleStar = async () => {
@@ -218,8 +207,6 @@ export default function ProblemWorkspacePage() {
         default: return 'bg-muted';
         }
     };
-    
-    const isSolved = solvedProblemIds.has(problem.id);
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
@@ -280,7 +267,7 @@ export default function ProblemWorkspacePage() {
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
                                             {p.difficulty}
                                         </Badge>
-                                        {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                        {(userData?.solvedProblems?.includes(p.id)) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                     </div>
                                 </Link>
                             )) : (
@@ -397,9 +384,9 @@ export default function ProblemWorkspacePage() {
                                             <TooltipContent><p>Reset Code</p></TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
-                                    <Button variant="outline" size="sm" onClick={handleRun} disabled={isExecuting}>
-                                        {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        <Play className="mr-2" />Run
+                                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Run & Submit
                                     </Button>
                                 </div>
                             </div>
@@ -420,13 +407,9 @@ export default function ProblemWorkspacePage() {
                             <Tabs defaultValue="results" className="h-full flex flex-col">
                                 <TabsList className="shrink-0 rounded-none border-b bg-transparent p-0">
                                     <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Test Results</TabsTrigger>
-                                    <TabsTrigger value="raw" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Raw Output</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="results" className="flex-1 p-4 overflow-auto">
                                     <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results}</pre>
-                                </TabsContent>
-                                <TabsContent value="raw" className="flex-1 p-4">
-                                    <p className="text-muted-foreground">Raw output will appear here.</p>
                                 </TabsContent>
                             </Tabs>
                         </div>
