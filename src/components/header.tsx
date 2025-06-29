@@ -18,9 +18,10 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import NavLink from "./nav-link";
+import { Skeleton } from "./ui/skeleton";
 
 export default function Header() {
-  const { user, userData, isAdmin } = useAuth();
+  const { user, userData, isAdmin, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -61,7 +62,12 @@ export default function Header() {
             </nav>
         </div>
         <div className="flex items-center gap-4">
-          {user && userData ? (
+          {loading ? (
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-20" />
+            </div>
+          ) : user && userData ? (
             <>
               <div className="flex items-center gap-2 text-amber-400">
                 <Flame className="h-5 w-5" />
