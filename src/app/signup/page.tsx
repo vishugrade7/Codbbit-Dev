@@ -53,7 +53,10 @@ export default function SignupPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       if (companyValue) {
-        setCompanyLogo(`https://logo.clearbit.com/${companyValue.toLowerCase().replace(/\s/g, "")}`);
+        // Use the first word of the company name for the logo lookup.
+        // This is a heuristic that works well for names like "Google Inc".
+        const lookupName = companyValue.split(' ')[0].toLowerCase();
+        setCompanyLogo(`https://logo.clearbit.com/${lookupName}`);
         setLogoError(false);
       } else {
         setCompanyLogo(null);
