@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -29,13 +30,61 @@ const formSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
+type CompanySuggestion = {
+  name: string;
+  domain: string;
+  logo: string;
+};
+
+const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySuggestion, onClick: (suggestion: CompanySuggestion) => void }) => {
+  const [logoError, setLogoError] = useState(false);
+  
+  return (
+    <li>
+      <button
+        type="button"
+        className="flex items-center w-full text-left px-3 py-2.5 cursor-pointer hover:bg-accent"
+        // Use onMouseDown to prevent the input's onBlur from firing before the click is registered
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onClick(suggestion);
+        }}
+      >
+        {logoError ? (
+          <div className="h-[24px] w-[24px] mr-3 rounded-sm bg-muted flex items-center justify-center shrink-0">
+            <Building className="h-4 w-4 text-muted-foreground" />
+          </div>
+        ) : (
+          <Image
+            src={suggestion.logo}
+            alt={`${suggestion.name} logo`}
+            width={24}
+            height={24}
+            className="mr-3 rounded-sm shrink-0"
+            onError={() => setLogoError(true)}
+          />
+        )}
+        <div className="flex-1 overflow-hidden">
+          <p className="text-sm font-medium text-foreground truncate">{suggestion.name}</p>
+        </div>
+        <p className="text-sm text-muted-foreground ml-4 shrink-0">{suggestion.domain}</p>
+      </button>
+    </li>
+  );
+};
+
+
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
+
+  const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,23 +100,53 @@ export default function SignupPage() {
   const companyValue = form.watch("company");
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      if (companyValue) {
-        // Use the first word of the company name for the logo lookup.
-        // This is a heuristic that works well for names like "Google Inc".
-        const lookupName = companyValue.split(' ')[0].toLowerCase();
-        setCompanyLogo(`https://logo.clearbit.com/${lookupName}`);
-        setLogoError(false);
-      } else {
-        setCompanyLogo(null);
+    if (!companyValue || companyValue.trim().length < 2) {
+      setSuggestions([]);
+      setIsSuggestionsOpen(false);
+      setCompanyLogo(null);
+      return;
+    }
+    
+    // If user keeps typing after selecting a company, clear the logo
+    if (companyLogo && companyValue !== suggestions.find(s => s.logo === companyLogo)?.name) {
+       setCompanyLogo(null);
+    }
+
+    const handler = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(companyValue)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && Array.isArray(data) && data.length > 0) {
+            setSuggestions(data);
+            setIsSuggestionsOpen(true);
+          } else {
+            setSuggestions([]);
+            setIsSuggestionsOpen(false);
+          }
+        } else {
+          setSuggestions([]);
+          setIsSuggestionsOpen(false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch company suggestions:", error);
+        setSuggestions([]);
+        setIsSuggestionsOpen(false);
       }
-    }, 500); // 500ms debounce
+    }, 300); // 300ms debounce
 
     return () => {
       clearTimeout(handler);
     };
-  }, [companyValue]);
+  }, [companyValue, companyLogo, suggestions]);
 
+  const handleSuggestionClick = (suggestion: CompanySuggestion) => {
+    form.setValue('company', suggestion.name, { shouldValidate: true });
+    setCompanyLogo(suggestion.logo);
+    setLogoError(false);
+    setIsSuggestionsOpen(false);
+    setSuggestions([]);
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -76,15 +155,10 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       let avatarUrl = '';
-      let companyLogoUrl = '';
-      const emailDomain = values.email.split('@')[1];
-      const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com'];
+      const companyLogoUrl = companyLogo || '';
 
-      // Use Clearbit logo if a company name is given and it's not a common free email provider
-      if (values.company && emailDomain && !freeEmailDomains.includes(emailDomain.toLowerCase())) {
-        const logoUrl = `https://logo.clearbit.com/${emailDomain}`;
-        avatarUrl = logoUrl;
-        companyLogoUrl = logoUrl;
+      if (companyLogoUrl) {
+        avatarUrl = companyLogoUrl;
       } else {
         const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
         avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
@@ -180,23 +254,44 @@ export default function SignupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company / College <span className="text-muted-foreground">(Optional)</span></FormLabel>
-                    <FormControl>
-                        <div className="relative">
-                            {companyLogo && !logoError ? (
-                                <Image
-                                  src={companyLogo}
-                                  alt="Company Logo"
-                                  width={20}
-                                  height={20}
-                                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                                  onError={() => setLogoError(true)}
-                                />
-                            ) : (
-                                <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            )}
-                            <Input placeholder="e.g. Apple" {...field} className="pl-10" />
-                        </div>
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                          <div className="relative">
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                {companyLogo && !logoError ? (
+                                    <Image
+                                      src={companyLogo}
+                                      alt="Company Logo"
+                                      width={20}
+                                      height={20}
+                                      onError={() => setLogoError(true)}
+                                    />
+                                ) : (
+                                    <Building className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </div>
+                              <Input 
+                                placeholder="e.g. Apple" 
+                                {...field} 
+                                className="pl-10"
+                                autoComplete="off"
+                                onFocus={() => companyValue && setSuggestions.length > 0 && setIsSuggestionsOpen(true)}
+                                onBlur={() => setIsSuggestionsOpen(false)}
+                              />
+                          </div>
+                      </FormControl>
+                      {isSuggestionsOpen && suggestions.length > 0 && (
+                        <Card className="absolute z-10 w-full mt-1 bg-popover border-border shadow-lg">
+                          <CardContent className="p-0">
+                            <ul className="flex flex-col">
+                              {suggestions.map((suggestion) => (
+                                <CompanySuggestionItem key={suggestion.domain} suggestion={suggestion} onClick={handleSuggestionClick} />
+                              ))}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -295,3 +390,4 @@ export default function SignupPage() {
     </div>
   );
 }
+
