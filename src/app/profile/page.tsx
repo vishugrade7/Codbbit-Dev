@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -10,12 +11,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Badge } from "@/components/ui/badge";
+import type { Problem, ApexProblemsData } from "@/types";
 
+type StarredProblemDetail = Problem & { categoryName: string };
 
 export default function ProfilePage() {
     const { user: authUser, userData, loading } = useAuth();
     const router = useRouter();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [starredProblems, setStarredProblems] = useState<StarredProblemDetail[]>([]);
+    const [loadingStarred, setLoadingStarred] = useState(true);
 
     useEffect(() => {
         if (!loading && !authUser) {
@@ -23,6 +32,41 @@ export default function ProfilePage() {
         }
     }, [authUser, loading, router]);
     
+    useEffect(() => {
+        const fetchStarredProblems = async () => {
+            if (!authUser || !userData?.starredProblems || userData.starredProblems.length === 0) {
+                setLoadingStarred(false);
+                setStarredProblems([]);
+                return;
+            }
+
+            setLoadingStarred(true);
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+
+                if (docSnap.exists()) {
+                    const categoriesData = docSnap.data().Category as ApexProblemsData;
+                    const allProblemsWithCategory = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) => 
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                    );
+
+                    const starredIds = new Set(userData.starredProblems);
+                    const details = allProblemsWithCategory.filter(p => starredIds.has(p.id));
+                    setStarredProblems(details);
+                }
+            } catch (error) {
+                console.error("Error fetching starred problems:", error);
+            } finally {
+                setLoadingStarred(false);
+            }
+        };
+
+        if (userData) {
+            fetchStarredProblems();
+        }
+    }, [authUser, userData]);
+
     const user = userData;
 
     if (loading || !authUser || !user) {
@@ -45,6 +89,15 @@ export default function ProfilePage() {
         Award,
         BarChart,
         GitCommit,
+    };
+    
+    const getDifficultyClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+        case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+        case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+        default: return 'bg-muted';
+        }
     };
 
   return (
@@ -121,6 +174,36 @@ export default function ProfilePage() {
                                 <p className="text-muted-foreground col-span-full text-center">No achievements yet. Keep coding!</p>
                             )}
                       </CardContent>
+                  </Card>
+
+                  <Card className="mt-8">
+                    <CardHeader>
+                        <CardTitle>Starred Problems</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingStarred ? (
+                            <div className="flex justify-center items-center h-24">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        ) : starredProblems.length > 0 ? (
+                            <div className="space-y-2">
+                                {starredProblems.map(problem => (
+                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
+                                        <div className="flex items-center justify-between p-3 rounded-md hover:bg-card/50 transition-colors">
+                                            <span className="font-medium">{problem.title}</span>
+                                            <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>
+                                                {problem.difficulty}
+                                            </Badge>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground text-center py-4">
+                                Star problems in the workspace to see them here.
+                            </p>
+                        )}
+                    </CardContent>
                   </Card>
               </div>
 
