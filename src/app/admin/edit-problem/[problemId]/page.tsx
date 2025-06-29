@@ -9,15 +9,12 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function EditProblemPage({
-    params,
-    searchParams,
+    params: { problemId },
+    searchParams: { categoryName },
 }: {
     params: { problemId: string };
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: { categoryName: string };
 }) {
-    const { problemId } = params;
-    const categoryName = searchParams.categoryName as string;
-
     const problem = await getProblem(problemId, categoryName);
 
     if (!problem) {
@@ -48,7 +45,7 @@ export default async function EditProblemPage({
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline text-2xl">Edit Problem</CardTitle>
-                        <CardDescription>Editing &quot;{problem.title}&quot; in the &quot;{decodeURIComponent(categoryName)}&quot; category.</CardDescription>
+                        <CardDescription>Editing &quot;{problem.title}&quot; in the &quot;{categoryName}&quot; category.</CardDescription>
                     </CardHeader>
                     <CardContent>
                        <EditProblemForm categoryName={categoryName} problem={problem} />
