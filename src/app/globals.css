@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +34,16 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    /* Sidebar Variables */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 240 5.9% 15%;
+    --sidebar-accent: 240 5.9% 20%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-primary: 197 91% 56%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-ring: 197 91% 56%;
   }
 
   .dark {
@@ -60,6 +71,16 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Sidebar Dark Variables */
+    --sidebar-background: 224 71.4% 4.1%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 217.2 32.6% 22.5%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-primary: 197 91% 56%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-ring: 197 91% 56%;
   }
 }
 
@@ -106,7 +127,7 @@ pre[class*="language-"] {
 
 :not(pre) > code[class*="language-"],
 pre[class*="language-"] {
-	background: #282c34;
+	background: #0d1117;
 }
 
 /* Inline code */
