@@ -89,9 +89,9 @@ export default function AdminPage() {
 
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-600/20 text-green-400 border-green-600/30';
-      case 'medium': return 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30';
-      case 'hard': return 'bg-red-600/20 text-red-400 border-red-600/30';
+      case 'easy': return 'bg-accent/20 text-accent border-accent/30';
+      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
       default: return 'bg-muted';
     }
   }
