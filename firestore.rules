@@ -3,37 +3,36 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the requesting user is an admin.
-    // It checks for an `isAdmin` flag in the user's own document.
+    // Helper function to check if a user is an admin
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Check for a specific hardcoded admin email OR if the user has the isAdmin flag in their document
+      return request.auth.token.email == 'gradevishu@gmail.com' ||
+             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
     }
 
-    // Rules for user profiles
-    match /users/{userId} {
-      // Everyone can read user profiles for leaderboards and profile pages.
-      allow read;
-      // A user can create their own profile upon signup.
-      allow create: if request.auth.uid == userId;
-      // A user can update their own profile, or an admin can.
-      allow update: if request.auth.uid == userId || isAdmin();
-    }
-
-    // Rules for problem categories
+    // Rules for categories and their sub-collection of problems
     match /categories/{categoryId} {
-      // Everyone can read the list of categories.
-      allow read;
-      // Only admins can create, update, or delete categories.
+      allow read: if true;
+      // Admins can create, update, and delete categories and their problems
       allow write: if isAdmin();
+
+      match /problems/{problemId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
     }
 
-    // Rules for problems (nested under categories)
-    match /categories/{categoryId}/problems/{problemId} {
-      // Everyone can read problems.
-      allow read;
-      // Only admins can create, update, or delete problems.
-      allow write: if isAdmin();
+    // Rules for the users collection
+    match /users/{userId} {
+      // Allow anyone to read user profiles for leaderboards, public profiles etc.
+      allow read: if true;
+      // Allow a user to create their own document upon signup
+      allow create: if request.auth.uid == userId;
+      // Allow a user to update their own document, or an admin to update any user document
+      allow update: if request.auth.uid == userId || isAdmin();
+      // Only admins can delete user documents
+      allow delete: if isAdmin();
     }
   }
 }
