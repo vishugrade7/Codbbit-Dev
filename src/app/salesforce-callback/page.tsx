@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, Suspense } from 'react';
@@ -17,6 +16,7 @@ function SalesforceCallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get('code');
+    const codeVerifier = sessionStorage.getItem('sfdc_code_verifier');
 
     // Wait until the auth state is resolved
     if (loading) {
@@ -34,10 +34,13 @@ function SalesforceCallbackContent() {
       return;
     }
 
-    // If logged in and we have a code, process it
-    if (code) {
+    // If logged in and we have a code and verifier, process it
+    if (code && codeVerifier) {
+       // Clear the verifier from storage now that we have it
+      sessionStorage.removeItem('sfdc_code_verifier');
+      
       const handleAuth = async () => {
-        const result = await getSalesforceAccessToken(code, user.uid);
+        const result = await getSalesforceAccessToken(code, user.uid, codeVerifier);
 
         if (result.success) {
           toast({
@@ -56,11 +59,11 @@ function SalesforceCallbackContent() {
       };
       handleAuth();
     } else {
-      // If we are logged in but there's no code, it's an error.
+      // If we are logged in but there's no code or verifier, it's an error.
       toast({
         variant: "destructive",
         title: "Callback Error",
-        description: "Invalid callback request. No authorization code found.",
+        description: "Invalid callback request. No authorization code or verifier found.",
       });
       router.replace('/settings');
     }

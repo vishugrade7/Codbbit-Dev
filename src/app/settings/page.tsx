@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,6 +12,25 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ThemeToggle } from "@/components/theme-toggle";
+
+// Helper function to generate a secure random string for the code verifier
+function generateCodeVerifier(): string {
+  const array = new Uint32Array(28);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, (dec) => ('0' + dec.toString(16)).substr(-2)).join('');
+}
+
+// Helper function to generate the code challenge from the code verifier
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
+  
+  // Base64-urlencode the hash
+  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
@@ -41,7 +59,7 @@ export default function SettingsPage() {
 
     }, [user, loading, router]);
 
-    const handleSalesforceConnect = () => {
+    const handleSalesforceConnect = async () => {
         const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
         if (!clientId || clientId === 'YOUR_SALESFORCE_CLIENT_ID') {
             toast({
@@ -51,9 +69,23 @@ export default function SettingsPage() {
             });
             return;
         }
+        
+        const verifier = generateCodeVerifier();
+        const challenge = await generateCodeChallenge(verifier);
+
+        sessionStorage.setItem('sfdc_code_verifier', verifier);
 
         const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
-        const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=api%20refresh_token`;
+        const params = new URLSearchParams({
+            response_type: 'code',
+            client_id: clientId,
+            redirect_uri: redirectUri,
+            scope: 'api refresh_token',
+            code_challenge: challenge,
+            code_challenge_method: 'S256',
+        });
+        
+        const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?${params.toString()}`;
         
         router.push(salesforceAuthUrl);
     };
