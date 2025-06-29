@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -13,15 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, CheckCircle2 } from "lucide-react";
+import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, Video } from "lucide-react";
 
 export default function ProblemListPage() {
   const router = useRouter();
@@ -74,9 +67,9 @@ export default function ProblemListPage() {
   
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30 hover:bg-green-400/30';
-      case 'medium': return 'bg-blue-400/20 text-blue-400 border-blue-400/30 hover:bg-blue-400/30';
-      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30 hover:bg-destructive/30';
+      case 'easy': return 'bg-accent text-accent-foreground border-transparent hover:bg-accent/80';
+      case 'medium': return 'bg-primary/20 text-primary border-primary/30 hover:bg-primary/30';
+      case 'hard': return 'bg-destructive text-destructive-foreground border-transparent hover:bg-destructive/80';
       default: return 'bg-muted hover:bg-muted/80';
     }
   };
@@ -125,36 +118,26 @@ export default function ProblemListPage() {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : filteredProblems.length > 0 ? (
-              <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16 text-center">Status</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Difficulty</TableHead>
-                      <TableHead className="text-right">Acceptance</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProblems.map((problem) => (
-                      <TableRow key={problem.id} className="cursor-pointer" onClick={() => router.push(`/problems/apex/${encodeURIComponent(categoryName)}/${problem.id}`)}>
-                        <TableCell>
-                          <div className="flex justify-center">
-                            {solvedProblemIds.has(problem.id) && <CheckCircle2 className="h-5 w-5 text-green-400" />}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{problem.title}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>
-                            {problem.difficulty}
+              <div className="rounded-lg border">
+                {filteredProblems.map((problem, index) => (
+                   <Link 
+                      key={problem.id} 
+                      href={`/problems/apex/${encodeURIComponent(categoryName)}/${problem.id}`}
+                      className="flex items-center p-3 px-4 border-b last:border-b-0 hover:bg-card/5 transition-colors"
+                  >
+                      <div className="flex-1 flex items-center gap-4">
+                          <span className="font-medium">{index + 1}. {problem.title}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground w-14 text-right">54.4%</span>
+                          <Badge className={getDifficultyClass(problem.difficulty)}>
+                              {problem.difficulty}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">59.9%</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
+                          <Video className="h-5 w-5 text-primary" />
+                      </div>
+                  </Link>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-16">
                  <p className="text-muted-foreground">No problems found in this category.</p>
