@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -70,7 +71,7 @@ export default function LeaderboardPage() {
             name: data.name,
             username: data.username,
             avatarUrl: data.avatarUrl,
-            points: data.points,
+            points: data.points || 0,
             country: data.country,
             company: data.company,
             companyLogoUrl: data.companyLogoUrl,
@@ -88,12 +89,23 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, []);
 
-  const filteredData = filter === "Global" 
-    ? leaderboard 
-    : leaderboard.filter(user => user.country === userData?.country);
+  const filteredData = useMemo(() => {
+    const data = filter === "Global" 
+      ? leaderboard 
+      : leaderboard.filter(user => user.country === userData?.country);
+    
+    // Re-rank the data based on the current filter context
+    return data.map((user, index) => ({
+      ...user,
+      rank: index + 1,
+    }));
+  }, [leaderboard, filter, userData]);
+
 
   const currentUser = userData;
-  const currentUserRank = leaderboard.find(u => u.id === currentUser?.uid)?.rank;
+  // The rank in the "Your Rank" card should always be the global rank.
+  const currentUserGlobalRank = leaderboard.find(u => u.id === currentUser?.uid)?.rank;
+
 
   const getUserInitials = (name: string) => {
     return name?.split(' ').map(n => n[0]).join('') || '';
@@ -118,13 +130,13 @@ export default function LeaderboardPage() {
             {currentUser && (
               <Card className="mb-8 bg-card/50">
                   <CardHeader>
-                      <CardTitle>Your Rank</CardTitle>
+                      <CardTitle>Your Global Rank</CardTitle>
                   </CardHeader>
                   <CardContent>
                       <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10">
                           <div className="flex items-center gap-4">
                               <div className="text-2xl font-bold w-12 text-center">
-                                  {currentUserRank ? `#${currentUserRank}` : '-'}
+                                  {currentUserGlobalRank ? `#${currentUserGlobalRank}` : '-'}
                               </div>
                               <Avatar>
                                   <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
