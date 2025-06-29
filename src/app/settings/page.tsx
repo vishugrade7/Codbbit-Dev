@@ -7,12 +7,11 @@ import Footer from "@/components/footer";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
@@ -97,14 +96,11 @@ export default function SettingsPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Theme</CardTitle>
-                                    <CardDescription>Customize the look and feel of the app.</CardDescription>
+                                    <CardDescription>Select your preferred color scheme.</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center space-x-2">
-                                        <Switch id="theme-mode" disabled />
-                                        <Label htmlFor="theme-mode">Dark Mode (default)</Label>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-2">Light mode coming soon!</p>
+                                <CardContent className="flex items-center justify-between">
+                                    <p className="font-medium">Appearance</p>
+                                    <ThemeToggle />
                                 </CardContent>
                             </Card>
 
