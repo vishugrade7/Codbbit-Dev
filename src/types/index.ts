@@ -17,6 +17,10 @@ export type User = {
     instanceUrl: string;
   };
   isAdmin?: boolean;
+  trailheadUrl?: string;
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  githubUrl?: string;
 };
 
 export type LeaderboardUser = {

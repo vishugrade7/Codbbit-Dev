@@ -4,16 +4,18 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon } from "lucide-react";
-import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+
 
 export default function ProfilePage() {
     const { user: authUser, userData, loading } = useAuth();
     const router = useRouter();
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         if (!loading && !authUser) {
@@ -46,6 +48,7 @@ export default function ProfilePage() {
     };
 
   return (
+    <>
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex-1">
@@ -75,8 +78,14 @@ export default function ProfilePage() {
                             <span>{authUser.email}</span>
                         </div>
                     </div>
+                     <div className="mt-6 flex justify-center md:justify-start gap-2">
+                        {user.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={user.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
+                        {user.githubUrl && (<Button variant="outline" size="icon" asChild><a href={user.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
+                        {user.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={user.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
+                        {user.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={user.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
+                    </div>
                 </div>
-                <Button variant="outline"><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
+                <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
             </div>
           </Card>
           
@@ -135,5 +144,7 @@ export default function ProfilePage() {
       </main>
       <Footer />
     </div>
+    <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={user} />
+    </>
   );
 }

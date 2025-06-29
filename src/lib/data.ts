@@ -40,6 +40,7 @@ export const leaderboardData: LeaderboardUser[] = [
 
 export const mockUser: User = {
     id: '8',
+    uid: 'mock-uid-8',
     username: 'current-user',
     name: 'Charlie Brown',
     email: 'charlie@brown.com',
@@ -48,6 +49,10 @@ export const mockUser: User = {
     company: 'Firebase',
     points: 11950,
     rank: 8,
+    trailheadUrl: 'https://trailblazer.me/id/charliebrown',
+    githubUrl: 'https://github.com/charliebrown',
+    linkedinUrl: 'https://linkedin.com/in/charliebrown',
+    twitterUrl: 'https://twitter.com/charliebrown',
     achievements: [
         { id: '1', name: 'Apex Pioneer', description: 'Complete 10 Apex challenges.', icon: 'Trophy', date: '2023-10-15' },
         { id: '2', name: 'SOQL Specialist', description: 'Master advanced SOQL queries.', icon: 'Award', date: '2023-09-20' },

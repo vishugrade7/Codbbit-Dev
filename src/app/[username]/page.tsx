@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockUser } from "@/lib/data";
-import { Building, Globe, Mail, Trophy, Award, BarChart, GitCommit, User as UserIcon } from "lucide-react";
+import { Building, Globe, Mail, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon } from "lucide-react";
 
 // Mock data fetching
 const getUserData = (username: string) => {
@@ -65,6 +65,12 @@ export default function UserProfilePage() {
                             <Mail className="h-5 w-5" />
                             <span>{user.email}</span>
                         </div>
+                    </div>
+                     <div className="mt-6 flex justify-center md:justify-start gap-2">
+                        {user.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={user.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
+                        {user.githubUrl && (<Button variant="outline" size="icon" asChild><a href={user.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
+                        {user.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={user.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
+                        {user.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={user.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
                     </div>
                 </div>
                 <Button>Follow</Button>
