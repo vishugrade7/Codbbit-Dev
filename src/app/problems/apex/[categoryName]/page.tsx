@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -14,7 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, Signal, Play } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, CheckCircle2 } from "lucide-react";
 
 export default function ProblemListPage() {
   const router = useRouter();
@@ -24,6 +31,8 @@ export default function ProblemListPage() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [solvedProblemIds, setSolvedProblemIds] = useState<Set<string>>(new Set()); // Mock, would fetch from user data
+
 
   useEffect(() => {
     if (!categoryName) return;
@@ -52,6 +61,9 @@ export default function ProblemListPage() {
         setLoading(false);
       }
     );
+    
+    // In a real app, you would fetch the user's solved problems and update the set.
+    setSolvedProblemIds(new Set());
 
     return () => unsubscribe();
   }, [categoryName]);
@@ -62,15 +74,14 @@ export default function ProblemListPage() {
   
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-accent/20 text-accent border-accent/30 hover:bg-accent/30';
-      case 'medium': return 'bg-primary/20 text-primary border-primary/30 hover:bg-primary/30';
+      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30 hover:bg-green-400/30';
+      case 'medium': return 'bg-blue-400/20 text-blue-400 border-blue-400/30 hover:bg-blue-400/30';
       case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30 hover:bg-destructive/30';
       default: return 'bg-muted hover:bg-muted/80';
     }
   };
   
-  // Static data for now
-  const solvedCount = 0;
+  const solvedCount = solvedProblemIds.size;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -114,30 +125,36 @@ export default function ProblemListPage() {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : filteredProblems.length > 0 ? (
-              <div className="space-y-3">
-                {filteredProblems.map((problem, index) => (
-                  <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(categoryName)}/${problem.id}`} passHref>
-                    <Card className="hover:bg-card/50 transition-colors">
-                      <CardContent className="p-3 pr-2 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <span className="text-muted-foreground text-sm w-6 text-center">{index + 1}.</span>
-                          <p className="font-medium">{problem.title}</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm text-muted-foreground">59.9%</span>
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16 text-center">Status</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Difficulty</TableHead>
+                      <TableHead className="text-right">Acceptance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProblems.map((problem) => (
+                      <TableRow key={problem.id} className="cursor-pointer" onClick={() => router.push(`/problems/apex/${encodeURIComponent(categoryName)}/${problem.id}`)}>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            {solvedProblemIds.has(problem.id) && <CheckCircle2 className="h-5 w-5 text-green-400" />}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{problem.title}</TableCell>
+                        <TableCell>
                           <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>
                             {problem.difficulty}
                           </Badge>
-                          <Signal className="text-primary h-5 w-5" />
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-green-400 hover:text-green-400 hover:bg-green-400/10 rounded-full">
-                             <Play className="h-5 w-5 fill-current"/>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">59.9%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
             ) : (
               <div className="text-center py-16">
                  <p className="text-muted-foreground">No problems found in this category.</p>
