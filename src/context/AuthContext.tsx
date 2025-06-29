@@ -25,24 +25,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // This effect handles listening to auth state changes from Firebase.
-  // It is only responsible for setting the `user` object or null.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
-      setLoading(true); // Whenever auth state changes, enter loading state.
+      // Every time auth state changes, we are in a loading state
+      // until we confirm user data is also loaded.
+      setLoading(true);
       if (authUser) {
         setUser(authUser);
       } else {
+        // If no user, reset states and finish loading.
         setUser(null);
         setUserData(null);
         setLoading(false);
       }
     });
+
     return () => unsubscribe();
   }, []);
 
-  // This effect listens for changes to the `user` object.
-  // If a user exists, it fetches their profile data from Firestore.
   useEffect(() => {
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
@@ -52,14 +52,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setUserData(null);
         }
-        setLoading(false); // We have our answer, stop loading.
+        // Finished loading user data.
+        setLoading(false);
       }, (error) => {
         console.error("Error fetching user data:", error);
         setUserData(null);
-        setLoading(false); // Also stop loading on error.
+        setLoading(false);
       });
+
       return () => unsubscribe();
     }
+    // If there is no user, the first useEffect has already set loading to false.
   }, [user]);
 
   const isAdmin = userData?.isAdmin ?? false;
