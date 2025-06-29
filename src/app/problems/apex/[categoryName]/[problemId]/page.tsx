@@ -261,7 +261,7 @@ export default function ProblemWorkspacePage() {
                     </Tooltip>
                 </TooltipProvider>
                  <Button variant="outline" size="sm"><Star className="mr-2 h-4 w-4" />Star</Button>
-                 <Button variant="outline" size="sm"><Settings className="mr-2 h-4 w-4" />Settings</Button>
+                 <Button variant="outline" size="sm" onClick={() => router.push('/settings')}><Settings className="mr-2 h-4 w-4" />Settings</Button>
             </div>
         </header>
 
