@@ -1,0 +1,204 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import type { Problem } from "@/types";
+import { getProblem } from "@/app/admin/actions";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star } from "lucide-react";
+
+export default function ProblemWorkspacePage() {
+    const router = useRouter();
+    const params = useParams();
+    const categoryName = decodeURIComponent(params.categoryName as string);
+    const problemId = params.problemId as string;
+    
+    const [problem, setProblem] = useState<Problem | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [code, setCode] = useState("");
+    const [results, setResults] = useState("Run the code to see the results here.");
+
+    useEffect(() => {
+        if (!problemId || !categoryName) return;
+
+        const fetchProblem = async () => {
+            setLoading(true);
+            const fetchedProblem = await getProblem(problemId, categoryName);
+            setProblem(fetchedProblem);
+            if (fetchedProblem) {
+                setCode(fetchedProblem.sampleCode);
+            }
+            setLoading(false);
+        };
+
+        fetchProblem();
+    }, [problemId, categoryName]);
+
+    const handleRun = () => {
+        setResults("Running tests...");
+        // In a real app, you would execute the code here and update the results.
+        setTimeout(() => {
+            setResults("Test run complete. 2/3 passed.");
+        }, 1500);
+    };
+    
+    const handleSubmit = () => {
+        setResults("Submitting solution...");
+        setTimeout(() => {
+            setResults("Submission successful! All tests passed.");
+        }, 2000);
+    }
+
+    if (loading) {
+        return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+    }
+
+    if (!problem) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-destructive">Problem Not Found</h1>
+                    <p className="text-muted-foreground">The requested problem could not be found.</p>
+                    <Button asChild className="mt-4"><Link href={`/problems/apex/${categoryName}`}>Go Back</Link></Button>
+                </div>
+            </div>
+        );
+    }
+    
+    const getDifficultyClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+        case 'easy': return 'bg-green-600/20 text-green-400 border-green-600/30';
+        case 'medium': return 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30';
+        case 'hard': return 'bg-red-600/20 text-red-400 border-red-600/30';
+        default: return 'bg-muted';
+        }
+    };
+    
+    const isSolved = false; // Static for now
+
+    return (
+    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0">
+             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+                <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-semibold">{problem.title}</h1>
+            <div className="ml-auto flex items-center gap-2">
+                 <Button variant="outline" size="sm"><Star className="mr-2 h-4 w-4" />Star</Button>
+                 <Button variant="outline" size="sm"><Settings className="mr-2 h-4 w-4" />Settings</Button>
+            </div>
+        </header>
+
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+            <ResizablePanel defaultSize={33} minSize={20}>
+                <div className="p-4 h-full overflow-y-auto">
+                    <Tabs defaultValue="description">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="description">Description</TabsTrigger>
+                            <TabsTrigger value="submissions">Submissions</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="description" className="mt-4 space-y-6">
+                            <div className="flex items-center gap-4">
+                               <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                               {isSolved && (
+                                <div className="flex items-center gap-1.5 text-sm text-green-400">
+                                   <CheckCircle2 className="h-4 w-4" />
+                                   <span>Solved</span>
+                                </div>
+                               )}
+                            </div>
+                            <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
+                            
+                            {problem.examples.map((example, index) => (
+                                <div key={index}>
+                                    <h3 className="font-semibold mb-2">Example {index + 1}</h3>
+                                    <Card className="bg-card/50">
+                                        <CardContent className="p-4 font-code text-sm">
+                                            {example.input && <p><strong>Input:</strong> {example.input}</p>}
+                                            <p><strong>Output:</strong> {example.output}</p>
+                                            {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            ))}
+
+                             {problem.hints && problem.hints.length > 0 && (
+                                <div>
+                                    <h3 className="font-semibold mb-2">Constraints</h3>
+                                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                        {problem.hints.map((hint, index) => (
+                                            <li key={index}>{hint}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                             )}
+
+                        </TabsContent>
+                         <TabsContent value="submissions" className="mt-4">
+                            <p className="text-muted-foreground text-center py-8">No submissions yet.</p>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={67} minSize={30}>
+                 <ResizablePanelGroup direction="vertical">
+                    <ResizablePanel defaultSize={65} minSize={25}>
+                        <div className="flex flex-col h-full">
+                            <div className="flex items-center justify-between p-2 border-b">
+                                <div className="flex items-center gap-2 font-semibold">
+                                    <Code className="h-5 w-5" />
+                                    <span>Apex Code</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw /></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Reset Code</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <Button variant="outline" size="sm" onClick={handleRun}><Play className="mr-2" />Run</Button>
+                                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleSubmit}><Send className="mr-2" />Submit</Button>
+                                </div>
+                            </div>
+                            <Textarea
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                placeholder="// Start your code here"
+                                className="flex-1 w-full h-full p-4 font-code text-base bg-[#282c34] text-gray-300 border-none rounded-none focus-visible:ring-0 resize-none"
+                            />
+                        </div>
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={35} minSize={15}>
+                        <div className="flex flex-col h-full">
+                            <Tabs defaultValue="results" className="h-full flex flex-col">
+                                <TabsList className="shrink-0 rounded-none border-b bg-transparent p-0">
+                                    <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Test Results</TabsTrigger>
+                                    <TabsTrigger value="raw" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Raw Output</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="results" className="flex-1 p-4">
+                                    <p className="text-muted-foreground">{results}</p>
+                                </TabsContent>
+                                <TabsContent value="raw" className="flex-1 p-4">
+                                    <p className="text-muted-foreground">Raw output will appear here.</p>
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                    </ResizablePanel>
+                 </ResizablePanelGroup>
+            </ResizablePanel>
+        </ResizablePanelGroup>
+    </div>
+    )
+}
