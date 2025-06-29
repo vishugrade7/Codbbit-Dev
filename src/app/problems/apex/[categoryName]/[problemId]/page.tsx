@@ -8,13 +8,17 @@ import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData } from "@/types";
 import type { ImperativePanelHandle } from "react-resizable-panels";
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-java';
+
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
@@ -320,12 +324,15 @@ export default function ProblemWorkspacePage() {
                                     <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleSubmit}><Send className="mr-2" />Submit</Button>
                                 </div>
                             </div>
-                            <Textarea
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                placeholder="// Start your code here"
-                                className="flex-1 w-full h-full p-4 font-code text-base bg-[#282c34] text-gray-300 border-none rounded-none focus-visible:ring-0 resize-none"
-                            />
+                            <div className="editor-container flex-1 w-full h-full overflow-auto">
+                                <Editor
+                                    value={code}
+                                    onValueChange={code => setCode(code)}
+                                    highlight={code => highlight(code, languages.java, 'java')}
+                                    padding={16}
+                                    className="editor"
+                                />
+                            </div>
                         </div>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
