@@ -19,12 +19,6 @@ import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import NavLink from "./nav-link";
 
-const navLinks = [
-  { href: "/problems/apex", label: "Apex Problems" },
-  { href: "/courses", label: "Courses" },
-  { href: "/leaderboard", label: "Leaderboard" },
-];
-
 export default function Header() {
   const { user, userData, isAdmin } = useAuth();
   const router = useRouter();
@@ -40,6 +34,15 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
   }
 
+  const baseNavLinks = [
+    { href: "/problems/apex", label: "Apex Problems" },
+    { href: "/courses", label: "Courses" },
+    { href: "/leaderboard", label: "Leaderboard" },
+  ];
+
+  const navLinks = isAdmin ? [...baseNavLinks, { href: "/admin", label: "Admin" }] : baseNavLinks;
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -50,15 +53,10 @@ export default function Header() {
             </Link>
             <nav className="hidden md:flex items-center gap-4">
                 {navLinks.map(link => (
-                    <NavLink key={link.label} href={link.href} active={pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/')}>
+                    <NavLink key={link.href} href={link.href} active={pathname.startsWith(link.href)}>
                         {link.label}
                     </NavLink>
                 ))}
-                {isAdmin && (
-                  <Button asChild size="sm" variant={pathname.startsWith('/admin') ? 'default' : 'ghost'}>
-                    <Link href="/admin">Admin</Link>
-                  </Button>
-                )}
             </nav>
         </div>
         <div className="flex items-center gap-4">

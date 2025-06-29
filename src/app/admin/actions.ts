@@ -4,14 +4,34 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/firebase";
 import {
   collection,
+  addDoc,
   deleteDoc,
   doc,
   getDocs,
   writeBatch,
 } from "firebase/firestore";
+import type { Problem } from "@/types";
 
 // In a production app, you would verify admin privileges here,
 // likely by decoding a Firebase ID token.
+
+type ProblemInput = Omit<Problem, 'id' | 'examples' | 'hints'> & {
+  examples: { input?: string; output: string; explanation?: string }[];
+  hints: string[];
+};
+
+
+export async function addProblem(categoryId: string, problemData: ProblemInput) {
+  try {
+    const problemsRef = collection(db, "categories", categoryId, "problems");
+    await addDoc(problemsRef, problemData);
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    return { success: false, error: `Failed to add problem: ${errorMessage}` };
+  }
+}
 
 export async function deleteProblem(problemId: string, categoryId: string) {
   try {

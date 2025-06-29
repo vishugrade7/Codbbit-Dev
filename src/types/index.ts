@@ -56,11 +56,22 @@ export type Course = {
   href: string;
 };
 
+export type Example = {
+    input: string;
+    output: string;
+    explanation?: string;
+}
+
 export type Problem = {
   id: string;
   title: string;
+  description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
-  // Other fields like statement, solution, etc. can be added here
+  examples: Example[];
+  hints: string[];
+  metadataType: string;
+  sampleCode: string;
+  testcases: string;
 };
 
 export type Category = {

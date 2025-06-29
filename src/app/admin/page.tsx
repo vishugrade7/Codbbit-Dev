@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { collection, onSnapshot, query, collectionGroup } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Category, Problem } from "@/types";
@@ -27,7 +28,6 @@ export default function AdminPage() {
         fetchedCategories.push({ id: doc.id, ...doc.data() } as Category);
       });
       setCategories(fetchedCategories);
-      // We set loading to false here, but if problems load slower it's fine
       setLoading(false); 
     }, (error) => {
       console.error("Error fetching categories:", error);
@@ -111,7 +111,11 @@ export default function AdminPage() {
                         )) : (
                             <p className="text-muted-foreground text-center py-4">No problems in this category yet.</p>
                         )}
-                        <Button variant="outline" className="w-full mt-2" disabled><PlusCircle /> Add Problem to {category.name}</Button>
+                         <Button asChild variant="outline" className="w-full mt-2">
+                            <Link href={`/admin/add-problem?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`}>
+                                <PlusCircle /> Add Problem to {category.name}
+                            </Link>
+                        </Button>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
