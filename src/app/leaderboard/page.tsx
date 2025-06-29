@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,43 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { LeaderboardUser } from "@/types";
-import { Trophy, Loader2 } from "lucide-react";
+import { Trophy, Loader2, Building } from "lucide-react";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+
+// Helper component for displaying company info with logo
+const CompanyInfo = ({ user }: { user: LeaderboardUser }) => {
+    const [logoError, setLogoError] = useState(false);
+
+    useEffect(() => {
+        // Reset error state if user/logo changes
+        setLogoError(false);
+    }, [user.companyLogoUrl]);
+
+    if (!user.company) {
+        return <span className="text-muted-foreground">-</span>;
+    }
+
+    return (
+        <div className="flex items-center gap-2">
+            {user.companyLogoUrl && !logoError ? (
+                 <Image
+                    src={user.companyLogoUrl}
+                    alt={user.company}
+                    width={20}
+                    height={20}
+                    className="rounded-sm"
+                    onError={() => setLogoError(true)}
+                />
+            ) : (
+                <Building className="h-5 w-5 text-muted-foreground" />
+            )}
+            <span>{user.company}</span>
+        </div>
+    );
+};
+
 
 export default function LeaderboardPage() {
   const { userData } = useAuth();
@@ -39,6 +73,7 @@ export default function LeaderboardPage() {
             points: data.points,
             country: data.country,
             company: data.company,
+            companyLogoUrl: data.companyLogoUrl,
           });
         });
         
@@ -79,7 +114,7 @@ export default function LeaderboardPage() {
             </div>
           </div>
           
-          <div className="mx-auto max-w-4xl py-12">
+          <div className="mx-auto max-w-5xl py-12">
             {currentUser && (
               <Card className="mb-8 bg-card/50">
                   <CardHeader>
@@ -122,6 +157,7 @@ export default function LeaderboardPage() {
                     <TableRow>
                       <TableHead className="w-16">Rank</TableHead>
                       <TableHead>User</TableHead>
+                      <TableHead>Company</TableHead>
                       <TableHead>Country</TableHead>
                       <TableHead className="text-right">Points</TableHead>
                     </TableRow>
@@ -141,6 +177,9 @@ export default function LeaderboardPage() {
                               <div className="text-sm text-muted-foreground">@{user.username}</div>
                             </div>
                           </div>
+                        </TableCell>
+                         <TableCell>
+                           <CompanyInfo user={user} />
                         </TableCell>
                         <TableCell>{user.country}</TableCell>
                         <TableCell className="text-right font-bold text-primary">{user.points.toLocaleString()}</TableCell>

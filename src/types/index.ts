@@ -32,6 +32,7 @@ export type LeaderboardUser = {
   points: number;
   country: string;
   company?: string;
+  companyLogoUrl?: string;
 };
 
 export type Achievement = {
