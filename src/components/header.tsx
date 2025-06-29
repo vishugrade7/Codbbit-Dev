@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from 'next/navigation';
-import { CodeXml, LogOut, Settings, User as UserIcon, Flame, Shield } from "lucide-react";
+import { CodeXml, LogOut, Settings, User as UserIcon, Flame } from "lucide-react";
 import { signOut } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { auth } from "@/lib/firebase";
 import NavLink from "./nav-link";
 
 const navLinks = [
+  { href: "#", label: "Apex Problems" },
   { href: "/courses", label: "Courses" },
   { href: "/leaderboard", label: "Leaderboard" },
 ];
@@ -49,15 +50,14 @@ export default function Header() {
             </Link>
             <nav className="hidden md:flex items-center gap-4">
                 {navLinks.map(link => (
-                    <NavLink key={link.href} href={link.href} active={pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/')}>
+                    <NavLink key={link.label} href={link.href} active={pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/')}>
                         {link.label}
                     </NavLink>
                 ))}
                 {isAdmin && (
-                  <NavLink href="/admin" active={pathname.startsWith('/admin')}>
-                    <Shield className="mr-1 h-4 w-4" />
-                    Admin
-                  </NavLink>
+                  <Button asChild size="sm" variant={pathname.startsWith('/admin') ? 'default' : 'ghost'}>
+                    <Link href="/admin">Admin</Link>
+                  </Button>
                 )}
             </nav>
         </div>
