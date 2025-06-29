@@ -1,0 +1,37 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users collection rules
+    match /users/{userId} {
+      // Anyone can read user profiles for public profiles and leaderboards
+      allow read: if true;
+      
+      // Users can create and update their own profile document
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      
+      // Users cannot delete their own accounts from the client
+      allow delete: if false;
+    }
+
+    // Categories and Problems rules
+    match /categories/{categoryId} {
+        // Anyone can read categories
+        allow read: if true;
+
+        // Only admins can write to categories
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+
+        // Problems subcollection rules
+        match /problems/{problemId} {
+            // Anyone can read problems
+            allow read: if true;
+            
+            // Only admins can write to problems
+            allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        }
+    }
+  }
+}
