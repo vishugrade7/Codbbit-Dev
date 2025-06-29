@@ -1,19 +1,22 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import type { Problem } from "@/types";
-import { getProblem } from "@/app/admin/actions";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { cn } from "@/lib/utils";
+import type { Problem, ApexProblemsData } from "@/types";
+
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu } from "lucide-react";
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -22,25 +25,55 @@ export default function ProblemWorkspacePage() {
     const problemId = params.problemId as string;
     
     const [problem, setProblem] = useState<Problem | null>(null);
+    const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
     const [code, setCode] = useState("");
     const [results, setResults] = useState("Run the code to see the results here.");
+    const [solvedProblemIds, setSolvedProblemIds] = useState(new Set<string>()); // Mock solved status
 
     useEffect(() => {
-        if (!problemId || !categoryName) return;
+        if (!categoryName || !problemId) return;
 
-        const fetchProblem = async () => {
-            setLoading(true);
-            const fetchedProblem = await getProblem(problemId, categoryName);
-            setProblem(fetchedProblem);
-            if (fetchedProblem) {
-                setCode(fetchedProblem.sampleCode);
+        setLoading(true);
+        const apexDocRef = doc(db, "problems", "Apex");
+
+        const unsubscribe = onSnapshot(apexDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data() as { Category: ApexProblemsData };
+                const categoryData = data.Category?.[categoryName];
+                
+                if (categoryData && categoryData.Questions) {
+                    const allQuestions = categoryData.Questions;
+                    setAllProblems(allQuestions);
+
+                    const currentProblem = allQuestions.find(p => p.id === problemId);
+                    if (currentProblem) {
+                        setProblem(currentProblem);
+                        setCode(currentProblem.sampleCode);
+                    } else {
+                        setProblem(null);
+                    }
+                } else {
+                    setProblem(null);
+                    setAllProblems([]);
+                }
+            } else {
+                setProblem(null);
+                setAllProblems([]);
             }
             setLoading(false);
-        };
+        }, (error) => {
+            console.error(`Error fetching problems for ${categoryName}:`, error);
+            setLoading(false);
+        });
 
-        fetchProblem();
-    }, [problemId, categoryName]);
+        // Mock: In a real app, you would fetch the user's solved problems
+        // and update the solvedProblemIds set from user data.
+        const newSolved = new Set<string>();
+        setSolvedProblemIds(newSolved);
+
+        return () => unsubscribe();
+    }, [categoryName, problemId]);
 
     const handleRun = () => {
         setResults("Running tests...");
@@ -82,15 +115,42 @@ export default function ProblemWorkspacePage() {
         }
     };
     
-    const isSolved = false; // Static for now
+    const isSolved = solvedProblemIds.has(problem.id);
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0">
+        <header className="flex h-14 items-center gap-2 border-b bg-card px-4 shrink-0">
              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
                 <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">{problem.title}</h1>
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Menu className="h-5 w-5" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 max-w-sm">
+                    <SheetHeader className="p-4 border-b">
+                        <SheetTitle>{categoryName}</SheetTitle>
+                    </SheetHeader>
+                    <div className="py-2 overflow-y-auto">
+                        {allProblems.map((p) => (
+                            <Link
+                                key={p.id}
+                                href={`/problems/apex/${encodeURIComponent(categoryName)}/${p.id}`}
+                                className={cn(
+                                    "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-accent",
+                                    p.id === problemId && "bg-accent"
+                                )}
+                            >
+                                <span className="truncate">{p.title}</span>
+                                {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                            </Link>
+                        ))}
+                    </div>
+                </SheetContent>
+            </Sheet>
+            <h1 className="text-lg font-semibold truncate">{problem.title}</h1>
             <div className="ml-auto flex items-center gap-2">
                  <Button variant="outline" size="sm"><Star className="mr-2 h-4 w-4" />Star</Button>
                  <Button variant="outline" size="sm"><Settings className="mr-2 h-4 w-4" />Settings</Button>
