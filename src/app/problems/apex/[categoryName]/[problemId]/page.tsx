@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -16,7 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -30,6 +31,11 @@ export default function ProblemWorkspacePage() {
     const [code, setCode] = useState("");
     const [results, setResults] = useState("Run the code to see the results here.");
     const [solvedProblemIds, setSolvedProblemIds] = useState(new Set<string>()); // Mock solved status
+
+    // New state for filtering
+    const [searchTerm, setSearchTerm] = useState("");
+    const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
+
 
     useEffect(() => {
         if (!categoryName || !problemId) return;
@@ -74,6 +80,17 @@ export default function ProblemWorkspacePage() {
 
         return () => unsubscribe();
     }, [categoryName, problemId]);
+    
+    const filteredProblems = useMemo(() => {
+        return allProblems
+            .filter((p) => {
+                if (difficultyFilter === "All") return true;
+                return p.difficulty === difficultyFilter;
+            })
+            .filter((p) => {
+                return p.title.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+    }, [allProblems, searchTerm, difficultyFilter]);
 
     const handleRun = () => {
         setResults("Running tests...");
@@ -129,12 +146,39 @@ export default function ProblemWorkspacePage() {
                         <Menu className="h-5 w-5" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 max-w-sm">
-                    <SheetHeader className="p-4 border-b">
+                <SheetContent side="left" className="p-0 max-w-sm flex flex-col">
+                    <SheetHeader className="p-4 border-b shrink-0">
                         <SheetTitle>{categoryName}</SheetTitle>
                     </SheetHeader>
-                    <div className="py-2 overflow-y-auto">
-                        {allProblems.map((p) => (
+                    <div className="p-4 border-b space-y-4 shrink-0">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search problems..."
+                                className="w-full pl-9 h-9"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <span className="text-xs font-medium text-muted-foreground">DIFFICULTY</span>
+                            <div className="flex gap-2 mt-2">
+                                {["All", "Easy", "Medium", "Hard"].map((diff) => (
+                                    <Button
+                                        key={diff}
+                                        variant={difficultyFilter === diff ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setDifficultyFilter(diff)}
+                                        className="flex-1"
+                                    >
+                                        {diff}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="py-2 overflow-y-auto flex-1">
+                        {filteredProblems.length > 0 ? filteredProblems.map((p) => (
                             <Link
                                 key={p.id}
                                 href={`/problems/apex/${encodeURIComponent(categoryName)}/${p.id}`}
@@ -146,7 +190,9 @@ export default function ProblemWorkspacePage() {
                                 <span className="truncate">{p.title}</span>
                                 {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
                             </Link>
-                        ))}
+                        )) : (
+                            <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
+                        )}
                     </div>
                 </SheetContent>
             </Sheet>
