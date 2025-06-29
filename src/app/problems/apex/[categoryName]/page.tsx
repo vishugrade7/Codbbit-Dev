@@ -36,6 +36,7 @@ export default function ProblemListPage() {
   
   const [difficultyFilter, setDifficultyFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('default');
 
 
   useEffect(() => {
@@ -72,7 +73,7 @@ export default function ProblemListPage() {
     return () => unsubscribe();
   }, [categoryName]);
 
-  const filteredProblems = problems
+  const processedProblems = problems
     .filter((problem) => {
       // Search term filter
       return problem.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -87,6 +88,21 @@ export default function ProblemListPage() {
       if (statusFilter === 'all') return true;
       const isSolved = solvedProblemIds.has(problem.id);
       return statusFilter === 'solved' ? isSolved : !isSolved;
+    })
+    .sort((a, b) => {
+      const difficultyOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+      switch (sortBy) {
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        case 'difficulty-asc':
+          return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+        case 'difficulty-desc':
+          return difficultyOrder[b.difficulty] - difficultyOrder[a.difficulty];
+        default:
+          return 0; // Default order from Firestore
+      }
     });
   
   const getDifficultyClass = (difficulty: string) => {
@@ -129,7 +145,22 @@ export default function ProblemListPage() {
                 />
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                  <Button variant="outline"><ArrowUpDown className="mr-2 h-4 w-4" />Sort</Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline"><ArrowUpDown className="mr-2 h-4 w-4" />Sort</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
+                        <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="title-asc">Title (A-Z)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="title-desc">Title (Z-A)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="difficulty-asc">Difficulty (Easy first)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="difficulty-desc">Difficulty (Hard first)</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline"><Filter className="mr-2 h-4 w-4" />Filters</Button>
@@ -168,16 +199,16 @@ export default function ProblemListPage() {
               <div className="flex h-40 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ) : filteredProblems.length > 0 ? (
+            ) : processedProblems.length > 0 ? (
               <div className="rounded-lg border">
-                {filteredProblems.map((problem, index) => (
+                {processedProblems.map((problem, index) => (
                    <Link 
                       key={problem.id} 
                       href={`/problems/apex/${encodeURIComponent(categoryName)}/${problem.id}`}
                       className="flex items-center p-3 px-4 border-b last:border-b-0 hover:bg-card/5 transition-colors"
                   >
                       <div className="flex-1 flex items-center gap-4">
-                          <span className="font-medium">{index + 1}. {problem.title}</span>
+                          <span className="font-medium">{sortBy === 'default' ? `${index + 1}. ` : ''}{problem.title}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm">
                           <span className="text-muted-foreground w-14 text-right">54.4%</span>
