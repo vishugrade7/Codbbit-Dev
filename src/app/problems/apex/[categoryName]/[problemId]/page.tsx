@@ -149,12 +149,6 @@ export default function ProblemWorkspacePage() {
         }
         setIsExecuting(false);
     };
-    
-    const handleSubmit = async () => {
-        // In a real app, this would run a more comprehensive test suite against `problem.testcases`.
-        // For now, it will behave the same as Run.
-        await handleRun();
-    }
 
     if (loading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -355,10 +349,6 @@ export default function ProblemWorkspacePage() {
                                     <Button variant="outline" size="sm" onClick={handleRun} disabled={isExecuting}>
                                         {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         <Play className="mr-2" />Run
-                                    </Button>
-                                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleSubmit} disabled={isExecuting}>
-                                        {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        <Send className="mr-2" />Submit
                                     </Button>
                                 </div>
                             </div>
