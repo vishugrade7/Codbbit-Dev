@@ -52,12 +52,15 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       let avatarUrl = '';
+      let companyLogoUrl = '';
       const emailDomain = values.email.split('@')[1];
       const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com'];
 
       // Use Clearbit logo if a company name is given and it's not a common free email provider
       if (values.company && emailDomain && !freeEmailDomains.includes(emailDomain.toLowerCase())) {
-        avatarUrl = `https://logo.clearbit.com/${emailDomain}`;
+        const logoUrl = `https://logo.clearbit.com/${emailDomain}`;
+        avatarUrl = logoUrl;
+        companyLogoUrl = logoUrl;
       } else {
         const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
         avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
@@ -74,6 +77,7 @@ export default function SignupPage() {
           points: 0,
           rank: 0,
           avatarUrl: avatarUrl,
+          companyLogoUrl: companyLogoUrl,
           achievements: [],
           contributions: [],
           isAdmin: false,

@@ -7,6 +7,7 @@ export type User = {
   avatarUrl: string;
   country: string;
   company?: string;
+  companyLogoUrl?: string;
   points: number;
   rank: number;
   achievements: Achievement[];
