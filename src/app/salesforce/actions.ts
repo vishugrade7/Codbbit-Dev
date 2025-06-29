@@ -209,13 +209,17 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         if (!mainObjectName || !testObjectName) {
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
+
+        if (mainObjectName === testObjectName) {
+            return { success: false, message: 'The solution class/trigger name cannot be the same as the test class name.' };
+        }
         
         // --- Deploy Main Object (Upsert) ---
         let existingRecord = await findToolingApiRecord(auth, objectType, mainObjectName);
         if (existingRecord) {
             await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${existingRecord.id}`, {
                 method: 'PATCH',
-                body: JSON.stringify({ Body: userCode }),
+                body: JSON.stringify({ Body: userCode, ApiVersion: 59.0 }),
             });
         } else {
             await createToolingApiRecord(auth, objectType, mainObjectName, userCode);
@@ -227,7 +231,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         if (existingTest) {
             await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/ApexClass/${existingTest.id}`, {
                 method: 'PATCH',
-                body: JSON.stringify({ Body: problem.testcases }),
+                body: JSON.stringify({ Body: problem.testcases, ApiVersion: 59.0 }),
             });
             testClassId = existingTest.id;
         } else {
