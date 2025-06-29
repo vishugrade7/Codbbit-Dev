@@ -90,10 +90,20 @@ export default function LeaderboardPage() {
   }, []);
 
   const filteredData = useMemo(() => {
-    const data = filter === "Global" 
-      ? leaderboard 
-      : leaderboard.filter(user => user.country === userData?.country);
-    
+    let data: LeaderboardUser[];
+    switch (filter) {
+      case "Country":
+        data = leaderboard.filter((user) => user.country === userData?.country);
+        break;
+      case "Company":
+        data = leaderboard.filter((user) => user.company && user.company === userData?.company);
+        break;
+      case "Global":
+      default:
+        data = leaderboard;
+        break;
+    }
+
     // Re-rank the data based on the current filter context
     return data.map((user, index) => ({
       ...user,
@@ -156,6 +166,7 @@ export default function LeaderboardPage() {
             <div className="flex justify-center gap-2 mb-8">
               <Button variant={filter === "Global" ? "default" : "outline"} onClick={() => setFilter("Global")}>Global</Button>
               <Button variant={filter === "Country" ? "default" : "outline"} onClick={() => setFilter("Country")} disabled={!userData}>Country</Button>
+              <Button variant={filter === "Company" ? "default" : "outline"} onClick={() => setFilter("Company")} disabled={!userData || !userData.company}>Company</Button>
             </div>
 
             <Card>
