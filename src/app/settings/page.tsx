@@ -14,7 +14,6 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ThemeToggle } from "@/components/theme-toggle";
 
-// PKCE Helper functions
 function generateCodeVerifier() {
     const randomBytes = new Uint8Array(32);
     window.crypto.getRandomValues(randomBytes);
@@ -91,11 +90,8 @@ export default function SettingsPage() {
             });
             
             const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?${params.toString()}`;
-            console.log("Redirecting to Salesforce for authorization:", salesforceAuthUrl);
-            
             router.push(salesforceAuthUrl);
         } catch (error) {
-            console.error("Failed to generate PKCE challenge", error);
             toast({
                 variant: "destructive",
                 title: "Connection Error",
