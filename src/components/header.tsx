@@ -20,8 +20,6 @@ import { auth } from "@/lib/firebase";
 import NavLink from "./nav-link";
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/problems", label: "Apex Problems" },
   { href: "/courses", label: "Courses" },
   { href: "/leaderboard", label: "Leaderboard" },
 ];

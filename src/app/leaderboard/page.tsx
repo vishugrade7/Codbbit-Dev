@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { LeaderboardUser } from "@/types";
-import { Trophy, Loader2, Building } from "lucide-react";
+import { Loader2, Building, Flame, ListFilter, Globe } from "lucide-react";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -26,7 +26,6 @@ const CompanyInfo = ({ user }: { user: LeaderboardUser }) => {
     const [logoError, setLogoError] = useState(false);
 
     useEffect(() => {
-        // Reset error state if user/logo changes
         setLogoError(false);
     }, [user.companyLogoUrl]);
 
@@ -56,9 +55,11 @@ const CompanyInfo = ({ user }: { user: LeaderboardUser }) => {
 
 export default function LeaderboardPage() {
   const { userData } = useAuth();
-  const [filter, setFilter] = useState("Global");
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [filterType, setFilterType] = useState<'company' | 'country'>('company');
+  const [selectedValue, setSelectedValue] = useState<string>('All Institutions');
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -95,34 +96,43 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, []);
 
+  const companies = useMemo(() => {
+    const companySet = new Set(leaderboard.map(user => user.company).filter(Boolean) as string[]);
+    return ['All Institutions', ...Array.from(companySet).sort()];
+  }, [leaderboard]);
+
+  const countries = useMemo(() => {
+      const countrySet = new Set(leaderboard.map(user => user.country).filter(Boolean) as string[]);
+      return ['All Countries', ...Array.from(countrySet).sort()];
+  }, [leaderboard]);
+  
+  const handleFilterTypeChange = (value: 'company' | 'country') => {
+      setFilterType(value);
+      setSelectedValue(value === 'company' ? 'All Institutions' : 'All Countries');
+  };
+
+  const valueOptions = filterType === 'company' ? companies : countries;
+
+
   const filteredData = useMemo(() => {
-    let data: LeaderboardUser[];
-    switch (filter) {
-      case "Country":
-        data = leaderboard.filter((user) => user.country === userData?.country);
-        break;
-      case "Company":
-        data = leaderboard.filter((user) => user.company && user.company === userData?.company);
-        break;
-      case "Global":
-      default:
-        data = leaderboard;
-        break;
+    let data = leaderboard;
+    if (selectedValue !== 'All Institutions' && selectedValue !== 'All Countries') {
+        if (filterType === 'company') {
+            data = leaderboard.filter(user => user.company === selectedValue);
+        } else if (filterType === 'country') {
+            data = leaderboard.filter(user => user.country === selectedValue);
+        }
     }
 
-    // Re-rank the data based on the current filter context
     return data.map((user, index) => ({
       ...user,
       rank: index + 1,
     }));
-  }, [leaderboard, filter, userData]);
-
+  }, [leaderboard, filterType, selectedValue]);
 
   const currentUser = userData;
-  // The rank in the "Your Rank" card should always be the global rank.
-  const currentUserGlobalRank = leaderboard.find(u => u.id === currentUser?.uid)?.rank;
-
-
+  const currentUserInFilteredList = filteredData.find(u => u.id === currentUser?.uid);
+  
   const getUserInitials = (name: string) => {
     return name?.split(' ').map(n => n[0]).join('') || '';
   }
@@ -131,57 +141,79 @@ export default function LeaderboardPage() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex-1">
-        <div className="container px-4 md:px-6 py-12 md:py-24 lg:py-32">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <Trophy className="h-16 w-16 text-primary" />
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold font-headline tracking-tighter sm:text-5xl text-primary">Leaderboard</h1>
-              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
-                See who is at the top of the Codbbit world.
-              </p>
+        <div className="container px-4 md:px-6 py-12 md:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 space-y-2">
+                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-headline">Global Coders</h1>
+                <p className="text-4xl font-light tracking-widest text-muted-foreground sm:text-5xl">LEADERBOARD</p>
+                <p className="text-muted-foreground md:text-lg/relaxed pt-2">
+                    Ranking of top coders based on their accumulated points.
+                </p>
+            </div>
+             <div className="lg:col-span-1">
+                {currentUser && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Your Position</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <div className="flex items-center gap-4">
+                          <Avatar>
+                              <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
+                              <AvatarFallback>{getUserInitials(currentUser.name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                              <div className="font-semibold">{currentUser.name}</div>
+                              <div className="text-sm text-muted-foreground truncate">@{currentUser.username}</div>
+                          </div>
+                          <div className="text-right">
+                              <div className="font-bold text-primary flex items-center gap-1 justify-end">
+                                <Flame className="h-4 w-4 text-amber-400" />
+                                <span>{currentUser.points.toLocaleString()}</span>
+                              </div>
+                              {currentUserInFilteredList ? (
+                                  <div className="text-lg font-bold">#{currentUserInFilteredList.rank}</div>
+                              ) : (
+                                  <div className="text-sm text-muted-foreground">Not in filter</div>
+                              )}
+                          </div>
+                        </div>
+                    </CardContent>
+                  </Card>
+                )}
             </div>
           </div>
           
-          <div className="mx-auto max-w-5xl py-12">
-            {currentUser && (
-              <Card className="mb-8 bg-card/50">
-                  <CardHeader>
-                      <CardTitle>Your Global Rank</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                      <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10">
-                          <div className="flex items-center gap-4">
-                              <div className="text-2xl font-bold w-12 text-center">
-                                  {currentUserGlobalRank ? `#${currentUserGlobalRank}` : '-'}
-                              </div>
-                              <Avatar>
-                                  <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
-                                  <AvatarFallback>{getUserInitials(currentUser.name)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                  <div className="font-semibold">{currentUser.name}</div>
-                                  <div className="text-sm text-muted-foreground">{currentUser.country}</div>
-                              </div>
-                          </div>
-                          <div className="text-2xl font-bold text-primary">{currentUser.points.toLocaleString()} pts</div>
-                      </div>
-                  </CardContent>
-              </Card>
-            )}
-
-            <div className="flex justify-center mb-8">
-              <Select onValueChange={setFilter} value={filter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by" />
+          <div className="mt-12">
+            <h2 className="text-sm font-medium text-muted-foreground mb-2">Filters</h2>
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <Select value={filterType} onValueChange={(v) => handleFilterTypeChange(v as 'company' | 'country')}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <div className="flex items-center gap-2">
+                    <ListFilter className="h-4 w-4" />
+                    <SelectValue placeholder="Filter by" />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Global">Global</SelectItem>
-                  <SelectItem value="Country" disabled={!userData}>My Country</SelectItem>
-                  <SelectItem value="Company" disabled={!userData || !userData.company}>My Company</SelectItem>
+                  <SelectItem value="company">Institution</SelectItem>
+                  <SelectItem value="country">Country</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedValue} onValueChange={setSelectedValue} disabled={valueOptions.length <= 1}>
+                <SelectTrigger className="w-full sm:w-[280px]">
+                  <div className="flex items-center gap-2">
+                      {filterType === 'company' ? <Building className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+                      <SelectValue placeholder={`Select ${filterType}`} />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {valueOptions.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-
+            
             <Card>
               {loading ? (
                 <div className="flex justify-center items-center h-96">
@@ -232,3 +264,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
