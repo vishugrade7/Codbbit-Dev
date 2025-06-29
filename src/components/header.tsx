@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from 'next/navigation';
-import { CodeXml, LogOut, Settings, User as UserIcon, Flame } from "lucide-react";
+import { CodeXml, LogOut, Settings, User as UserIcon, Flame, Shield } from "lucide-react";
 import { signOut } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ const navLinks = [
 ];
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user, userData, isAdmin } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,10 +36,9 @@ export default function Header() {
     router.push('/login');
   };
   
-  const getUserInitials = (email: string | null | undefined) => {
-    if (!email) return 'U';
-    const name = email.split('@')[0];
-    return name.substring(0, 2).toUpperCase();
+  const getUserInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
   }
 
   return (
@@ -52,32 +51,38 @@ export default function Header() {
             </Link>
             <nav className="hidden md:flex items-center gap-4">
                 {navLinks.map(link => (
-                    <NavLink key={link.href} href={link.href} active={pathname === link.href}>
+                    <NavLink key={link.href} href={link.href} active={pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/')}>
                         {link.label}
                     </NavLink>
                 ))}
+                {isAdmin && (
+                  <NavLink href="/admin" active={pathname.startsWith('/admin')}>
+                    <Shield className="mr-1 h-4 w-4" />
+                    Admin
+                  </NavLink>
+                )}
             </nav>
         </div>
         <div className="flex items-center gap-4">
-          {user ? (
+          {user && userData ? (
             <>
               <div className="flex items-center gap-2 text-amber-400">
                 <Flame className="h-5 w-5" />
-                <span className="font-bold">0</span>
+                <span className="font-bold">{userData.points || 0}</span>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-primary">
-                      <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
-                      <AvatarFallback>{getUserInitials(user.email)}</AvatarFallback>
+                      <AvatarImage src={userData.avatarUrl || undefined} alt={userData.name || "User"} />
+                      <AvatarFallback>{getUserInitials(userData.name)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.displayName || "User"}</p>
+                      <p className="text-sm font-medium leading-none">{userData.name || "User"}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>

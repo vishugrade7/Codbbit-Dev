@@ -1,5 +1,6 @@
 export type User = {
   id: string;
+  uid: string;
   username: string;
   name: string;
   email: string;
@@ -13,7 +14,8 @@ export type User = {
   sfdcAuth?: {
     accessToken: string;
     instanceUrl: string;
-  }
+  };
+  isAdmin?: boolean;
 };
 
 export type LeaderboardUser = {
@@ -46,4 +48,17 @@ export type Course = {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
+};
+
+export type Problem = {
+  id: string;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  // Other fields like statement, solution, etc. can be added here
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  problemCount?: number;
 };

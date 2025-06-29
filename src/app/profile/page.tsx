@@ -7,12 +7,12 @@ import Footer from "@/components/footer";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockUser } from "@/lib/data";
 import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon } from "lucide-react";
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
-    const { user: authUser, loading } = useAuth();
+    const { user: authUser, userData, loading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -21,18 +21,21 @@ export default function ProfilePage() {
         }
     }, [authUser, loading, router]);
     
-    // Using mock user data for now, replace with actual user data from Firestore
-    const user = mockUser;
+    const user = userData;
 
-    if (loading || !authUser) {
-        return null; // Or a loading spinner
+    if (loading || !authUser || !user) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
     const stats = [
         { label: "Points", value: user.points.toLocaleString() },
         { label: "Global Rank", value: `#${user.rank}` },
-        { label: "Problems Solved", value: "128" }, // static
-        { label: "Solutions Submitted", value: "342" }, // static
+        { label: "Problems Solved", value: user.contributions?.length || 0 }, 
+        { label: "Solutions Submitted", value: "342" }, // static for now
     ];
 
     const iconMap: { [key: string]: React.ElementType } = {
@@ -61,7 +64,7 @@ export default function ProfilePage() {
                     <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-4 text-muted-foreground">
                         <div className="flex items-center gap-2">
                             <Building className="h-5 w-5" />
-                            <span>{user.company}</span>
+                            <span>{user.company || 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Globe className="h-5 w-5" />
@@ -96,7 +99,7 @@ export default function ProfilePage() {
                           <CardTitle>Achievements</CardTitle>
                       </CardHeader>
                       <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {user.achievements.map((achievement) => {
+                          {user.achievements.length > 0 ? user.achievements.map((achievement) => {
                                 const Icon = iconMap[achievement.icon] || UserIcon;
                                 return (
                                 <div key={achievement.id} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
@@ -105,7 +108,9 @@ export default function ProfilePage() {
                                     <p className="text-xs text-muted-foreground">{achievement.description}</p>
                                 </div>
                                 )
-                            })}
+                            }) : (
+                                <p className="text-muted-foreground col-span-full text-center">No achievements yet. Keep coding!</p>
+                            )}
                       </CardContent>
                   </Card>
               </div>

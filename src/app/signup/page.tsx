@@ -7,8 +7,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -37,7 +38,25 @@ export default function SignupPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // Create a document for the new user in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          email: user.email,
+          name: user.email?.split('@')[0] || 'New User',
+          username: user.email?.split('@')[0] || 'newuser',
+          points: 0,
+          rank: 0,
+          country: 'Unknown',
+          company: '',
+          avatarUrl: `https://placehold.co/128x128.png?text=${user.email?.[0].toUpperCase() ?? 'U'}`,
+          achievements: [],
+          contributions: [],
+          isAdmin: false, // Default to not admin
+      });
+
       toast({
         title: "Account created",
         description: "You have successfully created an account.",
