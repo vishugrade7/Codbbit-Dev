@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,8 +12,17 @@ import Footer from "@/components/footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, Video } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ProblemListPage() {
   const router = useRouter();
@@ -25,6 +33,9 @@ export default function ProblemListPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [solvedProblemIds, setSolvedProblemIds] = useState<Set<string>>(new Set()); // Mock, would fetch from user data
+  
+  const [difficultyFilter, setDifficultyFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState('all');
 
 
   useEffect(() => {
@@ -61,14 +72,27 @@ export default function ProblemListPage() {
     return () => unsubscribe();
   }, [categoryName]);
 
-  const filteredProblems = problems.filter((problem) =>
-    problem.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProblems = problems
+    .filter((problem) => {
+      // Search term filter
+      return problem.title.toLowerCase().includes(searchTerm.toLowerCase());
+    })
+    .filter((problem) => {
+      // Difficulty filter
+      if (difficultyFilter.length === 0) return true;
+      return difficultyFilter.includes(problem.difficulty);
+    })
+    .filter((problem) => {
+      // Status filter
+      if (statusFilter === 'all') return true;
+      const isSolved = solvedProblemIds.has(problem.id);
+      return statusFilter === 'solved' ? isSolved : !isSolved;
+    });
   
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-accent text-accent-foreground border-transparent hover:bg-accent/80';
-      case 'medium': return 'bg-primary/20 text-primary border-primary/30 hover:bg-primary/30';
+      case 'easy': return 'bg-green-500 text-background border-transparent hover:bg-green-500/80';
+      case 'medium': return 'bg-blue-500 text-background border-transparent hover:bg-blue-500/80';
       case 'hard': return 'bg-destructive text-destructive-foreground border-transparent hover:bg-destructive/80';
       default: return 'bg-muted hover:bg-muted/80';
     }
@@ -93,25 +117,52 @@ export default function ProblemListPage() {
               </h1>
             </Button>
             
-            <Card className="mb-6">
-              <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
-                <div className="relative w-full">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search questions..."
-                    className="w-full pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <Button variant="outline"><ArrowUpDown className="mr-2 h-4 w-4" />Sort</Button>
-                    <Button variant="outline"><Filter className="mr-2 h-4 w-4" />Filters</Button>
-                    <Badge variant="outline" className="px-3 py-2 text-sm">{solvedCount} / {problems.length} Solved</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="mb-6 bg-card rounded-lg border p-4 flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search questions..."
+                  className="w-full pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                  <Button variant="outline"><ArrowUpDown className="mr-2 h-4 w-4" />Sort</Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline"><Filter className="mr-2 h-4 w-4" />Filters</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                      <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {['Easy', 'Medium', 'Hard'].map(difficulty => (
+                         <DropdownMenuCheckboxItem
+                            key={difficulty}
+                            checked={difficultyFilter.includes(difficulty)}
+                            onCheckedChange={(checked) => {
+                              setDifficultyFilter(prev => 
+                                checked ? [...prev, difficulty] : prev.filter(d => d !== difficulty)
+                              );
+                            }}
+                          >
+                           {difficulty}
+                         </DropdownMenuCheckboxItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Status</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                       <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                        <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="solved">Solved</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="unsolved">Unsolved</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Badge variant="outline" className="px-3 py-2 text-sm">{solvedCount} / {problems.length} Solved</Badge>
+              </div>
+            </div>
             
             {loading ? (
               <div className="flex h-40 items-center justify-center">
@@ -140,7 +191,9 @@ export default function ProblemListPage() {
               </div>
             ) : (
               <div className="text-center py-16">
-                 <p className="text-muted-foreground">No problems found in this category.</p>
+                 <p className="text-muted-foreground">
+                   {problems.length > 0 ? 'No problems found with the selected filters.' : 'No problems found in this category.'}
+                 </p>
               </div>
             )}
           </div>
