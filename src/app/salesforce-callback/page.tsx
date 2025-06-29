@@ -48,7 +48,21 @@ function SalesforceCallbackContent() {
     // If logged in and we have a code, process it
     if (code) {
       const handleAuth = async () => {
-        const result = await getSalesforceAccessToken(code, user.uid);
+        const codeVerifier = sessionStorage.getItem('sfdc_code_verifier');
+        if (!codeVerifier) {
+          toast({
+            variant: "destructive",
+            title: "Connection Failed",
+            description: "Your session has expired. Please try connecting again.",
+          });
+          router.replace('/settings');
+          return;
+        }
+        
+        // Clean up the verifier from storage
+        sessionStorage.removeItem('sfdc_code_verifier');
+
+        const result = await getSalesforceAccessToken(code, codeVerifier, user.uid);
 
         if (result.success) {
           toast({

@@ -14,6 +14,27 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ThemeToggle } from "@/components/theme-toggle";
 
+// PKCE Helper functions
+function generateCodeVerifier() {
+    const randomBytes = new Uint8Array(32);
+    window.crypto.getRandomValues(randomBytes);
+    return base64UrlEncode(randomBytes);
+}
+
+async function generateCodeChallenge(verifier: string) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    return base64UrlEncode(new Uint8Array(hashBuffer));
+}
+
+function base64UrlEncode(bytes: Uint8Array) {
+    return btoa(String.fromCharCode.apply(null, Array.from(bytes)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
 export default function SettingsPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -52,17 +73,32 @@ export default function SettingsPage() {
             return;
         }
 
-        const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
-        const params = new URLSearchParams({
-            response_type: 'code',
-            client_id: clientId,
-            redirect_uri: redirectUri,
-            scope: 'api refresh_token',
-        });
-        
-        const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?${params.toString()}`;
-        
-        router.push(salesforceAuthUrl);
+        try {
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+            sessionStorage.setItem('sfdc_code_verifier', codeVerifier);
+            
+            const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
+            const params = new URLSearchParams({
+                response_type: 'code',
+                client_id: clientId,
+                redirect_uri: redirectUri,
+                scope: 'api refresh_token',
+                code_challenge: codeChallenge,
+                code_challenge_method: 'S256',
+            });
+            
+            const salesforceAuthUrl = `https://login.salesforce.com/services/oauth2/authorize?${params.toString()}`;
+            
+            router.push(salesforceAuthUrl);
+        } catch (error) {
+            console.error("Failed to generate PKCE challenge", error);
+            toast({
+                variant: "destructive",
+                title: "Connection Error",
+                description: "Could not initiate secure connection. Please try again.",
+            });
+        }
     };
 
     const handleSalesforceDisconnect = async () => {

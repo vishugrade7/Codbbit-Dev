@@ -17,22 +17,21 @@ type SalesforceTokenResponse = {
   error_description?: string;
 };
 
-export async function getSalesforceAccessToken(code: string, userId: string) {
+export async function getSalesforceAccessToken(code: string, codeVerifier: string, userId: string) {
   const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
   const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
-  const clientSecret = process.env.SFDC_CLIENT_SECRET;
   const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
 
-  if (!clientId || !clientSecret) {
-    return { success: false, error: 'Salesforce client ID or secret is not configured.' };
+  if (!clientId) {
+    return { success: false, error: 'Salesforce client ID is not configured.' };
   }
 
   const params = new URLSearchParams();
   params.append('grant_type', 'authorization_code');
   params.append('code', code);
   params.append('client_id', clientId);
-  params.append('client_secret', clientSecret);
   params.append('redirect_uri', redirectUri);
+  params.append('code_verifier', codeVerifier);
 
   try {
     const response = await fetch(`${loginUrl}/services/oauth2/token`, {
@@ -44,8 +43,9 @@ export async function getSalesforceAccessToken(code: string, userId: string) {
     });
 
     const data: SalesforceTokenResponse = await response.json();
-
+    
     if (!response.ok) {
+      console.error('Salesforce Token Exchange Error:', data);
       throw new Error(data.error_description || 'Failed to fetch access token.');
     }
     
@@ -62,7 +62,7 @@ export async function getSalesforceAccessToken(code: string, userId: string) {
 
     return { success: true };
   } catch (error) {
-    console.error('Salesforce Token Exchange Error:', error);
+    console.error('Salesforce Token Exchange Full Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return { success: false, error: errorMessage };
   }
