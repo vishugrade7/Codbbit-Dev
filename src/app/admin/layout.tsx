@@ -12,14 +12,16 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
 
+  const isAllowed = isAdmin || user?.email === 'gradevishu@gmail.com';
+
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!loading && !isAllowed) {
       router.replace("/");
     }
-  }, [isAdmin, loading, router]);
+  }, [isAllowed, loading, router]);
 
   if (loading) {
     return (
@@ -29,7 +31,7 @@ export default function AdminLayout({
     );
   }
 
-  if (!isAdmin) {
+  if (!isAllowed) {
     // You can also render a more explicit "Access Denied" component here
     return (
         <div className="flex h-screen w-full flex-col bg-background">

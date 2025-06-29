@@ -40,7 +40,8 @@ export default function Header() {
     { href: "/leaderboard", label: "Leaderboard" },
   ];
 
-  const navLinks = isAdmin ? [...baseNavLinks, { href: "/admin", label: "Upload Problem" }] : baseNavLinks;
+  const showAdminLink = isAdmin || user?.email === 'gradevishu@gmail.com';
+  const navLinks = showAdminLink ? [...baseNavLinks, { href: "/admin", label: "Upload Problem" }] : baseNavLinks;
 
 
   return (
