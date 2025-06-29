@@ -18,7 +18,7 @@ export default function Footer() {
           <h4 className="font-semibold">Platform</h4>
           <Link href="/courses" className="text-sm text-muted-foreground hover:text-primary">Courses</Link>
           <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-primary">Leaderboard</Link>
-          <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Apex Problems</Link>
+          <Link href="/problems/apex" className="text-sm text-muted-foreground hover:text-primary">Apex Problems</Link>
         </div>
         <div className="flex flex-col gap-2">
           <h4 className="font-semibold">Community</h4>
