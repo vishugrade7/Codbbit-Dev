@@ -8,7 +8,7 @@ export default function Login() {
       <main className="flex-1 container py-8">
         <h1 className="text-4xl font-bold">Login</h1>
         <p className="text-muted-foreground mt-2">
-          Access your Codbbit account.
+          Login functionality is temporarily disabled.
         </p>
       </main>
       <Footer />

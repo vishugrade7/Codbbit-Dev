@@ -8,7 +8,7 @@ export default function Signup() {
       <main className="flex-1 container py-8">
         <h1 className="text-4xl font-bold">Sign Up</h1>
         <p className="text-muted-foreground mt-2">
-          Create an account to start your journey.
+          Sign up functionality is temporarily disabled.
         </p>
       </main>
       <Footer />

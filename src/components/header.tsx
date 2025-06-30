@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { CodeXml } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +17,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
@@ -31,8 +30,8 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "transition-colors hover:text-foreground",
-                  pathname === link.href ? "text-foreground" : "text-muted-foreground"
+                  "transition-colors hover:text-foreground/80",
+                  pathname === link.href ? "text-foreground" : "text-foreground/60"
                 )}
               >
                 {link.label}
@@ -40,14 +39,15 @@ export default function Header() {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          <Button variant="outline" asChild>
-             <Link href="/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Sign Up</Link>
-          </Button>
+        <div className="flex items-center gap-2">
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/signup">Sign Up</Link>
+              </Button>
+            </>
         </div>
       </div>
     </header>
