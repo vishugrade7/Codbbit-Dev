@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ export default function Header() {
   ]
 
   const handleLogout = async () => {
+    if (!auth) return;
     await auth.signOut();
     router.push('/');
   };
@@ -77,47 +78,53 @@ export default function Header() {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {loading ? (
-            <div className="hidden md:flex items-center gap-2">
-                <div className="h-10 w-20 animate-pulse rounded-md bg-muted" />
-                <div className="h-10 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="hidden md:flex items-center gap-4">
+                <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+                <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
             </div>
           ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
-                    <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/profile')}>
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/settings')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <div className="hidden md:flex items-center gap-1.5 font-semibold text-primary">
+                  <Flame className="h-5 w-5" />
+                  <span>{userData?.points?.toLocaleString() ?? 0}</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
+                      <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/profile')}>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <div className="hidden md:flex items-center gap-2">
               <Button variant="ghost" asChild>
@@ -172,6 +179,10 @@ export default function Header() {
                   <div className="flex flex-col gap-4 mt-4">
                      {user ? (
                         <>
+                         <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary">
+                            <Flame className="h-6 w-6" />
+                            <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                         </div>
                          <Button variant="ghost" asChild><Link href="/profile">Profile</Link></Button>
                          <Button onClick={handleLogout}>Logout</Button>
                         </>
