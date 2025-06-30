@@ -16,11 +16,11 @@ export default function Home() {
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline">
                 Master Salesforce Development
               </h1>
-              <p className="text-muted-foreground md:text-xl">
+              <p className="text-lg text-muted-foreground md:text-xl">
                 Build, test, and deploy Salesforce solutions faster with our comprehensive platform for SOQL queries, Apex code, and Lightning Web Components.
               </p>
             </div>
-            <div className="mt-8 flex justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 px-8 sm:px-0">
               <Button asChild size="lg">
                 <Link href="/apex-problems">
                   <Rocket className="mr-2 h-5 w-5" />
