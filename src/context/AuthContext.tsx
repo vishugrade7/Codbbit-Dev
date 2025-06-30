@@ -25,6 +25,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       if (!firebaseUser) {
@@ -37,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && db) {
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {

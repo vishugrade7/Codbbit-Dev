@@ -30,10 +30,11 @@ async function getSfdcConnection(userId: string): Promise<SfdcAuth> {
     let auth = userDoc.data().sfdcAuth as SfdcAuth;
 
     const tokenAgeMinutes = (Date.now() - auth.issuedAt) / (1000 * 60);
-    if (tokenAgeMinutes > 55) {
+    // Refresh if token is older than 55 minutes
+    if (tokenAgeMinutes > 55) { 
         const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
         const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
-        const clientSecret = process.env.SFDC_CLIENT_SECRET; // This needs to be set in your env
+        const clientSecret = process.env.SFDC_CLIENT_SECRET;
 
         if(!clientId || !clientSecret) {
              throw new Error('Salesforce client credentials are not configured on the server.');
@@ -109,7 +110,6 @@ async function deleteToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
         method: 'DELETE',
     });
 }
-
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -188,6 +188,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
+        // Clean up previous versions of the class/trigger and test class
         let existingRecord = await findToolingApiRecord(auth, objectType, mainObjectName);
         if (existingRecord) {
             await deleteToolingApiRecord(auth, objectType, existingRecord.id);
@@ -203,18 +204,21 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const newTestRecord = await createToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
         const testClassId = newTestRecord.id;
 
+        // Run tests asynchronously
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
             method: 'POST',
             body: JSON.stringify({ classids: testClassId })
         });
         const apexTestRunId = testRunResult;
 
+        // Poll for test results
         let testResult;
-        for (let i = 0; i < 20; i++) { 
+        for (let i = 0; i < 20; i++) { // Poll for up to 20 seconds
             await sleep(1000);
             const query = `SELECT Status, ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
             const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
-            if (result.records.length > 0 && ['Completed', 'Failed', 'Aborted'].includes(result.records[0].Status)) {
+            // Check if all tests for the class have completed
+            if (result.records.length > 0 && result.records.every((r: any) => ['Completed', 'Failed', 'Aborted'].includes(r.Status))) {
                 testResult = result.records;
                 break;
             }

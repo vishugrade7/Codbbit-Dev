@@ -134,10 +134,24 @@ export default function ProblemWorkspacePage() {
     }, [allProblems, searchTerm, difficultyFilter]);
 
     const handleSubmit = async () => {
-        if (!user || !problem) {
-            toast({ variant: "destructive", title: "Cannot Submit", description: "You must be logged in and viewing a problem to submit a solution." });
+        if (!user) {
+            toast({ variant: "destructive", title: "Not Logged In", description: "You must be logged in to submit a solution." });
             return;
         }
+        if (!userData?.sfdcAuth?.connected) {
+            toast({
+              variant: "destructive",
+              title: "Salesforce Not Connected",
+              description: "Please connect your Salesforce account in settings.",
+            });
+            router.push('/settings');
+            return;
+        }
+        if (!problem) {
+            toast({ variant: "destructive", title: "No Problem Loaded", description: "Cannot submit without a problem." });
+            return;
+        }
+
         setIsSubmitting(true);
         setResults("Submitting solution and running tests...");
 
@@ -152,7 +166,7 @@ export default function ProblemWorkspacePage() {
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
         } else {
-            toast({ variant: "destructive", title: "Submission Failed", description: response.message });
+            toast({ variant: "destructive", title: "Submission Failed", description: response.message, duration: 9000 });
         }
         
         setIsSubmitting(false);

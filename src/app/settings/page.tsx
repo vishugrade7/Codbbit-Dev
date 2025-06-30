@@ -1,12 +1,87 @@
 
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from 'next/navigation';
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
+// Helper function to generate a random string for the code verifier
+const generateCodeVerifier = () => {
+  const an = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+  return Array.from(crypto.getRandomValues(new Uint8Array(128)))
+    .map((c) => an[c % an.length])
+    .join("");
+};
+
+// Helper function to generate the code challenge from the verifier
+const generateCodeChallenge = async (verifier: string) => {
+  const te = new TextEncoder();
+  const d = await crypto.subtle.digest("SHA-256", te.encode(verifier));
+  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(d)]))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
 
 export default function Settings() {
+  const { user, userData, loading } = useAuth();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+        const codeVerifier = generateCodeVerifier();
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+        sessionStorage.setItem('sfdc-code-verifier', codeVerifier);
+
+        const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
+        const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
+        const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
+
+        const authUrl = new URL(`${loginUrl}/services/oauth2/authorize`);
+        authUrl.searchParams.append('response_type', 'code');
+        authUrl.searchParams.append('client_id', clientId!);
+        authUrl.searchParams.append('redirect_uri', redirectUri);
+        authUrl.searchParams.append('scope', 'api refresh_token');
+        authUrl.searchParams.append('code_challenge', codeChallenge);
+        authUrl.searchParams.append('code_challenge_method', 'S256');
+
+        window.location.href = authUrl.toString();
+
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Connection Error",
+            description: "Could not initiate Salesforce connection. Please try again.",
+        });
+        setIsConnecting(false);
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col bg-background">
+        <Header />
+        <main className="flex-1 container py-8 flex justify-center items-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
@@ -38,16 +113,41 @@ export default function Settings() {
                  <div className="flex items-center justify-between">
                    <div className="flex flex-col">
                       <Label>Salesforce Connection</Label>
-                      <p className="text-sm text-muted-foreground">Connect your Salesforce org to run code.</p>
+                      <p className="text-sm text-muted-foreground">
+                        {userData?.sfdcAuth?.connected 
+                          ? "Your Salesforce org is connected."
+                          : "Connect your Salesforce org to run code."
+                        }
+                      </p>
                    </div>
-                    <Button variant="outline">Connect</Button>
+                    <Button variant="outline" onClick={handleConnect} disabled={isConnecting}>
+                       {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                       {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
+                    </Button>
                  </div>
                  <div className="flex items-center justify-between">
                    <div className="flex flex-col">
                       <Label className="text-destructive">Delete Account</Label>
                       <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data.</p>
                    </div>
-                    <Button variant="destructive">Delete</Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="destructive">Delete</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your account
+                            and remove your data from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => toast({ title: "Action not implemented."})}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                  </div>
               </CardContent>
             </Card>
