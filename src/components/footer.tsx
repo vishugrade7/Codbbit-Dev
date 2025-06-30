@@ -17,21 +17,21 @@ export default function Footer() {
           </div>
           <div className="grid gap-2 text-sm">
             <h3 className="font-semibold">Platform</h3>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Courses</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Leaderboard</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Apex Problems</Link>
+            <Link href="/courses" className="text-muted-foreground hover:text-foreground">Courses</Link>
+            <Link href="/leaderboard" className="text-muted-foreground hover:text-foreground">Leaderboard</Link>
+            <Link href="/apex-problems" className="text-muted-foreground hover:text-foreground">Apex Problems</Link>
           </div>
           <div className="grid gap-2 text-sm">
             <h3 className="font-semibold">Community</h3>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Discussions</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">GitHub</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Twitter</Link>
+            <Link href="/discussions" className="text-muted-foreground hover:text-foreground">Discussions</Link>
+            <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">GitHub</Link>
+            <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">Twitter</Link>
           </div>
           <div className="grid gap-2 text-sm">
             <h3 className="font-semibold">Company</h3>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">About</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Contact</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
+            <Link href="/about" className="text-muted-foreground hover:text-foreground">About</Link>
+            <Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link>
+            <Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t text-center">

@@ -2,7 +2,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Rocket, BarChart, Database, Code, Trophy } from "lucide-react";
 
 export default function Home() {
@@ -22,13 +22,13 @@ export default function Home() {
             </div>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
-                <Link href="#">
+                <Link href="/apex-problems">
                   <Rocket className="mr-2 h-5 w-5" />
                   Get Started
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="#">
+                <Link href="/leaderboard">
                   <BarChart className="mr-2 h-5 w-5" />
                   View Leaderboard
                 </Link>
