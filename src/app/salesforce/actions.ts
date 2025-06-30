@@ -230,11 +230,13 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
         console.log("--- Finished upserting test class ---\n");
 
-        if (!testRecord?.Id) {
-            console.error('Failed to create or update test class in Salesforce.');
+        const testClassId = testRecord?.Id || (testRecord as any)?.id;
+
+        if (!testClassId) {
+            console.error('Failed to create or update test class in Salesforce.', testRecord);
             return { success: false, message: 'Failed to create or update test class in Salesforce.' };
         }
-        const testClassId = testRecord.Id;
+        
         console.log(`Test class ID to be used for test run: ${testClassId}`);
 
         console.log("Requesting asynchronous test run...");
