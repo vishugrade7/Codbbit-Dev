@@ -108,10 +108,10 @@ export default function ProblemListPage() {
   
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-500 text-background border-transparent hover:bg-green-500/80';
-      case 'medium': return 'bg-blue-500 text-background border-transparent hover:bg-blue-500/80';
-      case 'hard': return 'bg-destructive text-destructive-foreground border-transparent hover:bg-destructive/80';
-      default: return 'bg-muted hover:bg-muted/80';
+      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+      default: return 'bg-muted';
     }
   };
   
@@ -217,7 +217,7 @@ export default function ProblemListPage() {
                           <span className="font-medium">{problem.title}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm">
-                          <Badge className={getDifficultyClass(problem.difficulty)}>
+                          <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>
                               {problem.difficulty}
                           </Badge>
                       </div>
