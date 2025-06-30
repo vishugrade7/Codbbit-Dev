@@ -247,29 +247,43 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const apexTestRunId = testRunResult;
         console.log(`Asynchronous test run initiated with ID: ${apexTestRunId}`);
 
-        // Poll for test results
-        console.log("Polling for test results...");
-        let testResult;
-        for (let i = 0; i < 20; i++) { // Poll for up to 20 seconds
+        // Poll for test run completion
+        console.log("Polling for test job completion...");
+        let jobStatus;
+        for (let i = 0; i < 30; i++) { // Poll for up to 30 seconds
             await sleep(1000);
-            console.log(`Polling attempt ${i + 1}/20...`);
-            const query = `SELECT Status, ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
-            const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
-            console.log(`Polling response:`, JSON.stringify(result, null, 2));
-            // Check if all tests for the class have completed
-            if (result.records.length > 0 && result.records.every((r: any) => ['Completed', 'Failed', 'Aborted'].includes(r.Status))) {
-                console.log("All tests have completed.");
-                testResult = result.records;
-                break;
+            console.log(`Polling job status attempt ${i + 1}/30...`);
+            const jobQuery = `SELECT Status FROM AsyncApexJob WHERE Id = '${apexTestRunId}'`;
+            const jobResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(jobQuery)}`);
+            
+            if (jobResult.records.length > 0) {
+                jobStatus = jobResult.records[0].Status;
+                console.log(`Current job status: ${jobStatus}`);
+                if (['Completed', 'Failed', 'Aborted'].includes(jobStatus)) {
+                    break;
+                }
             }
         }
+
+        if (jobStatus !== 'Completed') {
+            const message = `Test run did not complete successfully. Final status: ${jobStatus || 'Timed Out'}`;
+            console.error(message);
+            return { success: false, message };
+        }
         
-        if (!testResult) {
-            console.error("Test run timed out.");
-            return { success: false, message: "Test run timed out." };
+        console.log("Test job completed. Fetching results...");
+        const resultQuery = `SELECT ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
+        const testResultData = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(resultQuery)}`);
+        
+        const testResults = testResultData.records;
+        console.log(`Test results received:`, JSON.stringify(testResults, null, 2));
+
+        if (!testResults || testResults.length === 0) {
+             console.error("No test results were found after a completed test run.");
+             return { success: false, message: "Test run completed, but no test results were found." };
         }
 
-        const failedTest = testResult.find((r: any) => r.Outcome !== 'Pass');
+        const failedTest = testResults.find((r: any) => r.Outcome !== 'Pass');
 
         if (failedTest) {
              console.error("A test case failed:", failedTest);
