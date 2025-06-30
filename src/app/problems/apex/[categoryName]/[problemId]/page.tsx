@@ -33,8 +33,11 @@ import { useToast } from "@/hooks/use-toast";
 export default function ProblemWorkspacePage() {
     const router = useRouter();
     const params = useParams();
-    const categoryName = decodeURIComponent(params.categoryName as string);
-    const problemId = params.problemId as string;
+
+    const { categoryName, problemId } = useMemo(() => ({
+        categoryName: params?.categoryName ? decodeURIComponent(params.categoryName as string) : null,
+        problemId: params?.problemId ? (params.problemId as string) : null
+    }), [params]);
     
     const { user, userData } = useAuth();
     const { toast } = useToast();
@@ -107,7 +110,7 @@ export default function ProblemWorkspacePage() {
     }, [categoryName, problemId]);
     
     useEffect(() => {
-        if (userData?.starredProblems) {
+        if (userData?.starredProblems && problemId) {
             setIsStarred(userData.starredProblems.includes(problemId));
         } else {
             setIsStarred(false);
@@ -115,6 +118,7 @@ export default function ProblemWorkspacePage() {
     }, [userData, problemId]);
 
     const isSolved = useMemo(() => {
+        if (!problemId) return false;
         return userData?.solvedProblems?.includes(problemId) ?? false;
     }, [userData, problemId]);
 
@@ -257,7 +261,7 @@ export default function ProblemWorkspacePage() {
                             {filteredProblems.length > 0 ? filteredProblems.map((p) => (
                                 <Link
                                     key={p.id}
-                                    href={`/problems/apex/${encodeURIComponent(categoryName)}/${p.id}`}
+                                    href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
                                         "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-accent",
                                         p.id === problemId && "bg-accent"
