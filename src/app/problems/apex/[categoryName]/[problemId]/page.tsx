@@ -14,6 +14,7 @@ import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-java';
 import 'prismjs/themes/prism-tomorrow.css';
+import ReactConfetti from 'react-confetti';
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -50,12 +51,19 @@ export default function ProblemWorkspacePage() {
     const [isStarred, setIsStarred] = useState(false);
     const [isStarring, setIsStarring] = useState(false);
 
-
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
 
     const [isFullScreen, setIsFullScreen] = useState(false);
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
+
+    const [isClient, setIsClient] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [awardedPoints, setAwardedPoints] = useState(0);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const toggleFullScreen = () => {
         const panel = leftPanelRef.current;
@@ -165,6 +173,15 @@ export default function ProblemWorkspacePage() {
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
+            const pointsMatch = response.message.match(/(\d+)\s+points/);
+            const points = pointsMatch ? parseInt(pointsMatch[1], 10) : 0;
+            if (points > 0) {
+                setAwardedPoints(points);
+                setShowSuccess(true);
+                setTimeout(() => {
+                    setShowSuccess(false);
+                }, 5000);
+            }
         } else {
             toast({ variant: "destructive", title: "Submission Failed", description: response.message, duration: 9000 });
         }
@@ -229,6 +246,21 @@ export default function ProblemWorkspacePage() {
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
+        {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
+        {showSuccess && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
+                <div className="text-center">
+                    <div className="animate-points-animation">
+                        <div className="text-6xl font-bold text-yellow-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                            +{awardedPoints}
+                        </div>
+                        <div className="text-3xl font-semibold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                            Points!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
         <header className="flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
