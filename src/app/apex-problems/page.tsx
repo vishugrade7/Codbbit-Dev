@@ -1,15 +1,138 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { ApexProblemsData } from "@/types";
+
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, ChevronRight, BookOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+type CategoryInfo = {
+  name: string;
+  problemCount: number;
+  firstProblemId: string | null;
+  difficulties: {
+    Easy: number;
+    Medium: number;
+    Hard: number;
+  };
+};
 
 export default function ApexProblems() {
+  const [categories, setCategories] = useState<CategoryInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoading(true);
+      try {
+        const apexDocRef = doc(db, "problems", "Apex");
+        const docSnap = await getDoc(apexDocRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data().Category as ApexProblemsData;
+          if (data) {
+            const categoriesInfo = Object.entries(data)
+              .map(([name, categoryData]) => {
+                const questions = categoryData.Questions || [];
+                const problemCount = questions.length;
+                const firstProblemId = problemCount > 0 ? questions[0].id : null;
+                const difficulties = questions.reduce(
+                  (acc, q) => {
+                    if (q.difficulty in acc) {
+                      acc[q.difficulty]++;
+                    }
+                    return acc;
+                  },
+                  { Easy: 0, Medium: 0, Hard: 0 }
+                );
+
+                return { name, problemCount, firstProblemId, difficulties };
+              })
+              .filter(cat => cat.problemCount > 0)
+              .sort((a, b) => a.name.localeCompare(b.name));
+            
+            setCategories(categoriesInfo);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching problem categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex-1 container py-8">
-        <h1 className="text-4xl font-bold">Apex Problems</h1>
-        <p className="text-muted-foreground mt-2">
-          Hone your skills by solving a curated list of problems.
-        </p>
+        <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Apex Problems</h1>
+            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
+                Hone your skills by solving a curated list of problems. Select a category to get started.
+            </p>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        ) : categories.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category) => (
+              category.firstProblemId && (
+                <Link key={category.name} href={`/problems/apex/${encodeURIComponent(category.name)}/${category.firstProblemId}`} legacyBehavior>
+                  <a className="block group">
+                    <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-105">
+                      <CardHeader className="flex-row items-center gap-4">
+                          <div className="p-3 bg-primary/10 rounded-lg">
+                              <BookOpen className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                              <CardTitle>{category.name}</CardTitle>
+                              <CardDescription>{category.problemCount} Problems</CardDescription>
+                          </div>
+                      </CardHeader>
+                      <CardContent className="flex-grow space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Easy</span>
+                              <Badge variant="outline" className="bg-green-400/10 text-green-400 border-green-400/20">{category.difficulties.Easy}</Badge>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Medium</span>
+                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{category.difficulties.Medium}</Badge>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Hard</span>
+                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">{category.difficulties.Hard}</Badge>
+                          </div>
+                      </CardContent>
+                      <div className="p-4 pt-0 text-right flex justify-end items-center">
+                          <span className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
+                              Start Solving
+                          </span>
+                          <ChevronRight className="ml-2 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </Card>
+                  </a>
+                </Link>
+              )
+            ))}
+          </div>
+        ) : (
+            <div className="text-center py-12">
+                <p className="text-muted-foreground">No problems found. Please check back later.</p>
+            </div>
+        )}
       </main>
       <Footer />
     </div>
