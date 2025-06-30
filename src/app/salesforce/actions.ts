@@ -118,10 +118,10 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
 async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string) {
     console.log(`Upserting ${objectType} named: ${name}`);
     const record = await findToolingApiRecord(auth, objectType, name);
-    if (record?.id) {
-        console.log(`Found existing record for ${name} with ID: ${record.id}. Updating it.`);
+    if (record?.Id) {
+        console.log(`Found existing record for ${name} with ID: ${record.Id}. Updating it.`);
         // Update existing record
-        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.id}`, {
+        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.Id}`, {
             method: 'PATCH',
             body: JSON.stringify({ Body: body, ApiVersion: 59.0 }),
         });
@@ -231,11 +231,11 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
         console.log("--- Finished upserting test class ---\n");
 
-        if (!testRecord?.id) {
+        if (!testRecord?.Id) {
             console.error('Failed to create or update test class in Salesforce.');
             return { success: false, message: 'Failed to create or update test class in Salesforce.' };
         }
-        const testClassId = testRecord.id;
+        const testClassId = testRecord.Id;
         console.log(`Test class ID to be used for test run: ${testClassId}`);
 
         // Run tests asynchronously
