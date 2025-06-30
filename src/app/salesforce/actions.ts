@@ -222,7 +222,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
-        // Upsert the main class/trigger and the test class.
         console.log("\n--- Upserting main user code ---");
         await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode);
         console.log("--- Finished upserting main user code ---\n");
@@ -238,7 +237,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const testClassId = testRecord.Id;
         console.log(`Test class ID to be used for test run: ${testClassId}`);
 
-        // Run tests asynchronously
         console.log("Requesting asynchronous test run...");
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
             method: 'POST',
@@ -247,10 +245,9 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const apexTestRunId = testRunResult;
         console.log(`Asynchronous test run initiated with ID: ${apexTestRunId}`);
 
-        // Poll for test run completion
         console.log("Polling for test job completion...");
         let jobStatus;
-        for (let i = 0; i < 30; i++) { // Poll for up to 30 seconds
+        for (let i = 0; i < 30; i++) {
             await sleep(1000);
             console.log(`Polling job status attempt ${i + 1}/30...`);
             const jobQuery = `SELECT Status FROM AsyncApexJob WHERE Id = '${apexTestRunId}'`;
