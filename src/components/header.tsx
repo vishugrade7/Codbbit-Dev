@@ -39,6 +39,8 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -60,7 +62,7 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            {user && userData?.isAdmin && adminNavLinks.map((link) => (
+            {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
                  <Link
                     key={link.href}
                     href={link.href}
@@ -96,7 +98,7 @@ export default function Header() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{userData?.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {userData?.email}
+                      {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -153,7 +155,7 @@ export default function Header() {
                         {link.label}
                       </Link>
                     ))}
-                    {user && userData?.isAdmin && adminNavLinks.map((link) => (
+                    {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}

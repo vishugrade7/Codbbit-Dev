@@ -47,7 +47,7 @@ const formSchema = z.object({
 
 
 export default function UploadProblemPage() {
-    const { userData, loading: authLoading } = useAuth();
+    const { user: authUser, userData, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,12 +77,14 @@ export default function UploadProblemPage() {
         name: "hints",
     });
 
+    const isAuthorized = userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
+
     useEffect(() => {
-        if (!authLoading && !userData?.isAdmin) {
+        if (!authLoading && !isAuthorized) {
             toast({ variant: "destructive", title: "Access Denied", description: "You do not have permission to view this page." });
             router.push('/');
         }
-    }, [userData, authLoading, router, toast]);
+    }, [userData, authLoading, authUser, isAuthorized, router, toast]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSubmitting(true);
@@ -96,7 +98,7 @@ export default function UploadProblemPage() {
         setIsSubmitting(false);
     }
     
-    if (authLoading || !userData?.isAdmin) {
+    if (authLoading || !isAuthorized) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
