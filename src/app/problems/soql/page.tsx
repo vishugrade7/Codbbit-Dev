@@ -258,7 +258,7 @@ function SelectFromContent() {
 SELECT Name, Industry
 FROM Account`
                     } />
-                    <p className="text-sm text-muted-foreground">This query asks Salesforce for two specific pieces of information (`Name`, `Industry`) from every record in the `Account` object.</p>
+                    <p className="text-sm text-muted-foreground">This query asks Salesforce for two specific pieces of information (\`Name\`, \`Industry\`) from every record in the \`Account\` object.</p>
                 </CardContent>
             </Card>
         </div>
@@ -369,7 +369,7 @@ ORDER BY CreatedDate DESC
 LIMIT 10
 OFFSET 20`
                     } />
-                    <p className="text-sm text-muted-foreground">Note: `OFFSET` has a maximum value of 2,000. For fetching deeper pages, you'll need to use other methods like keyset pagination.</p>
+                    <p className="text-sm text-muted-foreground">Note: \`OFFSET\` has a maximum value of 2,000. For fetching deeper pages, you'll need to use other methods like keyset pagination.</p>
                 </CardContent>
             </Card>
         </div>
@@ -474,7 +474,7 @@ WHERE Account.Industry = 'Healthcare'`
                     <CardHeader>
                         <CardTitle>Parent-to-Child (Subquery)</CardTitle>
                         <CardDescription>
-                            Use a subquery (a `SELECT` statement within parentheses) to fetch records from a child object. This is like "looking down" from a parent (an Account) to all its children (its Contacts).
+                            Use a subquery (a \`SELECT\` statement within parentheses) to fetch records from a child object. This is like "looking down" from a parent (an Account) to all its children (its Contacts).
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -582,7 +582,7 @@ function PerformanceSecurityContent() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <p className="text-sm">Standard indexed fields include `Id`, `Name`, `OwnerId`, `CreatedDate`, `LastModifiedDate`, and lookup/master-detail fields.</p>
+                        <p className="text-sm">Standard indexed fields include \`Id\`, \`Name\`, \`OwnerId\`, \`CreatedDate\`, \`LastModifiedDate\`, and lookup/master-detail fields.</p>
                         <CodeBlock code={
 `-- This is selective (and fast!)
 SELECT Id FROM Account WHERE Id = '001...'
@@ -602,7 +602,7 @@ SELECT Id FROM Account WHERE Name LIKE '%Acme' AND StageName != 'Closed'`
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                         <p className="text-sm">Failing to respect sharing rules can expose sensitive data. `WITH SECURITY_ENFORCED` is a simple way to make your queries safer.</p>
+                         <p className="text-sm">Failing to respect sharing rules can expose sensitive data. \`WITH SECURITY_ENFORCED\` is a simple way to make your queries safer.</p>
                         <CodeBlock code={
 `-- This query will only return Accounts the user
 -- has at least read access to, based on their
