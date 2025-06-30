@@ -11,6 +11,8 @@ import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-java';
 import 'prismjs/themes/prism-tomorrow.css';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +25,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, PlusCircle, Trash2, UploadCloud } from "lucide-react";
 
 
@@ -51,6 +53,11 @@ export default function UploadProblemPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [categories, setCategories] = useState<string[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -84,6 +91,29 @@ export default function UploadProblemPage() {
             toast({ variant: "destructive", title: "Access Denied", description: "You do not have permission to view this page." });
             router.push('/');
         }
+        
+        const fetchCategories = async () => {
+            if (!isAuthorized) return;
+            setLoadingCategories(true);
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data && data.Category) {
+                        const existingCategories = Object.keys(data.Category);
+                        setCategories(existingCategories.sort());
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                toast({ variant: "destructive", title: "Could not load categories." });
+            } finally {
+                setLoadingCategories(false);
+            }
+        };
+
+        fetchCategories();
     }, [userData, authLoading, authUser, isAuthorized, router, toast]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -92,6 +122,7 @@ export default function UploadProblemPage() {
         if (result.success) {
             toast({ title: "Success!", description: result.message });
             form.reset();
+            setIsAddingNewCategory(false);
         } else {
             toast({ variant: "destructive", title: "Upload Failed", description: result.error });
         }
@@ -131,13 +162,77 @@ export default function UploadProblemPage() {
                                             <FormMessage />
                                         </FormItem>
                                     )} />
-                                    <FormField control={form.control} name="category" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Category</FormLabel>
-                                            <FormControl><Input placeholder="e.g., List, String, Trigger" {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
+                                    <FormField
+                                        control={form.control}
+                                        name="category"
+                                        render={({ field }) => {
+                                            const handleValueChange = (value: string) => {
+                                                if (value === '---new-category---') {
+                                                    setIsAddingNewCategory(true);
+                                                    field.onChange('');
+                                                } else {
+                                                    setIsAddingNewCategory(false);
+                                                    field.onChange(value);
+                                                }
+                                            };
+
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel>Category</FormLabel>
+                                                    {isAddingNewCategory ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <FormControl>
+                                                                <Input 
+                                                                    placeholder="Enter new category name..." 
+                                                                    {...field}
+                                                                    autoFocus 
+                                                                />
+                                                            </FormControl>
+                                                            <Button 
+                                                                type="button" 
+                                                                variant="outline" 
+                                                                onClick={() => {
+                                                                    setIsAddingNewCategory(false)
+                                                                    field.onChange('');
+                                                                }}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <Select onValueChange={handleValueChange} value={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select an existing category or add a new one" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {loadingCategories ? (
+                                                                    <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                                                                ) : (
+                                                                    <>
+                                                                        {categories.map((cat) => (
+                                                                            <SelectItem key={cat} value={cat}>
+                                                                                {cat}
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </>
+                                                                )}
+                                                                <SelectSeparator />
+                                                                <SelectItem value="---new-category---">
+                                                                    <div className="flex items-center gap-2 text-primary">
+                                                                        <PlusCircle className="h-4 w-4" />
+                                                                        <span>Add new category</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
+                                    />
                                     <FormField control={form.control} name="description" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Description</FormLabel>
