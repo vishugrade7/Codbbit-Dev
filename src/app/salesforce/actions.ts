@@ -105,10 +105,19 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
     });
 }
 
-async function deleteToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', id: string) {
-    return sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${id}`, {
-        method: 'DELETE',
-    });
+async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string) {
+    const record = await findToolingApiRecord(auth, objectType, name);
+    if (record?.id) {
+        // Update existing record
+        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ Body: body, ApiVersion: 59.0 }),
+        });
+        return record;
+    } else {
+        // Create new record
+        return createToolingApiRecord(auth, objectType, name, body);
+    }
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -188,21 +197,15 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
-        // Clean up previous versions of the class/trigger and test class
-        let existingRecord = await findToolingApiRecord(auth, objectType, mainObjectName);
-        if (existingRecord) {
-            await deleteToolingApiRecord(auth, objectType, existingRecord.id);
-            await sleep(1000); 
-        }
-        await createToolingApiRecord(auth, objectType, mainObjectName, userCode);
+        // Upsert the main class/trigger and the test class.
+        // This is more robust than deleting and recreating, which can cause race conditions.
+        await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode);
+        const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
 
-        let existingTest = await findToolingApiRecord(auth, 'ApexClass', testObjectName);
-        if (existingTest) {
-            await deleteToolingApiRecord(auth, 'ApexClass', existingTest.id);
-            await sleep(1000);
+        if (!testRecord?.id) {
+            return { success: false, message: 'Failed to create or update test class in Salesforce.' };
         }
-        const newTestRecord = await createToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
-        const testClassId = newTestRecord.id;
+        const testClassId = testRecord.id;
 
         // Run tests asynchronously
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
