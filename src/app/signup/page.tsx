@@ -198,7 +198,7 @@ export default function SignupPage() {
         title: "Signup failed",
         description: error.code === 'auth/email-already-in-use' 
             ? 'This email is already associated with an account.'
-            : error.message,
+            : 'An unexpected error occurred. Please try again.',
       });
     } finally {
         setIsLoading(false);
