@@ -226,6 +226,11 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode);
         console.log("--- Finished upserting main user code ---\n");
         
+        // Add a delay to mitigate potential metadata contention issues in Salesforce,
+        // especially when a trigger is saved just before a dependent test class.
+        console.log("Waiting briefly before upserting test class to allow metadata to settle...");
+        await sleep(2000);
+
         console.log("\n--- Upserting test class ---");
         const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
         console.log("--- Finished upserting test class ---\n");
