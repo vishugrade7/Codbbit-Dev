@@ -6,11 +6,8 @@ import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Editor from 'react-simple-code-editor';
-import { highlight, languages } from 'prismjs/components/prism-core';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-java';
-import 'prismjs/themes/prism-tomorrow.css';
+import MonacoEditor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
@@ -296,6 +293,7 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
 // #region ProblemForm
 function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, problem: ProblemWithCategory | null, onClose: () => void }) {
     const { toast } = useToast();
+    const { resolvedTheme } = useTheme();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [categories, setCategories] = useState<string[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
@@ -461,8 +459,50 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                     <Card>
                         <CardHeader><CardTitle>Code & Tests</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                                <FormField control={form.control} name="sampleCode" render={({ field }) => (<FormItem><FormLabel>Sample Code</FormLabel><div className="editor-container rounded-md border w-full h-64 overflow-auto bg-[#282C34]"><Editor value={field.value} onValueChange={field.onChange} highlight={code => highlight(code, languages.java, 'java')} padding={16} className="font-code text-sm" style={{ fontFamily: '"Fira code", "Fira Mono", monospace', fontSize: 14 }}/></div><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="testcases" render={({ field }) => (<FormItem><FormLabel>Test Cases</FormLabel><div className="editor-container rounded-md border w-full h-64 overflow-auto bg-[#282C34]"><Editor value={field.value} onValueChange={field.onChange} highlight={code => highlight(code, languages.java, 'java')} padding={16} className="font-code text-sm" style={{ fontFamily: '"Fira code", "Fira Mono", monospace', fontSize: 14 }}/></div><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="sampleCode" render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Sample Code</FormLabel>
+                                    <div className="editor-container rounded-md border w-full h-64 overflow-hidden">
+                                        <MonacoEditor
+                                            height="100%"
+                                            language="java"
+                                            value={field.value}
+                                            onChange={(value) => field.onChange(value || '')}
+                                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                            options={{
+                                                fontSize: 14,
+                                                minimap: { enabled: false },
+                                                scrollBeyondLastLine: false,
+                                                padding: { top: 10, bottom: 10 },
+                                                fontFamily: 'var(--font-source-code-pro)',
+                                            }}
+                                        />
+                                    </div>
+                                    <FormMessage />
+                                  </FormItem>
+                                )} />
+                                <FormField control={form.control} name="testcases" render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Test Cases</FormLabel>
+                                      <div className="editor-container rounded-md border w-full h-64 overflow-hidden">
+                                          <MonacoEditor
+                                              height="100%"
+                                              language="java"
+                                              value={field.value}
+                                              onChange={(value) => field.onChange(value || '')}
+                                              theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                              options={{
+                                                  fontSize: 14,
+                                                  minimap: { enabled: false },
+                                                  scrollBeyondLastLine: false,
+                                                  padding: { top: 10, bottom: 10 },
+                                                  fontFamily: 'var(--font-source-code-pro)',
+                                              }}
+                                          />
+                                      </div>
+                                    <FormMessage />
+                                  </FormItem>
+                                )} />
                         </CardContent>
                     </Card>
                     
@@ -507,4 +547,3 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
     );
 }
 // #endregion
-

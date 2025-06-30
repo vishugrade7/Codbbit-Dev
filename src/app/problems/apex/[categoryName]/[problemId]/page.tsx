@@ -9,11 +9,8 @@ import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData } from "@/types";
 import type { ImperativePanelHandle } from "react-resizable-panels";
-import Editor from 'react-simple-code-editor';
-import { highlight, languages } from 'prismjs/components/prism-core';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-java';
-import 'prismjs/themes/prism-tomorrow.css';
+import MonacoEditor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 
 
@@ -34,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function ProblemWorkspacePage() {
     const router = useRouter();
     const params = useParams();
+    const { resolvedTheme } = useTheme();
 
     const { categoryName, problemId } = useMemo(() => ({
         categoryName: params?.categoryName ? decodeURIComponent(params.categoryName as string) : null,
@@ -441,18 +439,22 @@ export default function ProblemWorkspacePage() {
                                     </Button>
                                 </div>
                             </div>
-                            <div className="editor-container flex-1 w-full h-full overflow-auto bg-[#282C34]">
-                                <Editor
+                            <div className="editor-container flex-1 w-full h-full overflow-auto">
+                                <MonacoEditor
+                                    height="100%"
+                                    language="java"
                                     value={code}
-                                    onValueChange={code => setCode(code)}
-                                    highlight={code => highlight(code, languages.java, 'java')}
-                                    padding={16}
-                                    className="font-code text-sm"
-                                    style={{
-                                        fontFamily: '"Fira code", "Fira Mono", monospace',
+                                    onChange={(newValue) => setCode(newValue || "")}
+                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                    options={{
                                         fontSize: 14,
-                                        outline: 'none',
-                                        border: 'none',
+                                        minimap: { enabled: false },
+                                        scrollBeyondLastLine: false,
+                                        padding: {
+                                            top: 16,
+                                            bottom: 16,
+                                        },
+                                        fontFamily: 'var(--font-source-code-pro)',
                                     }}
                                 />
                             </div>
