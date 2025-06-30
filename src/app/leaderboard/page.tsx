@@ -16,6 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Building, Trophy } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
 
 const getMedal = (rank: number) => {
   if (rank === 1) return '🥇';
@@ -31,6 +34,9 @@ export default function Leaderboard() {
   const itemsPerPage = 10;
   const { user: authUser } = useAuth();
 
+  const [filterType, setFilterType] = useState<"Global" | "Country" | "Company">("Global");
+  const [filterValue, setFilterValue] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
@@ -41,7 +47,7 @@ export default function Leaderboard() {
         const users: LeaderboardUser[] = querySnapshot.docs.map((doc, index) => {
           const data = doc.data();
           return {
-            rank: index + 1,
+            rank: index + 1, // This is the global rank
             id: doc.id,
             name: data.name || 'N/A',
             username: data.username || 'N/A',
@@ -62,19 +68,45 @@ export default function Leaderboard() {
 
     fetchLeaderboard();
   }, []);
+
+  const countryOptions = useMemo(() => {
+    const countries = new Set(leaderboardData.map(u => u.country).filter(Boolean));
+    return Array.from(countries).sort();
+  }, [leaderboardData]);
+
+  const companyOptions = useMemo(() => {
+    const companies = new Set(leaderboardData.map(u => u.company).filter(c => c && c !== 'N/A'));
+    return Array.from(companies).sort();
+  }, [leaderboardData]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setFilterValue(null);
+  }, [filterType]);
   
+  const filteredData = useMemo(() => {
+    let data = leaderboardData;
+    if (filterType === "Country" && filterValue) {
+        data = leaderboardData.filter(u => u.country === filterValue);
+    } else if (filterType === "Company" && filterValue) {
+        data = leaderboardData.filter(u => u.company === filterValue);
+    }
+    return data.map((user, index) => ({ ...user, rank: index + 1 }));
+  }, [leaderboardData, filterType, filterValue]);
+
   const currentUserEntry = useMemo(() => {
     if (!authUser) return null;
-    return leaderboardData.find(entry => entry.id === authUser.uid);
-  }, [authUser, leaderboardData]);
+    return filteredData.find(entry => entry.id === authUser.uid);
+  }, [authUser, filteredData]);
 
-  const totalPages = Math.ceil(leaderboardData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return leaderboardData.slice(startIndex, endIndex);
-  }, [currentPage, leaderboardData]);
+    return filteredData.slice(startIndex, endIndex);
+  }, [currentPage, filteredData]);
+
 
   const handlePrevPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -107,6 +139,66 @@ export default function Leaderboard() {
             </p>
         </div>
         
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="flex-1">
+                <Label htmlFor="filter-type" className="text-xs text-muted-foreground">SCOPE</Label>
+                <Select
+                    value={filterType}
+                    onValueChange={(value: "Global" | "Country" | "Company") => setFilterType(value)}
+                >
+                    <SelectTrigger id="filter-type" className="mt-1">
+                        <SelectValue placeholder="Select scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Global">Global</SelectItem>
+                        <SelectItem value="Country">By Country</SelectItem>
+                        <SelectItem value="Company">By Company</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {filterType === "Country" && (
+                <div className="flex-1">
+                    <Label htmlFor="country-filter" className="text-xs text-muted-foreground">COUNTRY</Label>
+                    <Select
+                        value={filterValue ?? ''}
+                        onValueChange={(value) => setFilterValue(value)}
+                        disabled={countryOptions.length === 0}
+                    >
+                        <SelectTrigger id="country-filter" className="mt-1">
+                            <SelectValue placeholder="Select a country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {countryOptions.map(country => (
+                                <SelectItem key={country} value={country}>{country}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {filterType === "Company" && (
+                <div className="flex-1">
+                    <Label htmlFor="company-filter" className="text-xs text-muted-foreground">COMPANY</Label>
+                    <Select
+                        value={filterValue ?? ''}
+                        onValueChange={(value) => setFilterValue(value)}
+                        disabled={companyOptions.length === 0}
+                    >
+                        <SelectTrigger id="company-filter" className="mt-1">
+                            <SelectValue placeholder="Select a company" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {companyOptions.map(company => (
+                                <SelectItem key={company} value={company}>{company}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+        </div>
+
+
         {currentUserEntry && (
           <Card className="mb-8 bg-primary/10 border-primary/20 shadow-lg">
             <CardContent className="p-4">
