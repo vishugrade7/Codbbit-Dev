@@ -150,6 +150,17 @@ export default function SignupPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+
+    if (!auth || !db) {
+        toast({
+            variant: "destructive",
+            title: "Configuration Error",
+            description: "Firebase is not configured. Please check your environment variables.",
+        });
+        setIsLoading(false);
+        return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;

@@ -38,6 +38,17 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+
+    if (!auth) {
+        toast({
+            variant: "destructive",
+            title: "Configuration Error",
+            description: "Firebase is not configured. Please check your environment variables.",
+        });
+        setIsLoading(false);
+        return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
