@@ -9,22 +9,29 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2, Pencil } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateAvatar } from "./actions";
 
 type StarredProblemDetail = Problem & { categoryName: string };
 
 export default function ProfilePage() {
     const { user: authUser, userData, loading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
+
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [starredProblems, setStarredProblems] = useState<StarredProblemDetail[]>([]);
     const [loadingStarred, setLoadingStarred] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!loading && !authUser) {
@@ -37,6 +44,10 @@ export default function ProfilePage() {
             if (!authUser || !userData?.starredProblems || userData.starredProblems.length === 0) {
                 setLoadingStarred(false);
                 setStarredProblems([]);
+                return;
+            }
+            if (!db) {
+                setLoadingStarred(false);
                 return;
             }
 
@@ -66,10 +77,51 @@ export default function ProfilePage() {
             fetchStarredProblems();
         }
     }, [authUser, userData]);
+    
+    const handleAvatarClick = () => {
+        if (!isUploading) {
+            fileInputRef.current?.click();
+        }
+    };
 
-    const user = userData;
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !authUser || !storage) return;
 
-    if (loading || !authUser || !user) {
+        if (!file.type.startsWith('image/')) {
+            toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please select an image.' });
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const avatarStorageRef = storageRef(storage, `profile-pictures/${authUser.uid}`);
+            await uploadBytes(avatarStorageRef, file);
+            const downloadURL = await getDownloadURL(avatarStorageRef);
+
+            const result = await updateAvatar(authUser.uid, downloadURL);
+
+            if (result.success) {
+                toast({ title: 'Avatar updated successfully!' });
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Upload Failed',
+                description: error.message || 'An error occurred while uploading your avatar.',
+            });
+        } finally {
+            setIsUploading(false);
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
+
+
+    if (loading || !authUser || !userData) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -78,9 +130,9 @@ export default function ProfilePage() {
     }
 
     const stats = [
-        { label: "Points", value: user.points.toLocaleString() },
-        { label: "Global Rank", value: `#${user.rank}` },
-        { label: "Problems Solved", value: user.solvedProblems?.length || 0 }, 
+        { label: "Points", value: userData.points.toLocaleString() },
+        { label: "Global Rank", value: `#${userData.rank}` },
+        { label: "Problems Solved", value: userData.solvedProblems?.length || 0 }, 
         { label: "Solutions Submitted", value: "0" }, // static for now
     ];
 
@@ -108,23 +160,40 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
           <Card className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                <Avatar className="h-32 w-32 border-4 border-primary">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback className="text-4xl">
-                        {user.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                </Avatar>
+                <div className="relative group" onClick={handleAvatarClick}>
+                    <Avatar className="h-32 w-32 border-4 border-primary">
+                        <AvatarImage src={userData.avatarUrl} alt={userData.name} />
+                        <AvatarFallback className="text-4xl">
+                            {userData.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        {isUploading ? (
+                            <Loader2 className="h-8 w-8 animate-spin text-white" />
+                        ) : (
+                            <Pencil className="h-8 w-8 text-white" />
+                        )}
+                    </div>
+                     <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/png, image/jpeg, image/gif"
+                        disabled={isUploading}
+                    />
+                </div>
                 <div className="flex-1 text-center md:text-left">
-                    <h1 className="text-4xl font-bold font-headline">{user.name}</h1>
-                    <p className="text-lg text-muted-foreground">@{user.username}</p>
+                    <h1 className="text-4xl font-bold font-headline">{userData.name}</h1>
+                    <p className="text-lg text-muted-foreground">@{userData.username}</p>
                     <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-4 text-muted-foreground">
                         <div className="flex items-center gap-2">
                             <Building className="h-5 w-5" />
-                            <span>{user.company || 'N/A'}</span>
+                            <span>{userData.company || 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Globe className="h-5 w-5" />
-                            <span>{user.country}</span>
+                            <span>{userData.country}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Mail className="h-5 w-5" />
@@ -132,10 +201,10 @@ export default function ProfilePage() {
                         </div>
                     </div>
                      <div className="mt-6 flex justify-center md:justify-start gap-2">
-                        {user.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={user.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
-                        {user.githubUrl && (<Button variant="outline" size="icon" asChild><a href={user.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
-                        {user.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={user.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
-                        {user.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={user.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
+                        {userData.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={userData.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
+                        {userData.githubUrl && (<Button variant="outline" size="icon" asChild><a href={userData.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
+                        {userData.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={userData.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
+                        {userData.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={userData.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
                     </div>
                 </div>
                 <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
@@ -160,7 +229,7 @@ export default function ProfilePage() {
                           <CardTitle>Achievements</CardTitle>
                       </CardHeader>
                       <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {user.achievements && user.achievements.length > 0 ? user.achievements.map((achievement) => {
+                          {userData.achievements && userData.achievements.length > 0 ? userData.achievements.map((achievement) => {
                                 const Icon = iconMap[achievement.icon] || UserIcon;
                                 return (
                                 <div key={achievement.id} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
@@ -226,7 +295,7 @@ export default function ProfilePage() {
       </main>
       <Footer />
     </div>
-    <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={user} />
+    <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={userData} />
     </>
   );
 }
