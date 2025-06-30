@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,8 +23,11 @@ export default function Header() {
     { href: "/apex-problems", label: "Apex Problems" },
     { href: "/courses", label: "Courses" },
     { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/discussions", label: "Discussions" },
   ];
+
+  const adminNavLinks = [
+      { href: "/upload-problem", label: "Upload Problem", icon: UploadCloud }
+  ]
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -56,6 +59,19 @@ export default function Header() {
               >
                 {link.label}
               </Link>
+            ))}
+            {user && userData?.isAdmin && adminNavLinks.map((link) => (
+                 <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                    "transition-colors hover:text-foreground/80 flex items-center gap-1",
+                    pathname === link.href ? "text-foreground" : "text-foreground/60"
+                    )}
+                >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                </Link>
             ))}
           </nav>
         </div>
@@ -136,6 +152,19 @@ export default function Header() {
                       >
                         {link.label}
                       </Link>
+                    ))}
+                    {user && userData?.isAdmin && adminNavLinks.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className={cn(
+                            "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
+                            pathname === link.href ? "text-foreground" : "text-foreground/60"
+                            )}
+                        >
+                            <link.icon className="h-5 w-5" />
+                            {link.label}
+                        </Link>
                     ))}
                   </nav>
                   <div className="flex flex-col gap-4 mt-4">
