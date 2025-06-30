@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, increment, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User, Problem } from '@/types';
 
@@ -176,7 +176,7 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
     }
     
     const userDocRef = doc(db, 'users', userId);
-    await updateDoc(userDocRef, {
+    await setDoc(userDocRef, {
       sfdcAuth: {
         accessToken: data.access_token,
         instanceUrl: data.instance_url,
@@ -184,7 +184,7 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
         issuedAt: parseInt(data.issued_at, 10),
         connected: true,
       },
-    });
+    }, { merge: true });
 
     return { success: true };
   } catch (error) {
@@ -230,7 +230,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
         console.log("--- Finished upserting test class ---\n");
 
-        const testClassId = testRecord?.Id || (testRecord as any)?.id;
+        const testClassId = (testRecord as any)?.id || (testRecord as any)?.Id;
 
         if (!testClassId) {
             console.error('Failed to create or update test class in Salesforce.', testRecord);
