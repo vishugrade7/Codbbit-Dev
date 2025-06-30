@@ -90,40 +90,38 @@ export default function ApexProblems() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category) => (
               category.firstProblemId && (
-                <Link key={category.name} href={`/problems/apex/${encodeURIComponent(category.name)}/${category.firstProblemId}`} legacyBehavior>
-                  <a className="block group">
-                    <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-105">
-                      <CardHeader className="flex-row items-center gap-4">
-                          <div className="p-3 bg-primary/10 rounded-lg">
-                              <BookOpen className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                              <CardTitle>{category.name}</CardTitle>
-                              <CardDescription>{category.problemCount} Problems</CardDescription>
-                          </div>
-                      </CardHeader>
-                      <CardContent className="flex-grow space-y-2">
-                          <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Easy</span>
-                              <Badge variant="outline" className="bg-green-400/10 text-green-400 border-green-400/20">{category.difficulties.Easy}</Badge>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Medium</span>
-                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{category.difficulties.Medium}</Badge>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Hard</span>
-                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">{category.difficulties.Hard}</Badge>
-                          </div>
-                      </CardContent>
-                      <div className="p-4 pt-0 text-right flex justify-end items-center">
-                          <span className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                              Start Solving
-                          </span>
-                          <ChevronRight className="ml-2 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </Card>
-                  </a>
+                <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
+                  <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-105">
+                    <CardHeader className="flex-row items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-lg">
+                            <BookOpen className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle>{category.name}</CardTitle>
+                            <CardDescription>{category.problemCount} Problems</CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Easy</span>
+                            <Badge variant="outline" className="bg-green-400/10 text-green-400 border-green-400/20">{category.difficulties.Easy}</Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Medium</span>
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{category.difficulties.Medium}</Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Hard</span>
+                            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">{category.difficulties.Hard}</Badge>
+                        </div>
+                    </CardContent>
+                    <div className="p-4 pt-0 text-right flex justify-end items-center">
+                        <span className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
+                            View Problems
+                        </span>
+                        <ChevronRight className="ml-2 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </Card>
                 </Link>
               )
             ))}
