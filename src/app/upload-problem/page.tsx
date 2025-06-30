@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Editor from 'react-simple-code-editor';
@@ -278,9 +278,9 @@ export default function UploadProblemPage() {
                                     <CardDescription>Provide the sample code and the test cases for validation.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <Controller
-                                        name="sampleCode"
+                                     <FormField
                                         control={form.control}
+                                        name="sampleCode"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Sample Code</FormLabel>
@@ -298,9 +298,9 @@ export default function UploadProblemPage() {
                                             </FormItem>
                                         )}
                                     />
-                                    <Controller
-                                        name="testcases"
+                                    <FormField
                                         control={form.control}
+                                        name="testcases"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Test Cases</FormLabel>
