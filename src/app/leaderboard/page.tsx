@@ -155,7 +155,7 @@ export default function Leaderboard() {
                   <div>
                     <p className="font-semibold text-lg">{currentUserEntry.name}</p>
                     <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                         {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
                             <div className="flex items-center gap-1.5">
                                 <Building className="h-4 w-4" />
