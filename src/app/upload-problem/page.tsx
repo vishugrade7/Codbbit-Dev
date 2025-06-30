@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +18,7 @@ import type { Problem, ApexProblemsData } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -118,6 +118,8 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState("All");
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchProblems = async () => {
@@ -142,6 +144,50 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
         fetchProblems();
     }, [toast]);
 
+    const handleBulkUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const content = await file.text();
+            const result = await bulkUpsertProblemsFromJSON(content);
+            if (result.success) {
+                toast({ title: 'Success!', description: result.message });
+                // Refresh list by re-fetching
+                setLoading(true);
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data().Category as ApexProblemsData;
+                    const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                    );
+                    setProblems(allProblems.sort((a,b) => a.title.localeCompare(b.title)));
+                }
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Upload Failed',
+                description: error.message || 'Could not process the JSON file.',
+                duration: 9000,
+            });
+        } finally {
+            setIsUploading(false);
+            setLoading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
     const filteredProblems = useMemo(() => {
         return problems
           .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
@@ -158,15 +204,27 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     };
 
     return (
-        <div className="relative">
-            <div className="flex justify-between items-start">
+        <div>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                 <div>
                     <h1 className="text-4xl font-bold font-headline">Problem Management</h1>
                     <p className="text-muted-foreground mt-2">
                         View, edit, or add new Apex coding challenges to the platform.
                     </p>
                 </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    <Button onClick={handleBulkUploadClick} variant="outline" disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                        Bulk Upload
+                    </Button>
+                    <Button onClick={onAddNew}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add New
+                    </Button>
+                </div>
             </div>
+            
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
 
             <div className="flex flex-col md:flex-row gap-4 my-8">
                 <div className="relative flex-1">
@@ -230,15 +288,6 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                     <p className="text-muted-foreground">No problems found for the selected criteria.</p>
                 </div>
             )}
-            
-            <Button
-                onClick={onAddNew}
-                className="fixed top-24 right-8 rounded-full h-14 w-14 shadow-lg z-10"
-                size="icon"
-            >
-                <PlusCircle className="h-7 w-7" />
-                <span className="sr-only">Add New Problem</span>
-            </Button>
         </div>
     );
 }

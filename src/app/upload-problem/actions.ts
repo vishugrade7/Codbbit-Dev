@@ -25,6 +25,9 @@ const formSchema = z.object({
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
 });
 
+const bulkProblemSchema = formSchema.omit({ id: true });
+const bulkUploadSchema = z.array(bulkProblemSchema);
+
 
 export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>) {
     const apexDocRef = doc(db, 'problems', 'Apex');
@@ -112,6 +115,66 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
     } catch (error) {
         console.error("Error upserting problem:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function bulkUpsertProblemsFromJSON(jsonString: string) {
+    let problemsToUpload: z.infer<typeof bulkUploadSchema>;
+
+    try {
+        const jsonData = JSON.parse(jsonString);
+        problemsToUpload = bulkUploadSchema.parse(jsonData);
+    } catch (error) {
+        console.error("Error parsing or validating JSON for bulk upload:", error);
+        const errorMessage = error instanceof z.ZodError 
+            ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+            : (error instanceof Error ? error.message : "Invalid JSON format.");
+        return { success: false, error: `Invalid file content: ${errorMessage}` };
+    }
+    
+    if (problemsToUpload.length === 0) {
+        return { success: false, error: "JSON file is empty or contains no problems." };
+    }
+
+    const apexDocRef = doc(db, 'problems', 'Apex');
+    try {
+        const docSnap = await getDoc(apexDocRef);
+        if (!docSnap.exists()) {
+            throw new Error("Critical: Apex problems document not found in Firestore.");
+        }
+
+        const currentData = docSnap.data();
+        const categories = currentData.Category || {};
+
+        problemsToUpload.forEach(data => {
+            const problemId = doc(collection(db, 'dummy')).id;
+            const newProblem: Problem = {
+                id: problemId,
+                title: data.title,
+                description: data.description,
+                difficulty: data.difficulty,
+                metadataType: data.metadataType,
+                sampleCode: data.sampleCode,
+                testcases: data.testcases,
+                examples: data.examples,
+                hints: data.hints ? data.hints.map(h => h.value) : [],
+            };
+            
+            const categoryName = data.category;
+            if (!categories[categoryName]) {
+                categories[categoryName] = { Questions: [] };
+            }
+            categories[categoryName].Questions.push(newProblem);
+        });
+
+        await updateDoc(apexDocRef, { Category: categories });
+
+        return { success: true, message: `${problemsToUpload.length} problem(s) uploaded successfully!` };
+
+    } catch (error) {
+        console.error("Error during bulk upsert to Firestore:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during database update.';
         return { success: false, error: errorMessage };
     }
 }
