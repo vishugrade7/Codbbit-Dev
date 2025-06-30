@@ -13,7 +13,7 @@ import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-java';
-
+import Confetti from 'react-confetti';
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
+
+type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -40,11 +42,12 @@ export default function ProblemWorkspacePage() {
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [code, setCode] = useState("");
-    const [results, setResults] = useState("Submit your solution to run tests and see results.");
+    const [results, setResults] = useState<string[]>(["Submit your solution to run tests and see results."]);
     const [isStarred, setIsStarred] = useState(false);
     const [isStarring, setIsStarring] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
 
 
     // New state for filtering
@@ -57,11 +60,7 @@ export default function ProblemWorkspacePage() {
     const toggleFullScreen = () => {
         const panel = leftPanelRef.current;
         if (panel) {
-            if (panel.isCollapsed()) {
-                panel.expand();
-            } else {
-                panel.collapse();
-            }
+            panel.isCollapsed() ? panel.expand() : panel.collapse();
         }
     };
 
@@ -128,29 +127,38 @@ export default function ProblemWorkspacePage() {
             });
     }, [allProblems, searchTerm, difficultyFilter]);
 
+    const appendResults = (newLines: string) => {
+      setResults(prev => [...prev, newLines]);
+    }
+
     const handleSubmit = async () => {
         if (!user || !problem) {
             toast({ variant: "destructive", title: "Cannot Submit", description: "You must be logged in and viewing a problem to submit a solution." });
             return;
         }
-        setIsSubmitting(true);
-        setResults("Submitting solution and running tests...");
+        setSubmissionStatus('submitting');
+        setResults(["Submitting solution and running tests..."]);
 
         const response = await submitApexSolution(user.uid, problem, code);
         
-        let resultText = `${response.message}`;
+        let resultText = response.message;
         if (response.details) {
             resultText += `\n\nDetails:\n${response.details}`;
         }
-        setResults(resultText);
+        appendResults(resultText);
 
         if (response.success) {
-            toast({ title: "Submission Successful!", description: response.message });
+            setSubmissionStatus('success');
+            if (response.pointsAwarded && response.pointsAwarded > 0) {
+                setShowConfetti(true);
+                toast({ title: "Congratulations!", description: response.message });
+            } else {
+                toast({ title: "Already Solved!", description: response.message });
+            }
         } else {
+            setSubmissionStatus('error');
             toast({ variant: "destructive", title: "Submission Failed", description: response.message });
         }
-        
-        setIsSubmitting(false);
     };
 
     const handleToggleStar = async () => {
@@ -207,9 +215,23 @@ export default function ProblemWorkspacePage() {
         default: return 'bg-muted';
         }
     };
+    
+    const renderSubmissionStatus = () => {
+        switch (submissionStatus) {
+            case 'submitting':
+                return <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /><span>Submitting...</span></div>;
+            case 'success':
+                 return <div className="flex items-center gap-2 text-green-400"><CheckCircle2 className="h-4 w-4" /><span>Success</span></div>;
+            case 'error':
+                 return <div className="flex items-center gap-2 text-destructive"><XCircle className="h-4 w-4" /><span>Failed</span></div>;
+            default:
+                return <span>Test Results</span>;
+        }
+    };
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
+        {showConfetti && <Confetti recycle={false} onConfettiComplete={() => setShowConfetti(false)} />}
         <header className="flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
@@ -384,8 +406,8 @@ export default function ProblemWorkspacePage() {
                                             <TooltipContent><p>Reset Code</p></TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
-                                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    <Button size="sm" onClick={handleSubmit} disabled={submissionStatus === 'submitting'}>
+                                        {submissionStatus === 'submitting' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Run & Submit
                                     </Button>
                                 </div>
@@ -406,10 +428,12 @@ export default function ProblemWorkspacePage() {
                         <div className="flex flex-col h-full">
                             <Tabs defaultValue="results" className="h-full flex flex-col">
                                 <TabsList className="shrink-0 rounded-none border-b bg-transparent p-0">
-                                    <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">Test Results</TabsTrigger>
+                                    <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">
+                                        {renderSubmissionStatus()}
+                                    </TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="results" className="flex-1 p-4 overflow-auto">
-                                    <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results}</pre>
+                                    <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results.join('\n\n')}</pre>
                                 </TabsContent>
                             </Tabs>
                         </div>

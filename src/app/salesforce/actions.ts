@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, increment, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User, Problem } from '@/types';
 
@@ -190,14 +190,14 @@ export async function executeQuery(userId: string, query: string) {
     }
 }
 
-type SubmissionResult = { success: boolean, message: string, details?: string };
+type SubmissionResult = { success: boolean, message: string, details?: string, pointsAwarded?: number };
 
 export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
     try {
         const userDocRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists() && userDoc.data().solvedProblems?.includes(problem.id)) {
-            return { success: true, message: "You have already solved this problem." };
+            return { success: true, message: "You have already solved this problem.", pointsAwarded: 0 };
         }
 
         const auth = await getSfdcConnection(userId);
@@ -214,6 +214,9 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'The solution class/trigger name cannot be the same as the test class name.' };
         }
         
+        // --- Upsert Logic for Apex Code and Test Class using a Batch ---
+        const batch = writeBatch(db);
+
         // --- Deploy Main Object (Upsert) ---
         let existingRecord = await findToolingApiRecord(auth, objectType, mainObjectName);
         if (existingRecord) {
@@ -274,12 +277,14 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 
         // --- Success ---
         const points = POINTS_MAP[problem.difficulty];
-        await updateDoc(userDocRef, {
+        batch.update(userDocRef, {
             points: increment(points),
             solvedProblems: arrayUnion(problem.id)
         });
+        
+        await batch.commit();
 
-        return { success: true, message: `All tests passed! You've earned ${points} points.` };
+        return { success: true, message: `All tests passed! You've earned ${points} points.`, pointsAwarded: points };
 
     } catch (error) {
         console.error('Submit Apex Error:', error);
