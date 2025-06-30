@@ -6,12 +6,16 @@ import Image from "next/image";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { LeaderboardUser } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
+
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Building } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Building, Trophy } from "lucide-react";
 
 const getMedal = (rank: number) => {
   if (rank === 1) return '🥇';
@@ -25,6 +29,7 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -57,6 +62,11 @@ export default function Leaderboard() {
 
     fetchLeaderboard();
   }, []);
+  
+  const currentUserEntry = useMemo(() => {
+    if (!authUser) return null;
+    return leaderboardData.find(entry => entry.id === authUser.uid);
+  }, [authUser, leaderboardData]);
 
   const totalPages = Math.ceil(leaderboardData.length / itemsPerPage);
 
@@ -97,6 +107,33 @@ export default function Leaderboard() {
             </p>
         </div>
         
+        {currentUserEntry && (
+          <Card className="mb-8 bg-primary/10 border-primary/20 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="font-bold text-center text-xl w-12 flex items-center justify-center gap-2">
+                    <Trophy className="h-6 w-6 text-yellow-400" />
+                    <span>{currentUserEntry.rank}</span>
+                  </div>
+                  <Avatar className="h-12 w-12 border-2 border-primary">
+                    <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                    <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-lg">{currentUserEntry.name}</p>
+                    <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono font-semibold text-xl">{currentUserEntry.points.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Points</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="rounded-lg border">
             <Table>
                 <TableHeader>
@@ -110,7 +147,10 @@ export default function Leaderboard() {
                 </TableHeader>
                 <TableBody>
                     {paginatedData.map((user) => (
-                        <TableRow key={user.id}>
+                        <TableRow 
+                          key={user.id} 
+                          className={cn(user.id === authUser?.uid && "bg-primary/10 hover:bg-primary/20")}
+                        >
                             <TableCell className="font-bold text-center text-lg">{getMedal(user.rank)}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-4">
