@@ -302,7 +302,7 @@ FROM Account`}
             />
             <p className="text-sm text-muted-foreground">
               This query asks Salesforce for two specific pieces of information
-              (`Name`, `Industry`) from every record in the `Account` object.
+              (\`Name\`, \`Industry\`) from every record in the \`Account\` object.
             </p>
           </CardContent>
         </Card>
@@ -724,7 +724,7 @@ SELECT Id FROM Account WHERE Name LIKE '%Acme' AND StageName != 'Closed'`}
               <CardTitle>Respect Platform Limits & Security</CardTitle>
               <CardDescription>
                 Be mindful of governor limits (e.g., max 50,000 rows per
-                transaction). Use `WITH SECURITY_ENFORCED` to ensure your query
+                transaction). Use \`WITH SECURITY_ENFORCED\` to ensure your query
                 only returns records the running user is allowed to see.
               </CardDescription>
             </CardHeader>
