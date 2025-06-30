@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { LeaderboardUser } from "@/types";
@@ -10,7 +11,7 @@ import Footer from "@/components/footer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Building } from "lucide-react";
 
 const getMedal = (rank: number) => {
   if (rank === 1) return '🥇';
@@ -123,7 +124,22 @@ export default function Leaderboard() {
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">{user.company}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                                <div className="flex items-center gap-2">
+                                    {user.companyLogoUrl ? (
+                                        <Image
+                                            src={user.companyLogoUrl}
+                                            alt={user.company || 'Company logo'}
+                                            width={20}
+                                            height={20}
+                                            className="rounded-sm object-contain"
+                                        />
+                                    ) : (user.company && user.company !== 'N/A') ? (
+                                        <Building className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                    ) : null}
+                                    <span>{user.company}</span>
+                                </div>
+                            </TableCell>
                             <TableCell className="hidden md:table-cell text-center">{user.country}</TableCell>
                             <TableCell className="text-right font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
                         </TableRow>
