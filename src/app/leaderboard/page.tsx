@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Building, Trophy } from "lucide-react";
+import { Loader2, Building, Trophy, Globe } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
@@ -142,8 +142,8 @@ export default function Leaderboard() {
         {currentUserEntry && (
           <Card className="mb-8 bg-primary/10 border-primary/20 shadow-lg">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1 min-w-[250px]">
                   <div className="font-bold text-center text-xl w-12 flex items-center justify-center gap-2">
                     <Trophy className="h-6 w-6 text-yellow-400" />
                     <span>{currentUserEntry.rank}</span>
@@ -155,6 +155,20 @@ export default function Leaderboard() {
                   <div>
                     <p className="font-semibold text-lg">{currentUserEntry.name}</p>
                     <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
+                            <div className="flex items-center gap-1.5">
+                                <Building className="h-4 w-4" />
+                                <span>{currentUserEntry.company}</span>
+                            </div>
+                        )}
+                        {currentUserEntry.country && (
+                             <div className="flex items-center gap-1.5">
+                                <Globe className="h-4 w-4" />
+                                <span>{currentUserEntry.country}</span>
+                            </div>
+                        )}
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
