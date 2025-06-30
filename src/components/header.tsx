@@ -86,13 +86,12 @@ export default function Header() {
             </div>
           ) : user ? (
             <>
-              <div className="flex items-center gap-1.5 font-semibold text-primary">
-                  <Flame className="h-5 w-5" />
-                  <span>{userData?.points?.toLocaleString() ?? 0}</span>
-              </div>
-              
-              {/* Desktop Dropdown */}
-              <div className="hidden md:block">
+              {/* Desktop view */}
+              <div className="hidden md:flex items-center gap-4">
+                <div className="flex items-center gap-1.5 font-semibold text-primary">
+                    <Flame className="h-5 w-5" />
+                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -129,15 +128,21 @@ export default function Header() {
                 </DropdownMenu>
               </div>
 
-              {/* Mobile Sheet (triggered by avatar) */}
-              <div className="md:hidden">
+              {/* Mobile view */}
+              <div className="flex items-center gap-2 md:hidden">
+                 <div className="flex items-center gap-1.5 font-semibold text-primary">
+                    <Flame className="h-5 w-5" />
+                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </div>
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                  <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                </Avatar>
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                        <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                      </Avatar>
+                    <Button variant="outline" size="icon">
+                      <Menu className="h-6 w-6" />
+                      <span className="sr-only">Open menu</span>
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="right">
