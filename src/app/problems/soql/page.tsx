@@ -311,81 +311,81 @@ FROM Account`}
 }
 
 function WhereContent() {
-    return (
-      <div>
-        <SectionHeading title="Filtering Results: WHERE">
-          The `WHERE` clause is used to filter records and retrieve only the ones
-          that meet specific criteria. This is essential for getting the exact
-          data you need instead of all records from an object.
-        </SectionHeading>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filtering with Operators</CardTitle>
-              <CardDescription>
-                Use comparison operators (`=`, `!=`, `<`, `>`, `LIKE`) and logical
-                operators (`AND`, `OR`, `NOT`) to build your filter conditions.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-center gap-4 rounded-md border bg-background p-4 text-center">
-                <div>
-                  <div className="inline-block rounded-md bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                    Field
-                  </div>
-                </div>
-                <div className="text-muted-foreground">Operator</div>
-                <div>
-                  <div className="inline-block rounded-md bg-green-100 px-3 py-1 text-sm font-medium text-green-800 dark:bg-green-900/50 dark:text-green-200">
-                    Value
-                  </div>
+  return (
+    <div>
+      <SectionHeading title="Filtering Results: WHERE">
+        The `WHERE` clause is used to filter records and retrieve only the ones
+        that meet specific criteria. This is essential for getting the exact
+        data you need instead of all records from an object.
+      </SectionHeading>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtering with Operators</CardTitle>
+            <CardDescription>
+              Use comparison operators (`=`, `!=`, `<`, `>`, `LIKE`) and logical
+              operators (`AND`, `OR`, `NOT`) to build your filter conditions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-center gap-4 rounded-md border bg-background p-4 text-center">
+              <div>
+                <div className="inline-block rounded-md bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                  Field
                 </div>
               </div>
-              <CodeBlock
-                code={`-- Find all Contacts with the last name 'Smith'
+              <div className="text-muted-foreground">Operator</div>
+              <div>
+                <div className="inline-block rounded-md bg-green-100 px-3 py-1 text-sm font-medium text-green-800 dark:bg-green-900/50 dark:text-green-200">
+                  Value
+                </div>
+              </div>
+            </div>
+            <CodeBlock
+              code={`-- Find all Contacts with the last name 'Smith'
 -- who are located in California
 SELECT FirstName, LastName, MailingState
 FROM Contact
 WHERE LastName = 'Smith' AND MailingState = 'CA'`}
-              />
-            </CardContent>
-          </Card>
-  
-          <Card>
-            <CardHeader>
-              <CardTitle>Using IN and LIKE</CardTitle>
-              <CardDescription>
-                `IN` checks if a field value is within a list. `LIKE` performs a
-                wildcard search for text fields using the `%` character.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-center gap-4 rounded-md border bg-background p-4 text-center">
-                <Target className="h-10 w-10 text-primary" />
-                <div className="flex-1 text-left">
-                  <p className="font-semibold">Target specific values</p>
-                  <p className="text-sm text-muted-foreground">
-                    Efficiently query for multiple possible values at once.
-                  </p>
-                </div>
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Using IN and LIKE</CardTitle>
+            <CardDescription>
+              `IN` checks if a field value is within a list. `LIKE` performs a
+              wildcard search for text fields using the `%` character.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-center gap-4 rounded-md border bg-background p-4 text-center">
+              <Target className="h-10 w-10 text-primary" />
+              <div className="flex-1 text-left">
+                <p className="font-semibold">Target specific values</p>
+                <p className="text-sm text-muted-foreground">
+                  Efficiently query for multiple possible values at once.
+                </p>
               </div>
-              <CodeBlock
-                code={`-- Find all Accounts in the Energy or Banking industry
+            </div>
+            <CodeBlock
+              code={`-- Find all Accounts in the Energy or Banking industry
 SELECT Name, Industry
 FROM Account
 WHERE Industry IN ('Energy', 'Banking')`}
-              />
-              <CodeBlock
-                code={`-- Find all Contacts whose first name starts with 'A'
+            />
+            <CodeBlock
+              code={`-- Find all Contacts whose first name starts with 'A'
 SELECT FirstName
 FROM Contact
 WHERE FirstName LIKE 'A%'`}
-              />
-            </CardContent>
-          </Card>
-        </div>
+            />
+          </CardContent>
+        </Card>
       </div>
-    );
+    </div>
+  );
 }
 
 function LimitOffsetContent() {
