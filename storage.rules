@@ -1,11 +1,12 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow anyone to read profile pictures, which is common for avatars.
-    // Restrict write access to only the authenticated user for their own picture.
     match /profile-pictures/{userId} {
-      allow read: if true;
+      // Allow anyone to read profile pictures
+      allow read;
+      // Allow only the authenticated user to upload/update their own profile picture
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
