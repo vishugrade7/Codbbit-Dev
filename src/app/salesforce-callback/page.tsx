@@ -11,12 +11,25 @@ import { Loader2 } from 'lucide-react';
 function SalesforceCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const [message, setMessage] = useState('Processing authentication...');
 
   useEffect(() => {
     const processAuth = async () => {
+      if (loading) {
+        // Auth state is not yet determined, wait.
+        return;
+      }
+
+      // After loading is false, check for user.
+      if (!user) {
+        setMessage('Error: User not logged in.');
+        toast({ variant: 'destructive', title: 'Authentication Failed', description: 'You must be logged in to connect a Salesforce account.' });
+        router.push('/login');
+        return;
+      }
+      
       const code = searchParams.get('code');
       const codeVerifier = sessionStorage.getItem('sfdc-code-verifier');
 
@@ -30,12 +43,6 @@ function SalesforceCallbackContent() {
         setMessage('Error: Code verifier not found.');
         toast({ variant: 'destructive', title: 'Authentication Failed', description: 'Your session may have expired. Please try connecting again.' });
         router.push('/settings');
-        return;
-      }
-      if (!user) {
-        setMessage('Error: User not logged in.');
-         toast({ variant: 'destructive', title: 'Authentication Failed', description: 'You must be logged in to connect a Salesforce account.' });
-        router.push('/login');
         return;
       }
 
@@ -55,7 +62,17 @@ function SalesforceCallbackContent() {
     };
 
     processAuth();
-  }, [router, searchParams, user, toast]);
+  }, [router, searchParams, user, toast, loading]);
+
+  if(loading){
+    return (
+        <div className="flex h-screen w-full flex-col items-center justify-center bg-background text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <h1 className="text-2xl font-bold">Authenticating</h1>
+            <p className="text-muted-foreground mt-2">Please wait...</p>
+        </div>
+    )
+  }
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background text-center">
