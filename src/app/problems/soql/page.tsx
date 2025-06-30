@@ -174,7 +174,7 @@ function SectionHeading({ title, children }: { title: string, children: React.Re
       <h2 className="text-2xl font-bold font-headline mb-2 text-primary">{title}</h2>
       <p className="text-muted-foreground max-w-4xl">{children}</p>
     </div>
-  )
+  );
 }
 
 function HomeContent({ onSelectTopic }: { onSelectTopic: (topic: string) => void }) {
