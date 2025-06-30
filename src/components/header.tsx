@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Flame } from "lucide-react";
+import { CodeXml } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +14,7 @@ export default function Header() {
     { href: "/apex-problems", label: "Apex Problems" },
     { href: "/courses", label: "Courses" },
     { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/discussions", label: "Discussions" },
   ];
 
   return (
@@ -23,7 +23,7 @@ export default function Header() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <CodeXml className="h-6 w-6" />
-            <span className="text-lg font-bold">Codbbit</span>
+            <span className="text-lg font-bold font-headline">Codbbit</span>
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             {navLinks.map((link) => (
@@ -42,12 +42,12 @@ export default function Header() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Flame className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm font-semibold">0</span>
-           <Avatar className="h-8 w-8">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>VG</AvatarFallback>
-          </Avatar>
+          <Button variant="outline" asChild>
+             <Link href="/login">Login</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/signup">Sign Up</Link>
+          </Button>
         </div>
       </div>
     </header>

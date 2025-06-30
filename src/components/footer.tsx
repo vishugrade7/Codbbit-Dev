@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">
               <CodeXml className="h-6 w-6" />
-              <span className="text-lg font-bold">Codbbit</span>
+              <span className="text-lg font-bold font-headline">Codbbit</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               The ultimate playground for Apex developers.

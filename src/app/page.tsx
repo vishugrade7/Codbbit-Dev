@@ -2,7 +2,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Rocket, BarChart, Database, Code, Trophy } from "lucide-react";
 
 export default function Home() {
@@ -13,7 +13,7 @@ export default function Home() {
         <section className="w-full py-20 md:py-32 lg:py-40">
           <div className="container px-4 md:px-6 text-center">
             <div className="max-w-3xl mx-auto space-y-4">
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline">
                 Master Salesforce Development
               </h1>
               <p className="text-muted-foreground md:text-xl">

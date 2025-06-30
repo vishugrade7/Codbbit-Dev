@@ -18,9 +18,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
-        code: ['"Source Code Pro"', 'monospace'],
+        sans: ["var(--font-inter)"],
+        mono: ["var(--font-source-code-pro)"],
+        headline: ["var(--font-inter)"],
+        body: ["var(--font-inter)"],
+        code: ["var(--font-source-code-pro)"],
       },
       colors: {
         background: 'hsl(var(--background))',
