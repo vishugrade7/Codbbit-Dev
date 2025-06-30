@@ -80,7 +80,7 @@ export default function Header() {
         </div>
         <div className="flex items-center gap-4">
           {loading ? (
-            <div className="hidden md:flex items-center gap-4">
+            <div className="flex items-center gap-4">
                 <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
                 <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
             </div>
@@ -90,6 +90,8 @@ export default function Header() {
                   <Flame className="h-5 w-5" />
                   <span>{userData?.points?.toLocaleString() ?? 0}</span>
               </div>
+              
+              {/* Desktop Dropdown */}
               <div className="hidden md:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -126,79 +128,112 @@ export default function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </>
-          ) : (
-            <div className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </div>
-          )}
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <div className="grid gap-6 py-6">
-                  <Link href="/" className="flex items-center gap-2 mb-4">
-                    <CodeXml className="h-6 w-6" />
-                    <span className="text-lg font-bold font-headline">Codbbit</span>
-                  </Link>
-                  <nav className="grid gap-4">
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                          "text-lg font-medium transition-colors hover:text-foreground/80",
-                          pathname === link.href ? "text-foreground" : "text-foreground/60"
-                        )}
-                      >
-                        {link.label}
+
+              {/* Mobile Sheet (triggered by avatar) */}
+              <div className="md:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                        <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right">
+                    <div className="grid gap-6 py-6">
+                      <Link href="/" className="flex items-center gap-2 mb-4">
+                        <CodeXml className="h-6 w-6" />
+                        <span className="text-lg font-bold font-headline">Codbbit</span>
                       </Link>
-                    ))}
-                    {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
-                        <Link
+                      <nav className="grid gap-4">
+                        {navLinks.map((link) => (
+                          <Link
                             key={link.href}
                             href={link.href}
                             className={cn(
-                            "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
-                            pathname === link.href ? "text-foreground" : "text-foreground/60"
+                              "text-lg font-medium transition-colors hover:text-foreground/80",
+                              pathname === link.href ? "text-foreground" : "text-foreground/60"
                             )}
-                        >
-                            <link.icon className="h-5 w-5" />
+                          >
                             {link.label}
-                        </Link>
-                    ))}
-                  </nav>
-                  <div className="flex flex-col gap-4 mt-4">
-                     {user ? (
-                        <>
-                         <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary">
-                            <Flame className="h-6 w-6" />
-                            <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                         </div>
+                          </Link>
+                        ))}
+                        {isAuthorizedAdmin && adminNavLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={cn(
+                                "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
+                                pathname === link.href ? "text-foreground" : "text-foreground/60"
+                                )}
+                            >
+                                <link.icon className="h-5 w-5" />
+                                {link.label}
+                            </Link>
+                        ))}
+                      </nav>
+                      <div className="flex flex-col gap-4 mt-4">
                          <Button variant="ghost" asChild><Link href="/profile">Profile</Link></Button>
+                         <Button variant="ghost" asChild><Link href="/settings">Settings</Link></Button>
                          <Button onClick={handleLogout}>Logout</Button>
-                        </>
-                     ) : (
-                        <>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Desktop Logged-out Buttons */}
+              <div className="hidden md:flex items-center gap-2">
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </div>
+
+              {/* Mobile Sheet (triggered by Menu icon) */}
+              <div className="md:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Menu className="h-6 w-6" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right">
+                    <div className="grid gap-6 py-6">
+                      <Link href="/" className="flex items-center gap-2 mb-4">
+                        <CodeXml className="h-6 w-6" />
+                        <span className="text-lg font-bold font-headline">Codbbit</span>
+                      </Link>
+                      <nav className="grid gap-4">
+                        {navLinks.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            className={cn(
+                              "text-lg font-medium transition-colors hover:text-foreground/80",
+                              pathname === link.href ? "text-foreground" : "text-foreground/60"
+                            )}
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </nav>
+                      <div className="flex flex-col gap-4 mt-4">
                          <Button variant="ghost" asChild><Link href="/login">Login</Link></Button>
                          <Button asChild><Link href="/signup">Sign Up</Link></Button>
-                        </>
-                     )}
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>
