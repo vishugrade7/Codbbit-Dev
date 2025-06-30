@@ -13,7 +13,7 @@ import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-sql';
-
+import Confetti from 'react-confetti';
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
@@ -22,13 +22,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, ArrowLeft, CheckCircle2, Database, Play, RefreshCw, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Database, Play, RefreshCw, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { executeQuery } from "@/app/salesforce/actions";
+import { executeQuery, submitSOQLSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
+type RunStatus = 'idle' | 'running' | 'success' | 'error';
 
 export default function SOQLWorkspacePage() {
     const router = useRouter();
@@ -41,14 +44,15 @@ export default function SOQLWorkspacePage() {
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isExecuting, setIsExecuting] = useState(false);
+    const [runStatus, setRunStatus] = useState<RunStatus>('idle');
+    const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
+    
     const [code, setCode] = useState("");
     const [results, setResults] = useState<any>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [solvedProblemIds, setSolvedProblemIds] = useState(new Set<string>()); // Mock solved status
     const [isStarred, setIsStarred] = useState(false);
     const [isStarring, setIsStarring] = useState(false);
-
+    const [showConfetti, setShowConfetti] = useState(false);
+    
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
 
@@ -98,13 +102,15 @@ export default function SOQLWorkspacePage() {
             setLoading(false);
         });
         
-        setSolvedProblemIds(new Set<string>());
-
         return () => unsubscribe();
     }, [categoryName, problemId]);
     
     useEffect(() => {
         setIsStarred(userData?.starredProblems?.includes(problemId) ?? false);
+    }, [userData, problemId]);
+
+    const isSolved = useMemo(() => {
+        return userData?.solvedProblems?.includes(problemId) ?? false;
     }, [userData, problemId]);
 
     const filteredProblems = useMemo(() => {
@@ -115,21 +121,44 @@ export default function SOQLWorkspacePage() {
 
     const handleRun = async () => {
         if (!user) {
-            setError("Please log in to run queries.");
+            toast({ variant: 'destructive', title: "Please log in to run queries." });
             return;
         }
-        setIsExecuting(true);
-        setError(null);
+        setRunStatus('running');
         setResults(null);
 
         const response = await executeQuery(user.uid, code);
         
         if (response.success) {
             setResults(response.result);
+            setRunStatus('success');
         } else {
-            setError(response.error || 'An unknown error occurred during execution.');
+            setResults({ error: response.error || 'An unknown error occurred during execution.' });
+            setRunStatus('error');
         }
-        setIsExecuting(false);
+    };
+
+    const handleSubmit = async () => {
+        if (!user || !problem) {
+            toast({ variant: "destructive", title: "Cannot Submit", description: "You must be logged in and viewing a problem to submit a solution." });
+            return;
+        }
+        setSubmissionStatus('submitting');
+        
+        const response = await submitSOQLSolution(user.uid, problem, code);
+        
+        if (response.success) {
+            setSubmissionStatus('success');
+            if (response.pointsAwarded && response.pointsAwarded > 0) {
+                setShowConfetti(true);
+                toast({ title: "Congratulations!", description: response.message });
+            } else {
+                toast({ title: "Already Solved!", description: response.message });
+            }
+        } else {
+            setSubmissionStatus('error');
+            toast({ variant: "destructive", title: "Submission Failed", description: response.message });
+        }
     };
 
     const handleToggleStar = async () => {
@@ -172,10 +201,22 @@ export default function SOQLWorkspacePage() {
         }
     };
     
-    const isSolved = solvedProblemIds.has(problem.id);
+    const renderRunStatus = () => {
+        switch (runStatus) {
+            case 'running':
+                return <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /><span>Executing...</span></div>;
+            case 'success':
+                 return <div className="flex items-center gap-2 text-green-400"><CheckCircle2 className="h-4 w-4" /><span>Success</span></div>;
+            case 'error':
+                 return <div className="flex items-center gap-2 text-destructive"><XCircle className="h-4 w-4" /><span>Error</span></div>;
+            default:
+                return <span>Results</span>;
+        }
+    };
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
+        {showConfetti && <Confetti recycle={false} onConfettiComplete={() => setShowConfetti(false)} />}
         <header className="flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
@@ -211,7 +252,7 @@ export default function SOQLWorkspacePage() {
                                     <span className="truncate pr-4">{p.title}</span>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>{p.difficulty}</Badge>
-                                        {solvedProblemIds.has(p.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                        {(userData?.solvedProblems?.includes(p.id)) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                     </div>
                                 </Link>
                             )) : (
@@ -287,9 +328,13 @@ export default function SOQLWorkspacePage() {
                                             <TooltipContent><p>Reset Query</p></TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
-                                    <Button variant="outline" size="sm" onClick={handleRun} disabled={isExecuting}>
-                                        {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        <Play className="mr-2" />Run Query
+                                    <Button variant="outline" size="sm" onClick={handleRun} disabled={runStatus === 'running'}>
+                                        {runStatus === 'running' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                        Run Query
+                                    </Button>
+                                    <Button size="sm" onClick={handleSubmit} disabled={submissionStatus === 'submitting' || !problem.testcases}>
+                                        {submissionStatus === 'submitting' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                        Submit
                                     </Button>
                                 </div>
                             </div>
@@ -301,39 +346,45 @@ export default function SOQLWorkspacePage() {
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={35} minSize={15}>
                          <div className="flex flex-col h-full">
-                            <div className="p-2 border-b"><h3 className="font-semibold">Results</h3></div>
-                            <div className="flex-1 p-4 overflow-auto">
-                                {isExecuting && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /><span>Executing query...</span></div>}
-                                {error && <pre className="text-sm text-destructive whitespace-pre-wrap font-code">{error}</pre>}
-                                {results && (
-                                    <div>
-                                        <p className="text-sm text-muted-foreground mb-2">Returned {results.records.length} of {results.totalSize} total records.</p>
-                                        {results.records.length > 0 ? (
-                                        <div className="w-full overflow-x-auto">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        {Object.keys(results.records[0]).filter(key => key !== 'attributes').map(key => <TableHead key={key}>{key}</TableHead>)}
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {results.records.map((record: any, index: number) => (
-                                                        <TableRow key={index}>
-                                                            {Object.keys(record).filter(key => key !== 'attributes').map(key => (
-                                                                <TableCell key={key} className="font-code text-xs whitespace-pre">
-                                                                    {record[key] !== null && typeof record[key] === 'object' ? JSON.stringify(record[key], null, 2) : String(record[key])}
-                                                                </TableCell>
-                                                            ))}
+                            <Tabs defaultValue="results" className="h-full flex flex-col">
+                                <TabsList className="shrink-0 rounded-none border-b bg-transparent p-0">
+                                    <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none">
+                                        {renderRunStatus()}
+                                    </TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="results" className="flex-1 p-4 overflow-auto">
+                                    {runStatus === 'running' && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /><span>Executing query...</span></div>}
+                                    {results?.error && <pre className="text-sm text-destructive whitespace-pre-wrap font-code">{results.error}</pre>}
+                                    {results?.records && (
+                                        <div>
+                                            <p className="text-sm text-muted-foreground mb-2">Returned {results.records.length} of {results.totalSize} total records.</p>
+                                            {results.records.length > 0 ? (
+                                            <div className="w-full overflow-x-auto">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            {Object.keys(results.records[0]).filter(key => key !== 'attributes').map(key => <TableHead key={key}>{key}</TableHead>)}
                                                         </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {results.records.map((record: any, index: number) => (
+                                                            <TableRow key={index}>
+                                                                {Object.keys(record).filter(key => key !== 'attributes').map(key => (
+                                                                    <TableCell key={key} className="font-code text-xs whitespace-pre">
+                                                                        {record[key] !== null && typeof record[key] === 'object' ? JSON.stringify(record[key], null, 2) : String(record[key])}
+                                                                    </TableCell>
+                                                                ))}
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                            ) : <p className="text-sm text-muted-foreground">Query executed successfully and returned 0 records.</p>}
                                         </div>
-                                        ) : <p className="text-sm text-muted-foreground">Query executed successfully and returned 0 records.</p>}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
+                         </div>
                     </ResizablePanel>
                  </ResizablePanelGroup>
             </ResizablePanel>

@@ -79,7 +79,7 @@ export type Problem = {
   hints: string[];
   metadataType: string;
   sampleCode: string;
-  testcases: string;
+  testcases: string; // For Apex: test class code. For SOQL: expected result JSON string.
 };
 
 // This represents the structure of the data fetched from the `problems/Apex` document

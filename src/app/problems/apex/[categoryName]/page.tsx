@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import type { Problem, ApexProblemsData } from "@/types";
 
 import Header from "@/components/header";
@@ -12,7 +14,7 @@ import Footer from "@/components/footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, Video } from "lucide-react";
+import { Loader2, Search, ArrowLeft, ArrowUpDown, Filter, CheckCircle2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -28,11 +30,11 @@ export default function ProblemListPage() {
   const router = useRouter();
   const params = useParams();
   const categoryName = decodeURIComponent(params.categoryName as string);
+  const { userData } = useAuth();
 
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [solvedProblemIds, setSolvedProblemIds] = useState<Set<string>>(new Set()); // Mock, would fetch from user data
   
   const [difficultyFilter, setDifficultyFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -67,11 +69,10 @@ export default function ProblemListPage() {
       }
     );
     
-    // In a real app, you would fetch the user's solved problems and update the set.
-    setSolvedProblemIds(new Set());
-
     return () => unsubscribe();
   }, [categoryName]);
+
+  const solvedProblemIds = new Set(userData?.solvedProblems || []);
 
   const processedProblems = problems
     .filter((problem) => {
@@ -114,7 +115,7 @@ export default function ProblemListPage() {
     }
   };
   
-  const solvedCount = solvedProblemIds.size;
+  const solvedCount = problems.filter(p => solvedProblemIds.has(p.id)).length;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -208,14 +209,17 @@ export default function ProblemListPage() {
                       className="flex items-center p-3 px-4 border-b last:border-b-0 hover:bg-card/5 transition-colors"
                   >
                       <div className="flex-1 flex items-center gap-4">
-                          <span className="font-medium">{sortBy === 'default' ? `${index + 1}. ` : ''}{problem.title}</span>
+                         {solvedProblemIds.has(problem.id) ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <span className="w-5 h-5"></span>
+                          )}
+                          <span className="font-medium">{problem.title}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm">
-                          <span className="text-muted-foreground w-14 text-right">54.4%</span>
                           <Badge className={getDifficultyClass(problem.difficulty)}>
                               {problem.difficulty}
                           </Badge>
-                          <Video className="h-5 w-5 text-primary" />
                       </div>
                   </Link>
                 ))}

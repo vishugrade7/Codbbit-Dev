@@ -105,7 +105,7 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
 
 
 const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/)?.[1];
-const POINTS_MAP = { Easy: 10, Medium: 25, Hard: 50 };
+const POINTS_MAP: Record<'Easy' | 'Medium' | 'Hard', number> = { Easy: 10, Medium: 25, Hard: 50 };
 
 export async function getSalesforceAccessToken(code: string, codeVerifier: string, userId: string) {
   const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
@@ -179,9 +179,9 @@ export async function executeApexCode(userId: string, code: string) {
 }
 
 export async function executeQuery(userId: string, query: string) {
-    const auth = await getSfdcConnection(userId);
-    const endpoint = `/services/data/v59.0/query?q=${encodeURIComponent(query)}`;
     try {
+        const auth = await getSfdcConnection(userId);
+        const endpoint = `/services/data/v59.0/query?q=${encodeURIComponent(query)}`;
         const result = await sfdcFetch(auth, endpoint, { method: 'GET' });
         return { success: true, result };
     } catch (error) {
@@ -214,9 +214,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'The solution class/trigger name cannot be the same as the test class name.' };
         }
         
-        // --- Upsert Logic for Apex Code and Test Class using a Batch ---
-        const batch = writeBatch(db);
-
         // --- Deploy Main Object (Upsert) ---
         let existingRecord = await findToolingApiRecord(auth, objectType, mainObjectName);
         if (existingRecord) {
@@ -277,6 +274,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 
         // --- Success ---
         const points = POINTS_MAP[problem.difficulty];
+        const batch = writeBatch(db);
         batch.update(userDocRef, {
             points: increment(points),
             solvedProblems: arrayUnion(problem.id)
@@ -288,6 +286,74 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 
     } catch (error) {
         console.error('Submit Apex Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, message: 'An error occurred during submission.', details: errorMessage };
+    }
+}
+
+// Canonical stringify for comparing SOQL results
+const canonicalStringify = (obj: any): string => {
+    if (obj === null || typeof obj !== 'object') {
+        return JSON.stringify(obj);
+    }
+    if (Array.isArray(obj)) {
+        return '[' + obj.map(canonicalStringify).join(',') + ']';
+    }
+    const keys = Object.keys(obj).sort();
+    const pairs = keys.map(key => `"${key}":${canonicalStringify(obj[key])}`);
+    return '{' + pairs.join(',') + '}';
+};
+
+export async function submitSOQLSolution(userId: string, problem: Problem, userQuery: string): Promise<SubmissionResult> {
+    try {
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists() && userDoc.data().solvedProblems?.includes(problem.id)) {
+            return { success: true, message: "You have already solved this problem.", pointsAwarded: 0 };
+        }
+
+        if (!problem.testcases) {
+            return { success: false, message: "This problem has no validation criteria and cannot be submitted." };
+        }
+
+        const auth = await getSfdcConnection(userId);
+        
+        // Execute user's query
+        const userResult = await sfdcFetch(auth, `/services/data/v59.0/query?q=${encodeURIComponent(userQuery)}`);
+        
+        // Parse expected result from testcases
+        let expectedResult;
+        try {
+            expectedResult = JSON.parse(problem.testcases);
+        } catch (e) {
+            return { success: false, message: "Problem has an invalid test case format. Please contact an admin." };
+        }
+
+        // --- Compare results ---
+        const userRecords = userResult.records.map((r: any) => { delete r.attributes; return r; });
+        const expectedRecords = expectedResult.records || [];
+
+        const userCanon = userRecords.map(canonicalStringify).sort();
+        const expectedCanon = expectedRecords.map(canonicalStringify).sort();
+
+        if (userCanon.length !== expectedCanon.length || userCanon.join('') !== expectedCanon.join('')) {
+            return { success: false, message: "Your query result did not match the expected output." };
+        }
+        
+        // --- Success ---
+        const points = POINTS_MAP[problem.difficulty];
+        const batch = writeBatch(db);
+        batch.update(userDocRef, {
+            points: increment(points),
+            solvedProblems: arrayUnion(problem.id)
+        });
+        
+        await batch.commit();
+
+        return { success: true, message: `Correct! You've earned ${points} points.`, pointsAwarded: points };
+
+    } catch (error) {
+        console.error('Submit SOQL Error:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, message: 'An error occurred during submission.', details: errorMessage };
     }

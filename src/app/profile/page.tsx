@@ -15,9 +15,9 @@ import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
-import type { Problem, ApexProblemsData } from "@/types";
+import type { Problem, ApexProblemsData, SOQLProblemsData } from "@/types";
 
-type StarredProblemDetail = Problem & { categoryName: string };
+type StarredProblemDetail = Problem & { categoryName: string, problemType: 'apex' | 'soql' };
 
 export default function ProfilePage() {
     const { user: authUser, userData, loading } = useAuth();
@@ -42,19 +42,35 @@ export default function ProfilePage() {
 
             setLoadingStarred(true);
             try {
+                const starredIds = new Set(userData.starredProblems);
+                let allDetails: StarredProblemDetail[] = [];
+
+                // Fetch Apex problems
                 const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
-
-                if (docSnap.exists()) {
-                    const categoriesData = docSnap.data().Category as ApexProblemsData;
-                    const allProblemsWithCategory = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) => 
-                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                const apexDocSnap = await getDoc(apexDocRef);
+                if (apexDocSnap.exists()) {
+                    const categoriesData = apexDocSnap.data().Category as ApexProblemsData;
+                    const apexProblems = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) => 
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName, problemType: 'apex' as const }))
                     );
-
-                    const starredIds = new Set(userData.starredProblems);
-                    const details = allProblemsWithCategory.filter(p => starredIds.has(p.id));
-                    setStarredProblems(details);
+                    allDetails.push(...apexProblems.filter(p => starredIds.has(p.id)));
                 }
+
+                // Fetch SOQL problems
+                const soqlDocRef = doc(db, "problems", "SOQL");
+                const soqlDocSnap = await getDoc(soqlDocRef);
+                 if (soqlDocSnap.exists()) {
+                    const categoriesData = soqlDocSnap.data().Category as SOQLProblemsData;
+                    const soqlProblems = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) => 
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName, problemType: 'soql' as const }))
+                    );
+                    allDetails.push(...soqlProblems.filter(p => starredIds.has(p.id)));
+                }
+                
+                // Sort to maintain a consistent order
+                allDetails.sort((a,b) => a.title.localeCompare(b.title));
+                setStarredProblems(allDetails);
+
             } catch (error) {
                 console.error("Error fetching starred problems:", error);
             } finally {
@@ -188,9 +204,12 @@ export default function ProfilePage() {
                         ) : starredProblems.length > 0 ? (
                             <div className="space-y-2">
                                 {starredProblems.map(problem => (
-                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
+                                    <Link key={problem.id} href={`/problems/${problem.problemType}/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
                                         <div className="flex items-center justify-between p-3 rounded-md hover:bg-card/50 transition-colors">
-                                            <span className="font-medium">{problem.title}</span>
+                                           <div className="flex items-center gap-3">
+                                                <Badge variant="secondary" className="w-16 justify-center">{problem.problemType.toUpperCase()}</Badge>
+                                                <span className="font-medium">{problem.title}</span>
+                                           </div>
                                             <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>
                                                 {problem.difficulty}
                                             </Badge>
