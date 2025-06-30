@@ -22,7 +22,6 @@ import {
   Home,
   LayoutGrid,
   GitFork,
-  DatabaseZap,
   ShieldCheck,
   Wrench,
   CodeXml,
