@@ -32,6 +32,7 @@ async function getSfdcConnection(userId: string): Promise<SfdcAuth> {
     const tokenAgeMinutes = (Date.now() - auth.issuedAt) / (1000 * 60);
     // Refresh if token is older than 55 minutes
     if (tokenAgeMinutes > 55) { 
+        console.log("Salesforce token is old, attempting refresh...");
         const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
         const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
         const clientSecret = process.env.SFDC_CLIENT_SECRET;
@@ -57,7 +58,8 @@ async function getSfdcConnection(userId: string): Promise<SfdcAuth> {
             await updateDoc(userDocRef, { "sfdcAuth.connected": false });
             throw new Error('Failed to refresh Salesforce token. Please reconnect.');
         }
-
+        
+        console.log("Salesforce token refreshed successfully.");
         const newAuth: Partial<SfdcAuth> = {
             accessToken: data.access_token,
             issuedAt: parseInt(data.issued_at, 10),
@@ -94,11 +96,19 @@ async function sfdcFetch(auth: SfdcAuth, path: string, options: RequestInit = {}
 
 async function findToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string) {
     const query = `SELECT Id FROM ${objectType} WHERE Name = '${name}'`;
-    const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
-    return result.records[0] || null;
+    console.log(`Executing Tooling API query: ${query}`);
+    try {
+        const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
+        console.log(`Query result for ${name}:`, JSON.stringify(result, null, 2));
+        return result.records[0] || null;
+    } catch (error) {
+        console.error(`Error finding Tooling API record for ${name}:`, error);
+        throw error;
+    }
 }
 
 async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string) {
+    console.log(`Creating new ${objectType} record named: ${name}`);
     return sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/`, {
         method: 'POST',
         body: JSON.stringify({ Name: name, Body: body, ApiVersion: 59.0 }),
@@ -106,17 +116,23 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
 }
 
 async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string) {
+    console.log(`Upserting ${objectType} named: ${name}`);
     const record = await findToolingApiRecord(auth, objectType, name);
     if (record?.id) {
+        console.log(`Found existing record for ${name} with ID: ${record.id}. Updating it.`);
         // Update existing record
         await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.id}`, {
             method: 'PATCH',
             body: JSON.stringify({ Body: body, ApiVersion: 59.0 }),
         });
+        console.log(`Successfully updated ${name}.`);
         return record;
     } else {
+        console.log(`No existing record found for ${name}. Creating a new one.`);
         // Create new record
-        return createToolingApiRecord(auth, objectType, name, body);
+        const newRecord = await createToolingApiRecord(auth, objectType, name, body);
+        console.log(`Successfully created ${name}.`);
+        return newRecord;
     }
 }
 
@@ -180,74 +196,102 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
 type SubmissionResult = { success: boolean, message: string, details?: string };
 
 export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
+    console.log(`\n--- Starting Apex Solution Submission for user ${userId}, problem ${problem.id} ---`);
     try {
         const userDocRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists() && userDoc.data().solvedProblems?.includes(problem.id)) {
+            console.log("Problem already solved by user. Exiting.");
             return { success: true, message: "You have already solved this problem." };
         }
 
+        console.log("Getting SFDC connection...");
         const auth = await getSfdcConnection(userId);
+        console.log("SFDC connection successful.");
         
         const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
         const mainObjectName = getClassName(userCode);
         const testObjectName = getClassName(problem.testcases);
         
+        console.log(`Determined metadata type: ${objectType}`);
+        console.log(`Extracted main object name: ${mainObjectName}`);
+        console.log(`Extracted test object name: ${testObjectName}`);
+
         if (!mainObjectName || !testObjectName) {
+            console.error('Could not determine class/trigger names from code.');
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
         // Upsert the main class/trigger and the test class.
-        // This is more robust than deleting and recreating, which can cause race conditions.
+        console.log("\n--- Upserting main user code ---");
         await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode);
+        console.log("--- Finished upserting main user code ---\n");
+        
+        console.log("\n--- Upserting test class ---");
         const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
+        console.log("--- Finished upserting test class ---\n");
 
         if (!testRecord?.id) {
+            console.error('Failed to create or update test class in Salesforce.');
             return { success: false, message: 'Failed to create or update test class in Salesforce.' };
         }
         const testClassId = testRecord.id;
+        console.log(`Test class ID to be used for test run: ${testClassId}`);
 
         // Run tests asynchronously
+        console.log("Requesting asynchronous test run...");
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
             method: 'POST',
             body: JSON.stringify({ classids: testClassId })
         });
         const apexTestRunId = testRunResult;
+        console.log(`Asynchronous test run initiated with ID: ${apexTestRunId}`);
 
         // Poll for test results
+        console.log("Polling for test results...");
         let testResult;
         for (let i = 0; i < 20; i++) { // Poll for up to 20 seconds
             await sleep(1000);
+            console.log(`Polling attempt ${i + 1}/20...`);
             const query = `SELECT Status, ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
             const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
+            console.log(`Polling response:`, JSON.stringify(result, null, 2));
             // Check if all tests for the class have completed
             if (result.records.length > 0 && result.records.every((r: any) => ['Completed', 'Failed', 'Aborted'].includes(r.Status))) {
+                console.log("All tests have completed.");
                 testResult = result.records;
                 break;
             }
         }
         
         if (!testResult) {
+            console.error("Test run timed out.");
             return { success: false, message: "Test run timed out." };
         }
 
         const failedTest = testResult.find((r: any) => r.Outcome !== 'Pass');
 
         if (failedTest) {
+             console.error("A test case failed:", failedTest);
              return { success: false, message: `Test Failed: ${failedTest.MethodName}`, details: `${failedTest.Message}\n${failedTest.StackTrace || ''}` };
         }
 
+        console.log("All tests passed successfully!");
         const points = POINTS_MAP[problem.difficulty] || 0;
+        console.log(`Awarding ${points} points to user ${userId}.`);
         await updateDoc(userDocRef, {
             points: increment(points),
             solvedProblems: arrayUnion(problem.id)
         });
-
+        
+        console.log("User data updated in Firestore.");
         return { success: true, message: `All tests passed! You've earned ${points} points.` };
 
     } catch (error) {
         console.error('Submit Apex Error:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, message: 'An error occurred during submission.', details: errorMessage };
+    } finally {
+        console.log(`--- Finished Apex Solution Submission for user ${userId} ---`);
     }
 }
