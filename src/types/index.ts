@@ -3,6 +3,13 @@ export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
   difficulty: 'Easy' | 'Medium' | 'Hard';
+  categoryName: string;
+};
+
+export type Achievement = {
+  name: string;
+  description: string;
+  date: any; // Firestore Timestamp
 };
 
 export type User = {
@@ -17,7 +24,7 @@ export type User = {
   companyLogoUrl?: string;
   points: number;
   rank: number;
-  achievements: Achievement[];
+  achievements?: { [badgeName: string]: Achievement };
   contributions: Contribution[];
   sfdcAuth?: {
     accessToken: string;
@@ -54,14 +61,6 @@ export type LeaderboardUser = {
   country: string;
   company?: string;
   companyLogoUrl?: string;
-};
-
-export type Achievement = {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  date: string;
 };
 
 export type Contribution = {

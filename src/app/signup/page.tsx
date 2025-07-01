@@ -180,7 +180,7 @@ export default function SignupPage() {
           rank: 9999,
           avatarUrl: avatarUrl,
           companyLogoUrl: companyLogoUrl,
-          achievements: [],
+          achievements: {},
           contributions: [],
           isAdmin: false,
           

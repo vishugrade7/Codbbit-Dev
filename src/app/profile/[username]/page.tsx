@@ -15,7 +15,7 @@ import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
-import type { Problem, ApexProblemsData, User as AppUser } from "@/types";
+import type { Problem, ApexProblemsData, User as AppUser, Achievement } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
@@ -393,12 +393,12 @@ export default function UserProfilePage() {
                           <CardTitle>Achievements</CardTitle>
                       </CardHeader>
                       <CardContent>
-                          {profileUser.achievements && profileUser.achievements.length > 0 ? (
+                          {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {profileUser.achievements.map((achievement) => {
-                                    const Icon = UserIcon; // Replace with a dynamic icon map if available
+                                {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).map((achievement: Achievement) => {
+                                    const Icon = Award; // Use a default icon
                                     return (
-                                    <div key={achievement.id} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
+                                    <div key={achievement.name} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
                                         <Icon className="h-10 w-10 text-primary" />
                                         <h3 className="font-semibold">{achievement.name}</h3>
                                         <p className="text-xs text-muted-foreground">{achievement.description}</p>

@@ -3,7 +3,9 @@
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Problem } from '@/types';
+import type { User, Problem, SolvedProblemDetail } from '@/types';
+import { BADGES } from '@/lib/badges';
+
 
 type SalesforceTokenResponse = {
   access_token: string;
@@ -211,6 +213,7 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
     const categoryName = problem.categoryName || "Uncategorized";
 
     try {
+        let awardedBadges: string[] = [];
         await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userDocRef);
             if (!userDoc.exists()) {
@@ -243,7 +246,9 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                 solvedAt: serverTimestamp(),
                 points: pointsToAward,
                 difficulty: problem.difficulty,
+                categoryName: categoryName,
             };
+            const newTotalSolved = Object.keys(solvedProblems).length;
 
             // --- Streak Logic ---
             let currentStreak = userData.currentStreak || 0;
@@ -261,6 +266,52 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
             if (currentStreak > maxStreak) {
                 maxStreak = currentStreak;
             }
+            
+            // --- Badge Awarding Logic ---
+            const newAchievements = { ...(userData.achievements || {}) };
+            const categoryCounts: { [key: string]: number } = {};
+            Object.values(solvedProblems).forEach((p: SolvedProblemDetail) => {
+                categoryCounts[p.categoryName] = (categoryCounts[p.categoryName] || 0) + 1;
+            });
+            const activeDaysCount = Object.keys(submissionHeatmap).length;
+
+
+            for (const badgeName in BADGES) {
+                if (!newAchievements[badgeName]) { // Check if badge is not already earned
+                    const criteria = BADGES[badgeName];
+                    let earned = false;
+
+                    switch (criteria.type) {
+                        case 'STREAK':
+                            if (currentStreak >= criteria.value) earned = true;
+                            break;
+                        case 'POINTS':
+                            if (newPoints >= criteria.value) earned = true;
+                            break;
+                        case 'TOTAL_SOLVED':
+                            if (newTotalSolved >= criteria.value) earned = true;
+                            break;
+                        case 'CATEGORY_SOLVED':
+                            if (criteria.category && (categoryCounts[criteria.category] || 0) >= criteria.value) {
+                                earned = true;
+                            }
+                            break;
+                        case 'ACTIVE_DAYS':
+                            if (activeDaysCount >= criteria.value) earned = true;
+                            break;
+                    }
+                    
+                    if (earned) {
+                        newAchievements[badgeName] = {
+                            name: badgeName,
+                            description: criteria.description,
+                            date: serverTimestamp(),
+                        };
+                        awardedBadges.push(badgeName);
+                    }
+                }
+            }
+
 
             // --- Perform Update ---
             transaction.update(userDocRef, {
@@ -272,9 +323,16 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                 currentStreak,
                 maxStreak,
                 lastSolvedDate: today,
+                achievements: newAchievements,
             });
         });
-        return `All tests passed! You've earned ${pointsToAward} points.`;
+
+        let successMessage = `All tests passed! You've earned ${pointsToAward} points.`;
+        if (awardedBadges.length > 0) {
+            log.push(`\n> New Badges Earned: ${awardedBadges.join(', ')}`);
+            successMessage += ` You've earned new badge(s): ${awardedBadges.join(', ')}!`;
+        }
+        return successMessage;
     } catch (e: any) {
         console.error("Error in award points transaction:", e);
         log.push(`\n> Error updating profile: ${e.message}`);
