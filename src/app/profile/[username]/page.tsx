@@ -9,7 +9,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2, Pencil, PieChart as PieChartIcon, Target } from "lucide-react";
+import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Target } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
@@ -192,7 +192,7 @@ export default function UserProfilePage() {
     if (loadingProfile || loadingProblems) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -256,7 +256,7 @@ export default function UserProfilePage() {
                     {isOwnProfile && (
                         <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                             {isUploading ? (
-                                <Loader2 className="h-8 w-8 animate-spin text-white" />
+                                <LoaderCircle className="h-8 w-8 animate-spin text-white" />
                             ) : (
                                 <Pencil className="h-8 w-8 text-white" />
                             )}
@@ -331,7 +331,7 @@ export default function UserProfilePage() {
                     <CardContent>
                         {loadingStarred ? (
                             <div className="flex justify-center items-center h-24">
-                                <Loader2 className="h-6 w-6 animate-spin" />
+                                <LoaderCircle className="h-6 w-6 animate-spin" />
                             </div>
                         ) : starredProblems.length > 0 ? (
                             <div className="space-y-2">
