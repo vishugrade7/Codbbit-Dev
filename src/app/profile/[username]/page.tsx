@@ -280,15 +280,17 @@ export default function UserProfilePage() {
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                   <Card>
-                      <CardHeader>
-                          <CardTitle>Contribution Activity</CardTitle>
-                      </CardHeader>
-                      <CardContent>
+                      <CardContent className="pt-6">
                           {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
                                 <ContributionHeatmap data={profileUser.submissionHeatmap} />
                           ) : (
-                                <div className="w-full h-40 bg-card-foreground/5 rounded flex items-center justify-center">
-                                    <p className="text-muted-foreground">No contribution data yet.</p>
+                                <div className="w-full h-48 flex flex-col items-start justify-center">
+                                    <h3 className="text-xl font-semibold mb-4">
+                                        0 submissions in the last year
+                                    </h3>
+                                    <div className="w-full h-full bg-card-foreground/5 rounded flex items-center justify-center">
+                                        <p className="text-muted-foreground">No contribution data yet.</p>
+                                    </div>
                                 </div>
                           )}
                       </CardContent>
