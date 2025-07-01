@@ -2,11 +2,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Problem, ApexProblemsData } from "@/types";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { createProblemSheet } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -25,6 +28,9 @@ type ProblemWithCategory = Problem & { categoryName: string };
 
 export default function ProblemSheetsPage() {
     const { toast } = useToast();
+    const router = useRouter();
+    const { user: authUser, userData } = useAuth();
+
     const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -32,6 +38,7 @@ export default function ProblemSheetsPage() {
 
     const [selectedProblemIds, setSelectedProblemIds] = useState<Set<string>>(new Set());
     const [sheetName, setSheetName] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
     
     useEffect(() => {
         const fetchProblems = async () => {
@@ -106,7 +113,11 @@ export default function ProblemSheetsPage() {
         }
     };
     
-    const handleCreateSheet = () => {
+    const handleCreateSheet = async () => {
+        if (!authUser || !userData) {
+            toast({ variant: "destructive", title: "Please log in to create a sheet." });
+            return;
+        }
         if (!sheetName) {
             toast({ variant: "destructive", title: "Sheet name is required." });
             return;
@@ -115,7 +126,27 @@ export default function ProblemSheetsPage() {
             toast({ variant: "destructive", title: "Add at least one problem to the sheet." });
             return;
         }
-        toast({ title: "Coming Soon!", description: "Sheet creation functionality will be implemented soon." });
+
+        setIsCreating(true);
+        const problemIds = selectedProblems.map(p => p.id);
+        
+        const result = await createProblemSheet({
+            sheetName,
+            problemIds,
+            user: {
+                uid: authUser.uid,
+                name: userData.name,
+                avatarUrl: userData.avatarUrl,
+            }
+        });
+
+        if (result.success && result.sheetId) {
+            toast({ title: "Sheet created successfully!", description: "Redirecting you to your new sheet." });
+            router.push(`/sheets/${result.sheetId}`);
+        } else {
+            toast({ variant: "destructive", title: "Failed to create sheet", description: result.error });
+        }
+        setIsCreating(false);
     };
 
     return (
@@ -247,8 +278,9 @@ export default function ProblemSheetsPage() {
                                 </ScrollArea>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" onClick={handleCreateSheet}>
-                                    Create & Share Sheet
+                                <Button className="w-full" onClick={handleCreateSheet} disabled={isCreating}>
+                                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Create &amp; Share Sheet
                                 </Button>
                             </CardFooter>
                        </Card>
@@ -259,4 +291,3 @@ export default function ProblemSheetsPage() {
         </div>
     );
 }
-

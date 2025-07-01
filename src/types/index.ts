@@ -87,3 +87,14 @@ export type ApexProblemsData = {
         Questions: Problem[];
     }
 }
+
+export type ProblemSheet = {
+  id: string;
+  name: string;
+  createdBy: string; // User UID
+  creatorName: string;
+  creatorAvatarUrl: string;
+  createdAt: any; // Firestore Timestamp
+  isPublic: boolean;
+  problemIds: string[];
+};
