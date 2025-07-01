@@ -126,30 +126,6 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
     });
 }
 
-async function waitForCompilation(log: string[], auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', recordId: string): Promise<{ success: boolean; message?: string }> {
-    for (let i = 0; i < 60; i++) { // 60 seconds timeout
-        await sleep(1000);
-        log.push(`> Polling compilation status... (Attempt ${i + 1})`);
-        const query = `SELECT Status, IsValid, CompileProblem FROM ${objectType} WHERE Id = '${recordId}'`;
-        try {
-            const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
-            if (result.records.length > 0) {
-                const record = result.records[0];
-                if (record.Status === 'Active') {
-                    return { success: true };
-                }
-                if (record.Status === 'Invalid' || record.Status === 'Error' || !record.IsValid) {
-                    const errorMessage = `Compilation failed. Status: ${record.Status}. Problem: ${record.CompileProblem || 'Unknown'}`;
-                    return { success: false, message: errorMessage };
-                }
-            }
-        } catch (error) {
-            console.warn(`Polling query failed for ${recordId}, will retry. Error:`, error);
-        }
-    }
-    return { success: false, message: `Timed out waiting for ${objectType} to compile.` };
-}
-
 
 export async function getSalesforceAccessToken(code: string, codeVerifier: string, userId: string) {
   const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
@@ -219,16 +195,8 @@ async function deployMetadata(log: string[], auth: SfdcAuth, objectType: 'ApexCl
 
     log.push(`> Creating new ${objectType}...`);
     const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
-    log.push(`> Creation successful. Record ID: ${newRecord.id}.`);
+    log.push(`> Creation successful. Record ID: ${newRecord.id}. Proceeding to next step.`);
     
-    log.push(`> Waiting for compilation...`);
-    const compilationResult = await waitForCompilation(log, auth, objectType, newRecord.id);
-
-    if (!compilationResult.success) {
-        throw new Error(compilationResult.message || `The ${objectType} failed to compile.`);
-    }
-
-    log.push(`> Compilation successful.`);
     return newRecord.id;
 }
 
