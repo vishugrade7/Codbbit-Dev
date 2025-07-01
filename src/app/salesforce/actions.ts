@@ -221,10 +221,10 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
             const errorMessage = "This trigger problem is missing its associated SObject (e.g., Account, Contact). An administrator needs to update the problem configuration.";
             console.error(`Configuration error for problem ${problem.id}: ${errorMessage}`);
-            return { 
-                success: false, 
-                message: 'Problem Configuration Error', 
-                details: errorMessage 
+            return {
+                success: false,
+                message: 'Problem Configuration Error',
+                details: errorMessage
             };
         }
 
@@ -251,14 +251,19 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
-        console.log("\n--- Upserting main user code ---");
+        console.log("\n--- Phase 1: Upserting main user code ---");
         await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode, problem.triggerSObject);
-        console.log("--- Finished upserting main user code ---\n");
+        console.log("--- Finished Phase 1 ---\n");
 
-        console.log("\n--- Upserting test class ---");
+        // Add a delay to create a distinct separation between the two deployment operations.
+        // This helps prevent the "Cannot save a trigger during a parse and save class call" error.
+        console.log("Waiting for 2 seconds to prevent platform conflicts...");
+        await sleep(2000);
+
+        console.log("\n--- Phase 2: Upserting test class ---");
         await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
         const testRecord = await findToolingApiRecord(auth, 'ApexClass', testObjectName);
-        console.log("--- Finished upserting test class ---\n");
+        console.log("--- Finished Phase 2 ---\n");
 
         const testClassId = (testRecord as any)?.id || (testRecord as any)?.Id;
 
