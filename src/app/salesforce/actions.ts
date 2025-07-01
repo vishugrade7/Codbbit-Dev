@@ -213,6 +213,18 @@ type SubmissionResult = { success: boolean, message: string, details?: string };
 export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
     console.log(`\n--- Starting Apex Solution Submission for user ${userId}, problem ${problem.id} ---`);
     try {
+        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+
+        if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
+            const errorMessage = "This trigger problem is missing its associated SObject (e.g., Account, Contact). An administrator needs to update the problem configuration.";
+            console.error(`Configuration error for problem ${problem.id}: ${errorMessage}`);
+            return { 
+                success: false, 
+                message: 'Problem Configuration Error', 
+                details: errorMessage 
+            };
+        }
+
         const userDocRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists() && userDoc.data().solvedProblems?.includes(problem.id)) {
@@ -224,7 +236,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const auth = await getSfdcConnection(userId);
         console.log("SFDC connection successful.");
         
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
         const mainObjectName = getClassName(userCode);
         const testObjectName = getClassName(problem.testcases);
         
