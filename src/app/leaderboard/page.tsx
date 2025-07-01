@@ -220,7 +220,17 @@ export default function Leaderboard() {
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                             {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
                                 <div className="flex items-center gap-1.5">
-                                    <Building className="h-4 w-4" />
+                                    {currentUserEntry.companyLogoUrl ? (
+                                        <Image
+                                            src={currentUserEntry.companyLogoUrl}
+                                            alt={currentUserEntry.company || 'Company logo'}
+                                            width={16}
+                                            height={16}
+                                            className="rounded-sm object-contain"
+                                        />
+                                    ) : (
+                                        <Building className="h-4 w-4" />
+                                    )}
                                     <span>{currentUserEntry.company}</span>
                                 </div>
                             )}
