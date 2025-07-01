@@ -346,6 +346,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
 
     useEffect(() => {
         if (formMode === 'edit' && problem) {
+            // Check if we are editing a new problem to avoid re-rendering
             if (getValues('id') !== problem.id) {
                 reset({
                     id: problem.id,
@@ -361,20 +362,23 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                     hints: problem.hints.length > 0 ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
                 });
             }
-        } else if (formMode === 'add' && getValues('id')) {
-            reset({
-                id: undefined,
-                title: "",
-                description: "",
-                category: "",
-                difficulty: "Easy",
-                metadataType: "Class",
-                triggerSObject: "",
-                sampleCode: "",
-                testcases: "",
-                examples: [{ input: "", output: "", explanation: "" }],
-                hints: [{ value: "" }],
-            });
+        } else if (formMode === 'add') {
+             // Only reset if we are switching from editing a problem to adding a new one
+            if (getValues('id')) {
+                 reset({
+                    id: undefined,
+                    title: "",
+                    description: "",
+                    category: "",
+                    difficulty: "Easy",
+                    metadataType: "Class",
+                    triggerSObject: "",
+                    sampleCode: "",
+                    testcases: "",
+                    examples: [{ input: "", output: "", explanation: "" }],
+                    hints: [{ value: "" }],
+                });
+            }
         }
     }, [problem, formMode, reset, getValues]);
 
@@ -386,10 +390,14 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                 const docSnap = await getDoc(apexDocRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data && data.Category) {
-                        const existingCategories = Object.keys(data.Category);
+                    const existingCategories = (data && data.Category) ? Object.keys(data.Category) : [];
+                    if (existingCategories.length > 0) {
                         setCategories(existingCategories.sort());
+                    } else {
+                        setIsAddingNewCategory(true);
                     }
+                } else {
+                    setIsAddingNewCategory(true);
                 }
             } catch (error) {
                 console.error("Error fetching categories:", error);
@@ -461,7 +469,9 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                                             {isAddingNewCategory ? (
                                                 <div className="flex items-center gap-2">
                                                     <FormControl><Input placeholder="Enter new category name..." {...field} autoFocus/></FormControl>
-                                                    <Button type="button" variant="outline" onClick={() => { setIsAddingNewCategory(false); field.onChange(''); }}>Cancel</Button>
+                                                    {categories.length > 0 && (
+                                                        <Button type="button" variant="outline" onClick={() => { setIsAddingNewCategory(false); field.onChange(''); }}>Cancel</Button>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <Select onValueChange={handleValueChange} value={field.value}>
@@ -620,3 +630,5 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
     );
 }
 // #endregion
+
+    
