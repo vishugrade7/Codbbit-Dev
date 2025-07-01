@@ -91,7 +91,6 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
         blockMargin={4}
         fontSize={14}
         hideTotalCount
-        hideColorLegend
         showWeekdayLabels
         renderBlock={(block, activity) => (
           <TooltipProvider delayDuration={100}>
