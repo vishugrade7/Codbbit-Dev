@@ -479,7 +479,7 @@ export default function ProblemWorkspacePage() {
                     <ResizablePanel defaultSize={35} minSize={15}>
                         <div className="flex flex-col h-full">
                             <Tabs defaultValue="results" className="h-full flex flex-col">
-                                <TabsList className="shrink-0 rounded-none border-b bg-transparent px-2">
+                                <TabsList className="shrink-0 rounded-none border-b bg-transparent px-2 justify-start">
                                     <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none text-sm">Test Results</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="results" className="flex-1 p-4 overflow-auto">
@@ -494,3 +494,5 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
+    
