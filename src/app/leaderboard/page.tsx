@@ -3,9 +3,10 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import Link from "next/link";
+import { collection, query, orderBy, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { LeaderboardUser } from "@/types";
+import type { LeaderboardUser, Problem, ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -14,11 +15,13 @@ import Footer from "@/components/footer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Building, Trophy, Globe } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Loader2, Building, Trophy, Globe, BookOpen } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
+type ProblemWithCategory = Problem & { categoryName: string };
 
 const getMedal = (rank: number) => {
   if (rank === 1) return '🥇';
@@ -32,10 +35,49 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const { user: authUser } = useAuth();
+  const { user: authUser, userData } = useAuth();
 
   const [filterType, setFilterType] = useState<"Global" | "Country" | "Company">("Global");
   const [filterValue, setFilterValue] = useState<string | null>(null);
+
+  const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
+  const [suggestedProblem, setSuggestedProblem] = useState<ProblemWithCategory | null>(null);
+  
+  // Fetch all problems for suggestion
+  useEffect(() => {
+    const fetchAllProblems = async () => {
+        if (!db) return;
+        try {
+            const apexDocRef = doc(db, "problems", "Apex");
+            const problemsSnap = await getDoc(apexDocRef);
+            if (problemsSnap.exists()) {
+                const data = problemsSnap.data().Category as ApexProblemsData;
+                const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                );
+                setAllProblems(problems);
+            }
+        } catch (error) {
+            console.error("Error fetching all problems for suggestion:", error);
+        }
+    };
+    fetchAllProblems();
+  }, []);
+
+  // Determine suggested problem
+  useEffect(() => {
+    if (allProblems.length > 0 && userData?.solvedProblems) {
+        const solvedIds = new Set(userData.solvedProblems);
+        const unsolvedProblems = allProblems.filter(p => !solvedIds.has(p.id));
+
+        if (unsolvedProblems.length > 0) {
+            const randomIndex = Math.floor(Math.random() * unsolvedProblems.length);
+            setSuggestedProblem(unsolvedProblems[randomIndex]);
+        } else {
+            setSuggestedProblem(null);
+        }
+    }
+  }, [allProblems, userData]);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -116,6 +158,15 @@ export default function Leaderboard() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  const getDifficultyBadgeClass = (difficulty: string) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+      default: return 'bg-muted';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen w-full flex-col bg-background">
@@ -140,44 +191,90 @@ export default function Leaderboard() {
         </div>
 
         {currentUserEntry && (
-          <Card className="mb-8 bg-primary/10 border-primary/20 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1 min-w-[250px]">
-                  <div className="font-bold text-center text-xl w-12 flex items-center justify-center gap-2">
-                    <Trophy className="h-6 w-6 text-yellow-400" />
-                    <span>{currentUserEntry.rank}</span>
-                  </div>
-                  <Avatar className="h-12 w-12 border-2 border-primary">
-                    <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                    <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                    <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-                        {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
-                            <div className="flex items-center gap-1.5">
-                                <Building className="h-4 w-4" />
-                                <span>{currentUserEntry.company}</span>
-                            </div>
-                        )}
-                        {currentUserEntry.country && (
-                             <div className="flex items-center gap-1.5">
-                                <Globe className="h-4 w-4" />
-                                <span>{currentUserEntry.country}</span>
-                            </div>
-                        )}
+          <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            <div className="lg:col-span-1">
+              <Card className="h-full bg-primary/10 border-primary/20 shadow-lg">
+                <CardContent className="p-6 flex flex-col justify-between h-full">
+                  <div className="flex items-center gap-4">
+                    <div className="font-bold text-center text-xl w-12 flex items-center justify-center gap-2">
+                      <Trophy className="h-6 w-6 text-yellow-400" />
+                      <span>{currentUserEntry.rank}</span>
+                    </div>
+                    <Avatar className="h-12 w-12 border-2 border-primary">
+                      <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                      <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-lg">{currentUserEntry.name}</p>
+                      <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-mono font-semibold text-xl">{currentUserEntry.points.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Points</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
+                              <div className="flex items-center gap-1.5">
+                                  <Building className="h-4 w-4" />
+                                  <span>{currentUserEntry.company}</span>
+                              </div>
+                          )}
+                          {currentUserEntry.country && (
+                              <div className="flex items-center gap-1.5">
+                                  <Globe className="h-4 w-4" />
+                                  <span>{currentUserEntry.country}</span>
+                              </div>
+                          )}
+                    </div>
+                    <div className="pt-2 text-right">
+                      <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">Points</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-2">
+              {suggestedProblem ? (
+                  <Card className="h-full flex flex-col">
+                    <CardHeader>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-primary/10 rounded-lg">
+                                <BookOpen className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle>Challenge Yourself!</CardTitle>
+                              <CardDescription>Solve this to climb the leaderboard.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                      <h3 className="text-lg font-semibold">{suggestedProblem.title}</h3>
+                      <div className="flex items-center gap-4 mt-2">
+                        <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
+                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
+                          {suggestedProblem.difficulty}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button asChild className="w-full">
+                          <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
+                            Start Challenge
+                          </Link>
+                        </Button>
+                    </CardFooter>
+                  </Card>
+              ) : (
+                <Card className="h-full flex items-center justify-center">
+                  <CardContent className="text-center p-6">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+                    <p className="text-muted-foreground">
+                        {allProblems.length > 0 ? "You've solved all the problems. Great job!" : "Loading a suggestion for you..."}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         )}
         
         <div className="flex flex-col md:flex-row gap-4 mb-8">
