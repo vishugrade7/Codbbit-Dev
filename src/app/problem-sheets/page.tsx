@@ -16,12 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
   const [loading, setLoading] = useState(true);
   const { user: authUser } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -93,7 +95,7 @@ export default function ProblemSheetsListPage() {
                       className="absolute top-3 right-3 h-8 w-8 z-10 bg-card/80 hover:bg-card"
                       onClick={(e) => {
                         e.preventDefault();
-                        toast({ title: "Edit functionality coming soon!" });
+                        router.push(`/problem-sheets/create?id=${sheet.id}`);
                       }}
                     >
                       <Pencil className="h-4 w-4" />

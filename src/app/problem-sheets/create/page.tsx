@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useRouter, useSearchParams } from "next/navigation";
+import { doc, getDoc, collection, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import type { Problem, ApexProblemsData } from "@/types";
+import type { Problem, ApexProblemsData, ProblemSheet } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
@@ -28,7 +28,11 @@ type ProblemWithCategory = Problem & { categoryName: string };
 export default function CreateProblemSheetPage() {
     const { toast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user: authUser, userData } = useAuth();
+    
+    const sheetId = searchParams.get('id');
+    const formMode = sheetId ? 'edit' : 'create';
 
     const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,30 +41,50 @@ export default function CreateProblemSheetPage() {
 
     const [selectedProblemIds, setSelectedProblemIds] = useState<Set<string>>(new Set());
     const [sheetName, setSheetName] = useState("");
-    const [isCreating, setIsCreating] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     
     useEffect(() => {
-        const fetchProblems = async () => {
+        const fetchProblemsAndSheet = async () => {
             setLoading(true);
             try {
+                // Fetch all problems
                 const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data().Category as ApexProblemsData;
+                const problemsSnap = await getDoc(apexDocRef);
+                if (problemsSnap.exists()) {
+                    const data = problemsSnap.data().Category as ApexProblemsData;
                     const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                         (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                     );
                     setAllProblems(problems);
                 }
+
+                // If in edit mode, fetch sheet data
+                if (formMode === 'edit' && sheetId) {
+                    const sheetDocRef = doc(db, 'problem-sheets', sheetId);
+                    const sheetSnap = await getDoc(sheetDocRef);
+                    if (sheetSnap.exists()) {
+                        const sheetData = sheetSnap.data() as ProblemSheet;
+                        if (sheetData.createdBy !== authUser?.uid) {
+                            toast({ variant: 'destructive', title: 'Unauthorized', description: "You can only edit sheets you have created." });
+                            router.push('/problem-sheets');
+                            return;
+                        }
+                        setSheetName(sheetData.name);
+                        setSelectedProblemIds(new Set(sheetData.problemIds));
+                    } else {
+                        toast({ variant: 'destructive', title: 'Sheet not found' });
+                        router.push('/problem-sheets');
+                    }
+                }
             } catch (error) {
-                console.error("Error fetching problems:", error);
-                toast({ variant: 'destructive', title: 'Failed to load problems' });
+                console.error("Error loading data:", error);
+                toast({ variant: 'destructive', title: 'Failed to load data' });
             } finally {
                 setLoading(false);
             }
         };
-        fetchProblems();
-    }, [toast]);
+        fetchProblemsAndSheet();
+    }, [toast, formMode, sheetId, authUser, router]);
     
     const filteredProblems = useMemo(() => {
         return allProblems
@@ -112,9 +136,9 @@ export default function CreateProblemSheetPage() {
         }
     };
     
-    const handleCreateSheet = async () => {
+    const handleSaveSheet = async () => {
         if (!authUser || !userData) {
-            toast({ variant: "destructive", title: "Please log in to create a sheet." });
+            toast({ variant: "destructive", title: "Please log in to save a sheet." });
             return;
         }
         if (!sheetName) {
@@ -130,45 +154,58 @@ export default function CreateProblemSheetPage() {
             return;
         }
 
-        setIsCreating(true);
+        setIsSaving(true);
         const problemIds = selectedProblems.map(p => p.id);
         
         try {
-            const sheetsCollection = collection(db, 'problem-sheets');
-            const newSheetDoc = await addDoc(sheetsCollection, {
-                name: sheetName,
-                problemIds: problemIds,
-                createdBy: authUser.uid,
-                creatorName: userData.name,
-                creatorAvatarUrl: userData.avatarUrl,
-                createdAt: serverTimestamp(),
-                isPublic: true,
-            });
+            if (formMode === 'edit' && sheetId) {
+                 const sheetDocRef = doc(db, 'problem-sheets', sheetId);
+                 await updateDoc(sheetDocRef, {
+                    name: sheetName,
+                    problemIds: problemIds,
+                 });
+                 toast({ title: "Sheet updated successfully!" });
+                 router.push(`/sheets/${sheetId}`);
+            } else {
+                const sheetsCollection = collection(db, 'problem-sheets');
+                const newSheetDoc = await addDoc(sheetsCollection, {
+                    name: sheetName,
+                    problemIds: problemIds,
+                    createdBy: authUser.uid,
+                    creatorName: userData.name,
+                    creatorAvatarUrl: userData.avatarUrl,
+                    createdAt: serverTimestamp(),
+                    isPublic: true,
+                });
 
-            toast({ title: "Sheet created successfully!", description: "Redirecting you to your new sheet." });
-            router.push(`/sheets/${newSheetDoc.id}`);
-
+                toast({ title: "Sheet created successfully!", description: "Redirecting you to your new sheet." });
+                router.push(`/sheets/${newSheetDoc.id}`);
+            }
         } catch (error) {
-            console.error("Error creating problem sheet:", error);
+            console.error(`Error ${formMode}ing problem sheet:`, error);
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            toast({ variant: "destructive", title: "Failed to create sheet", description: errorMessage });
+            toast({ variant: "destructive", title: `Failed to ${formMode} sheet`, description: errorMessage });
         } finally {
-            setIsCreating(false);
+            setIsSaving(false);
         }
     };
+
+    const backUrl = formMode === 'edit' && sheetId ? `/sheets/${sheetId}` : '/problem-sheets';
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-background">
             <Header />
             <main className="flex-1 container py-8 flex flex-col">
                  <div className="mb-8">
-                    <Button variant="outline" onClick={() => router.push('/problem-sheets')} className="mb-4">
+                    <Button variant="outline" onClick={() => router.push(backUrl)} className="mb-4">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to All Sheets
+                        {formMode === 'edit' ? 'Back to Sheet' : 'Back to All Sheets'}
                     </Button>
-                    <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Create New Problem Sheet</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
+                        {formMode === 'edit' ? 'Edit Problem Sheet' : 'Create New Problem Sheet'}
+                    </h1>
                     <p className="text-muted-foreground mt-4 max-w-2xl">
-                        Build a custom problem sheet to share with friends, for interviews, or for targeted practice.
+                        {formMode === 'edit' ? 'Update the details of your problem sheet.' : 'Build a custom problem sheet to share with friends, for interviews, or for targeted practice.'}
                     </p>
                 </div>
 
@@ -253,7 +290,7 @@ export default function CreateProblemSheetPage() {
                     <ResizablePanel defaultSize={40} minSize={30}>
                        <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
                             <CardHeader>
-                                <CardTitle>Your New Sheet</CardTitle>
+                                <CardTitle>{formMode === 'edit' ? 'Editing Sheet' : 'Your New Sheet'}</CardTitle>
                                 <CardDescription>Select problems from the list to add them here.</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-1 flex flex-col gap-4">
@@ -290,9 +327,9 @@ export default function CreateProblemSheetPage() {
                                 </ScrollArea>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" onClick={handleCreateSheet} disabled={isCreating}>
-                                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Create & Share Sheet
+                                <Button className="w-full" onClick={handleSaveSheet} disabled={isSaving}>
+                                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
                                 </Button>
                             </CardFooter>
                        </Card>
