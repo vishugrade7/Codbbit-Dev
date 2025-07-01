@@ -400,7 +400,7 @@ export async function upsertCourseToFirestore(data: z.infer<typeof courseSchema>
 
 // #region Navigation Settings
 const defaultNavLinks: NavLink[] = [
-    { id: 'apex-problems', label: 'Apex Problems', href: '/apex-problems', isEnabled: true, isProtected: true },
+    { id: 'apex-problems', label: 'Practice Problems', href: '/apex-problems', isEnabled: true, isProtected: true },
     { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true },
     { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true },
     { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true },

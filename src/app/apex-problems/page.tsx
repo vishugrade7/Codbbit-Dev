@@ -76,7 +76,7 @@ export default function ApexProblems() {
       <Header />
       <main className="flex-1 container py-8">
         <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Apex Problems</h1>
+            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Practice Problems</h1>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
                 Hone your skills by solving a curated list of problems. Select a category to get started.
             </p>

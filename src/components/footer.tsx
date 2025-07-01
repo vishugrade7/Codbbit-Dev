@@ -20,7 +20,7 @@ export default function Footer() {
             <h3 className="font-semibold">Platform</h3>
             <Link href="/courses" className="text-muted-foreground hover:text-foreground">Courses</Link>
             <Link href="/leaderboard" className="text-muted-foreground hover:text-foreground">Leaderboard</Link>
-            <Link href="/apex-problems" className="text-muted-foreground hover:text-foreground">Apex Problems</Link>
+            <Link href="/apex-problems" className="text-muted-foreground hover:text-foreground">Practice Problems</Link>
           </div>
           <div className="grid gap-2 text-sm">
             <h3 className="font-semibold">Community</h3>
