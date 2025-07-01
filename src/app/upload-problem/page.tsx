@@ -20,7 +20,7 @@ import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory } fro
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,16 +102,49 @@ function UploadProblemContent() {
         setViewMode('form');
     }
 
+    if (viewMode === 'form') {
+      return (
+        <ProblemForm
+          formMode={formMode}
+          problem={currentProblem}
+          onClose={() => setViewMode('list')}
+        />
+      );
+    }
+
     return (
-        viewMode === 'list' ? (
-            <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
-        ) : (
-            <ProblemForm 
-                formMode={formMode}
-                problem={currentProblem} 
-                onClose={() => setViewMode('list')} 
-            />
-        )
+        <div>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-8">
+                <div>
+                    <h1 className="text-4xl font-bold font-headline">Admin Dashboard</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Manage platform content including problems and courses.
+                    </p>
+                </div>
+            </div>
+
+            <div className="space-y-8">
+                <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Course Management</CardTitle>
+                        <CardDescription>Add, edit, or remove courses from the platform.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">Course management functionality is coming soon.</p>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button disabled>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add New Course
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+        </div>
     );
 }
 
@@ -218,13 +251,13 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     };
 
     return (
-        <div>
-            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+        <Card>
+            <CardHeader className="flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold font-headline">Problem Management</h1>
-                    <p className="text-muted-foreground mt-2">
+                    <CardTitle>Problem Management</CardTitle>
+                    <CardDescription>
                         View, edit, or add new Apex coding challenges to the platform.
-                    </p>
+                    </CardDescription>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                      <Button onClick={() => setIsCategoryModalOpen(true)} variant="secondary">
@@ -240,75 +273,77 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                         Add New Problem
                     </Button>
                 </div>
-            </div>
-            
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
-            <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
+            </CardHeader>
+            <CardContent>
+                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
+                <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
 
-
-            <div className="flex flex-col md:flex-row gap-4 my-8">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search problems by title..."
-                        className="w-full pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col md:flex-row gap-4 mt-4 border-t pt-6">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search problems by title..."
+                            className="w-full pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        {["All", "Easy", "Medium", "Hard"].map((diff) => (
+                        <Button
+                            key={diff}
+                            variant={difficultyFilter === diff ? "default" : "outline"}
+                            onClick={() => setDifficultyFilter(diff)}
+                            className="flex-1 md:flex-none"
+                        >
+                            {diff}
+                        </Button>
+                        ))}
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    {["All", "Easy", "Medium", "Hard"].map((diff) => (
-                    <Button
-                        key={diff}
-                        variant={difficultyFilter === diff ? "default" : "outline"}
-                        onClick={() => setDifficultyFilter(diff)}
-                        className="flex-1 md:flex-none"
-                    >
-                        {diff}
-                    </Button>
-                    ))}
+                
+                <div className="mt-4">
+                    {loading ? (
+                        <div className="flex justify-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+                    ) : filteredProblems.length > 0 ? (
+                        <div className="rounded-lg border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead>Difficulty</TableHead>
+                                        <TableHead className="w-[100px] text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredProblems.map((problem) => (
+                                        <TableRow key={problem.id}>
+                                            <TableCell className="font-medium">{problem.title}</TableCell>
+                                            <TableCell>{problem.categoryName}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                    {problem.difficulty}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="outline" size="sm" onClick={() => onEdit(problem)}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-muted-foreground">No problems found for the selected criteria.</p>
+                        </div>
+                    )}
                 </div>
-            </div>
-            
-            {loading ? (
-                <div className="flex justify-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
-            ) : filteredProblems.length > 0 ? (
-                <div className="rounded-lg border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead>Difficulty</TableHead>
-                                <TableHead className="w-[100px] text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredProblems.map((problem) => (
-                                <TableRow key={problem.id}>
-                                    <TableCell className="font-medium">{problem.title}</TableCell>
-                                    <TableCell>{problem.categoryName}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                            {problem.difficulty}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="outline" size="sm" onClick={() => onEdit(problem)}>
-                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            ) : (
-                <div className="text-center py-12">
-                    <p className="text-muted-foreground">No problems found for the selected criteria.</p>
-                </div>
-            )}
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 // #endregion
