@@ -11,11 +11,11 @@ import { useTheme } from "next-themes";
 import { doc, getDoc, collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser } from "@/types";
+import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, makeUserAdmin, getAdminUsers, setAdminStatus } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, makeUserAdmin, getAdminUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -89,6 +89,16 @@ const courseFormSchema = z.object({
     isPublished: z.boolean(),
 });
 
+const navLinksSchema = z.object({
+    links: z.array(z.object({
+        id: z.string(),
+        label: z.string().min(1, 'Label is required'),
+        href: z.string().min(1, 'Href is required').refine(val => val.startsWith('/'), { message: 'Href must start with /' }),
+        isEnabled: z.boolean(),
+        isProtected: z.boolean(),
+    }))
+});
+
 // #endregion
 
 type FormMode = 'add' | 'edit';
@@ -99,7 +109,7 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form' | 'user-management';
+    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form' | 'user-management' | 'navigation-management';
     const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
     
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
@@ -187,6 +197,18 @@ function UploadProblemContent() {
         )
     }
 
+     if (viewMode === 'navigation-management') {
+        return (
+            <div>
+                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+                <NavigationManagementView />
+            </div>
+        )
+    }
+
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-8">
@@ -255,6 +277,26 @@ function UploadProblemContent() {
                     <CardFooter>
                        <div className="text-sm text-primary font-semibold flex items-center gap-2">
                            Manage Users <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                       </div>
+                    </CardFooter>
+                </Card>
+
+                 <Card 
+                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                    onClick={() => setViewMode('navigation-management')}
+                >
+                    <CardHeader>
+                        <CardTitle>Navigation Management</CardTitle>
+                        <CardDescription>Control the links displayed in the main app header.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-center justify-center">
+                        <div className="text-muted-foreground/20">
+                           <MenuIcon className="h-24 w-24" />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                           Manage Navigation <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
                        </div>
                     </CardFooter>
                 </Card>
@@ -712,6 +754,120 @@ function AddAdminCard() {
                     </Button>
                 </div>
             </CardContent>
+        </Card>
+    )
+}
+// #endregion
+
+// #region NavigationManagementView
+function NavigationManagementView() {
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const form = useForm<z.infer<typeof navLinksSchema>>({
+        resolver: zodResolver(navLinksSchema),
+        defaultValues: { links: [] }
+    });
+    const { fields, append, remove } = useFieldArray({ control: form.control, name: "links" });
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            setIsLoading(true);
+            try {
+                const links = await getNavigationSettings();
+                form.reset({ links });
+            } catch (error) {
+                 toast({ variant: 'destructive', title: 'Error', description: "Could not load navigation settings." });
+            }
+            setIsLoading(false);
+        };
+        loadSettings();
+    }, [form, toast]);
+
+    const onSubmit = async (data: z.infer<typeof navLinksSchema>) => {
+        setIsSaving(true);
+        const result = await updateNavigationSettings(data.links);
+        if (result.success) {
+            toast({ title: 'Success', description: result.message });
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsSaving(false);
+    };
+
+    if (isLoading) {
+      return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Navigation Management</CardTitle>
+                <CardDescription>Configure the main application navigation links.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+            </CardContent>
+        </Card>
+      )
+    }
+
+    return (
+        <Card>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardHeader>
+                        <CardTitle>Navigation Management</CardTitle>
+                        <CardDescription>Enable, disable, add, or remove navigation links.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-3">
+                        {fields.map((field, index) => (
+                            <div key={field.id} className="flex items-start sm:items-center gap-2 p-3 border rounded-lg flex-col sm:flex-row">
+                                <GripVertical className="h-5 w-5 text-muted-foreground hidden sm:block" />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 w-full">
+                                    <FormField
+                                        control={form.control}
+                                        name={`links.${index}.label`}
+                                        render={({ field }) => <FormItem><FormLabel className="sm:hidden">Label</FormLabel><FormControl><Input placeholder="Label" {...field} /></FormControl><FormMessage/></FormItem>}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`links.${index}.href`}
+                                        render={({ field }) => <FormItem><FormLabel className="sm:hidden">Href</FormLabel><FormControl><Input placeholder="Href (e.g. /about)" {...field} /></FormControl><FormMessage/></FormItem>}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between w-full sm:w-auto">
+                                    <div className="flex items-center gap-4 pl-2">
+                                        <FormField
+                                            control={form.control}
+                                            name={`links.${index}.isEnabled`}
+                                            render={({ field: switchField }) => (
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor={`enabled-${index}`} className="text-sm">Enabled</Label>
+                                                    <Switch id={`enabled-${index}`} checked={switchField.value} onCheckedChange={switchField.onChange} />
+                                                </div>
+                                            )}
+                                        />
+                                    </div>
+                                    <Button type="button" variant="ghost" size="icon" disabled={field.isProtected} onClick={() => remove(index)} className="text-destructive disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Delete</span>
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                        <Button type="button" variant="outline" onClick={() => append({ id: crypto.randomUUID(), label: '', href: '/', isEnabled: false, isProtected: false })}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Link
+                        </Button>
+                    </CardContent>
+                    <CardFooter>
+                         <Button type="submit" disabled={isSaving}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Form>
         </Card>
     )
 }

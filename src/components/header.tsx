@@ -12,19 +12,29 @@ import { auth } from "@/lib/firebase";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { NavLink } from "@/types";
+import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userData, loading } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
+  
+  const [navLinks, setNavLinks] = useState<NavLink[]>([]);
+  const [loadingNav, setLoadingNav] = useState(true);
 
-  const navLinks = [
-    { href: "/apex-problems", label: "Apex Problems" },
-    { href: "/courses", label: "Courses" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/problem-sheets", label: "Problem Sheets" },
-  ];
+  useEffect(() => {
+    const fetchNavLinks = async () => {
+      setLoadingNav(true);
+      const links = await getPublicNavigationLinks();
+      setNavLinks(links);
+      setLoadingNav(false);
+    };
+    fetchNavLinks();
+  }, []);
 
   const adminNavLinks = [
       { href: "/upload-problem", label: "Admin Page", icon: UploadCloud }
@@ -52,18 +62,26 @@ export default function Header() {
             <span className="text-lg font-bold font-headline">Codbbit</span>
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname === link.href ? "text-foreground" : "text-foreground/60"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+             {loadingNav ? (
+                <>
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-5 w-28" />
+                </>
+            ) : (
+                navLinks.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                    "transition-colors hover:text-foreground/80",
+                    pathname === link.href ? "text-foreground" : "text-foreground/60"
+                    )}
+                >
+                    {link.label}
+                </Link>
+                ))
+            )}
             {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
                  <Link
                     key={link.href}
@@ -80,7 +98,7 @@ export default function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {loading ? (
+          {authLoading ? (
             <div className="flex items-center gap-4">
                 <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
                 <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />

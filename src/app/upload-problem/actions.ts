@@ -3,7 +3,7 @@
 
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, User } from '@/types';
+import type { Problem, Course, User, NavLink } from '@/types';
 import { z } from "zod";
 
 // #region Problem Schemas
@@ -369,3 +369,63 @@ export async function upsertCourseToFirestore(data: z.infer<typeof courseSchema>
         return { success: false, error: errorMessage };
     }
 }
+
+// #region Navigation Settings
+const defaultNavLinks: NavLink[] = [
+    { id: 'apex-problems', label: 'Apex Problems', href: '/apex-problems', isEnabled: true, isProtected: true },
+    { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true },
+    { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true },
+    { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true },
+];
+
+export async function getNavigationSettings(): Promise<NavLink[]> {
+    if (!db) throw new Error("Database not initialized.");
+    const settingsDocRef = doc(db, 'settings', 'navigation');
+    const docSnap = await getDoc(settingsDocRef);
+
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        return data.links || defaultNavLinks;
+    } else {
+        await setDoc(settingsDocRef, { links: defaultNavLinks });
+        return defaultNavLinks;
+    }
+}
+
+export async function updateNavigationSettings(links: NavLink[]) {
+    if (!db) return { success: false, error: "Database not initialized." };
+    
+    const linksSchema = z.array(z.object({
+        id: z.string(),
+        label: z.string().min(1, 'Label is required'),
+        href: z.string().min(1, 'Href is required').refine(val => val.startsWith('/'), { message: 'Href must start with /' }),
+        isEnabled: z.boolean(),
+        isProtected: z.boolean(),
+    }));
+
+    const validation = linksSchema.safeParse(links);
+    if (!validation.success) {
+        return { success: false, error: validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+
+    const settingsDocRef = doc(db, 'settings', 'navigation');
+    try {
+        await setDoc(settingsDocRef, { links: validation.data });
+        return { success: true, message: "Navigation settings updated successfully." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function getPublicNavigationLinks(): Promise<NavLink[]> {
+    try {
+        if (!db) return defaultNavLinks.filter(link => link.isEnabled);
+        const allLinks = await getNavigationSettings();
+        return allLinks.filter(link => link.isEnabled);
+    } catch (error) {
+        console.error("Failed to fetch nav links, returning defaults:", error);
+        return defaultNavLinks.filter(link => link.isEnabled);
+    }
+}
+// #endregion

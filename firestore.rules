@@ -1,44 +1,67 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Admins can manage problems.
-    match /problems/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
-    // Authenticated users can manage their own sheets.
-    match /problem-sheets/{sheetId} {
-      allow read: if true;
-      allow create: if request.auth.uid == request.resource.data.createdBy;
-      allow update: if request.auth.uid == resource.data.createdBy;
-      allow delete: if request.auth.uid == resource.data.createdBy;
-    }
-
-    // Published courses are public; admins manage all courses.
-    match /courses/{courseId} {
-      allow read: if resource.data.isPublished == true || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
-    // Users can read any profile, but only update their own. Admins can update any profile.
-    match /users/{userId} {
-      allow read: if true;
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId || (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
-      allow delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
     
-    // Salesforce data is private to the user.
-    match /salesforceData/{userId} {
-      allow read, write: if request.auth.uid == userId;
+    function isAdmin() {
+      // Check if the user is authenticated and if their user document has isAdmin set to true.
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Default deny all other collections.
-    match /{path=**} {
-      allow read, write: if false;
+    match /users/{userId} {
+      // Anyone can read a user's profile.
+      allow read: if true;
+      // Only the owner can create their own user document upon signup.
+      allow create: if isOwner(userId);
+      // Only the owner can update their own profile information.
+      allow update: if isOwner(userId) || isAdmin(); // allow admins to update users too
+      // Deleting users is disallowed from the client.
+      allow delete: if false;
+    }
+
+    match /problems/{document=**} {
+      // Anyone can read problems.
+      allow read: if true;
+      // Only admins can write (create, update, delete) problems.
+      allow write: if isAdmin();
+    }
+    
+    match /courses/{courseId} {
+      // Anyone can read published courses.
+      allow read: if true;
+      // Only admins can write courses.
+      allow write: if isAdmin();
+    }
+
+    match /problem-sheets/{sheetId} {
+      // Anyone can read a problem sheet.
+      allow read: if true;
+      // Any authenticated user can create a sheet.
+      allow create: if request.auth != null;
+      // Only the original creator or an admin can update or delete a sheet.
+      allow update, delete: if request.auth != null && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
+    
+    match /salesforceData/{document=**} {
+      // Only authenticated users can access their own Salesforce data.
+      allow read, write: if request.auth != null;
+    }
+    
+    match /settings/{docId} {
+        // Anyone can read settings (like navigation).
+        allow read: if true;
+        // Only admins can change settings.
+        allow write: if isAdmin();
+    }
+    
+    // Deny all other reads and writes by default for security.
+    match /{path=**}/documents/{document=**} {
+        allow read, write: if false;
     }
   }
 }

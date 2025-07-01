@@ -133,3 +133,11 @@ export type ProblemSheet = {
   problemIds: string[];
   subscribers?: string[];
 };
+
+export type NavLink = {
+  id: string;
+  label: string;
+  href: string;
+  isEnabled: boolean;
+  isProtected: boolean; // To prevent deletion of core links
+};
