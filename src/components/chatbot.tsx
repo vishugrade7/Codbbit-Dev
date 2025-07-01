@@ -71,11 +71,11 @@ export default function Chatbot() {
         <Card className="w-80 h-[28rem] sm:w-96 sm:h-[32rem] flex flex-col shadow-2xl rounded-2xl overflow-hidden">
           <CardHeader className="flex flex-row items-center gap-3 p-4 bg-gradient-to-r from-primary to-blue-500 text-primary-foreground">
              <Avatar>
-                <AvatarFallback className="bg-white text-primary font-bold">D</AvatarFallback>
+                <AvatarFallback className="bg-white text-primary font-bold">C</AvatarFallback>
             </Avatar>
             <div>
-                <p className="font-bold text-base">Decodeforce</p>
-                <p className="text-xs opacity-80">We'll return tomorrow at 12:30 AM</p>
+                <p className="font-bold text-base">Codbbit</p>
+                <p className="text-xs opacity-80">AI Assistant</p>
             </div>
           </CardHeader>
           <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-background">
@@ -83,7 +83,7 @@ export default function Chatbot() {
                 <div key={index} className={cn("flex items-start gap-2.5", message.sender === 'user' && 'justify-end')}>
                     {message.sender === 'bot' && (
                         <Avatar className="w-8 h-8 shrink-0">
-                            <AvatarFallback className="bg-muted text-muted-foreground font-bold">D</AvatarFallback>
+                            <AvatarFallback className="bg-muted text-muted-foreground font-bold">C</AvatarFallback>
                         </Avatar>
                     )}
                     <div className={cn(
@@ -103,7 +103,7 @@ export default function Chatbot() {
              {isLoading && (
                  <div className="flex items-start gap-2.5">
                     <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarFallback className="bg-muted text-muted-foreground font-bold">D</AvatarFallback>
+                        <AvatarFallback className="bg-muted text-muted-foreground font-bold">C</AvatarFallback>
                     </Avatar>
                      <div className="bg-muted rounded-xl px-3 py-2 text-sm">
                         <Loader2 className="h-4 w-4 animate-spin"/>
