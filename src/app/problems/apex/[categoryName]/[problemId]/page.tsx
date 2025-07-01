@@ -324,19 +324,6 @@ export default function ProblemWorkspacePage() {
                 </Sheet>
             </div>
             <div className="flex items-center gap-2">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
-                                {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                                <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
                  <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
                     {isStarring ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -422,6 +409,19 @@ export default function ProblemWorkspacePage() {
                                     <span>Apex Code</span>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
+                                                    {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                                                    <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                      <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
@@ -494,5 +494,7 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
+    
 
     
