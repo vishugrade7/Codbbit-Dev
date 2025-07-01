@@ -12,7 +12,9 @@ const exampleSchema = z.object({
   explanation: z.string().optional(),
 });
 
-const formSchema = z.object({
+// Base schema for a problem, without refinement.
+// This can be used for .omit() and other object manipulations.
+const problemObjectSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
@@ -24,7 +26,10 @@ const formSchema = z.object({
   testcases: z.string().min(1, "Test cases are required."),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
-}).refine(data => {
+});
+
+// Schema for form validation, with refinement.
+const formSchema = problemObjectSchema.refine(data => {
     if (data.metadataType === 'Trigger') {
         return !!data.triggerSObject && data.triggerSObject.length > 0;
     }
@@ -34,7 +39,9 @@ const formSchema = z.object({
     path: ["triggerSObject"],
 });
 
-const bulkProblemSchema = formSchema.omit({ id: true });
+// Schema for a single problem in a bulk upload (id is not present).
+// We use .omit on the base object schema, which is valid.
+const bulkProblemSchema = problemObjectSchema.omit({ id: true });
 const bulkUploadSchema = z.array(bulkProblemSchema);
 
 
