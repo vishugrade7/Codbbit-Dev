@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ export default function Header() {
     { href: "/apex-problems", label: "Apex Problems" },
     { href: "/courses", label: "Courses" },
     { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/problem-sheets", label: "Problem Sheets" },
   ];
 
   const adminNavLinks = [
@@ -134,10 +135,39 @@ export default function Header() {
                     <Flame className="h-5 w-5" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                  <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                </Avatar>
+                 <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                     <Avatar className="h-10 w-10 cursor-pointer">
+                        <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                        <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                   <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/profile')}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/settings')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -178,10 +208,10 @@ export default function Header() {
                             </Link>
                         ))}
                       </nav>
-                      <div className="flex flex-col gap-4 mt-4">
-                         <Button variant="ghost" asChild><Link href="/profile">Profile</Link></Button>
-                         <Button variant="ghost" asChild><Link href="/settings">Settings</Link></Button>
-                         <Button onClick={handleLogout}>Logout</Button>
+                      {/* Separate actions for mobile sheet */}
+                      <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+                        <Button variant="outline" asChild><Link href="/profile">Profile</Link></Button>
+                        <Button variant="secondary" onClick={handleLogout}>Logout</Button>
                       </div>
                     </div>
                   </SheetContent>
