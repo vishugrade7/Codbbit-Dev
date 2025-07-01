@@ -274,8 +274,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 
         const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, userCode, problem.triggerSObject);
         
-        await sleep(2000); // Wait after main object compilation to avoid platform conflicts
-
         const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
 
         log.push("\n--- Running Tests ---");
