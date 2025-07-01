@@ -11,13 +11,17 @@ import { formatDistanceToNow } from 'date-fns';
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, FileText, ChevronRight } from "lucide-react";
+import { Loader2, PlusCircle, FileText, ChevronRight, Users, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user: authUser } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -76,41 +80,68 @@ export default function ProblemSheetsListPage() {
           </div>
         ) : sheets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sheets.map((sheet) => (
-              <Link key={sheet.id} href={`/sheets/${sheet.id}`} className="block group">
-                <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.03]">
-                  <CardHeader>
-                      <CardTitle className="flex items-start gap-3">
-                        <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
-                        <span className="flex-1">{sheet.name}</span>
-                      </CardTitle>
-                      <CardDescription>
-                        {sheet.problemIds.length} {sheet.problemIds.length === 1 ? "Problem" : "Problems"}
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Avatar className="h-6 w-6">
-                            <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                            <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span>
-                            By {sheet.creatorName}
-                        </span>
-                     </div>
-                  </CardContent>
-                   <div className="p-4 pt-0 flex justify-between items-center text-xs text-muted-foreground">
-                        <span>
-                          {getRelativeDate(sheet.createdAt)}
-                        </span>
-                        <div className="flex items-center text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                            <span>View Sheet</span>
-                            <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {sheets.map((sheet) => {
+              const isCreator = authUser?.uid === sheet.createdBy;
+              const subscribersCount = sheet.subscribers?.length || 0;
+
+              return (
+                <div key={sheet.id} className="relative group">
+                  {isCreator && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-3 right-3 h-8 w-8 z-10 bg-card/80 hover:bg-card"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toast({ title: "Edit functionality coming soon!" });
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit Sheet</span>
+                    </Button>
+                  )}
+                  <Link href={`/sheets/${sheet.id}`} className="block h-full">
+                    <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.03]">
+                      <CardHeader>
+                          <CardTitle className="flex items-start gap-3 pr-10">
+                            <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                            <span className="flex-1">{sheet.name}</span>
+                          </CardTitle>
+                          <CardDescription>
+                            {sheet.problemIds.length} {sheet.problemIds.length === 1 ? "Problem" : "Problems"}
+                          </CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow flex flex-col justify-end">
+                         <div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                    <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span>
+                                    By {sheet.creatorName}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
+                                <Users className="h-4 w-4" />
+                                <span>{subscribersCount} {subscribersCount === 1 ? 'subscriber' : 'subscribers'}</span>
+                            </div>
+                         </div>
+                      </CardContent>
+                       <div className="p-4 pt-2 flex justify-between items-center text-xs text-muted-foreground">
+                            <span>
+                              {getRelativeDate(sheet.createdAt)}
+                            </span>
+                            <div className="flex items-center text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
+                                <span>View Sheet</span>
+                                <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </div>
                         </div>
-                    </div>
-                </Card>
-              </Link>
-            ))}
+                    </Card>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
