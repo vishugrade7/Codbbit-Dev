@@ -1,10 +1,9 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Problem, SolvedProblemDetail } from '@/types';
-import { BADGES } from '@/lib/badges';
+import type { User, Problem, SolvedProblemDetail, Badge } from '@/types';
 
 
 type SalesforceTokenResponse = {
@@ -214,6 +213,11 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
 
     try {
         let awardedBadges: string[] = [];
+
+        const badgesCollectionRef = collection(db, 'badges');
+        const badgesSnapshot = await getDocs(badgesCollectionRef);
+        const badgesToAward = badgesSnapshot.docs.map(doc => doc.data() as Omit<Badge, 'id'>);
+
         await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userDocRef);
             if (!userDoc.exists()) {
@@ -276,9 +280,9 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
             const activeDaysCount = Object.keys(submissionHeatmap).length;
 
 
-            for (const badgeName in BADGES) {
-                if (!newAchievements[badgeName]) { // Check if badge is not already earned
-                    const criteria = BADGES[badgeName];
+            for (const badge of badgesToAward) {
+                if (!newAchievements[badge.name]) { // Check if badge is not already earned
+                    const criteria = badge;
                     let earned = false;
 
                     switch (criteria.type) {
@@ -302,12 +306,12 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                     }
                     
                     if (earned) {
-                        newAchievements[badgeName] = {
-                            name: badgeName,
+                        newAchievements[badge.name] = {
+                            name: badge.name,
                             description: criteria.description,
                             date: serverTimestamp(),
                         };
-                        awardedBadges.push(badgeName);
+                        awardedBadges.push(badge.name);
                     }
                 }
             }

@@ -6,6 +6,9 @@ export type BadgeCriteria = {
   category?: string; // For CATEGORY_SOLVED
 };
 
+// THIS FILE IS NO LONGER USED FOR AWARDING BADGES.
+// Badge criteria are now managed dynamically in the 'badges' Firestore collection.
+// This file can be kept for reference or one-time seeding scripts.
 export const BADGES: { [badgeName: string]: BadgeCriteria } = {
   // Streak Badges
   'Streak Starter': { description: 'Solve problems 3 days in a row', type: 'STREAK', value: 3 },

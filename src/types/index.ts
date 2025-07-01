@@ -1,4 +1,5 @@
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -141,4 +142,13 @@ export type NavLink = {
   href: string;
   isEnabled: boolean;
   isProtected: boolean; // To prevent deletion of core links
+};
+
+export type Badge = {
+  id: string;
+  name: string;
+  description: string;
+  type: 'STREAK' | 'POINTS' | 'TOTAL_SOLVED' | 'CATEGORY_SOLVED' | 'ACTIVE_DAYS';
+  value: number;
+  category?: string;
 };

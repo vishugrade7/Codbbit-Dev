@@ -1,9 +1,9 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, User, NavLink } from '@/types';
+import type { Problem, Course, User, NavLink, Badge } from '@/types';
 import { z } from "zod";
 
 // #region Problem Schemas
@@ -78,6 +78,26 @@ const setAdminStatusSchema = z.object({
     userId: z.string().min(1, "User ID is required."),
     status: z.boolean(),
 });
+
+// #region Badge Schemas
+const badgeSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, "Badge name is required."),
+    description: z.string().min(1, "Description is required."),
+    type: z.enum(['STREAK', 'POINTS', 'TOTAL_SOLVED', 'CATEGORY_SOLVED', 'ACTIVE_DAYS']),
+    value: z.coerce.number().min(1, "Value must be at least 1."),
+    category: z.string().optional(),
+}).refine(data => {
+    if (data.type === 'CATEGORY_SOLVED') {
+        return !!data.category && data.category.length > 0;
+    }
+    return true;
+}, {
+    message: "Category is required for CATEGORY_SOLVED type badges.",
+    path: ["category"],
+});
+// #endregion
+
 
 export async function makeUserAdmin(email: string) {
     const validation = makeAdminSchema.safeParse({ email });
@@ -426,6 +446,71 @@ export async function getPublicNavigationLinks(): Promise<NavLink[]> {
     } catch (error) {
         console.error("Failed to fetch nav links, returning defaults:", error);
         return defaultNavLinks.filter(link => link.isEnabled);
+    }
+}
+// #endregion
+
+// #region Badge Management
+export async function getBadges(): Promise<{ success: boolean; badges: Badge[]; error?: string }> {
+    if (!db) {
+        return { success: false, error: "Database not initialized.", badges: [] };
+    }
+
+    try {
+        const badgesRef = collection(db, "badges");
+        const q = query(badgesRef, orderBy("name"));
+        const querySnapshot = await getDocs(q);
+        
+        const badges = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Badge));
+        return { success: true, badges };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage, badges: [] };
+    }
+}
+
+export async function upsertBadge(data: z.infer<typeof badgeSchema>) {
+    const validation = badgeSchema.safeParse(data);
+    if (!validation.success) {
+        return { success: false, error: validation.error.errors[0].message };
+    }
+    if (!db) {
+        return { success: false, error: "Database not initialized." };
+    }
+
+    const { id, ...badgeData } = validation.data;
+    
+    try {
+        let docRef;
+        if (id) {
+            docRef = doc(db, 'badges', id);
+            await updateDoc(docRef, badgeData);
+        } else {
+            docRef = doc(collection(db, 'badges'));
+            await setDoc(docRef, badgeData);
+        }
+        return { success: true, message: `Badge ${id ? 'updated' : 'created'} successfully!` };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function deleteBadge(badgeId: string) {
+    if (!badgeId) {
+        return { success: false, error: "Badge ID is required." };
+    }
+    if (!db) {
+        return { success: false, error: "Database not initialized." };
+    }
+    
+    try {
+        await deleteDoc(doc(db, 'badges', badgeId));
+        return { success: true, message: "Badge deleted successfully." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
     }
 }
 // #endregion
