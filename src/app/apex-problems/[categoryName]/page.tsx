@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -14,7 +15,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, CheckCircle2, ArrowLeft, Circle } from "lucide-react";
+import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Filter } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function CategoryProblemsPage() {
   const params = useParams();
@@ -27,6 +37,7 @@ export default function CategoryProblemsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
     if (!categoryName) return;
@@ -56,9 +67,16 @@ export default function CategoryProblemsPage() {
 
   const filteredProblems = useMemo(() => {
     return problems
+      .filter((p) => {
+        if (statusFilter === "All") return true;
+        const isSolved = userData?.solvedProblems?.includes(p.id) ?? false;
+        if (statusFilter === "Solved") return isSolved;
+        if (statusFilter === "Unsolved") return !isSolved;
+        return true;
+      })
       .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
       .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [problems, searchTerm, difficultyFilter]);
+  }, [problems, searchTerm, difficultyFilter, statusFilter, userData]);
   
    const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
@@ -68,6 +86,8 @@ export default function CategoryProblemsPage() {
       default: return 'bg-muted';
     }
   };
+
+  const activeFilterCount = (difficultyFilter !== 'All' ? 1 : 0) + (statusFilter !== 'All' ? 1 : 0);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -96,18 +116,35 @@ export default function CategoryProblemsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
-            {["All", "Easy", "Medium", "Hard"].map((diff) => (
-              <Button
-                key={diff}
-                variant={difficultyFilter === diff ? "default" : "outline"}
-                onClick={() => setDifficultyFilter(diff)}
-                className="flex-1 md:flex-none"
-              >
-                {diff}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex gap-2">
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="rounded-full px-2">{activeFilterCount}</Badge>
+                )}
               </Button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Filter by Difficulty</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {loading ? (
