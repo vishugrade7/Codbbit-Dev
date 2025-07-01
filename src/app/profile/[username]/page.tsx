@@ -242,58 +242,60 @@ export default function UserProfilePage() {
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-8">
           <Card className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                    <Avatar className="h-24 w-24 border-4 border-primary">
-                        <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                        <AvatarFallback className="text-3xl">
-                            {profileUser.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                    </Avatar>
-                    {isOwnProfile && (
-                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                            {isUploading ? (
-                                <LoaderCircle className="h-8 w-8 animate-spin text-white" />
-                            ) : (
-                                <Pencil className="h-8 w-8 text-white" />
-                            )}
-                        </div>
-                    )}
-                    {isOwnProfile && (
-                     <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/gif"
-                        disabled={isUploading}
-                    />
-                    )}
-                </div>
-                <div className="flex-1 text-center md:text-left">
-                    <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
-                    <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                    <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4 text-muted-foreground text-sm">
-                        <div className="flex items-center gap-2">
-                            <Building className="h-4 w-4" />
-                            <span>{profileUser.company || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4" />
-                            <span>{profileUser.country}</span>
-                        </div>
-                        {profileUser.isEmailPublic && (
-                          <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4" />
-                              <span>{profileUser.email}</span>
-                          </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                        <Avatar className="h-24 w-24 border-4 border-primary">
+                            <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
+                            <AvatarFallback className="text-3xl">
+                                {profileUser.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                        </Avatar>
+                        {isOwnProfile && (
+                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                {isUploading ? (
+                                    <LoaderCircle className="h-8 w-8 animate-spin text-white" />
+                                ) : (
+                                    <Pencil className="h-8 w-8 text-white" />
+                                )}
+                            </div>
+                        )}
+                        {isOwnProfile && (
+                         <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/gif"
+                            disabled={isUploading}
+                        />
                         )}
                     </div>
-                     <div className="mt-4 flex justify-center md:justify-start gap-2">
-                        {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
-                        {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
-                        {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
-                        {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
+                    <div className="text-center md:text-left">
+                        <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
+                        <p className="text-md text-muted-foreground">@{profileUser.username}</p>
+                        <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4 text-muted-foreground text-sm">
+                            <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4" />
+                                <span>{profileUser.company || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4" />
+                                <span>{profileUser.country}</span>
+                            </div>
+                            {profileUser.isEmailPublic && (
+                              <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4" />
+                                  <span>{profileUser.email}</span>
+                              </div>
+                            )}
+                        </div>
+                         <div className="mt-4 flex justify-center md:justify-start gap-2">
+                            {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
+                            {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
+                            {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
+                            {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
+                        </div>
                     </div>
                 </div>
                 {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
@@ -422,5 +424,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
-    
