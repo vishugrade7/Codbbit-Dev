@@ -24,8 +24,9 @@ export async function createRazorpayOrder(amount: number, currency: 'INR' | 'USD
         payment_capture,
     };
 
-    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-        return { error: 'Razorpay keys are not configured on the server.' };
+    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET.includes('REPLACE_WITH')) {
+        console.error("Razorpay keys are not configured on the server. Please check your .env file and ensure RAZORPAY_KEY_SECRET is set.");
+        return { error: 'Payment processing is not configured on the server. Please contact the site administrator.' };
     }
 
     try {
@@ -58,8 +59,12 @@ export async function verifyAndSavePayment(
     if (!userId || !db) {
         return { success: false, error: 'User or database not found.' };
     }
-    if (!process.env.RAZORPAY_KEY_SECRET) {
-        return { success: false, error: 'Razorpay secret key not configured.'}
+
+    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!razorpaySecret || razorpaySecret.includes('REPLACE_WITH')) {
+        console.error("Razorpay secret key is not configured for payment verification. Please check your .env file.");
+        return { success: false, error: 'Could not verify payment. Please contact the site administrator.'};
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData;
@@ -67,7 +72,7 @@ export async function verifyAndSavePayment(
 
     try {
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .createHmac('sha256', razorpaySecret)
             .update(body.toString())
             .digest('hex');
         
