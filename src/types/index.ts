@@ -68,12 +68,30 @@ export type Contribution = {
   count: number;
 };
 
+export type Lesson = {
+  id: string;
+  title: string;
+  contentType: 'video' | 'pdf' | 'text' | 'problem';
+  content: string; // URL for video/pdf, markdown for text, problemId for problem
+  isFree?: boolean;
+};
+
+export type Module = {
+  id: string;
+  title: string;
+  lessons: Lesson[];
+};
+
 export type Course = {
-  id:string;
+  id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
+  category: string;
+  thumbnailUrl: string;
+  modules: Module[];
+  isPublished: boolean;
+  createdAt: any; // Firestore Timestamp
+  createdBy: string; // user UID
 };
 
 export type Example = {

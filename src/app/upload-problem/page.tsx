@@ -3,19 +3,19 @@
 
 import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData } from "@/types";
+import type { Problem, ApexProblemsData, Course, Module, Lesson } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -27,21 +27,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-
+import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // #region Schemas
-const exampleSchema = z.object({
+const problemExampleSchema = z.object({
   input: z.string().optional(),
   output: z.string().min(1, "Output is required."),
   explanation: z.string().optional(),
 });
 
-const formSchema = z.object({
+const problemFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
@@ -51,7 +52,7 @@ const formSchema = z.object({
   triggerSObject: z.string().optional(),
   sampleCode: z.string().min(1, "Sample code is required."),
   testcases: z.string().min(1, "Test cases is required."),
-  examples: z.array(exampleSchema).min(1, "At least one example is required."),
+  examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
 }).refine(data => {
     if (data.metadataType === 'Trigger') {
@@ -62,6 +63,30 @@ const formSchema = z.object({
     message: "Trigger SObject is required when Metadata Type is Trigger.",
     path: ["triggerSObject"],
 });
+
+const lessonSchema = z.object({
+    id: z.string(),
+    title: z.string().min(1, 'Lesson title is required'),
+    contentType: z.enum(['video', 'pdf', 'text', 'problem']),
+    content: z.string().min(1, 'Lesson content is required'),
+});
+
+const moduleSchema = z.object({
+    id: z.string(),
+    title: z.string().min(1, 'Module title is required'),
+    lessons: z.array(lessonSchema).min(1, 'Each module must have at least one lesson.'),
+});
+
+const courseFormSchema = z.object({
+    id: z.string().optional(),
+    title: z.string().min(1, 'Course title is required'),
+    description: z.string().min(1, 'Course description is required'),
+    category: z.string().min(1, 'Course category is required'),
+    thumbnailUrl: z.string().url('Must be a valid URL').min(1, 'Thumbnail URL is required'),
+    modules: z.array(moduleSchema).min(1, 'At least one module is required'),
+    isPublished: z.boolean(),
+});
+
 // #endregion
 
 type FormMode = 'add' | 'edit';
@@ -72,10 +97,11 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    type ViewMode = 'dashboard' | 'list' | 'form';
+    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form';
     const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
-    const [formMode, setFormMode] = useState<FormMode>('add');
+    
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
+    const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
 
     const isAuthorized = userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
 
@@ -86,42 +112,65 @@ function UploadProblemContent() {
         }
     }, [userData, authLoading, authUser, isAuthorized, router, toast]);
 
+    const handleAddNewProblem = () => {
+        setCurrentProblem(null);
+        setViewMode('problem-form');
+    }
+    
+    const handleEditProblem = (problem: ProblemWithCategory) => {
+        setCurrentProblem(problem);
+        setViewMode('problem-form');
+    }
+
+    const handleAddNewCourse = () => {
+        setCurrentCourse(null);
+        setViewMode('course-form');
+    }
+
+    const handleEditCourse = (course: Course) => {
+        setCurrentCourse(course);
+        setViewMode('course-form');
+    }
+
     if (authLoading || !isAuthorized) {
         return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
     
-    const handleAddNew = () => {
-        setCurrentProblem(null);
-        setFormMode('add');
-        setViewMode('form');
-    }
-    
-    const handleEdit = (problem: ProblemWithCategory) => {
-        setCurrentProblem(problem);
-        setFormMode('edit');
-        setViewMode('form');
-    }
-
-    if (viewMode === 'form') {
+    if (viewMode === 'problem-form') {
       return (
         <ProblemForm
-          formMode={formMode}
           problem={currentProblem}
-          onClose={() => setViewMode('list')}
+          onClose={() => setViewMode('problem-list')}
         />
       );
     }
     
-    if (viewMode === 'list') {
+    if (viewMode === 'problem-list') {
         return (
             <div>
                  <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Dashboard
                 </Button>
-                <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
+                <ProblemList onEdit={handleEditProblem} onAddNew={handleAddNewProblem} />
             </div>
         )
+    }
+
+    if (viewMode === 'course-list') {
+        return (
+            <div>
+                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+                <CourseList onEdit={handleEditCourse} onAddNew={handleAddNewCourse} />
+            </div>
+        )
+    }
+
+     if (viewMode === 'course-form') {
+        return <CourseForm course={currentCourse} onBack={() => setViewMode('course-list')} />
     }
 
     return (
@@ -138,7 +187,7 @@ function UploadProblemContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  <Card 
                     className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                    onClick={() => setViewMode('list')}
+                    onClick={() => setViewMode('problem-list')}
                  >
                     <CardHeader>
                         <CardTitle>Problem Management</CardTitle>
@@ -156,7 +205,10 @@ function UploadProblemContent() {
                     </CardFooter>
                 </Card>
 
-                <Card className="flex flex-col bg-card/50 border-dashed text-muted-foreground/60 cursor-not-allowed">
+                <Card 
+                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                    onClick={() => setViewMode('course-list')}
+                >
                     <CardHeader>
                         <CardTitle>Course Management</CardTitle>
                         <CardDescription>Add, edit, or remove courses from the platform.</CardDescription>
@@ -167,9 +219,9 @@ function UploadProblemContent() {
                         </div>
                     </CardContent>
                     <CardFooter>
-                         <Button disabled>
-                            Coming Soon
-                        </Button>
+                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                           Manage Courses <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                       </div>
                     </CardFooter>
                 </Card>
             </div>
@@ -377,6 +429,91 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
 }
 // #endregion
 
+// #region CourseList
+function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
+    const { toast } = useToast();
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchCourses = useCallback(async () => {
+        setLoading(true);
+        try {
+            const coursesRef = collection(db, "courses");
+            const q = query(coursesRef, orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+            const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+            setCourses(coursesData);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Failed to load courses' });
+        } finally {
+            setLoading(false);
+        }
+    }, [toast]);
+
+    useEffect(() => {
+        fetchCourses();
+    }, [fetchCourses]);
+
+    return (
+        <Card>
+            <CardHeader className="flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <CardTitle>Course Management</CardTitle>
+                    <CardDescription>View, edit, or add new courses to the platform.</CardDescription>
+                </div>
+                <Button onClick={onAddNew}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Course
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <div className="mt-4">
+                    {loading ? (
+                        <div className="flex justify-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+                    ) : courses.length > 0 ? (
+                        <div className="rounded-lg border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead>Modules</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="w-[100px] text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {courses.map((course) => (
+                                        <TableRow key={course.id}>
+                                            <TableCell className="font-medium">{course.title}</TableCell>
+                                            <TableCell>{course.category}</TableCell>
+                                            <TableCell>{course.modules?.length || 0}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={course.isPublished ? "default" : "secondary"}>
+                                                    {course.isPublished ? "Published" : "Draft"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="outline" size="sm" onClick={() => onEdit(course)}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-muted-foreground">No courses found. Add one to get started.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+// #endregion
 
 // #region AddCategoryModal
 function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onCategoryAdded: () => void }) {
@@ -407,14 +544,10 @@ function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: b
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Add New Category</DialogTitle>
-                    <DialogDescription>
-                        Enter the name for the new problem category.
-                    </DialogDescription>
+                    <DialogDescription>Enter the name for the new problem category.</DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                    <Label htmlFor="category-name" className="text-right">
-                        Category Name
-                    </Label>
+                    <Label htmlFor="category-name">Category Name</Label>
                     <Input
                         id="category-name"
                         value={categoryName}
@@ -437,7 +570,7 @@ function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: b
 // #endregion
 
 // #region ProblemForm
-function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, problem: ProblemWithCategory | null, onClose: () => void }) {
+function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null, onClose: () => void }) {
     const { toast } = useToast();
     const { resolvedTheme } = useTheme();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -445,64 +578,26 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
     const [loadingCategories, setLoadingCategories] = useState(true);
     const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const formMode = problem ? 'edit' : 'add';
+
+    const form = useForm<z.infer<typeof problemFormSchema>>({
+        resolver: zodResolver(problemFormSchema),
         defaultValues: {
-            id: undefined,
-            title: "",
-            description: "",
-            category: "",
-            difficulty: "Easy",
-            metadataType: "Class",
-            triggerSObject: "",
-            sampleCode: "",
-            testcases: "",
-            examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
-            hints: [{ value: "" }],
+            id: problem?.id || undefined,
+            title: problem?.title || "",
+            description: problem?.description || "",
+            category: problem?.categoryName || "",
+            difficulty: problem?.difficulty || "Easy",
+            metadataType: problem?.metadataType || "Class",
+            triggerSObject: problem?.triggerSObject || "",
+            sampleCode: problem?.sampleCode || "",
+            testcases: problem?.testcases || "",
+            examples: problem?.examples?.map(e => ({...e})) || [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
+            hints: problem?.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
         },
     });
     
     const metadataTypeValue = form.watch("metadataType");
-    
-    const { reset, getValues } = form;
-
-    useEffect(() => {
-        if (formMode === 'edit' && problem) {
-            // Check if we are editing a new problem to avoid re-rendering
-            if (getValues('id') !== problem.id) {
-                reset({
-                    id: problem.id,
-                    title: problem.title,
-                    description: problem.description,
-                    category: problem.categoryName,
-                    difficulty: problem.difficulty,
-                    metadataType: problem.metadataType,
-                    triggerSObject: problem.triggerSObject || "",
-                    sampleCode: problem.sampleCode,
-                    testcases: problem.testcases,
-                    examples: problem.examples.map(e => ({...e})),
-                    hints: problem.hints.length > 0 ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
-                });
-            }
-        } else if (formMode === 'add') {
-             // Only reset if we are switching from editing a problem to adding a new one
-            if (getValues('id')) {
-                 reset({
-                    id: undefined,
-                    title: "",
-                    description: "",
-                    category: "",
-                    difficulty: "Easy",
-                    metadataType: "Class",
-                    triggerSObject: "",
-                    sampleCode: "",
-                    testcases: "",
-                    examples: [{ input: "", output: "", explanation: "" }],
-                    hints: [{ value: "" }],
-                });
-            }
-        }
-    }, [problem, formMode, reset, getValues]);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -522,7 +617,6 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                     setIsAddingNewCategory(true);
                 }
             } catch (error) {
-                console.error("Error fetching categories:", error);
                 toast({ variant: "destructive", title: "Could not load categories." });
             } finally {
                 setLoadingCategories(false);
@@ -534,7 +628,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
     const { fields: exampleFields, append: appendExample, remove: removeExample } = useFieldArray({ control: form.control, name: "examples" });
     const { fields: hintFields, append: appendHint, remove: removeHint } = useFieldArray({ control: form.control, name: "hints" });
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof problemFormSchema>) {
         setIsSubmitting(true);
         const result = await upsertProblemToFirestore(values);
         if (result.success) {
@@ -548,20 +642,15 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-4">
-                 <div>
-                    <h1 className="text-4xl font-bold font-headline">{formMode === 'add' ? 'Upload New Problem' : 'Edit Problem'}</h1>
-                    <p className="text-muted-foreground mt-2">
-                        {formMode === 'add' ? 'Add a new Apex coding challenge to the platform.' : 'Update the details for this problem.'}
-                    </p>
-                 </div>
-                 <Button variant="outline" onClick={onClose}>Back to List</Button>
-            </div>
+             <Button variant="outline" onClick={onClose} className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Problem List
+            </Button>
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-8">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                      <Card>
                         <CardHeader>
-                            <CardTitle>Problem Details</CardTitle>
+                            <CardTitle>{formMode === 'add' ? 'Upload New Problem' : 'Edit Problem'}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <FormField control={form.control} name="title" render={({ field }) => (
@@ -574,41 +663,18 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                              <FormField
                                 control={form.control}
                                 name="category"
-                                render={({ field }) => {
-                                    const handleValueChange = (value: string) => {
-                                        if (value === '---new-category---') {
-                                            setIsAddingNewCategory(true);
-                                            field.onChange('');
-                                        } else {
-                                            setIsAddingNewCategory(false);
-                                            field.onChange(value);
-                                        }
-                                    };
-
-                                    return (
-                                        <FormItem>
-                                            <FormLabel>Category</FormLabel>
-                                            {isAddingNewCategory ? (
-                                                <div className="flex items-center gap-2">
-                                                    <FormControl><Input placeholder="Enter new category name..." {...field} autoFocus/></FormControl>
-                                                    {categories.length > 0 && (
-                                                        <Button type="button" variant="outline" onClick={() => { setIsAddingNewCategory(false); field.onChange(''); }}>Cancel</Button>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <Select onValueChange={handleValueChange} value={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        {loadingCategories ? <SelectItem value="loading" disabled>Loading...</SelectItem> : categories.map((cat) => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
-                                                        <SelectSeparator />
-                                                        <SelectItem value="---new-category---"><div className="flex items-center gap-2 text-primary"><PlusCircle className="h-4 w-4" /><span>Add new category</span></div></SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                            <FormMessage />
-                                        </FormItem>
-                                    );
-                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Category</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                {loadingCategories ? <SelectItem value="loading" disabled>Loading...</SelectItem> : categories.map((cat) => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
                             <FormField control={form.control} name="description" render={({ field }) => (
                                 <FormItem>
@@ -619,10 +685,10 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                             )} />
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="difficulty" render={({ field }) => (
-                                    <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="metadataType" render={({ field }) => (
-                                    <FormItem><FormLabel>Metadata Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Class">Class</SelectItem><SelectItem value="Trigger">Trigger</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Metadata Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Class">Class</SelectItem><SelectItem value="Trigger">Trigger</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                 )} />
                                 {metadataTypeValue === 'Trigger' && (
                                      <FormField control={form.control} name="triggerSObject" render={({ field }) => (
@@ -640,7 +706,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                      <Card>
                         <CardHeader>
                             <CardTitle>Code & Tests</CardTitle>
-                            <CardDescription>Provide the starter code and the test cases to validate the solution.</CardDescription>
+                            <CardDescription>Provide starter code and test cases.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ResizablePanelGroup direction="horizontal" className="min-h-[40rem] max-w-full rounded-lg border">
@@ -660,13 +726,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                                                         value={field.value}
                                                         onChange={(value) => field.onChange(value || "")}
                                                         theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                                        options={{
-                                                            fontSize: 14,
-                                                            minimap: { enabled: false },
-                                                            scrollBeyondLastLine: false,
-                                                            padding: { top: 16, bottom: 16 },
-                                                            fontFamily: 'var(--font-source-code-pro)',
-                                                        }}
+                                                        options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)'}}
                                                     />
                                                 </div>
                                             </FormControl>
@@ -692,13 +752,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                                                         value={field.value}
                                                         onChange={(value) => field.onChange(value || "")}
                                                         theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                                        options={{
-                                                            fontSize: 14,
-                                                            minimap: { enabled: false },
-                                                            scrollBeyondLastLine: false,
-                                                            padding: { top: 16, bottom: 16 },
-                                                            fontFamily: 'var(--font-source-code-pro)',
-                                                        }}
+                                                        options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)'}}
                                                     />
                                                 </div>
                                             </FormControl>
@@ -753,4 +807,166 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
 }
 // #endregion
 
+// #region CourseForm
+function CourseForm({ course, onBack }: { course: Course | null, onBack: () => void }) {
+    const { user: authUser } = useAuth();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const formMode = course ? 'edit' : 'add';
+
+    const form = useForm<z.infer<typeof courseFormSchema>>({
+        resolver: zodResolver(courseFormSchema),
+        defaultValues: {
+            id: course?.id,
+            title: course?.title || '',
+            description: course?.description || '',
+            category: course?.category || '',
+            thumbnailUrl: course?.thumbnailUrl || '',
+            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '' }] }],
+            isPublished: course?.isPublished || false,
+        },
+    });
+
+    const { fields: moduleFields, append: appendModule, remove: removeModule } = useFieldArray({ control: form.control, name: "modules" });
+
+    async function onSubmit(values: z.infer<typeof courseFormSchema>) {
+        if (!authUser) {
+            toast({ variant: 'destructive', title: "Not authenticated" });
+            return;
+        }
+        setIsSubmitting(true);
+        const dataToSave = { ...values, createdBy: authUser.uid };
+        const result = await upsertCourseToFirestore(dataToSave);
+        if (result.success) {
+            toast({ title: "Success!", description: result.message });
+            onBack();
+        } else {
+            toast({ variant: "destructive", title: "Save Failed", description: result.error });
+        }
+        setIsSubmitting(false);
+    }
     
+    return (
+      <div>
+        <Button variant="outline" onClick={onBack} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Course List
+        </Button>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{formMode === 'add' ? 'Create New Course' : 'Edit Course'}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <FormField control={form.control} name="title" render={({ field }) => (
+                                <FormItem><FormLabel>Course Title</FormLabel><FormControl><Input placeholder="e.g., Introduction to Apex" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="category" render={({ field }) => (
+                                <FormItem><FormLabel>Category</FormLabel><FormControl><Input placeholder="e.g., Apex, LWC" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="thumbnailUrl" render={({ field }) => (
+                                <FormItem><FormLabel>Thumbnail URL</FormLabel><FormControl><Input placeholder="https://placehold.co/600x400.png" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                        <div className="space-y-4">
+                            <FormField control={form.control} name="description" render={({ field }) => (
+                                <FormItem className="flex flex-col h-full"><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the course..." {...field} className="flex-grow" /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                         <div className="md:col-span-2 flex items-center space-x-2">
+                             <FormField control={form.control} name="isPublished" render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm w-full">
+                                    <div className="space-y-0.5"><FormLabel>Publish Course</FormLabel><FormDescription>Make this course visible to all users.</FormDescription></div>
+                                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                </FormItem>
+                             )} />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Modules & Lessons</CardTitle>
+                        <CardDescription>Organize your course content into modules and lessons.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Accordion type="multiple" className="w-full" defaultValue={['module-0']}>
+                            {moduleFields.map((moduleItem, moduleIndex) => (
+                                <AccordionItem key={moduleItem.id} value={`module-${moduleIndex}`} className="border rounded-lg mb-4 bg-card">
+                                    <AccordionTrigger className="px-4 hover:no-underline">
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                            <FormField control={form.control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto" /></FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-4 border-t">
+                                        <LessonList moduleIndex={moduleIndex} control={form.control} />
+                                        <Button type="button" variant="secondary" size="sm" className="mt-4" onClick={() => removeModule(moduleIndex)}><Trash2 className="mr-2 h-4 w-4"/>Remove Module</Button>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                        <Button type="button" variant="outline" onClick={() => appendModule({ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '' }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
+                    </CardContent>
+                </Card>
+
+                <div className="flex justify-end">
+                    <Button type="submit" size="lg" disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {formMode === 'add' ? 'Create Course' : 'Save Changes'}
+                    </Button>
+                </div>
+            </form>
+        </Form>
+    </div>
+    );
+}
+
+const lessonIcons = {
+    video: <FileVideo className="h-4 w-4" />,
+    pdf: <FileText className="h-4 w-4" />,
+    text: <FileText className="h-4 w-4" />,
+    problem: <BrainCircuit className="h-4 w-4" />
+};
+
+function LessonList({ moduleIndex, control }: { moduleIndex: number, control: any }) {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `modules.${moduleIndex}.lessons`
+    });
+
+    return (
+        <div className="space-y-3 pl-6 border-l-2 border-dashed">
+            {fields.map((lessonItem, lessonIndex) => (
+                <div key={lessonItem.id} className="p-4 border rounded-md bg-background/50 relative">
+                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive" onClick={() => remove(lessonIndex)}><Trash2 className="h-4 w-4" /></Button>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
+                            <FormItem><FormLabel>Lesson Title</FormLabel><FormControl><Input placeholder={`Lesson ${lessonIndex + 1}`} {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentType`} render={({ field }) => (
+                            <FormItem><FormLabel>Content Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger>{lessonIcons[field.value as keyof typeof lessonIcons]}<span className="ml-2"><SelectValue /></span></SelectTrigger></FormControl><SelectContent>
+                                <SelectItem value="video">Video</SelectItem><SelectItem value="pdf">PDF</SelectItem><SelectItem value="text">Text / Markdown</SelectItem><SelectItem value="problem">Problem</SelectItem>
+                            </SelectContent></Select><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                     <div className="mt-4">
+                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
+                            <FormItem><FormLabel>Content</FormLabel><FormControl><Textarea placeholder="Enter video URL, PDF URL, Markdown, or Problem ID..." {...field} rows={4} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                     </div>
+                </div>
+            ))}
+             <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: crypto.randomUUID(), title: '', contentType: 'text', content: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
+        </div>
+    );
+}
+
+// #endregion
