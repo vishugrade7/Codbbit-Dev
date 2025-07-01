@@ -127,7 +127,7 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
 }
 
 async function waitForCompilation(log: string[], auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', recordId: string): Promise<{ success: boolean; message?: string }> {
-    for (let i = 0; i < 30; i++) { // 30 seconds timeout
+    for (let i = 0; i < 60; i++) { // 60 seconds timeout
         await sleep(1000);
         log.push(`> Polling compilation status... (Attempt ${i + 1})`);
         const query = `SELECT Status, IsValid, CompileProblem FROM ${objectType} WHERE Id = '${recordId}'`;
