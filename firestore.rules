@@ -1,23 +1,31 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Problems and problem sheets can be read by anyone
-    match /problems/{docId} {
+    // Allow public read access to problems and courses
+    match /problems/{problemId} {
       allow read: if true;
-      allow write: if false; // Disallow client-side writes for security
+      allow write: if false; // No one can write directly
+    }
+
+    match /courses/{courseId} {
+      allow read: if true;
+      // Only authenticated admins can write (create, update, delete) courses.
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Allow users to read all profiles, but only write to their own
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth.uid == userId;
     }
 
     match /problem-sheets/{sheetId} {
-      allow read: if true;
-      allow create, update: if request.auth != null; // Allow authenticated users to create/update sheets
-    }
-
-    // User profiles can be read by anyone, but only the
-    // authenticated user can create or update their own document.
-    match /users/{userId} {
-      allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+       allow read: if true;
+       // Allow create if user is logged in
+       allow create: if request.auth != null;
+       // Allow update/delete only by the creator
+       allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
   }
 }
