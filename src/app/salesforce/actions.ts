@@ -129,7 +129,7 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
     });
 }
 
-async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string) {
+async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string): Promise<string> {
     console.log(`Upserting ${objectType} named: ${name} using delete-then-create strategy.`);
     const record = await findToolingApiRecord(auth, objectType, name);
 
@@ -147,11 +147,9 @@ async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
         console.log(`No existing record found for ${name}. Proceeding with creation.`);
     }
 
-    // Now, create the new record. A small delay can help prevent race conditions on the platform.
-    await sleep(2000);
     const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
-    console.log(`Successfully created ${name}.`);
-    return newRecord;
+    console.log(`Successfully created ${name} with ID: ${newRecord.id}.`);
+    return newRecord.id;
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -213,6 +211,34 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
 
 type SubmissionResult = { success: boolean, message: string, details?: string };
 
+async function waitForCompilation(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', recordId: string): Promise<{ success: boolean; message?: string }> {
+    console.log(`Polling for compilation status of ${objectType} with ID ${recordId}`);
+    for (let i = 0; i < 30; i++) { // 30 seconds timeout
+        await sleep(1000);
+        console.log(`Polling status attempt ${i + 1}/30...`);
+        const query = `SELECT Status, IsValid, CompileProblem FROM ${objectType} WHERE Id = '${recordId}'`;
+        try {
+            const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
+            if (result.records.length > 0) {
+                const record = result.records[0];
+                console.log(`Current status for ${recordId}: ${record.Status}`);
+                if (record.Status === 'Active') {
+                    console.log(`${objectType} ${recordId} is active.`);
+                    return { success: true };
+                }
+                if (record.Status === 'Invalid' || record.Status === 'Error' || !record.IsValid) {
+                    const errorMessage = `Compilation failed for ${objectType}. Status: ${record.Status}. Problem: ${record.CompileProblem || 'Unknown'}`;
+                    console.error(errorMessage);
+                    return { success: false, message: errorMessage };
+                }
+            }
+        } catch (error) {
+            console.warn(`Polling query failed for ${recordId}, will retry. Error:`, error);
+        }
+    }
+    return { success: false, message: `Timed out waiting for ${objectType} ${recordId} to compile.` };
+}
+
 export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
     console.log(`\n--- Starting Apex Solution Submission for user ${userId}, problem ${problem.id} ---`);
     try {
@@ -251,25 +277,26 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Could not determine class/trigger names from code.' };
         }
         
-        console.log("\n--- Phase 1: Upserting main user code ---");
-        await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode, problem.triggerSObject);
+        console.log("\n--- Phase 1: Upserting and compiling main user code ---");
+        const mainObjectId = await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode, problem.triggerSObject);
+        const mainObjectCompilation = await waitForCompilation(auth, objectType, mainObjectId);
+        if (!mainObjectCompilation.success) {
+            return { success: false, message: 'Your solution failed to compile.', details: mainObjectCompilation.message };
+        }
         console.log("--- Finished Phase 1 ---\n");
+        
 
-        // Add a delay to create a distinct separation between the two deployment operations.
-        // This helps prevent the "Cannot save a trigger during a parse and save class call" error.
-        console.log("Waiting for 2 seconds to prevent platform conflicts...");
-        await sleep(2000);
-
-        console.log("\n--- Phase 2: Upserting test class ---");
-        await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
-        const testRecord = await findToolingApiRecord(auth, 'ApexClass', testObjectName);
+        console.log("\n--- Phase 2: Upserting and compiling test class ---");
+        const testClassId = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
+        const testObjectCompilation = await waitForCompilation(auth, 'ApexClass', testClassId);
+        if (!testObjectCompilation.success) {
+            return { success: false, message: 'The problem test class failed to compile.', details: testObjectCompilation.message };
+        }
         console.log("--- Finished Phase 2 ---\n");
 
-        const testClassId = (testRecord as any)?.id || (testRecord as any)?.Id;
-
         if (!testClassId) {
-            console.error('Failed to create or update test class in Salesforce.', testRecord);
-            return { success: false, message: 'Failed to create or update test class in Salesforce.' };
+            console.error('Failed to get test class ID after upsert.', testClassId);
+            return { success: false, message: 'Failed to retrieve test class ID from Salesforce.' };
         }
         
         console.log(`Test class ID to be used for test run: ${testClassId}`);
