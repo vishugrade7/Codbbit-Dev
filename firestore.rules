@@ -1,31 +1,53 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access to problems and courses
-    match /problems/{problemId} {
-      allow read: if true;
-      allow write: if false; // No one can write directly
+    
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
-
-    match /courses/{courseId} {
+    
+    // Allow public read for problems, but only admins can write.
+    match /problems/{document=**} {
       allow read: if true;
-      // Only authenticated admins can write (create, update, delete) courses.
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Allow users to read all profiles, but only write to their own
+    // User profiles:
+    // - Anyone can read any profile (for leaderboards).
+    // - A user can create their own profile.
+    // - A user can only update their own profile and cannot make themselves an admin.
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId && request.resource.data.isAdmin == resource.data.isAdmin;
+      allow delete: if false; // Deleting users should be handled via Firebase Auth.
     }
 
+    // Problem Sheets:
+    // - Anyone can read public sheets.
+    // - An authenticated user can subscribe/unsubscribe.
+    // - Only the creator can edit the sheet's content or delete it.
     match /problem-sheets/{sheetId} {
-       allow read: if true;
-       // Allow create if user is logged in
-       allow create: if request.auth != null;
-       // Allow update/delete only by the creator
-       allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+      allow read: if resource.data.isPublic == true;
+      allow create: if request.auth != null;
+      allow update: if request.auth.uid == resource.data.createdBy || 
+                     (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscribers']));
+      allow delete: if request.auth.uid == resource.data.createdBy;
+    }
+    
+    // Courses:
+    // - Anyone can read published courses. Admins can read any course.
+    // - Only admins can write (create, update, delete).
+    match /courses/{courseId} {
+      allow read: if resource.data.isPublished == true || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Salesforce Data: Only the authenticated user can access their own data.
+    match /salesforceData/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
