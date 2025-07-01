@@ -255,7 +255,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         // Add a delay to mitigate potential metadata contention issues in Salesforce,
         // especially when a trigger is saved just before a dependent test class.
         console.log("Waiting briefly before upserting test class to allow metadata to settle...");
-        await sleep(2000);
+        await sleep(5000);
 
         console.log("\n--- Upserting test class ---");
         await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
