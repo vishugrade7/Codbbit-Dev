@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, arrayUnion, increment, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User, Problem } from '@/types';
 
@@ -19,9 +19,16 @@ type SalesforceTokenResponse = {
 
 type SfdcAuth = NonNullable<User['sfdcAuth']>;
 type SubmissionResult = { success: boolean, message: string, details?: string };
-const POINTS_MAP: { [key: string]: number } = { Easy: 10, Medium: 25, Hard: 50 };
+const POINTS_MAP: { [key: string]: number } = { Easy: 5, Medium: 10, Hard: 15 };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/i)?.[1];
+
+const getFormattedDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
 
 async function getSfdcConnection(userId: string): Promise<SfdcAuth> {
@@ -93,7 +100,6 @@ async function sfdcFetch(auth: SfdcAuth, path: string, options: RequestInit = {}
         const errorMessage = Array.isArray(errorBody) ? errorBody[0]?.message : (errorBody.message || 'An unknown Salesforce API error occurred.');
         throw new Error(errorMessage);
     }
-    // No content for DELETE requests
     if (response.status === 204) {
         return null;
     }
@@ -125,7 +131,6 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
         body: JSON.stringify(requestBody),
     });
 }
-
 
 export async function getSalesforceAccessToken(code: string, codeVerifier: string, userId: string) {
   const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
@@ -162,7 +167,7 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
     }
     
     const userDocRef = doc(db, 'users', userId);
-    await setDoc(userDocRef, {
+    await updateDoc(userDocRef, {
       sfdcAuth: {
         accessToken: data.access_token,
         instanceUrl: data.instance_url,
@@ -195,19 +200,93 @@ async function deployMetadata(log: string[], auth: SfdcAuth, objectType: 'ApexCl
 
     log.push(`> Creating new ${objectType}...`);
     const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
-    log.push(`> Creation successful. Record ID: ${newRecord.id}. Proceeding to next step.`);
+    log.push(`> Creation successful. Record ID: ${newRecord.id}.`);
     
     return newRecord.id;
 }
 
+async function _awardPointsAndLogProgress(log: string[], userId: string, problem: Problem): Promise<string> {
+    const userDocRef = doc(db, "users", userId);
+    const pointsToAward = POINTS_MAP[problem.difficulty] || 0;
+    const categoryName = problem.categoryName || "Uncategorized";
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userDocRef);
+            if (!userDoc.exists()) {
+                throw new Error("User document not found.");
+            }
+            const userData = userDoc.data() as User;
+
+            const solvedProblems = userData.solvedProblems || {};
+            if (solvedProblems[problem.id]) {
+                log.push("\n> Problem already solved. No new points awarded.");
+                return; 
+            }
+            
+            log.push(`\n> Congratulations! Awarding ${pointsToAward} points.`);
+            
+            // --- Update Stats ---
+            const newPoints = (userData.points || 0) + pointsToAward;
+
+            const dsaStats = userData.dsaStats || { Easy: 0, Medium: 0, Hard: 0 };
+            dsaStats[problem.difficulty] = (dsaStats[problem.difficulty] || 0) + 1;
+            
+            const categoryPoints = userData.categoryPoints || {};
+            categoryPoints[categoryName] = (categoryPoints[categoryName] || 0) + pointsToAward;
+
+            const today = getFormattedDate(new Date());
+            const submissionHeatmap = userData.submissionHeatmap || {};
+            submissionHeatmap[today] = (submissionHeatmap[today] || 0) + 1;
+
+            solvedProblems[problem.id] = {
+                solvedAt: serverTimestamp(),
+                points: pointsToAward,
+                difficulty: problem.difficulty,
+            };
+
+            // --- Streak Logic ---
+            let currentStreak = userData.currentStreak || 0;
+            let maxStreak = userData.maxStreak || 0;
+            const lastSolvedDate = userData.lastSolvedDate;
+
+            if (lastSolvedDate !== today) {
+                const yesterday = getFormattedDate(new Date(Date.now() - 864e5));
+                if (lastSolvedDate === yesterday) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 1;
+                }
+            }
+            if (currentStreak > maxStreak) {
+                maxStreak = currentStreak;
+            }
+
+            // --- Perform Update ---
+            transaction.update(userDocRef, {
+                points: newPoints,
+                dsaStats,
+                categoryPoints,
+                submissionHeatmap,
+                solvedProblems,
+                currentStreak,
+                maxStreak,
+                lastSolvedDate: today,
+            });
+        });
+        return `All tests passed! You've earned ${pointsToAward} points.`;
+    } catch (e: any) {
+        console.error("Error in award points transaction:", e);
+        log.push(`\n> Error updating profile: ${e.message}`);
+        return "All tests passed, but there was an error updating your profile.";
+    }
+}
 
 export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
     const log: string[] = [];
     
     try {
         log.push("Starting submission...");
-        
-        // --- VALIDATION STEP ---
         const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
         const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
         const problemTypeKeyword = problem.metadataType.toLowerCase();
@@ -219,17 +298,15 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             log.push(errorMessage);
             return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
         }
-        // --- END VALIDATION ---
-
+        
         const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
             const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
             return { success: false, message: 'Problem Configuration Error', details: msg };
         }
-
-        const userDocRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && userDoc.data().solvedProblems?.includes(problem.id)) {
+        
+        const userDocRefCheck = await getDoc(doc(db, "users", userId));
+        if (userDocRefCheck.exists() && userDocRefCheck.data().solvedProblems?.[problem.id]) {
             return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
         }
 
@@ -245,7 +322,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
 
         const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, userCode, problem.triggerSObject);
-        
         const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
 
         log.push("\n--- Running Tests ---");
@@ -304,14 +380,9 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             log.push("> Could not retrieve code coverage information.");
         }
 
-        const points = POINTS_MAP[problem.difficulty] || 0;
-        log.push(`\nCongratulations! You've earned ${points} points.`);
-        await updateDoc(userDocRef, {
-            points: increment(points),
-            solvedProblems: arrayUnion(problem.id)
-        });
+        const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
         
-        return { success: true, message: `All tests passed! You've earned ${points} points.`, details: log.join('\n') };
+        return { success: true, message: successMessage, details: log.join('\n') };
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

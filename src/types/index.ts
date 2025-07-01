@@ -1,4 +1,10 @@
 
+export type SolvedProblemDetail = {
+  solvedAt: any; // Firestore Timestamp
+  points: number;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+};
+
 export type User = {
   id: string;
   uid: string;
@@ -26,7 +32,15 @@ export type User = {
   twitterUrl?: string;
   githubUrl?: string;
   starredProblems?: string[];
-  solvedProblems?: string[];
+
+  // Detailed Progress Tracking
+  solvedProblems?: { [problemId: string]: SolvedProblemDetail };
+  dsaStats?: { [difficulty: string]: number }; // e.g., { Easy: 5, Medium: 2 }
+  categoryPoints?: { [categoryName: string]: number }; // e.g., { "Apex Triggers": 50 }
+  submissionHeatmap?: { [date: string]: number }; // e.g., { "2024-07-29": 3 }
+  currentStreak?: number;
+  maxStreak?: number;
+  lastSolvedDate?: string; // YYYY-MM-DD
   subscribedSheetIds?: string[];
 };
 
@@ -81,6 +95,7 @@ export type Problem = {
   triggerSObject?: string;
   sampleCode: string;
   testcases: string;
+  categoryName?: string; // Added for convenience
 };
 
 // This represents the structure of the data fetched from the `problems/Apex` document

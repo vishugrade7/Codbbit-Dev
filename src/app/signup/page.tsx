@@ -183,7 +183,15 @@ export default function SignupPage() {
           achievements: [],
           contributions: [],
           isAdmin: false,
-          solvedProblems: [],
+          
+          // Initialize new progress tracking fields
+          solvedProblems: {},
+          dsaStats: { Easy: 0, Medium: 0, Hard: 0 },
+          categoryPoints: {},
+          submissionHeatmap: {},
+          currentStreak: 0,
+          maxStreak: 0,
+          lastSolvedDate: "",
           starredProblems: [],
       });
 

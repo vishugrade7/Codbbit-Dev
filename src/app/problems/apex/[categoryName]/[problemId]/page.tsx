@@ -94,7 +94,7 @@ export default function ProblemWorkspacePage() {
 
                     const currentProblem = allQuestions.find(p => p.id === problemId);
                     if (currentProblem) {
-                        setProblem(currentProblem);
+                        setProblem({...currentProblem, categoryName});
                         setCode(currentProblem.sampleCode);
                     } else {
                         setProblem(null);
@@ -126,7 +126,7 @@ export default function ProblemWorkspacePage() {
 
     const isSolved = useMemo(() => {
         if (!problemId) return false;
-        return userData?.solvedProblems?.includes(problemId) ?? false;
+        return !!userData?.solvedProblems?.[problemId];
     }, [userData, problemId]);
 
     const filteredProblems = useMemo(() => {
@@ -168,7 +168,7 @@ export default function ProblemWorkspacePage() {
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
-            const pointsMatch = response.details?.match(/You've earned (\d+) points/);
+            const pointsMatch = response.message.match(/You've earned (\d+) points/);
             const points = pointsMatch ? parseInt(pointsMatch[1], 10) : 0;
             if (points > 0) {
                 setAwardedPoints(points);
@@ -313,7 +313,7 @@ export default function ProblemWorkspacePage() {
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
                                             {p.difficulty}
                                         </Badge>
-                                        {(userData?.solvedProblems?.includes(p.id)) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                     </div>
                                 </Link>
                             )) : (
@@ -476,8 +476,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-    
-
-    
-
-    

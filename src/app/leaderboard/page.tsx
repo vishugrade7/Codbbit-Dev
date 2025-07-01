@@ -67,7 +67,7 @@ export default function Leaderboard() {
   // Determine suggested problem
   useEffect(() => {
     if (allProblems.length > 0 && userData?.solvedProblems) {
-        const solvedIds = new Set(userData.solvedProblems);
+        const solvedIds = new Set(Object.keys(userData.solvedProblems));
         const unsolvedProblems = allProblems.filter(p => !solvedIds.has(p.id));
 
         if (unsolvedProblems.length > 0) {
@@ -268,7 +268,7 @@ export default function Leaderboard() {
               ) : (
                 <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed min-h-[160px]">
                     <CardContent className="p-0">
-                        {allProblems.length > 0 && userData && userData.solvedProblems.length >= allProblems.length ? (
+                        {allProblems.length > 0 && userData && userData.solvedProblems && Object.keys(userData.solvedProblems).length >= allProblems.length ? (
                         <>
                             <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
                             <h3 className="text-xl font-bold">You're a Champion!</h3>

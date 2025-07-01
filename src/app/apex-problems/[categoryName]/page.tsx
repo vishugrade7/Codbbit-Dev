@@ -69,7 +69,7 @@ export default function CategoryProblemsPage() {
     return problems
       .filter((p) => {
         if (statusFilter === "All") return true;
-        const isSolved = userData?.solvedProblems?.includes(p.id) ?? false;
+        const isSolved = !!userData?.solvedProblems?.[p.id];
         if (statusFilter === "Solved") return isSolved;
         if (statusFilter === "Unsolved") return !isSolved;
         return true;
@@ -168,7 +168,7 @@ export default function CategoryProblemsPage() {
                   <TableRow key={problem.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${problem.id}`)}>
                     <TableCell>
                       <div className="flex justify-center">
-                        {userData?.solvedProblems?.includes(problem.id) ? (
+                        {userData?.solvedProblems?.[problem.id] ? (
                           <CheckCircle2 className="h-5 w-5 text-green-500" />
                         ) : (
                           <Circle className="h-5 w-5 text-muted-foreground/50" />
