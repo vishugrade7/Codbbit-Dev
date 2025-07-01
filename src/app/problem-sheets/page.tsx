@@ -3,13 +3,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Problem, ApexProblemsData } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
-import { createProblemSheet } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -126,27 +125,36 @@ export default function ProblemSheetsPage() {
             toast({ variant: "destructive", title: "Add at least one problem to the sheet." });
             return;
         }
+        if (!db) {
+            toast({ variant: "destructive", title: "Database not available." });
+            return;
+        }
 
         setIsCreating(true);
         const problemIds = selectedProblems.map(p => p.id);
         
-        const result = await createProblemSheet({
-            sheetName,
-            problemIds,
-            user: {
-                uid: authUser.uid,
-                name: userData.name,
-                avatarUrl: userData.avatarUrl,
-            }
-        });
+        try {
+            const sheetsCollection = collection(db, 'problem-sheets');
+            const newSheetDoc = await addDoc(sheetsCollection, {
+                name: sheetName,
+                problemIds: problemIds,
+                createdBy: authUser.uid,
+                creatorName: userData.name,
+                creatorAvatarUrl: userData.avatarUrl,
+                createdAt: serverTimestamp(),
+                isPublic: true,
+            });
 
-        if (result.success && result.sheetId) {
             toast({ title: "Sheet created successfully!", description: "Redirecting you to your new sheet." });
-            router.push(`/sheets/${result.sheetId}`);
-        } else {
-            toast({ variant: "destructive", title: "Failed to create sheet", description: result.error });
+            router.push(`/sheets/${newSheetDoc.id}`);
+
+        } catch (error) {
+            console.error("Error creating problem sheet:", error);
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            toast({ variant: "destructive", title: "Failed to create sheet", description: errorMessage });
+        } finally {
+            setIsCreating(false);
         }
-        setIsCreating(false);
     };
 
     return (
