@@ -130,25 +130,28 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
 }
 
 async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string) {
-    console.log(`Upserting ${objectType} named: ${name}`);
+    console.log(`Upserting ${objectType} named: ${name} using delete-then-create strategy.`);
     const record = await findToolingApiRecord(auth, objectType, name);
+
     if (record?.Id) {
-        console.log(`Found existing record for ${name} with ID: ${record.Id}. Updating it.`);
-        // Update existing record
-        // Note: TableEnumOrId is not updateable for triggers.
-        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.Id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ Body: body, ApiVersion: 59.0 }),
-        });
-        console.log(`Successfully updated ${name}.`);
-        return record;
+        console.log(`Found existing record for ${name} with ID: ${record.Id}. Deleting it first.`);
+        try {
+            await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.Id}`, {
+                method: 'DELETE',
+            });
+            console.log(`Successfully deleted existing version of ${name}.`);
+        } catch (error) {
+            console.error(`Failed to delete existing ${objectType} named ${name}. This might happen if it's referenced elsewhere. Continuing with creation attempt.`, error);
+        }
     } else {
-        console.log(`No existing record found for ${name}. Creating a new one.`);
-        // Create new record
-        const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
-        console.log(`Successfully created ${name}.`);
-        return newRecord;
+        console.log(`No existing record found for ${name}. Proceeding with creation.`);
     }
+
+    // Now, create the new record. A small delay can help prevent race conditions on the platform.
+    await sleep(2000);
+    const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
+    console.log(`Successfully created ${name}.`);
+    return newRecord;
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -251,11 +254,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         console.log("\n--- Upserting main user code ---");
         await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode, problem.triggerSObject);
         console.log("--- Finished upserting main user code ---\n");
-        
-        // Add a delay to mitigate potential metadata contention issues in Salesforce,
-        // especially when a trigger is saved just before a dependent test class.
-        console.log("Waiting briefly before upserting test class to allow metadata to settle...");
-        await sleep(5000);
 
         console.log("\n--- Upserting test class ---");
         await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
