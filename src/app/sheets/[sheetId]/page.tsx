@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
@@ -15,9 +15,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { toggleSheetSubscription } from '../actions';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 
@@ -25,70 +27,101 @@ export default function SheetDisplayPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
+    const { user: authUser } = useAuth();
     const sheetId = params.sheetId as string;
     
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
     const [problems, setProblems] = useState<ProblemDetailWithCategory[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [subscribersCount, setSubscribersCount] = useState(0);
+    const [isSubscribing, setIsSubscribing] = useState(false);
 
     useEffect(() => {
         if (!sheetId || !db) return;
-
-        const fetchSheetAndProblems = async () => {
-            setLoading(true);
-            try {
-                // Fetch the sheet document
-                const sheetDocRef = doc(db, 'problem-sheets', sheetId);
-                const sheetSnap = await getDoc(sheetDocRef);
-
-                if (!sheetSnap.exists()) {
-                    toast({ variant: 'destructive', title: 'Sheet not found' });
-                    setSheet(null);
-                    setProblems([]);
-                    setLoading(false);
-                    return;
-                }
-                
-                const sheetData = { id: sheetSnap.id, ...sheetSnap.data() } as ProblemSheet;
-                setSheet(sheetData);
-                
-                if (sheetData.problemIds && sheetData.problemIds.length > 0) {
-                    // Fetch all problems from Apex collection
-                    const apexDocRef = doc(db, "problems", "Apex");
-                    const apexSnap = await getDoc(apexDocRef);
-                    
-                    if (apexSnap.exists()) {
-                        const categoriesData = apexSnap.data().Category as ApexProblemsData;
-                        const allProblems = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) => 
-                            (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                        );
-
-                        const problemIdsSet = new Set(sheetData.problemIds);
-                        const sheetProblems = allProblems.filter(p => problemIdsSet.has(p.id));
-                        
-                        // Sort problems in the order they appear in the sheet
-                        const sortedProblems = sheetData.problemIds.map(id => 
-                            sheetProblems.find(p => p.id === id)
-                        ).filter((p): p is ProblemDetailWithCategory => p !== undefined);
-
-                        setProblems(sortedProblems);
-                    }
-                }
-
-            } catch (error) {
-                console.error("Error fetching sheet:", error);
-                toast({ variant: 'destructive', title: 'Failed to load sheet' });
-            } finally {
+    
+        setLoading(true);
+        const sheetDocRef = doc(db, 'problem-sheets', sheetId);
+    
+        const unsubscribe = onSnapshot(sheetDocRef, async (sheetSnap) => {
+            if (!sheetSnap.exists()) {
+                toast({ variant: 'destructive', title: 'Sheet not found' });
+                setSheet(null);
+                setProblems([]);
                 setLoading(false);
+                return;
             }
-        };
+            
+            const sheetData = { id: sheetSnap.id, ...sheetSnap.data() } as ProblemSheet;
+            setSheet(sheetData);
 
-        fetchSheetAndProblems();
-    }, [sheetId, toast]);
+            const subscribers = sheetData.subscribers || [];
+            setSubscribersCount(subscribers.length);
+            if (authUser) {
+                setIsSubscribed(subscribers.includes(authUser.uid));
+            } else {
+                setIsSubscribed(false);
+            }
+            
+            if (sheetData.problemIds && sheetData.problemIds.length > 0) {
+                // This part can be optimized if problems don't change often,
+                // but is fine for now.
+                const apexDocRef = doc(db, "problems", "Apex");
+                const apexSnap = await getDoc(apexDocRef);
+                
+                if (apexSnap.exists()) {
+                    const categoriesData = apexSnap.data().Category as ApexProblemsData;
+                    const allProblems = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) => 
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                    );
+
+                    const problemIdsSet = new Set(sheetData.problemIds);
+                    const sheetProblems = allProblems.filter(p => problemIdsSet.has(p.id));
+                    
+                    const sortedProblems = sheetData.problemIds.map(id => 
+                        sheetProblems.find(p => p.id === id)
+                    ).filter((p): p is ProblemDetailWithCategory => p !== undefined);
+
+                    setProblems(sortedProblems);
+                }
+            }
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching sheet:", error);
+            toast({ variant: 'destructive', title: 'Failed to load sheet' });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [sheetId, toast, authUser]);
     
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
         toast({ title: 'Link copied to clipboard!' });
+    };
+
+    const handleToggleSubscription = async () => {
+        if (!authUser) {
+            toast({ variant: 'destructive', title: 'Please log in to subscribe.' });
+            return;
+        }
+        if (isSubscribing) return;
+    
+        setIsSubscribing(true);
+        const result = await toggleSheetSubscription(sheetId, authUser.uid, isSubscribed);
+    
+        if (result.success) {
+            toast({
+                title: isSubscribed ? 'Unsubscribed successfully' : 'Subscribed successfully',
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'An error occurred',
+                description: result.error,
+            });
+        }
+        setIsSubscribing(false);
     };
 
     const getDifficultyBadgeClass = (difficulty: string) => {
@@ -149,8 +182,8 @@ export default function SheetDisplayPage() {
                 
                 <Card className="mb-8">
                     <CardHeader>
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                            <div>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                            <div className="flex-1">
                                 <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
                                 <CardDescription className="flex items-center gap-2 mt-2">
                                     <Avatar className="h-6 w-6">
@@ -160,7 +193,25 @@ export default function SheetDisplayPage() {
                                     <span>Created by {sheet.creatorName} {timeAgo}</span>
                                 </CardDescription>
                             </div>
-                            <Button onClick={handleCopyLink}><Copy className="mr-2 h-4 w-4" /> Copy Shareable Link</Button>
+                            <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0">
+                                <div className="flex flex-row items-center gap-4">
+                                    <Button onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
+                                        {isSubscribing ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : isSubscribed ? (
+                                            <UserCheck className="mr-2 h-4 w-4" />
+                                        ) : (
+                                            <UserPlus className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                                    </Button>
+                                    <Button onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
+                                </div>
+                                <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
+                                    <Users className="h-4 w-4" />
+                                    <span>{subscribersCount} {subscribersCount === 1 ? 'Subscriber' : 'Subscribers'}</span>
+                                </div>
+                            </div>
                         </div>
                     </CardHeader>
                 </Card>

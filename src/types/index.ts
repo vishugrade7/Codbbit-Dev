@@ -27,6 +27,7 @@ export type User = {
   githubUrl?: string;
   starredProblems?: string[];
   solvedProblems?: string[];
+  subscribedSheetIds?: string[];
 };
 
 export type LeaderboardUser = {
@@ -97,4 +98,5 @@ export type ProblemSheet = {
   createdAt: any; // Firestore Timestamp
   isPublic: boolean;
   problemIds: string[];
+  subscribers?: string[];
 };
