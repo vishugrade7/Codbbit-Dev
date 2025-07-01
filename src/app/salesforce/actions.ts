@@ -209,8 +209,12 @@ async function deployMetadata(log: string[], auth: SfdcAuth, objectType: 'ApexCl
     
     if (existingRecord) {
         log.push(`> Found existing record with ID: ${existingRecord.Id}. Deleting...`);
-        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${existingRecord.Id}`, { method: 'DELETE' });
-        log.push(`> Deletion successful.`);
+        try {
+            await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${existingRecord.Id}`, { method: 'DELETE' });
+            log.push(`> Deletion successful.`);
+        } catch (e: any) {
+            log.push(`> Warning: Could not delete existing record. This may be expected if it was from a failed previous run. Error: ${e.message}`);
+        }
     }
 
     log.push(`> Creating new ${objectType}...`);
