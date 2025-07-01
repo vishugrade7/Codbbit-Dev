@@ -48,7 +48,7 @@ const formSchema = z.object({
   metadataType: z.enum(["Class", "Trigger"]),
   triggerSObject: z.string().optional(),
   sampleCode: z.string().min(1, "Sample code is required."),
-  testcases: z.string().min(1, "Test cases are required."),
+  testcases: z.string().min(1, "Test cases is required."),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
 }).refine(data => {
@@ -326,6 +326,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            id: undefined,
             title: "",
             description: "",
             category: "",
@@ -340,32 +341,42 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
     });
     
     const metadataTypeValue = form.watch("metadataType");
+    
+    const { reset, getValues } = form;
 
     useEffect(() => {
         if (formMode === 'edit' && problem) {
-            form.reset({
-                id: problem.id,
-                title: problem.title,
-                description: problem.description,
-                category: problem.categoryName,
-                difficulty: problem.difficulty,
-                metadataType: problem.metadataType,
-                triggerSObject: problem.triggerSObject || "",
-                sampleCode: problem.sampleCode,
-                testcases: problem.testcases,
-                examples: problem.examples.map(e => ({...e})),
-                hints: problem.hints.length > 0 ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
-            });
-        } else {
-            form.reset({
-                title: "", description: "", category: "", difficulty: "Easy", metadataType: "Class",
+            if (getValues('id') !== problem.id) {
+                reset({
+                    id: problem.id,
+                    title: problem.title,
+                    description: problem.description,
+                    category: problem.categoryName,
+                    difficulty: problem.difficulty,
+                    metadataType: problem.metadataType,
+                    triggerSObject: problem.triggerSObject || "",
+                    sampleCode: problem.sampleCode,
+                    testcases: problem.testcases,
+                    examples: problem.examples.map(e => ({...e})),
+                    hints: problem.hints.length > 0 ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
+                });
+            }
+        } else if (formMode === 'add' && getValues('id')) {
+            reset({
+                id: undefined,
+                title: "",
+                description: "",
+                category: "",
+                difficulty: "Easy",
+                metadataType: "Class",
                 triggerSObject: "",
-                sampleCode: "", testcases: "",
+                sampleCode: "",
+                testcases: "",
                 examples: [{ input: "", output: "", explanation: "" }],
                 hints: [{ value: "" }],
             });
         }
-    }, [problem, formMode, form]);
+    }, [problem, formMode, reset, getValues]);
 
     useEffect(() => {
         const fetchCategories = async () => {
