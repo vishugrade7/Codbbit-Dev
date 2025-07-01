@@ -8,7 +8,7 @@ import Footer from "@/components/footer";
 import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -22,6 +22,7 @@ import { updateAvatar } from "../actions";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ContributionHeatmap from "@/components/contribution-heatmap";
 import { ProgressCard } from "@/components/progress-card";
+import { Separator } from "@/components/ui/separator";
 
 type StarredProblemDetail = Problem & { categoryName: string };
 
@@ -228,7 +229,7 @@ export default function UserProfilePage() {
     const CATEGORY_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
     
     const categoryData = profileUser.categoryPoints ? 
-        Object.entries(profileUser.categoryPoints).map(([name, value]) => ({ name, value })).filter(d => d.value > 0) 
+        Object.entries(profileUser.categoryPoints).map(([name, value]) => ({ name, value })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
         : [];
     
     const totalSolved = (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0);
@@ -331,27 +332,70 @@ export default function UserProfilePage() {
                             hardTotal={totalProblemsByDifficulty.Hard}
                         />
                          <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Points</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
+                                <CardDescription>Points earned per problem category.</CardDescription>
+                            </CardHeader>
                             <CardContent>
                                 {categoryData.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={160}>
+                                    <ResponsiveContainer width="100%" height={200}>
                                         <PieChart>
-                                            <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-                                                const RADIAN = Math.PI / 180;
-                                                const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
-                                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                                                return <text x={x} y={y} fill="currentColor" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs fill-muted-foreground">{categoryData[index].name}</text>;
-                                            }}>
-                                                {categoryData.map((entry, index) => (<Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />))}
+                                            <Tooltip
+                                                contentStyle={{
+                                                    background: 'hsl(var(--background))',
+                                                    borderColor: 'hsl(var(--border))',
+                                                    borderRadius: 'var(--radius)',
+                                                }}
+                                            />
+                                            <Pie
+                                                data={categoryData}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={90}
+                                                innerRadius={60}
+                                                paddingAngle={2}
+                                                labelLine={false}
+                                                label={false}
+                                            >
+                                                {categoryData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} className="stroke-background hover:opacity-80"/>
+                                                ))}
                                             </Pie>
-                                            <Tooltip />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 ) : (
                                     <p className="text-muted-foreground text-center py-4 text-sm">No points earned in categories yet.</p>
                                 )}
                             </CardContent>
+                            {categoryData.length > 0 && (
+                                <CardFooter className="flex-col items-start gap-3 border-t pt-4">
+                                    <div className="font-semibold text-muted-foreground">Legend</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {categoryData.map((item, index) => {
+                                            const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
+                                            return (
+                                                <div
+                                                    key={item.name}
+                                                    className="flex items-center gap-2 rounded-full border py-1 px-3 text-sm"
+                                                    style={{
+                                                        '--badge-color': color,
+                                                        backgroundColor: 'hsl(var(--badge-color) / 0.1)',
+                                                        borderColor: 'hsl(var(--badge-color) / 0.4)',
+                                                    } as React.CSSProperties}
+                                                >
+                                                    <span className="font-medium" style={{ color: 'hsl(var(--badge-color))' }}>{item.name}</span>
+                                                    <Separator orientation="vertical" className="h-4" style={{ backgroundColor: 'hsl(var(--badge-color) / 0.4)' }} />
+                                                    <span className="font-bold" style={{ color: 'hsl(var(--badge-color))' }}>
+                                                        {item.value.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </CardFooter>
+                            )}
                         </Card>
                      </div>
 
