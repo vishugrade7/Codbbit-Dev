@@ -9,7 +9,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Target } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
@@ -211,7 +211,6 @@ export default function UserProfilePage() {
     }
 
     if (!profileUser) {
-        // This case should be covered by error state, but as a fallback
         return <div>User not found.</div>
     }
     
@@ -237,185 +236,161 @@ export default function UserProfilePage() {
 
   return (
     <>
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <Header />
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-8">
-          <Card className="p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                        <Avatar className="h-24 w-24 border-4 border-primary">
-                            <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                            <AvatarFallback className="text-3xl">
-                                {profileUser.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                        </Avatar>
-                        {isOwnProfile && (
-                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                {isUploading ? (
-                                    <LoaderCircle className="h-8 w-8 animate-spin text-white" />
-                                ) : (
-                                    <Pencil className="h-8 w-8 text-white" />
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* --- LEFT COLUMN --- */}
+                <div className="lg:col-span-1 flex flex-col gap-8">
+                    {/* Profile Card */}
+                    <Card>
+                        <CardContent className="pt-6 flex flex-col items-center text-center">
+                            <div className="relative group mb-4" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                                <Avatar className="h-28 w-28 border-4 border-primary/50">
+                                    <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
+                                    <AvatarFallback className="text-4xl">
+                                        {profileUser.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                </Avatar>
+                                {isOwnProfile && (
+                                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                        {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
+                                    </div>
                                 )}
                             </div>
-                        )}
-                        {isOwnProfile && (
-                         <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            className="hidden"
-                            accept="image/png, image/jpeg, image/gif"
-                            disabled={isUploading}
-                        />
-                        )}
-                    </div>
-                    <div className="text-center md:text-left">
-                        <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
-                        <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                        <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4 text-muted-foreground text-sm">
-                            <div className="flex items-center gap-2">
-                                <Building className="h-4 w-4" />
-                                <span>{profileUser.company || 'N/A'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Globe className="h-4 w-4" />
-                                <span>{profileUser.country}</span>
-                            </div>
-                            {profileUser.isEmailPublic && (
-                              <div className="flex items-center gap-2">
-                                  <Mail className="h-4 w-4" />
-                                  <span>{profileUser.email}</span>
-                              </div>
+                             {isOwnProfile && (
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
                             )}
-                        </div>
-                         <div className="mt-4 flex justify-center md:justify-start gap-2">
-                            {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
-                            {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-5 w-5" /></a></Button>)}
-                            {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-5 w-5" /></a></Button>)}
-                            {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-5 w-5" /></a></Button>)}
-                        </div>
-                    </div>
-                </div>
-                {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
-            </div>
-          </Card>
-          
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
-                  <Card>
-                      <CardContent className="pt-6">
-                          {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                                <ContributionHeatmap 
-                                    data={profileUser.submissionHeatmap || {}} 
-                                    currentStreak={profileUser.currentStreak}
-                                    maxStreak={profileUser.maxStreak}
-                                />
-                          ) : (
-                                <div className="w-full h-48 flex flex-col items-start justify-center">
-                                    <h3 className="text-xl font-semibold mb-4">
-                                        0 submissions in the last year
-                                    </h3>
-                                    <div className="w-full h-full bg-card-foreground/5 rounded flex items-center justify-center">
-                                        <p className="text-muted-foreground">No contribution data yet.</p>
+                            <h1 className="text-2xl font-bold font-headline">{profileUser.name}</h1>
+                            <p className="text-md text-muted-foreground">@{profileUser.username}</p>
+                            
+                            <div className="mt-4 text-left w-full space-y-2 text-sm text-muted-foreground">
+                                {profileUser.company && (
+                                    <div className="flex items-center gap-2">
+                                        <Building className="h-4 w-4 shrink-0" />
+                                        <span>{profileUser.company}</span>
                                     </div>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4 shrink-0" />
+                                    <span>{profileUser.country}</span>
                                 </div>
-                          )}
-                      </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                        <CardTitle>Starred Problems</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {loadingStarred ? (
-                            <div className="flex justify-center items-center h-24">
-                                <LoaderCircle className="h-6 w-6 animate-spin" />
+                                {profileUser.isEmailPublic && (
+                                <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{profileUser.email}</span>
+                                </div>
+                                )}
                             </div>
-                        ) : starredProblems.length > 0 ? (
-                            <div className="space-y-2">
-                                {starredProblems.map(problem => (
-                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
-                                        <div className="flex items-center justify-between p-3 rounded-md hover:bg-card/50 transition-colors">
-                                            <span className="font-medium">{problem.title}</span>
-                                            <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>
-                                                {problem.difficulty}
-                                            </Badge>
-                                        </div>
-                                    </Link>
-                                ))}
+                            
+                            <div className="mt-4 flex justify-center flex-wrap gap-2">
+                                {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
+                                {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
+                                {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
+                                {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
                             </div>
-                        ) : (
-                            <p className="text-muted-foreground text-center py-4">
-                                Star problems in the workspace to see them here.
-                            </p>
-                        )}
-                    </CardContent>
-                  </Card>
-              </div>
 
-              <div className="space-y-8">
-                  <ProgressCard 
-                    totalSolved={totalSolved}
-                    totalAvailable={totalAvailable}
-                    easySolved={profileUser.dsaStats?.Easy || 0}
-                    easyTotal={totalProblemsByDifficulty.Easy}
-                    mediumSolved={profileUser.dsaStats?.Medium || 0}
-                    mediumTotal={totalProblemsByDifficulty.Medium}
-                    hardSolved={profileUser.dsaStats?.Hard || 0}
-                    hardTotal={totalProblemsByDifficulty.Hard}
-                  />
+                            {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)} className="w-full mt-6"><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
+                        </CardContent>
+                    </Card>
 
-                  <Card>
-                        <CardHeader>
-                           <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Points</CardTitle>
-                        </CardHeader>
+                    {/* Achievements Card */}
+                    <Card>
+                        <CardHeader><CardTitle>Achievements</CardTitle></CardHeader>
                         <CardContent>
-                            {categoryData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={200}>
-                                    <PieChart>
-                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                                            {categoryData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                            {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                                <div className="grid grid-cols-3 gap-4">
+                                    {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
+                                        <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
+                                            <div className="p-3 bg-amber-400/10 rounded-full">
+                                                <Award className="h-6 w-6 text-amber-500" />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : (
-                                <p className="text-muted-foreground text-center py-4">No points earned in categories yet.</p>
+                                <p className="text-muted-foreground text-center py-4 text-sm">No achievements yet. Keep coding!</p>
                             )}
                         </CardContent>
-                  </Card>
+                    </Card>
+                </div>
 
-                   <Card>
-                      <CardHeader>
-                          <CardTitle>Achievements</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                          {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).map((achievement: Achievement) => {
-                                    const Icon = Award; // Use a default icon
-                                    return (
-                                    <div key={achievement.name} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
-                                        <Icon className="h-10 w-10 text-primary" />
-                                        <h3 className="font-semibold">{achievement.name}</h3>
-                                        <p className="text-xs text-muted-foreground">{achievement.description}</p>
-                                    </div>
-                                    )
-                                })}
-                              </div>
-                           ) : (
-                                <p className="text-muted-foreground col-span-full text-center">No achievements yet. Keep coding!</p>
+                {/* --- RIGHT COLUMN --- */}
+                <div className="lg:col-span-3 flex flex-col gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <ProgressCard 
+                            totalSolved={totalSolved}
+                            totalAvailable={totalAvailable}
+                            easySolved={profileUser.dsaStats?.Easy || 0}
+                            easyTotal={totalProblemsByDifficulty.Easy}
+                            mediumSolved={profileUser.dsaStats?.Medium || 0}
+                            mediumTotal={totalProblemsByDifficulty.Medium}
+                            hardSolved={profileUser.dsaStats?.Hard || 0}
+                            hardTotal={totalProblemsByDifficulty.Hard}
+                        />
+                         <Card>
+                            <CardHeader><CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Points</CardTitle></CardHeader>
+                            <CardContent>
+                                {categoryData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height={160}>
+                                        <PieChart>
+                                            <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                                                const RADIAN = Math.PI / 180;
+                                                const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
+                                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                                return <text x={x} y={y} fill="currentColor" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs fill-muted-foreground">{categoryData[index].name}</text>;
+                                            }}>
+                                                {categoryData.map((entry, index) => (<Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />))}
+                                            </Pie>
+                                            <Tooltip />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <p className="text-muted-foreground text-center py-4 text-sm">No points earned in categories yet.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                     </div>
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                                <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                            ) : (
+                                <div className="text-center py-10">
+                                    <h3 className="text-lg font-semibold">Start your journey!</h3>
+                                    <p className="text-muted-foreground mt-2">Solve a problem to see your contribution graph here.</p>
+                                </div>
                             )}
-                      </CardContent>
-                  </Card>
-              </div>
-          </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
+                        <CardContent>
+                            {loadingStarred ? (
+                                <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
+                            ) : starredProblems.length > 0 ? (
+                                <div className="space-y-2">
+                                    {starredProblems.map(problem => (
+                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
+                                            <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                                <span className="font-medium">{problem.title}</span>
+                                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
       </main>
       <Footer />
@@ -424,3 +399,5 @@ export default function UserProfilePage() {
     </>
   );
 }
+
+    

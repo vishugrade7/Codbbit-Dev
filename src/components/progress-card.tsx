@@ -89,7 +89,7 @@ export function ProgressCard({
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-orange-500">Medium</span>
+              <span className="font-medium text-primary">Medium</span>
               <span className="text-muted-foreground">
                 {mediumSolved} / {mediumTotal}
               </span>
@@ -98,19 +98,19 @@ export function ProgressCard({
               value={
                 (mediumTotal > 0 ? (mediumSolved / mediumTotal) * 100 : 0)
               }
-              className="h-2 bg-muted [&>div]:bg-orange-500"
+              className="h-2 bg-muted [&>div]:bg-primary"
             />
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-red-500">Hard</span>
+              <span className="font-medium text-destructive">Hard</span>
               <span className="text-muted-foreground">
                 {hardSolved} / {hardTotal}
               </span>
             </div>
             <Progress
               value={(hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0)}
-              className="h-2 bg-muted [&>div]:bg-red-500"
+              className="h-2 bg-muted [&>div]:bg-destructive"
             />
           </div>
         </div>
@@ -118,3 +118,5 @@ export function ProgressCard({
     </Card>
   );
 }
+
+    
