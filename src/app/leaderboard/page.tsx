@@ -96,7 +96,7 @@ export default function Leaderboard() {
             avatarUrl: data.avatarUrl || '',
             points: data.points || 0,
             country: data.country || 'N/A',
-            company: data.company || 'N/A',
+            company: data.company || '',
             companyLogoUrl: data.companyLogoUrl || ''
           };
         });
@@ -117,7 +117,7 @@ export default function Leaderboard() {
   }, [leaderboardData]);
 
   const companyOptions = useMemo(() => {
-    const companies = new Set(leaderboardData.map(u => u.company).filter(c => c && c !== 'N/A'));
+    const companies = new Set(leaderboardData.map(u => u.company).filter(Boolean));
     return Array.from(companies).sort();
   }, [leaderboardData]);
 
@@ -218,7 +218,7 @@ export default function Leaderboard() {
                   </Link>
                   <div className="mt-4 flex justify-between items-end">
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
+                            {currentUserEntry.company && (
                                 <div className="flex items-center gap-1.5">
                                     {currentUserEntry.companyLogoUrl ? (
                                         <Image
@@ -393,20 +393,22 @@ export default function Leaderboard() {
                                 </Link>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
-                                <div className="flex items-center gap-2">
-                                    {user.companyLogoUrl ? (
-                                        <Image
-                                            src={user.companyLogoUrl}
-                                            alt={user.company || 'Company logo'}
-                                            width={20}
-                                            height={20}
-                                            className="rounded-sm object-contain"
-                                        />
-                                    ) : (user.company && user.company !== 'N/A') ? (
-                                        <Building className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                    ) : null}
-                                    <span>{user.company}</span>
-                                </div>
+                                {user.company ? (
+                                    <div className="flex items-center gap-2">
+                                        {user.companyLogoUrl ? (
+                                            <Image
+                                                src={user.companyLogoUrl}
+                                                alt={user.company}
+                                                width={20}
+                                                height={20}
+                                                className="rounded-sm object-contain"
+                                            />
+                                        ) : (
+                                            <Building className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                        )}
+                                        <span>{user.company}</span>
+                                    </div>
+                                ) : null}
                             </TableCell>
                             <TableCell className="hidden md:table-cell text-center">{user.country}</TableCell>
                             <TableCell className="text-right font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
