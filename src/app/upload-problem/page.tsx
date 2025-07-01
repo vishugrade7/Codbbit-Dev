@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -64,7 +64,6 @@ const formSchema = z.object({
 });
 // #endregion
 
-type ViewMode = 'list' | 'form';
 type FormMode = 'add' | 'edit';
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -73,7 +72,8 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    const [viewMode, setViewMode] = useState<ViewMode>('list');
+    type ViewMode = 'dashboard' | 'list' | 'form';
+    const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
     const [formMode, setFormMode] = useState<FormMode>('add');
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
 
@@ -111,6 +111,18 @@ function UploadProblemContent() {
         />
       );
     }
+    
+    if (viewMode === 'list') {
+        return (
+            <div>
+                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+                <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
+            </div>
+        )
+    }
 
     return (
         <div>
@@ -123,23 +135,40 @@ function UploadProblemContent() {
                 </div>
             </div>
 
-            <div className="space-y-8">
-                <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <Card 
+                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                    onClick={() => setViewMode('list')}
+                 >
+                    <CardHeader>
+                        <CardTitle>Problem Management</CardTitle>
+                        <CardDescription>View, edit, or add new Apex coding challenges to the platform.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-center justify-center">
+                       <div className="text-muted-foreground/20">
+                           <FileQuestion className="h-24 w-24" />
+                       </div>
+                    </CardContent>
+                    <CardFooter>
+                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                           Manage Problems <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                       </div>
+                    </CardFooter>
+                </Card>
 
-                <Card>
+                <Card className="flex flex-col bg-card/50 border-dashed text-muted-foreground/60 cursor-not-allowed">
                     <CardHeader>
                         <CardTitle>Course Management</CardTitle>
                         <CardDescription>Add, edit, or remove courses from the platform.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">Course management functionality is coming soon.</p>
+                    <CardContent className="flex-grow flex items-center justify-center">
+                        <div className="text-muted-foreground/20">
+                           <BookOpenCheck className="h-24 w-24" />
                         </div>
                     </CardContent>
                     <CardFooter>
-                        <Button disabled>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add New Course
+                         <Button disabled>
+                            Coming Soon
                         </Button>
                     </CardFooter>
                 </Card>
