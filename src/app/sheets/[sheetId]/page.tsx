@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -91,6 +91,12 @@ export default function SheetDisplayPage() {
 
         return () => unsubscribe();
     }, [sheetId, toast, authUser]);
+
+    const uniqueCategories = useMemo(() => {
+        if (!problems || problems.length === 0) return [];
+        const categorySet = new Set(problems.map(p => p.categoryName));
+        return Array.from(categorySet);
+    }, [problems]);
     
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -194,14 +200,21 @@ export default function SheetDisplayPage() {
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                             <div className="flex-1">
-                                <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
-                                <CardDescription className="flex items-center gap-2 mt-2">
-                                    <Avatar className="h-6 w-6">
-                                        <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                        <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <span>Created by {sheet.creatorName} {timeAgo}</span>
-                                </CardDescription>
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-lg mt-1">
+                                        <FileText className="h-6 w-6 text-primary" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
+                                        <CardDescription className="flex items-center gap-2 mt-2">
+                                            <Avatar className="h-6 w-6">
+                                                <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                                <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span>Created by {sheet.creatorName} {timeAgo}</span>
+                                        </CardDescription>
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0">
                                 <div className="flex flex-row items-center gap-4">
@@ -223,6 +236,16 @@ export default function SheetDisplayPage() {
                                 </div>
                             </div>
                         </div>
+                        {uniqueCategories.length > 0 && (
+                            <div className="border-t pt-4 mt-6">
+                                <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {uniqueCategories.map(category => (
+                                        <Badge key={category} variant="secondary">{category}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </CardHeader>
                 </Card>
                 
