@@ -183,6 +183,7 @@ export default function SignupPage() {
           achievements: {},
           contributions: [],
           isAdmin: false,
+          isEmailPublic: false,
           
           // Initialize new progress tracking fields
           solvedProblems: {},

@@ -282,10 +282,12 @@ export default function UserProfilePage() {
                             <Globe className="h-5 w-5" />
                             <span>{profileUser.country}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Mail className="h-5 w-5" />
-                            <span>{profileUser.email}</span>
-                        </div>
+                        {profileUser.isEmailPublic && (
+                          <div className="flex items-center gap-2">
+                              <Mail className="h-5 w-5" />
+                              <span>{profileUser.email}</span>
+                          </div>
+                        )}
                     </div>
                      <div className="mt-6 flex justify-center md:justify-start gap-2">
                         {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-5 w-5" /></a></Button>)}
@@ -420,4 +422,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-

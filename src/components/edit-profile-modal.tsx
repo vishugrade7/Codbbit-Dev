@@ -21,6 +21,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,9 +32,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/types";
 import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter } from "lucide-react";
+import { Switch } from "./ui/switch";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
+  isEmailPublic: z.boolean().optional(),
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
   trailheadUrl: z.string().url().optional().or(z.literal('')),
@@ -98,6 +101,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user.name || "",
+      isEmailPublic: user.isEmailPublic || false,
       company: user.company || "",
       companyLogoUrl: user.companyLogoUrl || "",
       trailheadUrl: user.trailheadUrl || "",
@@ -170,6 +174,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
         name: values.name,
+        isEmailPublic: values.isEmailPublic,
         company: values.company,
         companyLogoUrl: companyLogo || '',
         trailheadUrl: values.trailheadUrl,
@@ -212,6 +217,26 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
                         <Input placeholder="Your full name" {...field} className="pl-10" />
                     </div>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isEmailPublic"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Show Email</FormLabel>
+                    <FormDescription>
+                      Allow others to see your email on your public profile.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

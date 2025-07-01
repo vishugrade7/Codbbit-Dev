@@ -18,6 +18,7 @@ export type User = {
   username: string;
   name: string;
   email: string;
+  isEmailPublic?: boolean;
   avatarUrl: string;
   country: string;
   company?: string;
