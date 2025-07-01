@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
@@ -19,7 +19,6 @@ import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { toggleSheetSubscription } from '../actions';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 
@@ -64,8 +63,6 @@ export default function SheetDisplayPage() {
             }
             
             if (sheetData.problemIds && sheetData.problemIds.length > 0) {
-                // This part can be optimized if problems don't change often,
-                // but is fine for now.
                 const apexDocRef = doc(db, "problems", "Apex");
                 const apexSnap = await getDoc(apexDocRef);
                 
@@ -105,23 +102,36 @@ export default function SheetDisplayPage() {
             toast({ variant: 'destructive', title: 'Please log in to subscribe.' });
             return;
         }
-        if (isSubscribing) return;
+        if (isSubscribing || !db) return;
     
         setIsSubscribing(true);
-        const result = await toggleSheetSubscription(sheetId, authUser.uid, isSubscribed);
-    
-        if (result.success) {
+
+        const sheetDocRef = doc(db, 'problem-sheets', sheetId);
+        const userDocRef = doc(db, 'users', authUser.uid);
+
+        try {
+            if (isSubscribed) {
+                // Unsubscribe
+                await updateDoc(sheetDocRef, { subscribers: arrayRemove(authUser.uid) });
+                await updateDoc(userDocRef, { subscribedSheetIds: arrayRemove(sheetId) });
+            } else {
+                // Subscribe
+                await updateDoc(sheetDocRef, { subscribers: arrayUnion(authUser.uid) });
+                await updateDoc(userDocRef, { subscribedSheetIds: arrayUnion(sheetId) });
+            }
             toast({
                 title: isSubscribed ? 'Unsubscribed successfully' : 'Subscribed successfully',
             });
-        } else {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             toast({
                 variant: 'destructive',
                 title: 'An error occurred',
-                description: result.error,
+                description: errorMessage,
             });
+        } finally {
+            setIsSubscribing(false);
         }
-        setIsSubscribing(false);
     };
 
     const getDifficultyBadgeClass = (difficulty: string) => {
