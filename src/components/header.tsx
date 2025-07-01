@@ -27,7 +27,7 @@ export default function Header() {
   ];
 
   const adminNavLinks = [
-      { href: "/upload-problem", label: "Upload Problem", icon: UploadCloud }
+      { href: "/upload-problem", label: "Admin Page", icon: UploadCloud }
   ]
 
   const handleLogout = async () => {
