@@ -28,6 +28,8 @@ import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, Sele
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search } from "lucide-react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Separator } from "@/components/ui/separator";
 
 
 // #region Schemas
@@ -492,53 +494,77 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader><CardTitle>Code & Tests</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                                <FormField control={form.control} name="sampleCode" render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Sample Code</FormLabel>
-                                    <div className="editor-container rounded-md border w-full h-64 overflow-hidden">
-                                        <MonacoEditor
-                                            height="100%"
-                                            language="java"
-                                            value={field.value}
-                                            onChange={(value) => field.onChange(value || '')}
-                                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                            options={{
-                                                fontSize: 14,
-                                                minimap: { enabled: false },
-                                                scrollBeyondLastLine: false,
-                                                padding: { top: 10, bottom: 10 },
-                                                fontFamily: 'var(--font-source-code-pro)',
-                                            }}
-                                        />
-                                    </div>
-                                    <FormMessage />
-                                  </FormItem>
-                                )} />
-                                <FormField control={form.control} name="testcases" render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Test Cases</FormLabel>
-                                      <div className="editor-container rounded-md border w-full h-64 overflow-hidden">
-                                          <MonacoEditor
-                                              height="100%"
-                                              language="java"
-                                              value={field.value}
-                                              onChange={(value) => field.onChange(value || '')}
-                                              theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                              options={{
-                                                  fontSize: 14,
-                                                  minimap: { enabled: false },
-                                                  scrollBeyondLastLine: false,
-                                                  padding: { top: 10, bottom: 10 },
-                                                  fontFamily: 'var(--font-source-code-pro)',
-                                              }}
-                                          />
-                                      </div>
-                                    <FormMessage />
-                                  </FormItem>
-                                )} />
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Code & Tests</CardTitle>
+                            <CardDescription>Provide the starter code and the test cases to validate the solution.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ResizablePanelGroup direction="horizontal" className="min-h-[40rem] max-w-full rounded-lg border">
+                                <ResizablePanel defaultSize={50}>
+                                    <FormField
+                                        control={form.control}
+                                        name="sampleCode"
+                                        render={({ field }) => (
+                                        <FormItem className="h-full flex flex-col">
+                                            <FormLabel className="p-2.5 font-semibold">Sample Code</FormLabel>
+                                            <Separator />
+                                            <FormControl className="flex-1">
+                                                <div className="h-full">
+                                                    <MonacoEditor
+                                                        height="100%"
+                                                        language="java"
+                                                        value={field.value}
+                                                        onChange={(value) => field.onChange(value || "")}
+                                                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                                        options={{
+                                                            fontSize: 14,
+                                                            minimap: { enabled: false },
+                                                            scrollBeyondLastLine: false,
+                                                            padding: { top: 16, bottom: 16 },
+                                                            fontFamily: 'var(--font-source-code-pro)',
+                                                        }}
+                                                    />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage className="p-2 text-xs" />
+                                        </FormItem>
+                                        )}
+                                    />
+                                </ResizablePanel>
+                                <ResizableHandle withHandle />
+                                <ResizablePanel defaultSize={50}>
+                                    <FormField
+                                        control={form.control}
+                                        name="testcases"
+                                        render={({ field }) => (
+                                        <FormItem className="h-full flex flex-col">
+                                            <FormLabel className="p-2.5 font-semibold">Test Cases</FormLabel>
+                                            <Separator />
+                                            <FormControl className="flex-1">
+                                                <div className="h-full">
+                                                    <MonacoEditor
+                                                        height="100%"
+                                                        language="java"
+                                                        value={field.value}
+                                                        onChange={(value) => field.onChange(value || "")}
+                                                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                                        options={{
+                                                            fontSize: 14,
+                                                            minimap: { enabled: false },
+                                                            scrollBeyondLastLine: false,
+                                                            padding: { top: 16, bottom: 16 },
+                                                            fontFamily: 'var(--font-source-code-pro)',
+                                                        }}
+                                                    />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage className="p-2 text-xs" />
+                                        </FormItem>
+                                        )}
+                                    />
+                                </ResizablePanel>
+                            </ResizablePanelGroup>
                         </CardContent>
                     </Card>
                     
