@@ -92,7 +92,7 @@ export default function Leaderboard() {
             rank: index + 1, // This is the global rank
             id: doc.id,
             name: data.name || 'N/A',
-            username: data.username || 'N/A',
+            username: data.username || `user${doc.id.substring(0,5)}`,
             avatarUrl: data.avatarUrl || '',
             points: data.points || 0,
             country: data.country || 'N/A',
@@ -195,25 +195,27 @@ export default function Leaderboard() {
             <div className="lg:col-span-1">
               <Card className="bg-primary/10 border-primary/20 shadow-lg">
                 <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 border-2 border-primary">
-                              <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                              <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                              <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                              <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                  <Link href={`/profile/${currentUserEntry.username}`} className="block">
+                      <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-4">
+                              <Avatar className="h-12 w-12 border-2 border-primary">
+                                  <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                                  <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                  <p className="font-semibold text-lg">{currentUserEntry.name}</p>
+                                  <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                              </div>
+                          </div>
+                          <div className="text-right">
+                              <div className="flex items-center gap-2 font-bold text-2xl">
+                                  <Trophy className="h-7 w-7 text-yellow-400" />
+                                  <span>{currentUserEntry.rank}</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">Rank</p>
                           </div>
                       </div>
-                      <div className="text-right">
-                          <div className="flex items-center gap-2 font-bold text-2xl">
-                              <Trophy className="h-7 w-7 text-yellow-400" />
-                              <span>{currentUserEntry.rank}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">Rank</p>
-                      </div>
-                  </div>
+                  </Link>
                   <div className="mt-4 flex justify-between items-end">
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                             {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
@@ -369,16 +371,16 @@ export default function Leaderboard() {
                         >
                             <TableCell className="font-bold text-center text-xl">{getMedal(user.rank)}</TableCell>
                             <TableCell>
-                                <div className="flex items-center gap-4">
+                                <Link href={`/profile/${user.username}`} className="flex items-center gap-4 group">
                                     <Avatar>
                                         <AvatarImage src={user.avatarUrl} alt={user.name} />
                                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-medium">{user.name}</p>
+                                        <p className="font-medium group-hover:underline">{user.name}</p>
                                         <p className="text-sm text-muted-foreground">@{user.username}</p>
                                     </div>
-                                </div>
+                                </Link>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
                                 <div className="flex items-center gap-2">
