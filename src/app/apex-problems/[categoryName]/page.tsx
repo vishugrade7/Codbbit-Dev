@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -15,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Loader2, Search, CheckCircle2, ArrowLeft, Circle } from "lucide-react";
 
 export default function CategoryProblemsPage() {
   const params = useParams();
@@ -129,11 +128,13 @@ export default function CategoryProblemsPage() {
                 {filteredProblems.map((problem) => (
                   <TableRow key={problem.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${problem.id}`)}>
                     <TableCell>
-                      {userData?.solvedProblems?.includes(problem.id) && (
-                        <div className="flex justify-center">
-                            <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        </div>
-                      )}
+                      <div className="flex justify-center">
+                        {userData?.solvedProblems?.includes(problem.id) ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground/50" />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium">{problem.title}</TableCell>
                     <TableCell className="text-right">
