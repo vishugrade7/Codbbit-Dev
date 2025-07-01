@@ -160,19 +160,15 @@ export default function ProblemWorkspacePage() {
         }
 
         setIsSubmitting(true);
-        setResults("Submitting solution and running tests...");
+        setResults("Initializing submission process...");
 
         const response = await submitApexSolution(user.uid, problem, code);
         
-        let resultText = `${response.message}`;
-        if (response.details) {
-            resultText += `\n\nDetails:\n${response.details}`;
-        }
-        setResults(resultText);
+        setResults(response.details || response.message);
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
-            const pointsMatch = response.message.match(/(\d+)\s+points/);
+            const pointsMatch = response.details?.match(/You've earned (\d+) points/);
             const points = pointsMatch ? parseInt(pointsMatch[1], 10) : 0;
             if (points > 0) {
                 setAwardedPoints(points);

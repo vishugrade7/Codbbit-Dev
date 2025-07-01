@@ -18,6 +18,11 @@ type SalesforceTokenResponse = {
 };
 
 type SfdcAuth = NonNullable<User['sfdcAuth']>;
+type SubmissionResult = { success: boolean, message: string, details?: string };
+const POINTS_MAP: { [key: string]: number } = { Easy: 10, Medium: 25, Hard: 50 };
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/)?.[1];
+
 
 async function getSfdcConnection(userId: string): Promise<SfdcAuth> {
     const userDocRef = doc(db, 'users', userId);
@@ -88,6 +93,7 @@ async function sfdcFetch(auth: SfdcAuth, path: string, options: RequestInit = {}
         const errorMessage = Array.isArray(errorBody) ? errorBody[0]?.message : (errorBody.message || 'An unknown Salesforce API error occurred.');
         throw new Error(errorMessage);
     }
+    // No content for DELETE requests
     if (response.status === 204) {
         return null;
     }
@@ -96,20 +102,11 @@ async function sfdcFetch(auth: SfdcAuth, path: string, options: RequestInit = {}
 
 async function findToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string) {
     const query = `SELECT Id FROM ${objectType} WHERE Name = '${name}'`;
-    console.log(`Executing Tooling API query: ${query}`);
-    try {
-        const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
-        console.log(`Query result for ${name}:`, JSON.stringify(result, null, 2));
-        return result.records[0] || null;
-    } catch (error) {
-        console.error(`Error finding Tooling API record for ${name}:`, error);
-        throw error;
-    }
+    const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
+    return result.records[0] || null;
 }
 
 async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string) {
-    console.log(`Creating new ${objectType} record named: ${name}`);
-    
     const requestBody: { Name: string; Body: string; ApiVersion: number; TableEnumOrId?: string } = {
         Name: name,
         Body: body,
@@ -129,33 +126,30 @@ async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
     });
 }
 
-async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string): Promise<string> {
-    console.log(`Upserting ${objectType} named: ${name} using delete-then-create strategy.`);
-    const record = await findToolingApiRecord(auth, objectType, name);
-
-    if (record?.Id) {
-        console.log(`Found existing record for ${name} with ID: ${record.Id}. Deleting it first.`);
+async function waitForCompilation(log: string[], auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', recordId: string): Promise<{ success: boolean; message?: string }> {
+    for (let i = 0; i < 30; i++) { // 30 seconds timeout
+        await sleep(1000);
+        log.push(`> Polling compilation status... (Attempt ${i + 1})`);
+        const query = `SELECT Status, IsValid, CompileProblem FROM ${objectType} WHERE Id = '${recordId}'`;
         try {
-            await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.Id}`, {
-                method: 'DELETE',
-            });
-            console.log(`Successfully deleted existing version of ${name}.`);
+            const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
+            if (result.records.length > 0) {
+                const record = result.records[0];
+                if (record.Status === 'Active') {
+                    return { success: true };
+                }
+                if (record.Status === 'Invalid' || record.Status === 'Error' || !record.IsValid) {
+                    const errorMessage = `Compilation failed. Status: ${record.Status}. Problem: ${record.CompileProblem || 'Unknown'}`;
+                    return { success: false, message: errorMessage };
+                }
+            }
         } catch (error) {
-            console.error(`Failed to delete existing ${objectType} named ${name}. This might happen if it's referenced elsewhere. Continuing with creation attempt.`, error);
+            console.warn(`Polling query failed for ${recordId}, will retry. Error:`, error);
         }
-    } else {
-        console.log(`No existing record found for ${name}. Proceeding with creation.`);
     }
-
-    const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
-    console.log(`Successfully created ${name} with ID: ${newRecord.id}.`);
-    return newRecord.id;
+    return { success: false, message: `Timed out waiting for ${objectType} to compile.` };
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/)?.[1];
-const POINTS_MAP: { [key: string]: number } = { Easy: 10, Medium: 25, Hard: 50 };
 
 export async function getSalesforceAccessToken(code: string, codeVerifier: string, userId: string) {
   const loginUrl = process.env.SFDC_LOGIN_URL || 'https://login.salesforce.com';
@@ -209,167 +203,136 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
   }
 }
 
-type SubmissionResult = { success: boolean, message: string, details?: string };
-
-async function waitForCompilation(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', recordId: string): Promise<{ success: boolean; message?: string }> {
-    console.log(`Polling for compilation status of ${objectType} with ID ${recordId}`);
-    for (let i = 0; i < 30; i++) { // 30 seconds timeout
-        await sleep(1000);
-        console.log(`Polling status attempt ${i + 1}/30...`);
-        const query = `SELECT Status, IsValid, CompileProblem FROM ${objectType} WHERE Id = '${recordId}'`;
-        try {
-            const result = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(query)}`);
-            if (result.records.length > 0) {
-                const record = result.records[0];
-                console.log(`Current status for ${recordId}: ${record.Status}`);
-                if (record.Status === 'Active') {
-                    console.log(`${objectType} ${recordId} is active.`);
-                    return { success: true };
-                }
-                if (record.Status === 'Invalid' || record.Status === 'Error' || !record.IsValid) {
-                    const errorMessage = `Compilation failed for ${objectType}. Status: ${record.Status}. Problem: ${record.CompileProblem || 'Unknown'}`;
-                    console.error(errorMessage);
-                    return { success: false, message: errorMessage };
-                }
-            }
-        } catch (error) {
-            console.warn(`Polling query failed for ${recordId}, will retry. Error:`, error);
-        }
+async function deployMetadata(log: string[], auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string): Promise<string> {
+    log.push(`\n--- Deploying ${objectType}: ${name} ---`);
+    const existingRecord = await findToolingApiRecord(auth, objectType, name);
+    
+    if (existingRecord) {
+        log.push(`> Found existing record with ID: ${existingRecord.Id}. Deleting...`);
+        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${existingRecord.Id}`, { method: 'DELETE' });
+        log.push(`> Deletion successful.`);
     }
-    return { success: false, message: `Timed out waiting for ${objectType} ${recordId} to compile.` };
+
+    log.push(`> Creating new ${objectType}...`);
+    const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
+    log.push(`> Creation successful. Record ID: ${newRecord.id}.`);
+    
+    log.push(`> Waiting for compilation...`);
+    const compilationResult = await waitForCompilation(log, auth, objectType, newRecord.id);
+
+    if (!compilationResult.success) {
+        throw new Error(compilationResult.message || `The ${objectType} failed to compile.`);
+    }
+
+    log.push(`> Compilation successful.`);
+    return newRecord.id;
 }
 
+
 export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
-    console.log(`\n--- Starting Apex Solution Submission for user ${userId}, problem ${problem.id} ---`);
+    const log: string[] = [];
+    
     try {
+        log.push("Starting submission...");
         const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
 
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
-            const errorMessage = "This trigger problem is missing its associated SObject (e.g., Account, Contact). An administrator needs to update the problem configuration.";
-            console.error(`Configuration error for problem ${problem.id}: ${errorMessage}`);
-            return {
-                success: false,
-                message: 'Problem Configuration Error',
-                details: errorMessage
-            };
+            const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
+            return { success: false, message: 'Problem Configuration Error', details: msg };
         }
 
         const userDocRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists() && userDoc.data().solvedProblems?.includes(problem.id)) {
-            console.log("Problem already solved by user. Exiting.");
-            return { success: true, message: "You have already solved this problem." };
+            return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
         }
 
-        console.log("Getting SFDC connection...");
+        log.push("> Connecting to Salesforce...");
         const auth = await getSfdcConnection(userId);
-        console.log("SFDC connection successful.");
+        log.push("> Connection successful.");
         
         const mainObjectName = getClassName(userCode);
         const testObjectName = getClassName(problem.testcases);
         
-        console.log(`Determined metadata type: ${objectType}`);
-        console.log(`Extracted main object name: ${mainObjectName}`);
-        console.log(`Extracted test object name: ${testObjectName}`);
-
         if (!mainObjectName || !testObjectName) {
-            console.error('Could not determine class/trigger names from code.');
-            return { success: false, message: 'Could not determine class/trigger names from code.' };
+            throw new Error('Could not determine class/trigger names from the provided code.');
         }
-        
-        console.log("\n--- Phase 1: Upserting and compiling main user code ---");
-        const mainObjectId = await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode, problem.triggerSObject);
-        const mainObjectCompilation = await waitForCompilation(auth, objectType, mainObjectId);
-        if (!mainObjectCompilation.success) {
-            return { success: false, message: 'Your solution failed to compile.', details: mainObjectCompilation.message };
-        }
-        console.log("--- Finished Phase 1 ---\n");
-        
-        console.log("Briefly pausing between deployments to avoid platform race conditions...");
-        await sleep(2000);
 
-        console.log("\n--- Phase 2: Upserting and compiling test class ---");
-        const testClassId = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
-        const testObjectCompilation = await waitForCompilation(auth, 'ApexClass', testClassId);
-        if (!testObjectCompilation.success) {
-            return { success: false, message: 'The problem test class failed to compile.', details: testObjectCompilation.message };
-        }
-        console.log("--- Finished Phase 2 ---\n");
-
-        if (!testClassId) {
-            console.error('Failed to get test class ID after upsert.', testClassId);
-            return { success: false, message: 'Failed to retrieve test class ID from Salesforce.' };
-        }
+        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, userCode, problem.triggerSObject);
         
-        console.log(`Test class ID to be used for test run: ${testClassId}`);
+        await sleep(2000); // Wait after main object compilation to avoid platform conflicts
 
-        console.log("Requesting asynchronous test run...");
+        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
+
+        log.push("\n--- Running Tests ---");
+        log.push(`> Initiating test run for class ID: ${testClassId}`);
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
             method: 'POST',
             body: JSON.stringify({ classids: testClassId })
         });
         const apexTestRunId = testRunResult;
-        console.log(`Asynchronous test run initiated with ID: ${apexTestRunId}`);
+        log.push(`> Test run queued with ID: ${apexTestRunId}`);
 
-        console.log("Polling for test job completion...");
+        log.push("> Polling for test job completion...");
         let jobStatus;
         for (let i = 0; i < 30; i++) {
             await sleep(1000);
-            console.log(`Polling job status attempt ${i + 1}/30...`);
             const jobQuery = `SELECT Status FROM AsyncApexJob WHERE Id = '${apexTestRunId}'`;
             const jobResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(jobQuery)}`);
-            
             if (jobResult.records.length > 0) {
                 jobStatus = jobResult.records[0].Status;
-                console.log(`Current job status: ${jobStatus}`);
-                if (['Completed', 'Failed', 'Aborted'].includes(jobStatus)) {
-                    break;
-                }
+                log.push(`> Job status: ${jobStatus}`);
+                if (['Completed', 'Failed', 'Aborted'].includes(jobStatus)) break;
             }
         }
 
         if (jobStatus !== 'Completed') {
-            const message = `Test run did not complete successfully. Final status: ${jobStatus || 'Timed Out'}`;
-            console.error(message);
-            return { success: false, message };
+            throw new Error(`Test run did not complete successfully. Final status: ${jobStatus || 'Timed Out'}`);
         }
         
-        console.log("Test job completed. Fetching results...");
+        log.push("> Test job completed. Fetching results...");
         const resultQuery = `SELECT ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
         const testResultData = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(resultQuery)}`);
         
         const testResults = testResultData.records;
-        console.log(`Test results received:`, JSON.stringify(testResults, null, 2));
-
         if (!testResults || testResults.length === 0) {
-             console.error("No test results were found after a completed test run.");
-             return { success: false, message: "Test run completed, but no test results were found." };
+             throw new Error("Test run completed, but no test results were found.");
         }
 
         const failedTest = testResults.find((r: any) => r.Outcome !== 'Pass');
-
         if (failedTest) {
-             console.error("A test case failed:", failedTest);
-             return { success: false, message: `Test Failed: ${failedTest.MethodName}`, details: `${failedTest.Message}\n${failedTest.StackTrace || ''}` };
+             throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
 
-        console.log("All tests passed successfully!");
+        log.push("> All tests passed!");
+
+        log.push("\n--- Checking Code Coverage ---");
+        const coverageQuery = `SELECT NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
+        const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
+        
+        if (coverageResult.records && coverageResult.records.length > 0) {
+            const coverage = coverageResult.records[0];
+            const covered = coverage.NumLinesCovered;
+            const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
+            const percentage = total > 0 ? ((covered / total) * 100).toFixed(2) : '100.00';
+            log.push(`> Coverage: ${percentage}% (${covered}/${total} lines covered).`);
+        } else {
+            log.push("> Could not retrieve code coverage information.");
+        }
+
         const points = POINTS_MAP[problem.difficulty] || 0;
-        console.log(`Awarding ${points} points to user ${userId}.`);
+        log.push(`\nCongratulations! You've earned ${points} points.`);
         await updateDoc(userDocRef, {
             points: increment(points),
             solvedProblems: arrayUnion(problem.id)
         });
         
-        console.log("User data updated in Firestore.");
-        return { success: true, message: `All tests passed! You've earned ${points} points.` };
+        return { success: true, message: `All tests passed! You've earned ${points} points.`, details: log.join('\n') };
 
     } catch (error) {
-        console.error('Submit Apex Error:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return { success: false, message: 'An error occurred during submission.', details: errorMessage };
-    } finally {
-        console.log(`--- Finished Apex Solution Submission for user ${userId} ---`);
+        log.push(`\n--- ERROR ---`);
+        log.push(errorMessage);
+        return { success: false, message: 'An error occurred during submission.', details: log.join('\n') };
     }
 }
-    
