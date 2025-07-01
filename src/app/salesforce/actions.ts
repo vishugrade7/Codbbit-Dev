@@ -285,6 +285,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
         console.log("--- Finished Phase 1 ---\n");
         
+        console.log("Briefly pausing between deployments to avoid platform race conditions...");
+        await sleep(2000);
 
         console.log("\n--- Phase 2: Upserting and compiling test class ---");
         const testClassId = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
