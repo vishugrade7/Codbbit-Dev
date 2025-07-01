@@ -304,7 +304,11 @@ export default function UserProfilePage() {
                   <Card>
                       <CardContent className="pt-6">
                           {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                                <ContributionHeatmap data={profileUser.submissionHeatmap} />
+                                <ContributionHeatmap 
+                                    data={profileUser.submissionHeatmap || {}} 
+                                    currentStreak={profileUser.currentStreak}
+                                    maxStreak={profileUser.maxStreak}
+                                />
                           ) : (
                                 <div className="w-full h-48 flex flex-col items-start justify-center">
                                     <h3 className="text-xl font-semibold mb-4">
