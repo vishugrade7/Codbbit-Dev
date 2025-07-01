@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import ContributionHeatmap from "@/components/contribution-heatmap";
 
 type StarredProblemDetail = Problem & { categoryName: string };
 
@@ -283,9 +284,13 @@ export default function UserProfilePage() {
                           <CardTitle>Contribution Activity</CardTitle>
                       </CardHeader>
                       <CardContent>
-                          <div className="w-full h-40 bg-card-foreground/5 rounded flex items-center justify-center">
-                              <p className="text-muted-foreground">Contribution graph coming soon</p>
-                          </div>
+                          {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                                <ContributionHeatmap data={profileUser.submissionHeatmap} />
+                          ) : (
+                                <div className="w-full h-40 bg-card-foreground/5 rounded flex items-center justify-center">
+                                    <p className="text-muted-foreground">No contribution data yet.</p>
+                                </div>
+                          )}
                       </CardContent>
                   </Card>
 
@@ -417,4 +422,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
