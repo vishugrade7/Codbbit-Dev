@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Loader2, Building, Trophy, Globe, BookOpen } from "lucide-react";
+import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -196,8 +196,8 @@ export default function Leaderboard() {
               <Card className="h-full bg-primary/10 border-primary/20 shadow-lg">
                 <CardContent className="p-6 flex flex-col justify-between h-full">
                   <div className="flex items-center gap-4">
-                    <div className="font-bold text-center text-xl w-12 flex items-center justify-center gap-2">
-                      <Trophy className="h-6 w-6 text-yellow-400" />
+                    <div className="font-bold text-center text-2xl w-12 flex items-center justify-center gap-2">
+                      <Trophy className="h-7 w-7 text-yellow-400" />
                       <span>{currentUserEntry.rank}</span>
                     </div>
                     <Avatar className="h-12 w-12 border-2 border-primary">
@@ -234,7 +234,7 @@ export default function Leaderboard() {
             </div>
             <div className="lg:col-span-2">
               {suggestedProblem ? (
-                  <Card className="h-full flex flex-col">
+                  <Card className="h-full flex flex-col bg-gradient-to-br from-card to-muted/50">
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-primary/10 rounded-lg">
@@ -258,83 +258,95 @@ export default function Leaderboard() {
                     <CardFooter>
                         <Button asChild className="w-full">
                           <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
-                            Start Challenge
+                            Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
                           </Link>
                         </Button>
                     </CardFooter>
                   </Card>
               ) : (
-                <Card className="h-full flex items-center justify-center">
-                  <CardContent className="text-center p-6">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-                    <p className="text-muted-foreground">
-                        {allProblems.length > 0 ? "You've solved all the problems. Great job!" : "Loading a suggestion for you..."}
-                    </p>
-                  </CardContent>
+                <Card className="h-full flex items-center justify-center text-center p-6 bg-card/80 border-dashed">
+                    <CardContent className="p-0">
+                        {allProblems.length > 0 && userData && userData.solvedProblems.length >= allProblems.length ? (
+                        <>
+                            <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+                            <h3 className="text-xl font-bold">You're a Champion!</h3>
+                            <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
+                        </>
+                        ) : (
+                        <>
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+                            <p className="text-muted-foreground">Finding a great challenge for you...</p>
+                        </>
+                        )}
+                    </CardContent>
                 </Card>
               )}
             </div>
           </div>
         )}
         
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <div className="flex-1">
-                <Label htmlFor="filter-type" className="text-xs text-muted-foreground">SCOPE</Label>
-                <Select
-                    value={filterType}
-                    onValueChange={(value: "Global" | "Country" | "Company") => setFilterType(value)}
-                >
-                    <SelectTrigger id="filter-type" className="mt-1">
-                        <SelectValue placeholder="Select scope" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Global">Global</SelectItem>
-                        <SelectItem value="Country">By Country</SelectItem>
-                        <SelectItem value="Company">By Company</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+        <Card className="mb-8">
+            <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1">
+                        <Label htmlFor="filter-type" className="text-xs text-muted-foreground">SCOPE</Label>
+                        <Select
+                            value={filterType}
+                            onValueChange={(value: "Global" | "Country" | "Company") => setFilterType(value)}
+                        >
+                            <SelectTrigger id="filter-type" className="mt-1">
+                                <SelectValue placeholder="Select scope" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Global">Global</SelectItem>
+                                <SelectItem value="Country">By Country</SelectItem>
+                                <SelectItem value="Company">By Company</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-            {filterType === "Country" && (
-                <div className="flex-1">
-                    <Label htmlFor="country-filter" className="text-xs text-muted-foreground">COUNTRY</Label>
-                    <Select
-                        value={filterValue ?? ''}
-                        onValueChange={(value) => setFilterValue(value)}
-                        disabled={countryOptions.length === 0}
-                    >
-                        <SelectTrigger id="country-filter" className="mt-1">
-                            <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {countryOptions.map(country => (
-                                <SelectItem key={country} value={country}>{country}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
+                    {filterType === "Country" && (
+                        <div className="flex-1">
+                            <Label htmlFor="country-filter" className="text-xs text-muted-foreground">COUNTRY</Label>
+                            <Select
+                                value={filterValue ?? ''}
+                                onValueChange={(value) => setFilterValue(value)}
+                                disabled={countryOptions.length === 0}
+                            >
+                                <SelectTrigger id="country-filter" className="mt-1">
+                                    <SelectValue placeholder="Select a country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {countryOptions.map(country => (
+                                        <SelectItem key={country} value={country}>{country}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
-            {filterType === "Company" && (
-                <div className="flex-1">
-                    <Label htmlFor="company-filter" className="text-xs text-muted-foreground">COMPANY</Label>
-                    <Select
-                        value={filterValue ?? ''}
-                        onValueChange={(value) => setFilterValue(value)}
-                        disabled={companyOptions.length === 0}
-                    >
-                        <SelectTrigger id="company-filter" className="mt-1">
-                            <SelectValue placeholder="Select a company" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {companyOptions.map(company => (
-                                <SelectItem key={company} value={company}>{company}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    {filterType === "Company" && (
+                        <div className="flex-1">
+                            <Label htmlFor="company-filter" className="text-xs text-muted-foreground">COMPANY</Label>
+                            <Select
+                                value={filterValue ?? ''}
+                                onValueChange={(value) => setFilterValue(value)}
+                                disabled={companyOptions.length === 0}
+                            >
+                                <SelectTrigger id="company-filter" className="mt-1">
+                                    <SelectValue placeholder="Select a company" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {companyOptions.map(company => (
+                                        <SelectItem key={company} value={company}>{company}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
-            )}
-        </div>
+            </CardContent>
+        </Card>
 
         <div className="rounded-lg border">
             <Table>
@@ -353,7 +365,7 @@ export default function Leaderboard() {
                           key={user.id} 
                           className={cn(user.id === authUser?.uid && "bg-primary/10 hover:bg-primary/20")}
                         >
-                            <TableCell className="font-bold text-center text-lg">{getMedal(user.rank)}</TableCell>
+                            <TableCell className="font-bold text-center text-xl">{getMedal(user.rank)}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-4">
                                     <Avatar>
