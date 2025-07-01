@@ -1,5 +1,6 @@
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -115,6 +116,8 @@ export type Problem = {
   sampleCode: string;
   testcases: string;
   categoryName?: string; // Added for convenience
+  company?: string;
+  isPremium?: boolean;
 };
 
 // This represents the structure of the data fetched from the `problems/Apex` document

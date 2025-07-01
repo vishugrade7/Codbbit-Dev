@@ -56,6 +56,8 @@ const problemFormSchema = z.object({
   testcases: z.string().min(1, "Test cases is required."),
   examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
+  company: z.string().optional(),
+  isPremium: z.boolean().optional(),
 }).refine(data => {
     if (data.metadataType === 'Trigger') {
         return !!data.triggerSObject && data.triggerSObject.length > 0;
@@ -1201,6 +1203,8 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
             testcases: problem?.testcases || "",
             examples: problem?.examples?.map(e => ({...e})) || [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
             hints: problem?.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
+            company: problem?.company || "",
+            isPremium: problem?.isPremium || false,
         },
     });
     
@@ -1283,6 +1287,31 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
                                     </FormItem>
                                 )}
                             />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="company" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Company (Optional)</FormLabel>
+                                        <FormControl><Input placeholder="e.g., Google, Amazon" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="isPremium" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <FormLabel>Premium Problem</FormLabel>
+                                            <FormDescription>
+                                                Mark this problem as premium content.
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )} />
+                            </div>
                             <FormField control={form.control} name="description" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Description (HTML supported)</FormLabel>
@@ -1379,7 +1408,7 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
                                 <div key={field.id} className="p-4 border rounded-md relative space-y-2">
                                     <h4 className="font-semibold">Example {index + 1}</h4>
                                     <FormField control={form.control} name={`examples.${index}.input`} render={({ field }) => (<FormItem><FormLabel>Input (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name={`examples.${index}.output`} render={({ field }) => (<FormItem><FormLabel>Output</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name={`examples.${index}.output`} render={({ field }) => (<FormItem><FormLabel>Output</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>)} />
                                     <FormField control={form.control} name={`examples.${index}.explanation`} render={({ field }) => (<FormItem><FormLabel>Explanation (Optional)</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
                                     {exampleFields.length > 1 && (<Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2" onClick={() => removeExample(index)}><Trash2 className="h-4 w-4" /></Button>)}
                                 </div>

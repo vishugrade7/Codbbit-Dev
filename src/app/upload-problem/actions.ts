@@ -26,6 +26,8 @@ const problemObjectSchema = z.object({
   testcases: z.string().min(1, "Test cases is required."),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
+  company: z.string().optional(),
+  isPremium: z.boolean().optional(),
 });
 
 // Schema for form validation, with refinement.
@@ -222,6 +224,8 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                     testcases: data.testcases,
                     examples: cleanExamples,
                     hints: data.hints ? data.hints.map(h => h.value) : [],
+                    company: data.company,
+                    isPremium: data.isPremium,
                 };
 
                 if (oldCategoryName === newCategoryName) {
@@ -251,6 +255,8 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                 testcases: data.testcases,
                 examples: cleanExamples,
                 hints: data.hints ? data.hints.map(h => h.value) : [],
+                company: data.company,
+                isPremium: data.isPremium || false,
             };
             
             if (!categories[newCategoryName]) {
@@ -310,6 +316,8 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
                 testcases: data.testcases,
                 examples: data.examples,
                 hints: data.hints ? data.hints.map(h => h.value) : [],
+                company: data.company,
+                isPremium: data.isPremium || false,
             };
             
             const categoryName = data.category;
