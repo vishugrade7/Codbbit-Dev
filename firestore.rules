@@ -4,25 +4,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow public read/write to problems and users for simplicity during development.
-    // In a production app, you'd want more granular security.
-    match /problems/{document=**} {
+    // Target the specific document used by your app
+    match /problems/{document=**}{
+      // Allow anyone to read and write to the problem_data collection
       allow read, write: if true;
     }
 
+    // Allow anyone to read and write to the users collection
     match /users/{document=**} {
-      allow read, write: if true;
+      allow read, write: if true;  // Allow public read and write
+    }
+
+    // Allow authenticated users to create/write sheets, and anyone to read them.
+    match /problem-sheets/{sheetId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
     // Salesforce Data: Allow authenticated users to access this data
     match /salesforceData/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null;  // Only authenticated users can access this
     }
 
     // Catch-all: Deny writes, allow reads to anything else not matched
-    match /{path=**} {
-      allow read: if true;
-      allow write: if false;
+    match /{document=**} {
+      allow read: if true;  // Allow public read
+      allow write: if false;  // Deny write to all other documents
     }
   }
 }
