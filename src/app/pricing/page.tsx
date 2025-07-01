@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -9,31 +9,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Check } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const { userData } = useAuth();
 
-  const plans = {
-    monthly: {
-      price: 12,
-      suffix: "/month",
-      total: "Billed monthly.",
-    },
-    biannually: {
-      price: 10,
-      suffix: "/month",
-      total: "Billed $60 every 6 months.",
-      save: "16%",
-    },
-    annually: {
-      price: 8,
-      suffix: "/month",
-      total: "Billed $96 annually.",
-      save: "33%",
-    },
-  };
+  const isIndianUser = userData?.country === 'India';
 
-  const currentPlan = plans[billingCycle as keyof typeof plans];
+  const plans = useMemo(() => {
+    const currency = isIndianUser ? "₹" : "$";
+    const prices = isIndianUser
+      ? { monthly: 499, biannually: 415, annually: 333, biannualTotal: 2490, annualTotal: 3996 }
+      : { monthly: 12, biannually: 10, annually: 8, biannualTotal: 60, annualTotal: 96 };
+
+    return {
+      monthly: {
+        price: prices.monthly,
+        suffix: "/month",
+        total: "Billed monthly.",
+        currency: currency,
+      },
+      biannually: {
+        price: prices.biannually,
+        suffix: "/month",
+        total: `Billed ${currency}${prices.biannualTotal} every 6 months.`,
+        save: "16%",
+        currency: currency,
+      },
+      annually: {
+        price: prices.annually,
+        suffix: "/month",
+        total: `Billed ${currency}${prices.annualTotal} annually.`,
+        save: "33%",
+        currency: currency,
+      },
+      free: {
+        currency: currency,
+      }
+    };
+  }, [isIndianUser]);
+
+  const currentPlan = plans[billingCycle as keyof Omit<typeof plans, 'free'>];
+  const freePlan = plans.free;
+
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -66,7 +85,7 @@ export default function PricingPage() {
               <CardDescription>For individuals starting their Salesforce journey.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-4xl font-bold">$0<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+              <div className="text-4xl font-bold">{freePlan.currency}0<span className="text-lg font-normal text-muted-foreground">/month</span></div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Access to free problems</li>
                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Basic profile stats</li>
@@ -93,7 +112,7 @@ export default function PricingPage() {
             <CardContent className="space-y-4">
               <div className="flex flex-col">
                 <div className="flex items-baseline">
-                    <span className="text-4xl font-bold">${currentPlan.price}</span>
+                    <span className="text-4xl font-bold">{currentPlan.currency}{currentPlan.price}</span>
                     <span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{currentPlan.total}</p>
