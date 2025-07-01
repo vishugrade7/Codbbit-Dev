@@ -118,6 +118,16 @@ export default function LoginPage() {
       setIsResettingPassword(false);
     }
   };
+  
+  const handleOpenResetDialog = (open: boolean) => {
+    if (open) {
+      const emailValue = form.getValues('email');
+      if (emailValue) {
+        setResetEmail(emailValue);
+      }
+    }
+    setIsResetDialogOpen(open);
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -157,7 +167,7 @@ export default function LoginPage() {
                   <FormItem>
                     <div className="flex items-center justify-between">
                         <FormLabel>Password</FormLabel>
-                        <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                        <Dialog open={isResetDialogOpen} onOpenChange={handleOpenResetDialog}>
                             <DialogTrigger asChild>
                                 <button
                                     type="button"
@@ -188,7 +198,7 @@ export default function LoginPage() {
                                 </div>
                                 </div>
                                 <DialogFooter>
-                                <Button onClick={handlePasswordReset} disabled={isResettingPassword}>
+                                <Button type="button" onClick={handlePasswordReset} disabled={isResettingPassword}>
                                     {isResettingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Send Reset Link
                                 </Button>
