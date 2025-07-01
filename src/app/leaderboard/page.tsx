@@ -191,80 +191,82 @@ export default function Leaderboard() {
         </div>
 
         {currentUserEntry && (
-          <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+          <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-              <Card className="h-full bg-primary/10 border-primary/20 shadow-lg">
-                <CardContent className="p-6 flex flex-col justify-between h-full">
-                  <div className="flex items-center gap-4">
-                    <div className="font-bold text-center text-2xl w-12 flex items-center justify-center gap-2">
-                      <Trophy className="h-7 w-7 text-yellow-400" />
-                      <span>{currentUserEntry.rank}</span>
-                    </div>
-                    <Avatar className="h-12 w-12 border-2 border-primary">
-                      <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                      <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                      <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                    </div>
+              <Card className="bg-primary/10 border-primary/20 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12 border-2 border-primary">
+                              <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                              <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <p className="font-semibold text-lg">{currentUserEntry.name}</p>
+                              <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                          </div>
+                      </div>
+                      <div className="text-right">
+                          <div className="flex items-center gap-2 font-bold text-2xl">
+                              <Trophy className="h-7 w-7 text-yellow-400" />
+                              <span>{currentUserEntry.rank}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">Rank</p>
+                      </div>
                   </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                          {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
-                              <div className="flex items-center gap-1.5">
-                                  <Building className="h-4 w-4" />
-                                  <span>{currentUserEntry.company}</span>
-                              </div>
-                          )}
-                          {currentUserEntry.country && (
-                              <div className="flex items-center gap-1.5">
-                                  <Globe className="h-4 w-4" />
-                                  <span>{currentUserEntry.country}</span>
-                              </div>
-                          )}
-                    </div>
-                    <div className="pt-2 text-right">
-                      <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">Points</p>
-                    </div>
+                  <div className="mt-4 flex justify-between items-end">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            {currentUserEntry.company && currentUserEntry.company !== 'N/A' && (
+                                <div className="flex items-center gap-1.5">
+                                    <Building className="h-4 w-4" />
+                                    <span>{currentUserEntry.company}</span>
+                                </div>
+                            )}
+                            {currentUserEntry.country && (
+                                <div className="flex items-center gap-1.5">
+                                    <Globe className="h-4 w-4" />
+                                    <span>{currentUserEntry.country}</span>
+                                </div>
+                            )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Points</p>
+                      </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
             <div className="lg:col-span-2">
               {suggestedProblem ? (
-                  <Card className="h-full flex flex-col bg-gradient-to-br from-card to-muted/50">
-                    <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary/10 rounded-lg">
-                                <BookOpen className="h-6 w-6 text-primary" />
+                  <Card className="bg-gradient-to-br from-card to-muted/50">
+                    <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex-grow">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-primary/10 rounded-lg">
+                                    <BookOpen className="h-5 w-5 text-primary" />
+                                </div>
+                                <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
                             </div>
-                            <div>
-                              <CardTitle>Challenge Yourself!</CardTitle>
-                              <CardDescription>Solve this to climb the leaderboard.</CardDescription>
+                            <p className="text-muted-foreground text-sm mb-3">
+                                Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
+                                <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
+                                {suggestedProblem.difficulty}
+                                </Badge>
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <h3 className="text-lg font-semibold">{suggestedProblem.title}</h3>
-                      <div className="flex items-center gap-4 mt-2">
-                        <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
-                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
-                          {suggestedProblem.difficulty}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button asChild className="w-full">
+                        <Button asChild className="w-full sm:w-auto mt-4 sm:mt-0 flex-shrink-0">
                           <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
                             Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
                           </Link>
                         </Button>
-                    </CardFooter>
+                    </CardContent>
                   </Card>
               ) : (
-                <Card className="h-full flex items-center justify-center text-center p-6 bg-card/80 border-dashed">
+                <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed min-h-[160px]">
                     <CardContent className="p-0">
                         {allProblems.length > 0 && userData && userData.solvedProblems.length >= allProblems.length ? (
                         <>
