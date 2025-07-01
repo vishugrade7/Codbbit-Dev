@@ -412,6 +412,14 @@ export default function ProblemWorkspacePage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Reset Code</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
                                                     {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
                                                     <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
@@ -422,36 +430,10 @@ export default function ProblemWorkspacePage() {
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
-                                     <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Reset Code</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button size="sm" disabled={isSubmitting}>
-                                                <Play className="mr-2 h-4 w-4" />
-                                                Run
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                            <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                You are about to submit this solution as an Apex {problem.metadataType}. This will create or update the corresponding file in your connected Salesforce org.
-                                            </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleSubmit} disabled={isSubmitting}>
-                                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Continue'}
-                                            </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                        Run
+                                    </Button>
                                 </div>
                             </div>
                             <div className="editor-container flex-1 w-full h-full overflow-auto">
