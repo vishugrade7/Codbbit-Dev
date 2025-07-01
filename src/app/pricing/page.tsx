@@ -11,8 +11,22 @@ import { Check, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { loadStripe } from '@stripe/stripe-js';
-import { createCheckoutSession } from '@/app/stripe/actions';
+import { createRazorpayOrder, verifyAndSavePayment } from '@/app/razorpay/actions';
+
+// Function to load the Razorpay script
+const loadRazorpayScript = () => {
+  return new Promise(resolve => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => {
+      resolve(true);
+    };
+    script.onerror = () => {
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+};
 
 
 export default function PricingPage() {
@@ -24,51 +38,50 @@ export default function PricingPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const plans = useMemo(() => {
-    // NOTE: Replace these with your actual Stripe Price IDs from your Stripe dashboard.
     const priceData = {
         inr: {
-            monthly: { price: 499, id: 'price_REPLACE_WITH_INR_MONTHLY_ID' },
-            biannually: { price: 415, id: 'price_REPLACE_WITH_INR_BIANNUALLY_ID' },
-            annually: { price: 333, id: 'price_REPLACE_WITH_INR_ANNUALLY_ID' },
-            biannualTotal: 2490,
-            annualTotal: 3996
+            monthly: { price: 499, total: 499 },
+            biannually: { price: 415, total: 2490 },
+            annually: { price: 333, total: 3996 },
         },
         usd: {
-            monthly: { price: 12, id: 'price_REPLACE_WITH_USD_MONTHLY_ID' },
-            biannually: { price: 10, id: 'price_REPLACE_WITH_USD_BIANNUALLY_ID' },
-            annually: { price: 8, id: 'price_REPLACE_WITH_USD_ANNUALLY_ID' },
-            biannualTotal: 60,
-            annualTotal: 96
+            monthly: { price: 12, total: 12 },
+            biannually: { price: 10, total: 60 },
+            annually: { price: 8, total: 96 },
         }
     };
 
     const currency = isIndianUser ? "₹" : "$";
+    const currencyCode = isIndianUser ? "INR" : "USD";
     const prices = isIndianUser ? priceData.inr : priceData.usd;
 
     return {
       monthly: {
         price: prices.monthly.price,
-        id: prices.monthly.id,
+        total: prices.monthly.total,
         suffix: "/month",
-        total: "Billed monthly.",
+        billDesc: "Billed monthly.",
         currency: currency,
+        currencyCode,
         save: null,
       },
       biannually: {
         price: prices.biannually.price,
-        id: prices.biannually.id,
+        total: prices.biannually.total,
         suffix: "/month",
-        total: `Billed ${currency}${prices.biannualTotal} every 6 months.`,
+        billDesc: `Billed ${currency}${prices.biannually.total} every 6 months.`,
         save: "16%",
         currency: currency,
+        currencyCode,
       },
       annually: {
         price: prices.annually.price,
-        id: prices.annually.id,
+        total: prices.annually.total,
         suffix: "/month",
-        total: `Billed ${currency}${prices.annualTotal} annually.`,
+        billDesc: `Billed ${currency}${prices.annually.total} annually.`,
         save: "33%",
         currency: currency,
+        currencyCode,
       },
       free: {
         currency: currency,
@@ -79,42 +92,70 @@ export default function PricingPage() {
   const currentPlan = plans[billingCycle as keyof Omit<typeof plans, 'free'>];
   const freePlan = plans.free;
 
-  const handleUpgrade = async (priceId: string) => {
-    if (!user) {
+  const handleUpgrade = async () => {
+    if (!user || !userData) {
         toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to upgrade your plan.' });
         router.push('/login');
         return;
     }
-    if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-        toast({ variant: 'destructive', title: 'Configuration Error', description: 'Stripe is not configured correctly.' });
+    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        toast({ variant: 'destructive', title: 'Configuration Error', description: 'Razorpay is not configured correctly.' });
         return;
     }
-     if (priceId.includes('REPLACE_WITH')) {
-        toast({ variant: 'destructive', title: 'Configuration Error', description: 'Stripe Price IDs have not been set. Please contact support.' });
-        return;
-    }
-
+    
     setIsCheckingOut(true);
-    const response = await createCheckoutSession(priceId, user.uid);
-    
-    if (response.error || !response.sessionId) {
-        toast({ variant: 'destructive', title: 'Checkout Error', description: response.error || 'Could not initiate checkout.' });
+
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      toast({ variant: 'destructive', title: 'Payment Error', description: 'Could not load payment script. Please check your connection.' });
+      setIsCheckingOut(false);
+      return;
+    }
+
+    const orderResponse = await createRazorpayOrder(currentPlan.total, currentPlan.currencyCode);
+
+    if (orderResponse.error || !orderResponse.orderId) {
+        toast({ variant: 'destructive', title: 'Checkout Error', description: orderResponse.error || 'Could not create an order.' });
         setIsCheckingOut(false);
         return;
     }
-    
-    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-    if (!stripe) {
-         toast({ variant: 'destructive', title: 'Stripe Error', description: 'Stripe.js failed to load.' });
-         setIsCheckingOut(false);
-         return;
-    }
 
-    const { error } = await stripe.redirectToCheckout({ sessionId: response.sessionId });
-    if (error) {
-        toast({ variant: 'destructive', title: 'Redirect Error', description: error.message || 'Failed to redirect to Stripe.' });
+    const options = {
+        key: orderResponse.razorpayKeyId,
+        amount: orderResponse.amount,
+        currency: orderResponse.currency,
+        name: "Codbbit",
+        description: "Pro Plan Subscription",
+        image: "https://placehold.co/128x128.png", // You should have a logo in your public folder
+        order_id: orderResponse.orderId,
+        handler: async function (response: any) {
+            const verificationResult = await verifyAndSavePayment(response, user.uid);
+            if (verificationResult.success) {
+                toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
+                router.push('/profile');
+            } else {
+                 toast({ variant: 'destructive', title: 'Payment Verification Failed', description: verificationResult.error || 'Please contact support.' });
+            }
+        },
+        prefill: {
+            name: userData.name,
+            email: userData.email,
+        },
+        theme: {
+            color: "#1976D2" // A blue shade similar to your primary color
+        }
+    };
+
+    const paymentObject = new (window as any).Razorpay(options);
+    paymentObject.on('payment.failed', function (response: any){
+        toast({ variant: 'destructive', title: 'Payment Failed', description: response.error.description });
         setIsCheckingOut(false);
-    }
+    });
+    paymentObject.open();
+
+    // The checkout process is now modal, so we don't want to keep the button in a loading state indefinitely.
+    // The payment failed handler will reset it if needed.
+    // setIsCheckingOut(false); 
   };
 
 
@@ -179,7 +220,7 @@ export default function PricingPage() {
                     <span className="text-4xl font-bold">{currentPlan.currency}{currentPlan.price}</span>
                     <span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{currentPlan.total}</p>
+                <p className="text-xs text-muted-foreground mt-1">{currentPlan.billDesc}</p>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Everything in Free</li>
@@ -189,7 +230,7 @@ export default function PricingPage() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={() => handleUpgrade(currentPlan.id)} disabled={isCheckingOut}>
+              <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut}>
                 {isCheckingOut ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Upgrade to Pro'}
               </Button>
             </CardFooter>

@@ -2,6 +2,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -54,10 +55,11 @@ export type User = {
   lastSolvedDate?: string; // YYYY-MM-DD
   subscribedSheetIds?: string[];
 
-  // Stripe Subscription Fields
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  stripeSubscriptionStatus?: string;
+  // Razorpay Payment Fields
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  razorpaySubscriptionId?: string;
+  razorpaySubscriptionStatus?: string;
 };
 
 export type LeaderboardUser = {
