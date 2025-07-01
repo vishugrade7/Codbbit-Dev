@@ -21,7 +21,7 @@ type SfdcAuth = NonNullable<User['sfdcAuth']>;
 type SubmissionResult = { success: boolean, message: string, details?: string };
 const POINTS_MAP: { [key: string]: number } = { Easy: 10, Medium: 25, Hard: 50 };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/)?.[1];
+const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/i)?.[1];
 
 
 async function getSfdcConnection(userId: string): Promise<SfdcAuth> {
@@ -234,8 +234,22 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     
     try {
         log.push("Starting submission...");
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        
+        // --- VALIDATION STEP ---
+        const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
+        const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
+        const problemTypeKeyword = problem.metadataType.toLowerCase();
 
+        if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
+            const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
+            const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
+            log.push(`\n--- ERROR ---`);
+            log.push(errorMessage);
+            return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+        }
+        // --- END VALIDATION ---
+
+        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
             const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
             return { success: false, message: 'Problem Configuration Error', details: msg };
