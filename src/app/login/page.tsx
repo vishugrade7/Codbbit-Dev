@@ -169,12 +169,13 @@ export default function LoginPage() {
                         <FormLabel>Password</FormLabel>
                         <Dialog open={isResetDialogOpen} onOpenChange={handleOpenResetDialog}>
                             <DialogTrigger asChild>
-                                <button
+                                <Button
                                     type="button"
-                                    className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                    variant="link"
+                                    className="p-0 h-auto text-sm font-medium"
                                 >
                                     Forgot password?
-                                </button>
+                                </Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
