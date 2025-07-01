@@ -77,7 +77,8 @@ export type Problem = {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   examples: Example[];
   hints: string[];
-  metadataType: string;
+  metadataType: 'Class' | 'Trigger';
+  triggerSObject?: string;
   sampleCode: string;
   testcases: string;
 };

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,10 +44,19 @@ const formSchema = z.object({
   category: z.string().min(1, "Category is required."),
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
   metadataType: z.enum(["Class", "Trigger"]),
+  triggerSObject: z.string().optional(),
   sampleCode: z.string().min(1, "Sample code is required."),
   testcases: z.string().min(1, "Test cases are required."),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
+}).refine(data => {
+    if (data.metadataType === 'Trigger') {
+        return !!data.triggerSObject && data.triggerSObject.length > 0;
+    }
+    return true;
+}, {
+    message: "Trigger SObject is required when Metadata Type is Trigger.",
+    path: ["triggerSObject"],
 });
 // #endregion
 
@@ -55,7 +64,7 @@ type ViewMode = 'list' | 'form';
 type FormMode = 'add' | 'edit';
 type ProblemWithCategory = Problem & { categoryName: string };
 
-export default function UploadProblemPage() {
+function UploadProblemContent() {
     const { user: authUser, userData, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -74,7 +83,7 @@ export default function UploadProblemPage() {
     }, [userData, authLoading, authUser, isAuthorized, router, toast]);
 
     if (authLoading || !isAuthorized) {
-        return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+        return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
     
     const handleAddNew = () => {
@@ -90,23 +99,36 @@ export default function UploadProblemPage() {
     }
 
     return (
+        viewMode === 'list' ? (
+            <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
+        ) : (
+            <ProblemForm 
+                formMode={formMode}
+                problem={currentProblem} 
+                onClose={() => setViewMode('list')} 
+            />
+        )
+    );
+}
+
+export default function UploadProblemPage() {
+    return (
         <div className="flex min-h-screen w-full flex-col bg-background">
             <Header />
             <main className="flex-1 container py-8">
-                {viewMode === 'list' ? (
-                    <ProblemList onEdit={handleEdit} onAddNew={handleAddNew} />
-                ) : (
-                    <ProblemForm 
-                        formMode={formMode}
-                        problem={currentProblem} 
-                        onClose={() => setViewMode('list')} 
-                    />
-                )}
+                 <Suspense fallback={
+                    <div className="flex justify-center items-center flex-1">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    </div>
+                }>
+                    <UploadProblemContent />
+                </Suspense>
             </main>
             <Footer />
         </div>
     );
 }
+
 
 // #region ProblemList
 function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) => void, onAddNew: () => void }) {
@@ -307,12 +329,15 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
             category: "",
             difficulty: "Easy",
             metadataType: "Class",
+            triggerSObject: "",
             sampleCode: "",
             testcases: "",
             examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
             hints: [{ value: "" }],
         },
     });
+    
+    const metadataTypeValue = form.watch("metadataType");
 
     useEffect(() => {
         if (formMode === 'edit' && problem) {
@@ -323,6 +348,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                 category: problem.categoryName,
                 difficulty: problem.difficulty,
                 metadataType: problem.metadataType,
+                triggerSObject: problem.triggerSObject || "",
                 sampleCode: problem.sampleCode,
                 testcases: problem.testcases,
                 examples: problem.examples.map(e => ({...e})),
@@ -331,6 +357,7 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
         } else {
             form.reset({
                 title: "", description: "", category: "", difficulty: "Easy", metadataType: "Class",
+                triggerSObject: "",
                 sampleCode: "", testcases: "",
                 examples: [{ input: "", output: "", explanation: "" }],
                 hints: [{ value: "" }],
@@ -445,13 +472,22 @@ function ProblemForm({ formMode, problem, onClose }: { formMode: FormMode, probl
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="difficulty" render={({ field }) => (
                                     <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="metadataType" render={({ field }) => (
                                     <FormItem><FormLabel>Metadata Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Class">Class</SelectItem><SelectItem value="Trigger">Trigger</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                 )} />
+                                {metadataTypeValue === 'Trigger' && (
+                                     <FormField control={form.control} name="triggerSObject" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Trigger SObject</FormLabel>
+                                            <FormControl><Input placeholder="e.g., Account, Contact" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                )}
                             </div>
                         </CardContent>
                     </Card>

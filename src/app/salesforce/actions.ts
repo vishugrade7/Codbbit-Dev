@@ -107,20 +107,35 @@ async function findToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'A
     }
 }
 
-async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string) {
+async function createToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string) {
     console.log(`Creating new ${objectType} record named: ${name}`);
+    
+    const requestBody: { Name: string; Body: string; ApiVersion: number; TableEnumOrId?: string } = {
+        Name: name,
+        Body: body,
+        ApiVersion: 59.0,
+    };
+
+    if (objectType === 'ApexTrigger') {
+        if (!triggerSObject) {
+            throw new Error('The SObject for the trigger was not specified in the problem data.');
+        }
+        requestBody.TableEnumOrId = triggerSObject;
+    }
+
     return sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/`, {
         method: 'POST',
-        body: JSON.stringify({ Name: name, Body: body, ApiVersion: 59.0 }),
+        body: JSON.stringify(requestBody),
     });
 }
 
-async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string) {
+async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string) {
     console.log(`Upserting ${objectType} named: ${name}`);
     const record = await findToolingApiRecord(auth, objectType, name);
     if (record?.Id) {
         console.log(`Found existing record for ${name} with ID: ${record.Id}. Updating it.`);
         // Update existing record
+        // Note: TableEnumOrId is not updateable for triggers.
         await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${record.Id}`, {
             method: 'PATCH',
             body: JSON.stringify({ Body: body, ApiVersion: 59.0 }),
@@ -130,7 +145,7 @@ async function upsertToolingApiRecord(auth: SfdcAuth, objectType: 'ApexClass' | 
     } else {
         console.log(`No existing record found for ${name}. Creating a new one.`);
         // Create new record
-        const newRecord = await createToolingApiRecord(auth, objectType, name, body);
+        const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
         console.log(`Successfully created ${name}.`);
         return newRecord;
     }
@@ -223,7 +238,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
         
         console.log("\n--- Upserting main user code ---");
-        await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode);
+        await upsertToolingApiRecord(auth, objectType, mainObjectName, userCode, problem.triggerSObject);
         console.log("--- Finished upserting main user code ---\n");
         
         // Add a delay to mitigate potential metadata contention issues in Salesforce,
@@ -232,7 +247,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         await sleep(2000);
 
         console.log("\n--- Upserting test class ---");
-        const testRecord = await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
+        await upsertToolingApiRecord(auth, 'ApexClass', testObjectName, problem.testcases);
+        const testRecord = await findToolingApiRecord(auth, 'ApexClass', testObjectName);
         console.log("--- Finished upserting test class ---\n");
 
         const testClassId = (testRecord as any)?.id || (testRecord as any)?.Id;

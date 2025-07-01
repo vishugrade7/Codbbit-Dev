@@ -19,10 +19,19 @@ const formSchema = z.object({
   category: z.string().min(1, "Category is required."),
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
   metadataType: z.enum(["Class", "Trigger"]),
+  triggerSObject: z.string().optional(),
   sampleCode: z.string().min(1, "Sample code is required."),
   testcases: z.string().min(1, "Test cases are required."),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
+}).refine(data => {
+    if (data.metadataType === 'Trigger') {
+        return !!data.triggerSObject && data.triggerSObject.length > 0;
+    }
+    return true;
+}, {
+    message: "Trigger SObject is required when Metadata Type is Trigger.",
+    path: ["triggerSObject"],
 });
 
 const bulkProblemSchema = formSchema.omit({ id: true });
@@ -64,6 +73,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                     description: data.description,
                     difficulty: data.difficulty,
                     metadataType: data.metadataType,
+                    triggerSObject: data.triggerSObject,
                     sampleCode: data.sampleCode,
                     testcases: data.testcases,
                     examples: data.examples.map(({...e}) => e), // Remove react-hook-form id
@@ -96,6 +106,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                 description: data.description,
                 difficulty: data.difficulty,
                 metadataType: data.metadataType,
+                triggerSObject: data.triggerSObject,
                 sampleCode: data.sampleCode,
                 testcases: data.testcases,
                 examples: data.examples,
@@ -155,6 +166,7 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
                 description: data.description,
                 difficulty: data.difficulty,
                 metadataType: data.metadataType,
+                triggerSObject: data.triggerSObject,
                 sampleCode: data.sampleCode,
                 testcases: data.testcases,
                 examples: data.examples,
