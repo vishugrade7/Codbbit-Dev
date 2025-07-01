@@ -15,7 +15,7 @@ import type { Problem, ApexProblemsData, Course, Module, Lesson } from "@/types"
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, makeUserAdmin } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -98,7 +98,7 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form';
+    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form' | 'user-management';
     const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
     
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
@@ -174,6 +174,18 @@ function UploadProblemContent() {
         return <CourseForm course={currentCourse} onBack={() => setViewMode('course-list')} />
     }
 
+    if (viewMode === 'user-management') {
+        return (
+            <div>
+                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+                <UserManagementCard />
+            </div>
+        )
+    }
+
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-8">
@@ -222,6 +234,26 @@ function UploadProblemContent() {
                     <CardFooter>
                        <div className="text-sm text-primary font-semibold flex items-center gap-2">
                            Manage Courses <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                       </div>
+                    </CardFooter>
+                </Card>
+
+                <Card 
+                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                    onClick={() => setViewMode('user-management')}
+                >
+                    <CardHeader>
+                        <CardTitle>User Management</CardTitle>
+                        <CardDescription>Grant or revoke admin privileges for users.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-center justify-center">
+                        <div className="text-muted-foreground/20">
+                           <UserCog className="h-24 w-24" />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                           Manage Users <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
                        </div>
                     </CardFooter>
                 </Card>
@@ -513,6 +545,52 @@ function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNe
             </CardContent>
         </Card>
     );
+}
+// #endregion
+
+// #region UserManagementCard
+function UserManagementCard() {
+    const [email, setEmail] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleMakeAdmin = async () => {
+        if (!email) {
+            toast({ variant: 'destructive', title: 'Email is required' });
+            return;
+        }
+        setIsLoading(true);
+        const result = await makeUserAdmin(email);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            setEmail("");
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsLoading(false);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Grant admin privileges to a user by their email address.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <Input 
+                        placeholder="user@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        type="email"
+                    />
+                    <Button onClick={handleMakeAdmin} disabled={isLoading}>
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Make Admin'}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    )
 }
 // #endregion
 

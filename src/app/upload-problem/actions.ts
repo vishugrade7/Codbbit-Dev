@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Problem, Course } from '@/types';
 import { z } from "zod";
@@ -69,6 +69,45 @@ const courseSchema = z.object({
     createdBy: z.string(),
 });
 // #endregion
+
+const makeAdminSchema = z.object({
+  email: z.string().email("Invalid email address."),
+});
+
+export async function makeUserAdmin(email: string) {
+    const validation = makeAdminSchema.safeParse({ email });
+    if (!validation.success) {
+        return { success: false, error: validation.error.errors[0].message };
+    }
+
+    if (!db) {
+        return { success: false, error: "Database not initialized." };
+    }
+
+    try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return { success: false, error: `User with email '${email}' not found.` };
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        
+        if (userDoc.data().isAdmin) {
+             return { success: false, error: `User '${email}' is already an admin.` };
+        }
+
+        await updateDoc(userDoc.ref, { isAdmin: true });
+
+        return { success: true, message: `Successfully promoted '${email}' to admin.` };
+    } catch (error) {
+        console.error("Error making user admin:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
 
 
 export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>) {
