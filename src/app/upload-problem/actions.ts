@@ -58,6 +58,9 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
         const categories = currentData.Category || {};
         const newCategoryName = data.category;
         
+        // This will create a clean example object, removing any extra properties from react-hook-form.
+        const cleanExamples = data.examples.map(({ input, output, explanation }) => ({ input, output, explanation }));
+
         if (data.id) {
             // EDIT MODE
             let oldCategoryName: string | null = null;
@@ -83,7 +86,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                     triggerSObject: data.triggerSObject,
                     sampleCode: data.sampleCode,
                     testcases: data.testcases,
-                    examples: data.examples.map(({...e}) => e), // Remove react-hook-form id
+                    examples: cleanExamples,
                     hints: data.hints ? data.hints.map(h => h.value) : [],
                 };
 
@@ -116,7 +119,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                 triggerSObject: data.triggerSObject,
                 sampleCode: data.sampleCode,
                 testcases: data.testcases,
-                examples: data.examples,
+                examples: cleanExamples,
                 hints: data.hints ? data.hints.map(h => h.value) : [],
             };
             
