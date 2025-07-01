@@ -1191,23 +1191,47 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
 
     const form = useForm<z.infer<typeof problemFormSchema>>({
         resolver: zodResolver(problemFormSchema),
-        defaultValues: {
-            id: problem?.id || undefined,
-            title: problem?.title || "",
-            description: problem?.description || "",
-            category: problem?.categoryName || "",
-            difficulty: problem?.difficulty || "Easy",
-            metadataType: problem?.metadataType || "Class",
-            triggerSObject: problem?.triggerSObject || "",
-            sampleCode: problem?.sampleCode || "",
-            testcases: problem?.testcases || "",
-            examples: problem?.examples?.map(e => ({...e})) || [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
-            hints: problem?.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
-            company: problem?.company || "",
-            isPremium: problem?.isPremium || false,
-        },
+        // defaultValues are now set in useEffect to handle prop changes
     });
     
+    // This useEffect hook ensures the form is reset with the correct data
+    // when the component receives a new problem prop (i.e., when editing a different problem).
+    useEffect(() => {
+        if (formMode === 'edit' && problem) {
+            form.reset({
+                id: problem.id,
+                title: problem.title,
+                description: problem.description,
+                category: problem.categoryName,
+                difficulty: problem.difficulty,
+                metadataType: problem.metadataType,
+                triggerSObject: problem.triggerSObject || "",
+                sampleCode: problem.sampleCode,
+                testcases: problem.testcases,
+                examples: problem.examples?.length ? problem.examples.map(e => ({...e})) : [{ input: "", output: "", explanation: "" }],
+                hints: problem.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
+                company: problem.company || "",
+                isPremium: problem.isPremium || false,
+            });
+        } else {
+             form.reset({
+                id: undefined,
+                title: "",
+                description: "",
+                category: "",
+                difficulty: "Easy",
+                metadataType: "Class",
+                triggerSObject: "",
+                sampleCode: "",
+                testcases: "",
+                examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
+                hints: [{value: ""}],
+                company: "",
+                isPremium: false,
+            });
+        }
+    }, [problem, form, formMode]);
+
     const metadataTypeValue = form.watch("metadataType");
 
     useEffect(() => {
@@ -1606,3 +1630,5 @@ function LessonList({ moduleIndex, control }: { moduleIndex: number, control: an
 }
 
 // #endregion
+
+    
