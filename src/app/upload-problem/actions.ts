@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Problem } from '@/types';
 import { z } from "zod";
@@ -197,6 +197,43 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
     } catch (error) {
         console.error("Error during bulk upsert to Firestore:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during database update.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function addCategory(categoryName: string) {
+    if (!categoryName || categoryName.trim().length === 0) {
+        return { success: false, error: 'Category name cannot be empty.' };
+    }
+
+    const apexDocRef = doc(db, 'problems', 'Apex');
+
+    try {
+        const docSnap = await getDoc(apexDocRef);
+        if (!docSnap.exists()) {
+            await setDoc(apexDocRef, { 
+                Category: {
+                    [categoryName.trim()]: { Questions: [] }
+                } 
+            });
+            return { success: true, message: `Category '${categoryName.trim()}' added successfully!` };
+        }
+
+        const currentData = docSnap.data();
+        const categories = currentData.Category || {};
+        const sanitizedCategoryName = categoryName.trim();
+
+        if (categories[sanitizedCategoryName]) {
+            return { success: false, error: `Category '${sanitizedCategoryName}' already exists.` };
+        }
+
+        categories[sanitizedCategoryName] = { Questions: [] };
+        await updateDoc(apexDocRef, { Category: categories });
+        return { success: true, message: `Category '${sanitizedCategoryName}' added successfully!` };
+
+    } catch (error) {
+        console.error("Error adding category:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
 }

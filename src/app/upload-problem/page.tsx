@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useRef, Suspense } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +15,7 @@ import type { Problem, ApexProblemsData } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -30,6 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 
 // #region Schemas
@@ -141,29 +143,31 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+    const fetchProblems = useCallback(async () => {
+        setLoading(true);
+        try {
+            const apexDocRef = doc(db, "problems", "Apex");
+            const docSnap = await getDoc(apexDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data().Category as ApexProblemsData;
+                const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                );
+                setProblems(allProblems.sort((a,b) => a.title.localeCompare(b.title)));
+            }
+        } catch (error) {
+            console.error("Error fetching problems:", error);
+            toast({ variant: 'destructive', title: 'Failed to load problems' });
+        } finally {
+            setLoading(false);
+        }
+    }, [toast]);
 
     useEffect(() => {
-        const fetchProblems = async () => {
-            setLoading(true);
-            try {
-                const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data().Category as ApexProblemsData;
-                    const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
-                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                    );
-                    setProblems(allProblems.sort((a,b) => a.title.localeCompare(b.title)));
-                }
-            } catch (error) {
-                console.error("Error fetching problems:", error);
-                toast({ variant: 'destructive', title: 'Failed to load problems' });
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchProblems();
-    }, [toast]);
+    }, [fetchProblems]);
 
     const handleBulkUploadClick = () => {
         fileInputRef.current?.click();
@@ -179,17 +183,7 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
             const result = await bulkUpsertProblemsFromJSON(content);
             if (result.success) {
                 toast({ title: 'Success!', description: result.message });
-                // Refresh list by re-fetching
-                setLoading(true);
-                const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data().Category as ApexProblemsData;
-                    const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
-                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                    );
-                    setProblems(allProblems.sort((a,b) => a.title.localeCompare(b.title)));
-                }
+                fetchProblems();
             } else {
                 throw new Error(result.error);
             }
@@ -202,7 +196,6 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
             });
         } finally {
             setIsUploading(false);
-            setLoading(false);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
@@ -234,18 +227,24 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                     </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                     <Button onClick={() => setIsCategoryModalOpen(true)} variant="secondary">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Category
+                    </Button>
                     <Button onClick={handleBulkUploadClick} variant="outline" disabled={isUploading}>
                         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                         Bulk Upload
                     </Button>
                     <Button onClick={onAddNew}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add New
+                        Add New Problem
                     </Button>
                 </div>
             </div>
             
             <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
+            <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
+
 
             <div className="flex flex-col md:flex-row gap-4 my-8">
                 <div className="relative flex-1">
@@ -310,6 +309,65 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                 </div>
             )}
         </div>
+    );
+}
+// #endregion
+
+
+// #region AddCategoryModal
+function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onCategoryAdded: () => void }) {
+    const [categoryName, setCategoryName] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleSave = async () => {
+        if (!categoryName.trim()) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Category name cannot be empty.' });
+            return;
+        }
+        setIsSaving(true);
+        const result = await addCategory(categoryName);
+        if (result.success) {
+            toast({ title: 'Success', description: result.message });
+            setCategoryName("");
+            onCategoryAdded();
+            onOpenChange(false);
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Category</DialogTitle>
+                    <DialogDescription>
+                        Enter the name for the new problem category.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="category-name" className="text-right">
+                        Category Name
+                    </Label>
+                    <Input
+                        id="category-name"
+                        value={categoryName}
+                        onChange={(e) => setCategoryName(e.target.value)}
+                        placeholder="e.g., SOQL"
+                        className="mt-2"
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isSaving || !categoryName.trim()}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Category
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 // #endregion
