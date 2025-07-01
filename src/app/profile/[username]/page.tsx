@@ -8,8 +8,8 @@ import Footer from "@/components/footer";
 import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2, Pencil } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Building, Globe, Mail, Edit, Trophy, Award, BarChart, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, Loader2, Pencil, PieChart as PieChartIcon, Target } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
@@ -19,6 +19,7 @@ import type { Problem, ApexProblemsData, User as AppUser } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 type StarredProblemDetail = Problem & { categoryName: string };
 
@@ -184,18 +185,11 @@ export default function UserProfilePage() {
     const isOwnProfile = authUser?.uid === profileUser.uid;
 
     const stats = [
-        { label: "Points", value: profileUser.points.toLocaleString() },
-        { label: "Global Rank", value: `#${profileUser.rank || 'N/A'}` },
-        { label: "Problems Solved", value: Object.keys(profileUser.solvedProblems || {}).length },
-        { label: "Current Streak", value: `${profileUser.currentStreak || 0} days` },
+        { label: "Points", value: profileUser.points.toLocaleString(), icon: Trophy },
+        { label: "Global Rank", value: `#${profileUser.rank || 'N/A'}`, icon: Award },
+        { label: "Problems Solved", value: Object.keys(profileUser.solvedProblems || {}).length, icon: BarChart },
+        { label: "Current Streak", value: `${profileUser.currentStreak || 0} days`, icon: GitCommit },
     ];
-
-    const iconMap: { [key: string]: React.ElementType } = {
-        Trophy,
-        Award,
-        BarChart,
-        GitCommit,
-    };
 
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
@@ -205,6 +199,19 @@ export default function UserProfilePage() {
         default: return 'bg-muted';
         }
     };
+    
+    const DIFFICULTY_COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--destructive))'];
+    const CATEGORY_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+    const dsaData = [
+        { name: 'Easy', value: profileUser.dsaStats?.Easy || 0 },
+        { name: 'Medium', value: profileUser.dsaStats?.Medium || 0 },
+        { name: 'Hard', value: profileUser.dsaStats?.Hard || 0 },
+    ].filter(d => d.value > 0);
+    
+    const categoryData = profileUser.categoryPoints ? 
+        Object.entries(profileUser.categoryPoints).map(([name, value]) => ({ name, value })).filter(d => d.value > 0) 
+        : [];
 
   return (
     <>
@@ -270,7 +277,7 @@ export default function UserProfilePage() {
           </Card>
           
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 space-y-8">
                   <Card>
                       <CardHeader>
                           <CardTitle>Contribution Activity</CardTitle>
@@ -281,28 +288,8 @@ export default function UserProfilePage() {
                           </div>
                       </CardContent>
                   </Card>
-                  
-                  <Card className="mt-8">
-                      <CardHeader>
-                          <CardTitle>Achievements</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {profileUser.achievements && profileUser.achievements.length > 0 ? profileUser.achievements.map((achievement) => {
-                                const Icon = iconMap[achievement.icon] || UserIcon;
-                                return (
-                                <div key={achievement.id} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
-                                    <Icon className="h-10 w-10 text-primary" />
-                                    <h3 className="font-semibold">{achievement.name}</h3>
-                                    <p className="text-xs text-muted-foreground">{achievement.description}</p>
-                                </div>
-                                )
-                            }) : (
-                                <p className="text-muted-foreground col-span-full text-center">No achievements yet. Keep coding!</p>
-                            )}
-                      </CardContent>
-                  </Card>
 
-                  <Card className="mt-8">
+                  <Card>
                     <CardHeader>
                         <CardTitle>Starred Problems</CardTitle>
                     </CardHeader>
@@ -333,7 +320,7 @@ export default function UserProfilePage() {
                   </Card>
               </div>
 
-              <div>
+              <div className="space-y-8">
                   <Card>
                       <CardHeader>
                           <CardTitle>Stats</CardTitle>
@@ -341,10 +328,83 @@ export default function UserProfilePage() {
                       <CardContent className="space-y-4">
                           {stats.map(stat => (
                               <div key={stat.label} className="flex justify-between items-center p-3 rounded-md bg-card/50">
-                                  <span className="text-muted-foreground">{stat.label}</span>
+                                  <div className="flex items-center gap-3">
+                                      <stat.icon className="h-5 w-5 text-muted-foreground" />
+                                      <span className="text-muted-foreground">{stat.label}</span>
+                                  </div>
                                   <span className="font-bold text-lg">{stat.value}</span>
                               </div>
                           ))}
+                      </CardContent>
+                  </Card>
+
+                  <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><PieChartIcon className="h-5 w-5" /> Difficulty Breakdown</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {dsaData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <PieChart>
+                                        <Pie data={dsaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                                            {dsaData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={DIFFICULTY_COLORS[index % DIFFICULTY_COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-4">No problems solved yet.</p>
+                            )}
+                        </CardContent>
+                  </Card>
+
+                  <Card>
+                        <CardHeader>
+                           <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Points</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {categoryData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <PieChart>
+                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                                            {categoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-4">No points earned in categories yet.</p>
+                            )}
+                        </CardContent>
+                  </Card>
+
+                   <Card>
+                      <CardHeader>
+                          <CardTitle>Achievements</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          {profileUser.achievements && profileUser.achievements.length > 0 ? (
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {profileUser.achievements.map((achievement) => {
+                                    const Icon = UserIcon; // Replace with a dynamic icon map if available
+                                    return (
+                                    <div key={achievement.id} className="flex flex-col items-center text-center gap-2 p-4 rounded-lg bg-card/50">
+                                        <Icon className="h-10 w-10 text-primary" />
+                                        <h3 className="font-semibold">{achievement.name}</h3>
+                                        <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                                    </div>
+                                    )
+                                })}
+                              </div>
+                           ) : (
+                                <p className="text-muted-foreground col-span-full text-center">No achievements yet. Keep coding!</p>
+                            )}
                       </CardContent>
                   </Card>
               </div>
@@ -357,3 +417,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
