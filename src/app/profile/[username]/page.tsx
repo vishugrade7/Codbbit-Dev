@@ -21,6 +21,7 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
 import { updateAvatar } from "../actions";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ContributionHeatmap from "@/components/contribution-heatmap";
+import { ProgressCard } from "@/components/progress-card";
 
 type StarredProblemDetail = Problem & { categoryName: string };
 
@@ -42,6 +43,38 @@ export default function UserProfilePage() {
     const [loadingStarred, setLoadingStarred] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
+    const [loadingProblems, setLoadingProblems] = useState(true);
+
+    // Effect to fetch all problem counts
+    useEffect(() => {
+        const fetchAllProblems = async () => {
+            if (!db) {
+                setLoadingProblems(false);
+                return;
+            }
+            setLoadingProblems(true);
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+                if (docSnap.exists()) {
+                    const categoriesData = docSnap.data().Category as ApexProblemsData;
+                    const allProblems = Object.values(categoriesData).flatMap(cat => cat.Questions || []);
+                    const counts = allProblems.reduce((acc, problem) => {
+                        acc[problem.difficulty as keyof typeof acc] = (acc[problem.difficulty as keyof typeof acc] || 0) + 1;
+                        return acc;
+                    }, { Easy: 0, Medium: 0, Hard: 0 });
+                    setTotalProblemsByDifficulty(counts);
+                }
+            } catch (error) {
+                console.error("Error fetching problem counts:", error);
+            } finally {
+                setLoadingProblems(false);
+            }
+        };
+        fetchAllProblems();
+    }, []);
 
     // Effect to fetch the profile data based on username from URL using a real-time listener
     useEffect(() => {
@@ -154,7 +187,7 @@ export default function UserProfilePage() {
     };
 
 
-    if (loadingProfile) {
+    if (loadingProfile || loadingProblems) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -185,13 +218,6 @@ export default function UserProfilePage() {
     
     const isOwnProfile = authUser?.uid === profileUser.uid;
 
-    const stats = [
-        { label: "Points", value: profileUser.points.toLocaleString(), icon: Trophy },
-        { label: "Global Rank", value: `#${profileUser.rank || 'N/A'}`, icon: Award },
-        { label: "Problems Solved", value: Object.keys(profileUser.solvedProblems || {}).length, icon: BarChart },
-        { label: "Current Streak", value: `${profileUser.currentStreak || 0} days`, icon: GitCommit },
-    ];
-
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
         case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
@@ -201,18 +227,14 @@ export default function UserProfilePage() {
         }
     };
     
-    const DIFFICULTY_COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--destructive))'];
     const CATEGORY_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
-
-    const dsaData = [
-        { name: 'Easy', value: profileUser.dsaStats?.Easy || 0 },
-        { name: 'Medium', value: profileUser.dsaStats?.Medium || 0 },
-        { name: 'Hard', value: profileUser.dsaStats?.Hard || 0 },
-    ].filter(d => d.value > 0);
     
     const categoryData = profileUser.categoryPoints ? 
         Object.entries(profileUser.categoryPoints).map(([name, value]) => ({ name, value })).filter(d => d.value > 0) 
         : [];
+    
+    const totalSolved = (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0);
+    const totalAvailable = totalProblemsByDifficulty.Easy + totalProblemsByDifficulty.Medium + totalProblemsByDifficulty.Hard;
 
   return (
     <>
@@ -328,45 +350,16 @@ export default function UserProfilePage() {
               </div>
 
               <div className="space-y-8">
-                  <Card>
-                      <CardHeader>
-                          <CardTitle>Stats</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                          {stats.map(stat => (
-                              <div key={stat.label} className="flex justify-between items-center p-3 rounded-md bg-card/50">
-                                  <div className="flex items-center gap-3">
-                                      <stat.icon className="h-5 w-5 text-muted-foreground" />
-                                      <span className="text-muted-foreground">{stat.label}</span>
-                                  </div>
-                                  <span className="font-bold text-lg">{stat.value}</span>
-                              </div>
-                          ))}
-                      </CardContent>
-                  </Card>
-
-                  <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><PieChartIcon className="h-5 w-5" /> Difficulty Breakdown</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {dsaData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={200}>
-                                    <PieChart>
-                                        <Pie data={dsaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                                            {dsaData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={DIFFICULTY_COLORS[index % DIFFICULTY_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4">No problems solved yet.</p>
-                            )}
-                        </CardContent>
-                  </Card>
+                  <ProgressCard 
+                    totalSolved={totalSolved}
+                    totalAvailable={totalAvailable}
+                    easySolved={profileUser.dsaStats?.Easy || 0}
+                    easyTotal={totalProblemsByDifficulty.Easy}
+                    mediumSolved={profileUser.dsaStats?.Medium || 0}
+                    mediumTotal={totalProblemsByDifficulty.Medium}
+                    hardSolved={profileUser.dsaStats?.Hard || 0}
+                    hardTotal={totalProblemsByDifficulty.Hard}
+                  />
 
                   <Card>
                         <CardHeader>
