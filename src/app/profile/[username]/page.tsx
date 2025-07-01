@@ -151,7 +151,7 @@ export default function UserProfilePage() {
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !authUser || !storage) return;
-        if (authUser.uid !== profileUser?.uid) return; // Can only change own avatar
+        if (authUser.uid !== profileUser?.uid) return;
 
         if (!file.type.startsWith('image/')) {
             toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please select an image.' });
@@ -167,9 +167,6 @@ export default function UserProfilePage() {
             const result = await updateAvatar(authUser.uid, downloadURL);
 
             if (result.success) {
-                // The onSnapshot listener will update the state automatically,
-                // but we also update it here for a more responsive feel.
-                setProfileUser(prev => prev ? { ...prev, avatarUrl: downloadURL } : null);
                 toast({ title: 'Avatar updated successfully!' });
             } else {
                 throw new Error(result.error);
@@ -423,3 +420,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
