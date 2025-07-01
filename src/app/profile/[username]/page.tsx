@@ -167,7 +167,9 @@ export default function UserProfilePage() {
             const result = await updateAvatar(authUser.uid, downloadURL);
 
             if (result.success) {
-                // The onSnapshot listener will update the state automatically
+                // The onSnapshot listener will update the state automatically,
+                // but we also update it here for a more responsive feel.
+                setProfileUser(prev => prev ? { ...prev, avatarUrl: downloadURL } : null);
                 toast({ title: 'Avatar updated successfully!' });
             } else {
                 throw new Error(result.error);
