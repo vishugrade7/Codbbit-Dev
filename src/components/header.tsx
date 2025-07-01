@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, ClipboardList } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -138,6 +138,12 @@ export default function Header() {
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
                     </DropdownMenuItem>
+                    {!isAuthorizedAdmin && (
+                        <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                            <Rocket className="mr-2 h-4 w-4" />
+                            <span>Upgrade</span>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -178,6 +184,12 @@ export default function Header() {
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
                     </DropdownMenuItem>
+                    {!isAuthorizedAdmin && (
+                        <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                            <Rocket className="mr-2 h-4 w-4" />
+                            <span>Upgrade</span>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
