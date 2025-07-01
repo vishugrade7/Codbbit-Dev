@@ -11,11 +11,11 @@ import { useTheme } from "next-themes";
 import { doc, getDoc, collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData, Course, Module, Lesson } from "@/types";
+import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, makeUserAdmin } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, makeUserAdmin, getAdminUsers, setAdminStatus } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -35,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { FormDescription } from "@/components/ui/form";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // #region Schemas
 const problemExampleSchema = z.object({
@@ -181,7 +182,7 @@ function UploadProblemContent() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Dashboard
                 </Button>
-                <UserManagementCard />
+                <UserManagementView />
             </div>
         )
     }
@@ -548,8 +549,128 @@ function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNe
 }
 // #endregion
 
-// #region UserManagementCard
-function UserManagementCard() {
+// #region UserManagement
+function UserManagementView() {
+    return (
+        <div className="space-y-8">
+            <AdminUsersList />
+            <AddAdminCard />
+        </div>
+    );
+}
+
+function AdminUsersList() {
+    const { user: authUser } = useAuth();
+    const { toast } = useToast();
+    const [admins, setAdmins] = useState<AppUser[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+    const fetchAdmins = useCallback(async () => {
+        setLoading(true);
+        const result = await getAdminUsers();
+        if (result.success) {
+            setAdmins(result.users);
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setLoading(false);
+    }, [toast]);
+
+    useEffect(() => {
+        fetchAdmins();
+    }, [fetchAdmins]);
+
+    const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
+        if (userId === authUser?.uid) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot revoke your own admin access.' });
+            return;
+        }
+        setUpdatingId(userId);
+        const result = await setAdminStatus(userId, !currentStatus);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            await fetchAdmins();
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setUpdatingId(null);
+    };
+
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Current Administrators</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                </CardContent>
+            </Card>
+        );
+    }
+    
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Current Administrators</CardTitle>
+                <CardDescription>Toggle the switch to revoke admin access. An admin cannot revoke their own access.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User</TableHead>
+                                <TableHead className="w-[150px] text-right">Admin Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {admins.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-center h-24">No admin users found.</TableCell>
+                                </TableRow>
+                            ) : (
+                                admins.map(admin => (
+                                    <TableRow key={admin.id}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar>
+                                                    <AvatarImage src={admin.avatarUrl} alt={admin.name} />
+                                                    <AvatarFallback>{admin.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-medium">{admin.name}</p>
+                                                    <p className="text-sm text-muted-foreground">{admin.email}</p>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end">
+                                                {updatingId === admin.id ? (
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                ) : (
+                                                    <Switch
+                                                        checked={admin.isAdmin}
+                                                        onCheckedChange={() => handleToggleAdmin(admin.id, admin.isAdmin ?? false)}
+                                                        disabled={admin.id === authUser?.uid}
+                                                        aria-label={`Toggle admin status for ${admin.name}`}
+                                                    />
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function AddAdminCard() {
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
@@ -564,6 +685,8 @@ function UserManagementCard() {
         if (result.success) {
             toast({ title: 'Success!', description: result.message });
             setEmail("");
+            // Ideally, we'd refetch the list in the sibling component.
+            // For simplicity, we can just rely on the user to see the result.
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
@@ -573,7 +696,7 @@ function UserManagementCard() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>User Management</CardTitle>
+                <CardTitle>Add New Admin</CardTitle>
                 <CardDescription>Grant admin privileges to a user by their email address.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

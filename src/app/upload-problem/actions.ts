@@ -1,9 +1,9 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course } from '@/types';
+import type { Problem, Course, User } from '@/types';
 import { z } from "zod";
 
 // #region Problem Schemas
@@ -74,6 +74,11 @@ const makeAdminSchema = z.object({
   email: z.string().email("Invalid email address."),
 });
 
+const setAdminStatusSchema = z.object({
+    userId: z.string().min(1, "User ID is required."),
+    status: z.boolean(),
+});
+
 export async function makeUserAdmin(email: string) {
     const validation = makeAdminSchema.safeParse({ email });
     if (!validation.success) {
@@ -109,6 +114,51 @@ export async function makeUserAdmin(email: string) {
     }
 }
 
+export async function getAdminUsers(): Promise<{ success: boolean; users: User[]; error?: string }> {
+    if (!db) {
+        return { success: false, error: "Database not initialized.", users: [] };
+    }
+
+    try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("isAdmin", "==", true), orderBy("name"));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return { success: true, users: [] };
+        }
+        
+        const adminUsers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        return { success: true, users: adminUsers };
+
+    } catch (error) {
+        console.error("Error fetching admin users:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage, users: [] };
+    }
+}
+
+export async function setAdminStatus(userId: string, status: boolean) {
+    const validation = setAdminStatusSchema.safeParse({ userId, status });
+    if (!validation.success) {
+        return { success: false, error: validation.error.errors[0].message };
+    }
+
+    if (!db) {
+        return { success: false, error: "Database not initialized." };
+    }
+
+    try {
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, { isAdmin: status });
+        const action = status ? "promoted to" : "revoked from";
+        return { success: true, message: `User successfully ${action} admin.` };
+    } catch (error) {
+        console.error("Error setting admin status:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
 
 export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>) {
     const apexDocRef = doc(db, 'problems', 'Apex');
