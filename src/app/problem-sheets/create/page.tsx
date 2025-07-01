@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc, collection, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -25,7 +25,7 @@ import { Loader2, Search, ClipboardList, X, ArrowLeft } from "lucide-react";
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
-export default function CreateProblemSheetPage() {
+function CreateProblemSheetClient() {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -193,148 +193,162 @@ export default function CreateProblemSheetPage() {
     const backUrl = formMode === 'edit' && sheetId ? `/sheets/${sheetId}` : '/problem-sheets';
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-background">
-            <Header />
-            <main className="flex-1 container py-8 flex flex-col">
-                 <div className="mb-8">
-                    <Button variant="outline" onClick={() => router.push(backUrl)} className="mb-4">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        {formMode === 'edit' ? 'Back to Sheet' : 'Back to All Sheets'}
-                    </Button>
-                    <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
-                        {formMode === 'edit' ? 'Edit Problem Sheet' : 'Create New Problem Sheet'}
-                    </h1>
-                    <p className="text-muted-foreground mt-4 max-w-2xl">
-                        {formMode === 'edit' ? 'Update the details of your problem sheet.' : 'Build a custom problem sheet to share with friends, for interviews, or for targeted practice.'}
-                    </p>
-                </div>
+        <>
+            <div className="mb-8">
+                <Button variant="outline" onClick={() => router.push(backUrl)} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {formMode === 'edit' ? 'Back to Sheet' : 'Back to All Sheets'}
+                </Button>
+                <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
+                    {formMode === 'edit' ? 'Edit Problem Sheet' : 'Create New Problem Sheet'}
+                </h1>
+                <p className="text-muted-foreground mt-4 max-w-2xl">
+                    {formMode === 'edit' ? 'Update the details of your problem sheet.' : 'Build a custom problem sheet to share with friends, for interviews, or for targeted practice.'}
+                </p>
+            </div>
 
-                <ResizablePanelGroup direction="horizontal" className="rounded-lg border bg-card min-h-[70vh] flex-1">
-                    <ResizablePanel defaultSize={60}>
-                        <div className="flex flex-col h-full">
-                            <div className="p-4 border-b">
-                                <div className="flex flex-col md:flex-row gap-4">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Search problems by title..."
-                                            className="w-full pl-10"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {["All", "Easy", "Medium", "Hard"].map((diff) => (
-                                        <Button
-                                            key={diff}
-                                            variant={difficultyFilter === diff ? "default" : "outline"}
-                                            onClick={() => setDifficultyFilter(diff)}
-                                            className="flex-1 md:flex-none"
-                                        >
-                                            {diff}
-                                        </Button>
-                                        ))}
-                                    </div>
+            <ResizablePanelGroup direction="horizontal" className="rounded-lg border bg-card min-h-[70vh] flex-1">
+                <ResizablePanel defaultSize={60}>
+                    <div className="flex flex-col h-full">
+                        <div className="p-4 border-b">
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search problems by title..."
+                                        className="w-full pl-10"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    {["All", "Easy", "Medium", "Hard"].map((diff) => (
+                                    <Button
+                                        key={diff}
+                                        variant={difficultyFilter === diff ? "default" : "outline"}
+                                        onClick={() => setDifficultyFilter(diff)}
+                                        className="flex-1 md:flex-none"
+                                    >
+                                        {diff}
+                                    </Button>
+                                    ))}
                                 </div>
                             </div>
-                            <ScrollArea className="flex-1">
-                                {loading ? (
-                                    <div className="flex justify-center items-center h-full py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
-                                ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-12">
-                                                 <Checkbox 
-                                                    checked={isAllFilteredSelected}
-                                                    onCheckedChange={handleSelectAllFiltered}
-                                                    aria-label="Select all filtered problems"
-                                                 />
-                                            </TableHead>
-                                            <TableHead>Title</TableHead>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead className="text-right">Difficulty</TableHead>
+                        </div>
+                        <ScrollArea className="flex-1">
+                            {loading ? (
+                                <div className="flex justify-center items-center h-full py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+                            ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-12">
+                                             <Checkbox 
+                                                checked={isAllFilteredSelected}
+                                                onCheckedChange={handleSelectAllFiltered}
+                                                aria-label="Select all filtered problems"
+                                             />
+                                        </TableHead>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead className="text-right">Difficulty</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredProblems.map((problem) => (
+                                        <TableRow key={problem.id} data-state={selectedProblemIds.has(problem.id) ? "selected" : ""}>
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedProblemIds.has(problem.id)}
+                                                    onCheckedChange={() => handleToggleProblem(problem.id)}
+                                                    aria-label={`Select ${problem.title}`}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-medium">{problem.title}</TableCell>
+                                            <TableCell><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                    {problem.difficulty}
+                                                </Badge>
+                                            </TableCell>
                                         </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredProblems.map((problem) => (
-                                            <TableRow key={problem.id} data-state={selectedProblemIds.has(problem.id) ? "selected" : ""}>
-                                                <TableCell>
-                                                    <Checkbox
-                                                        checked={selectedProblemIds.has(problem.id)}
-                                                        onCheckedChange={() => handleToggleProblem(problem.id)}
-                                                        aria-label={`Select ${problem.title}`}
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">{problem.title}</TableCell>
-                                                <TableCell><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
-                                                <TableCell className="text-right">
-                                                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                        {problem.difficulty}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                            )}
+                            {!loading && filteredProblems.length === 0 && (
+                                 <div className="text-center py-12">
+                                    <p className="text-muted-foreground">No problems found for the selected criteria.</p>
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={40} minSize={30}>
+                   <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
+                        <CardHeader>
+                            <CardTitle>{formMode === 'edit' ? 'Editing Sheet' : 'Your New Sheet'}</CardTitle>
+                            <CardDescription>Select problems from the list to add them here.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex flex-col gap-4">
+                            <Input
+                                placeholder="Enter sheet name..."
+                                value={sheetName}
+                                onChange={(e) => setSheetName(e.target.value)}
+                            />
+                            <p className="text-sm font-medium text-muted-foreground">
+                                Selected Problems ({selectedProblems.length})
+                            </p>
+                            <ScrollArea className="flex-1 border rounded-md p-2">
+                                {selectedProblems.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {selectedProblems.map(problem => (
+                                            <div key={problem.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-sm">{problem.title}</span>
+                                                    <span className="text-xs text-muted-foreground">{problem.categoryName}</span>
+                                                </div>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleProblem(problem.id)}>
+                                                    <X className="h-4 w-4"/>
+                                                </Button>
+                                            </div>
                                         ))}
-                                    </TableBody>
-                                </Table>
-                                )}
-                                {!loading && filteredProblems.length === 0 && (
-                                     <div className="text-center py-12">
-                                        <p className="text-muted-foreground">No problems found for the selected criteria.</p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
+                                        <ClipboardList className="h-10 w-10 mb-4" />
+                                        <p className="font-medium">Your sheet is empty</p>
+                                        <p className="text-sm">Check problems on the left to add them.</p>
                                     </div>
                                 )}
                             </ScrollArea>
-                        </div>
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={40} minSize={30}>
-                       <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
-                            <CardHeader>
-                                <CardTitle>{formMode === 'edit' ? 'Editing Sheet' : 'Your New Sheet'}</CardTitle>
-                                <CardDescription>Select problems from the list to add them here.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 flex flex-col gap-4">
-                                <Input
-                                    placeholder="Enter sheet name..."
-                                    value={sheetName}
-                                    onChange={(e) => setSheetName(e.target.value)}
-                                />
-                                <p className="text-sm font-medium text-muted-foreground">
-                                    Selected Problems ({selectedProblems.length})
-                                </p>
-                                <ScrollArea className="flex-1 border rounded-md p-2">
-                                    {selectedProblems.length > 0 ? (
-                                        <div className="space-y-2">
-                                            {selectedProblems.map(problem => (
-                                                <div key={problem.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium text-sm">{problem.title}</span>
-                                                        <span className="text-xs text-muted-foreground">{problem.categoryName}</span>
-                                                    </div>
-                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleProblem(problem.id)}>
-                                                        <X className="h-4 w-4"/>
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
-                                            <ClipboardList className="h-10 w-10 mb-4" />
-                                            <p className="font-medium">Your sheet is empty</p>
-                                            <p className="text-sm">Check problems on the left to add them.</p>
-                                        </div>
-                                    )}
-                                </ScrollArea>
-                            </CardContent>
-                            <CardFooter>
-                                <Button className="w-full" onClick={handleSaveSheet} disabled={isSaving}>
-                                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
-                                </Button>
-                            </CardFooter>
-                       </Card>
-                    </ResizablePanel>
-                </ResizablePanelGroup>
+                        </CardContent>
+                        <CardFooter>
+                            <Button className="w-full" onClick={handleSaveSheet} disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
+                            </Button>
+                        </CardFooter>
+                   </Card>
+                </ResizablePanel>
+            </ResizablePanelGroup>
+        </>
+    );
+}
+
+export default function CreateProblemSheetPage() {
+    return (
+        <div className="flex min-h-screen w-full flex-col bg-background">
+            <Header />
+            <main className="flex-1 container py-8 flex flex-col">
+                <Suspense fallback={
+                    <div className="flex justify-center items-center flex-1">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    </div>
+                }>
+                    <CreateProblemSheetClient />
+                </Suspense>
             </main>
             <Footer />
         </div>
