@@ -19,7 +19,8 @@ import type { Problem, ApexProblemsData, User as AppUser, Achievement } from "@/
 import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
 import { ProgressCard } from "@/components/progress-card";
 import { Separator } from "@/components/ui/separator";
@@ -231,6 +232,21 @@ export default function UserProfilePage() {
     const categoryData = profileUser.categoryPoints ? 
         Object.entries(profileUser.categoryPoints).map(([name, value]) => ({ name, value })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
         : [];
+        
+    const chartConfig = {
+        points: {
+            label: "Points",
+        },
+        ...Object.fromEntries(
+            categoryData.map((item, index) => [
+                item.name,
+                {
+                    label: item.name,
+                    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+                },
+            ])
+        ),
+    } satisfies ChartConfig;
     
     const totalSolved = (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0);
     const totalAvailable = totalProblemsByDifficulty.Easy + totalProblemsByDifficulty.Medium + totalProblemsByDifficulty.Hard;
@@ -338,14 +354,14 @@ export default function UserProfilePage() {
                             </CardHeader>
                             <CardContent>
                                 {categoryData.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={200}>
+                                    <ChartContainer
+                                        config={chartConfig}
+                                        className="mx-auto aspect-square h-[200px]"
+                                    >
                                         <PieChart>
-                                            <Tooltip
-                                                contentStyle={{
-                                                    background: 'hsl(var(--background))',
-                                                    borderColor: 'hsl(var(--border))',
-                                                    borderRadius: 'var(--radius)',
-                                                }}
+                                            <ChartTooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent hideLabel nameKey="name" />}
                                             />
                                             <Pie
                                                 data={categoryData}
@@ -356,15 +372,17 @@ export default function UserProfilePage() {
                                                 outerRadius={90}
                                                 innerRadius={60}
                                                 paddingAngle={2}
-                                                labelLine={false}
-                                                label={false}
                                             >
-                                                {categoryData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} className="stroke-background hover:opacity-80"/>
+                                                {categoryData.map((entry) => (
+                                                    <Cell
+                                                        key={entry.name}
+                                                        fill={`var(--color-${entry.name})`}
+                                                        className="stroke-background hover:opacity-80"
+                                                    />
                                                 ))}
                                             </Pie>
                                         </PieChart>
-                                    </ResponsiveContainer>
+                                    </ChartContainer>
                                 ) : (
                                     <p className="text-muted-foreground text-center py-4 text-sm">No points earned in categories yet.</p>
                                 )}
