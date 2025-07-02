@@ -36,7 +36,7 @@ const getLessonIcon = (lesson: Lesson) => {
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { userData } = useAuth();
+    const { user, userData, loading: authLoading } = useAuth();
     const courseId = params.courseId as string;
 
     const [course, setCourse] = useState<Course | null>(null);
@@ -45,6 +45,13 @@ export default function CourseDetailPage() {
     const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
 
     useEffect(() => {
+        if (authLoading) return; // Wait for auth status to resolve
+
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+
         if (!courseId) return;
 
         const fetchCourse = async () => {
@@ -63,6 +70,7 @@ export default function CourseDetailPage() {
                     setCourse(courseData);
                 } else {
                     console.log("No such course!");
+                    router.push('/courses');
                 }
             } catch (error) {
                 console.error("Error fetching course:", error);
@@ -72,11 +80,11 @@ export default function CourseDetailPage() {
         };
 
         fetchCourse();
-    }, [courseId, isPro, router]);
+    }, [courseId, isPro, router, user, authLoading]);
 
     const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id;
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />

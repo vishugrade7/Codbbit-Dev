@@ -155,7 +155,7 @@ const LessonContent = ({ lesson, problemMap }: { lesson: Lesson; problemMap: Map
 export default function LessonPage() {
     const params = useParams();
     const router = useRouter();
-    const { userData } = useAuth();
+    const { user, userData, loading: authLoading } = useAuth();
 
     const courseId = params.courseId as string;
     const lessonId = params.lessonId as string;
@@ -191,6 +191,13 @@ export default function LessonPage() {
     }, []);
 
     useEffect(() => {
+        if (authLoading) return; // Wait for auth status to resolve
+
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+
         if (!courseId) return;
 
         const fetchCourse = async () => {
@@ -238,9 +245,9 @@ export default function LessonPage() {
         };
 
         fetchCourse();
-    }, [courseId, lessonId, router, isPro]);
+    }, [courseId, lessonId, router, isPro, user, authLoading]);
 
-    if (loading) {
+    if (loading || authLoading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
 
