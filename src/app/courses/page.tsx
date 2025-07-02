@@ -7,10 +7,10 @@ import Image from "next/image";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Course } from "@/types";
+import { format } from "date-fns";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -69,30 +69,28 @@ export default function Courses() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {courses.map((course) => (
               <Link key={course.id} href={`/courses/${course.id}`} className="block group">
-                <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2">
-                  <CardHeader className="p-0">
-                    <div className="aspect-video relative overflow-hidden rounded-t-lg">
+                <div className="flex flex-col h-full gap-3">
+                    <div className="aspect-video relative overflow-hidden rounded-lg">
                        <Image 
                          src={course.thumbnailUrl || 'https://placehold.co/600x400.png'} 
                          alt={course.title || 'Course thumbnail'}
                          fill
                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                         className="object-cover transition-transform duration-300 group-hover:scale-110"
+                         className="object-cover transition-transform duration-300 group-hover:scale-105 rounded-lg"
                        />
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-6 flex flex-col flex-grow">
-                    <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
-                    <CardTitle className="text-xl mb-2">{course.title || 'Untitled Course'}</CardTitle>
-                    <CardDescription className="flex-grow">{course.description}</CardDescription>
-                  </CardContent>
-                  <CardFooter>
-                    <div className="flex items-center text-sm text-primary font-semibold">
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      <span>Start Learning</span>
+                    <div className="flex flex-col">
+                        <Badge variant="outline" className="w-fit mb-2">{course.category}</Badge>
+                        <h3 className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
+                            {course.title || 'Untitled Course'}
+                        </h3>
+                        {course.createdAt?.toDate && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                                {format(course.createdAt.toDate(), 'MMMM d, yyyy')}
+                            </p>
+                        )}
                     </div>
-                  </CardFooter>
-                </Card>
+                </div>
               </Link>
             ))}
           </div>
