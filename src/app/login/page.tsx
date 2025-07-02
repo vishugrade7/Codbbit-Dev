@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
+import { updateActiveSession } from "@/app/profile/actions";
 
 
 const formSchema = z.object({
@@ -65,10 +66,13 @@ export default function LoginPage() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
       // Force a new session to be created to log out other devices.
-      sessionStorage.removeItem('appSessionId');
+      const newSessionId = crypto.randomUUID();
+      sessionStorage.setItem('appSessionId', newSessionId);
+      await updateActiveSession(user.uid, newSessionId);
 
       toast({
         title: "Login Successful",

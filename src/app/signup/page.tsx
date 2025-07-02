@@ -169,6 +169,9 @@ export default function SignupPage() {
       const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
       const avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
 
+      const sessionId = crypto.randomUUID();
+      sessionStorage.setItem('appSessionId', sessionId);
+
       await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: user.email,
@@ -194,7 +197,7 @@ export default function SignupPage() {
           maxStreak: 0,
           lastSolvedDate: "",
           starredProblems: [],
-          activeSessionId: "",
+          activeSessionId: sessionId,
       });
 
       toast({

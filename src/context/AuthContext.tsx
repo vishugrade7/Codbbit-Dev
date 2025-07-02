@@ -6,7 +6,6 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import type { User as AppUser } from '@/types';
-import { updateActiveSession } from '@/app/profile/actions';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -48,18 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribeAuth();
   }, []);
-
-  // Effect to manage and update the user's active session
-  useEffect(() => {
-    if (user) {
-      let sessionId = sessionStorage.getItem('appSessionId');
-      if (!sessionId) {
-        sessionId = crypto.randomUUID();
-        sessionStorage.setItem('appSessionId', sessionId);
-      }
-      updateActiveSession(user.uid, sessionId);
-    }
-  }, [user]);
 
   useEffect(() => {
     if (user && db) {
