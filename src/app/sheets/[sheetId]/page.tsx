@@ -266,45 +266,49 @@ export default function SheetDisplayPage() {
                             </div>
                         </div>
                         {(uniqueCategories.length > 0 || problems.length > 0) && (
-                            <div className="border-t pt-4 mt-6 space-y-6">
-                                {uniqueCategories.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {uniqueCategories.map(category => (
-                                                <Badge key={category} variant="secondary">{category}</Badge>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {problems.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-16 text-muted-foreground">Easy</span>
-                                                <div className="flex-1 bg-muted rounded-full h-2">
-                                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
-                                                </div>
-                                                <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-16 text-muted-foreground">Medium</span>
-                                                <div className="flex-1 bg-muted rounded-full h-2">
-                                                    <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
-                                                </div>
-                                                <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-16 text-muted-foreground">Hard</span>
-                                                <div className="flex-1 bg-muted rounded-full h-2">
-                                                    <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
-                                                </div>
-                                                <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
+                            <div className="border-t pt-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="md:col-span-2">
+                                    {uniqueCategories.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {uniqueCategories.map(category => (
+                                                    <Badge key={category} variant="secondary">{category}</Badge>
+                                                ))}
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
+                                <div className="md:col-span-1">
+                                    {problems.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-16 text-muted-foreground">Easy</span>
+                                                    <div className="flex-1 bg-muted rounded-full h-2">
+                                                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                                    </div>
+                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-16 text-muted-foreground">Medium</span>
+                                                    <div className="flex-1 bg-muted rounded-full h-2">
+                                                        <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                                    </div>
+                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-16 text-muted-foreground">Hard</span>
+                                                    <div className="flex-1 bg-muted rounded-full h-2">
+                                                        <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                                    </div>
+                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </CardHeader>
