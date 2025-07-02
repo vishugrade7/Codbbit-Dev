@@ -118,47 +118,62 @@ export default function ApexProblems() {
                     </CardHeader>
                     
                     <CardContent className="flex-grow">
-                      <div className="space-y-3 text-sm">
-                          <div className="flex justify-between">
-                              <span className="text-muted-foreground">Total Problems</span>
-                              <span className="font-semibold">{category.problemCount}</span>
-                          </div>
-                          {userData && category.problemCount > 0 ? (
-                              <div className="flex flex-col items-center gap-2 pt-2">
-                                <div className="relative h-20 w-20">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={[
-                                                    { value: category.solvedCount },
-                                                    { value: category.problemCount - category.solvedCount }
-                                                ]}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={24}
-                                                outerRadius={30}
-                                                dataKey="value"
-                                                stroke="none"
-                                                startAngle={90}
-                                                endAngle={-270}
-                                            >
-                                                <Cell fill="hsl(var(--primary))" />
-                                                <Cell fill="hsl(var(--muted))" />
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-sm font-bold">{Math.round((category.solvedCount / category.problemCount) * 100)}%</span>
-                                    </div>
-                                </div>
-                                <p className="font-semibold">{category.solvedCount} / {category.problemCount} Solved</p>
+                      {userData && category.problemCount > 0 ? (
+                          <div className="flex items-center justify-between">
+                              {/* Left side */}
+                              <div className="space-y-4">
+                                  <div>
+                                      <p className="text-sm text-muted-foreground">Total Problems</p>
+                                      <p className="text-2xl font-bold">{category.problemCount}</p>
+                                  </div>
+                                  <div>
+                                      <p className="text-sm text-muted-foreground">Solved</p>
+                                      <p className="text-2xl font-bold text-primary">{category.solvedCount}</p>
+                                  </div>
                               </div>
-                          ) : (
-                              <p className="text-muted-foreground text-xs pt-2">
-                                <Link href="/login" className="underline text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>Log in</Link> to track your progress.
-                              </p>
-                          )}
-                      </div>
+
+                              {/* Right side */}
+                              <div className="relative h-28 w-28">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                      <PieChart>
+                                          <Pie
+                                              data={[
+                                                  { value: category.solvedCount },
+                                                  { value: category.problemCount - category.solvedCount }
+                                              ]}
+                                              cx="50%"
+                                              cy="50%"
+                                              innerRadius={36}
+                                              outerRadius={45}
+                                              dataKey="value"
+                                              stroke="none"
+                                              startAngle={90}
+                                              endAngle={-270}
+                                          >
+                                              <Cell fill="hsl(var(--primary))" />
+                                              <Cell fill="hsl(var(--muted))" />
+                                          </Pie>
+                                      </PieChart>
+                                  </ResponsiveContainer>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                      <span className="text-xl font-bold">
+                                          {Math.round((category.solvedCount / category.problemCount) * 100)}%
+                                      </span>
+                                  </div>
+                              </div>
+                          </div>
+                      ) : (
+                        // Fallback for logged-out users
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Total Problems</span>
+                            <span className="font-semibold">{category.problemCount}</span>
+                          </div>
+                          <p className="text-muted-foreground text-xs pt-2">
+                            <Link href="/login" className="underline text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>Log in</Link> to track your progress.
+                          </p>
+                        </div>
+                      )}
                     </CardContent>
 
                     <CardFooter>
