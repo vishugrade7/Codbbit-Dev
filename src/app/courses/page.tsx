@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,6 @@ import Image from "next/image";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Course } from "@/types";
-import { format } from "date-fns";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -84,11 +82,6 @@ export default function Courses() {
                         <h3 className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
                             {course.title || 'Untitled Course'}
                         </h3>
-                        {course.createdAt?.toDate && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                                {format(course.createdAt.toDate(), 'MMMM d, yyyy')}
-                            </p>
-                        )}
                     </div>
                 </div>
               </Link>
