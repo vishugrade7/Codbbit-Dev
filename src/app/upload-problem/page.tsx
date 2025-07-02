@@ -12,6 +12,9 @@ import { doc, getDoc, collection, query, getDocs, orderBy, deleteDoc } from "fir
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink, Badge, ContentBlock } from "@/types";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -1423,6 +1426,37 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
 // #endregion
 
 // #region CourseForm
+
+function DraggableContentBlock({ id, children }: { id: string; children: React.ReactNode }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 'auto',
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className={cn(isDragging && "shadow-lg opacity-90")}>
+            <div className="p-3 border rounded bg-card/50 flex items-start gap-2">
+                <span {...attributes} {...listeners} className="cursor-grab py-2 touch-none">
+                     <GripVertical className="h-5 w-5 text-muted-foreground" />
+                </span>
+                <div className="flex-grow">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function CourseForm({ course, onBack }: { course: Course | null, onBack: () => void }) {
     const { user: authUser } = useAuth();
     const { toast } = useToast();
@@ -1649,7 +1683,7 @@ const contentBlockIcons = {
 };
 
 function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, loadingProblems }: { moduleIndex: number, lessonIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
-    const { fields, append, remove } = useFieldArray({
+    const { fields, append, remove, move } = useFieldArray({
         control,
         name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`
     });
@@ -1658,28 +1692,51 @@ function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, load
         append({ id: crypto.randomUUID(), type, content: '' });
     };
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = fields.findIndex((field) => field.id === active.id);
+            const newIndex = fields.findIndex((field) => field.id === over.id);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                move(oldIndex, newIndex);
+            }
+        }
+    };
+
+
     return (
         <div className="space-y-4">
             <Label>Lesson Content</Label>
             {fields.length > 0 && (
-                <div className="space-y-4 rounded-md border p-4">
-                    {fields.map((block, blockIndex) => (
-                        <div key={block.id} className="p-3 border rounded bg-card/50">
-                             <div className="flex justify-end">
-                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(blockIndex)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                             </div>
-                            <ContentBlockItem
-                                moduleIndex={moduleIndex}
-                                lessonIndex={lessonIndex}
-                                blockIndex={blockIndex}
-                                control={control}
-                                allProblems={allProblems}
-                                loadingProblems={loadingProblems}
-                            />
-                        </div>
-                    ))}
+                 <div className="space-y-4 rounded-md border p-4">
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={fields} strategy={verticalListSortingStrategy}>
+                            {fields.map((block, blockIndex) => (
+                                <DraggableContentBlock key={block.id} id={block.id}>
+                                    <div className="relative w-full">
+                                        <div className="absolute top-0 right-0 z-10">
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(blockIndex)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <ContentBlockItem
+                                            moduleIndex={moduleIndex}
+                                            lessonIndex={lessonIndex}
+                                            blockIndex={blockIndex}
+                                            control={control}
+                                            allProblems={allProblems}
+                                            loadingProblems={loadingProblems}
+                                        />
+                                    </div>
+                                </DraggableContentBlock>
+                            ))}
+                        </SortableContext>
+                    </DndContext>
                 </div>
             )}
             <div className="flex flex-wrap gap-2">
