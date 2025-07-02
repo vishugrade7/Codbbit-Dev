@@ -194,6 +194,7 @@ export default function SignupPage() {
           maxStreak: 0,
           lastSolvedDate: "",
           starredProblems: [],
+          activeSessionId: "",
       });
 
       toast({

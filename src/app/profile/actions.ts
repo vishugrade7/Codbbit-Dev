@@ -54,3 +54,24 @@ export async function updateAvatar(userId: string, newAvatarUrl: string) {
         return { success: false, error: 'Failed to update profile picture URL.' };
     }
 }
+
+export async function updateActiveSession(userId: string, sessionId: string) {
+    if (!userId || !sessionId) {
+        return { success: false, error: 'User ID and Session ID are required.' };
+    }
+    if (!db) {
+        return { success: false, error: 'Firebase is not configured correctly.' };
+    }
+
+    const userDocRef = doc(db, 'users', userId);
+
+    try {
+        await updateDoc(userDocRef, {
+            activeSessionId: sessionId
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating active session:", error);
+        return { success: false, error: 'Failed to update user session.' };
+    }
+}

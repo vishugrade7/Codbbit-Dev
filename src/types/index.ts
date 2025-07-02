@@ -58,6 +58,7 @@ export type User = {
   razorpaySubscriptionStatus?: string;
   subscriptionEndDate?: any; // Firestore Timestamp
   subscriptionPeriod?: 'monthly' | 'biannually' | 'annually';
+  activeSessionId?: string;
 };
 
 export type LeaderboardUser = {
@@ -127,8 +128,6 @@ export type Problem = {
   hints: string[];
   metadataType: 'Class' | 'Trigger';
   triggerSObject?: string;
-  sampleCode: string;
-  testcases: string;
   categoryName?: string; // Added for convenience
   company?: string;
   companyLogoUrl?: string;
