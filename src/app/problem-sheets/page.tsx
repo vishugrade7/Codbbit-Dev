@@ -7,6 +7,7 @@ import { collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ProblemSheet } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from "@/lib/utils";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -17,6 +18,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+
+const cardColorClasses = [
+  "bg-sky-100 dark:bg-sky-900/30 hover:border-sky-500/50",
+  "bg-amber-100 dark:bg-amber-900/30 hover:border-amber-500/50",
+  "bg-emerald-100 dark:bg-emerald-900/30 hover:border-emerald-500/50",
+  "bg-violet-100 dark:bg-violet-900/30 hover:border-violet-500/50",
+  "bg-rose-100 dark:bg-rose-900/30 hover:border-rose-500/50",
+  "bg-fuchsia-100 dark:bg-fuchsia-900/30 hover:border-fuchsia-500/50",
+];
 
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
@@ -82,9 +92,10 @@ export default function ProblemSheetsListPage() {
           </div>
         ) : sheets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sheets.map((sheet) => {
+            {sheets.map((sheet, index) => {
               const isCreator = authUser?.uid === sheet.createdBy;
               const subscribersCount = sheet.subscribers?.length || 0;
+              const colorClass = cardColorClasses[index % cardColorClasses.length];
 
               return (
                 <div key={sheet.id} className="relative group">
@@ -103,7 +114,10 @@ export default function ProblemSheetsListPage() {
                     </Button>
                   )}
                   <Link href={`/sheets/${sheet.id}`} className="block h-full">
-                    <Card className="h-full flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
+                    <Card className={cn(
+                        "h-full flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent",
+                        colorClass
+                    )}>
                       <CardHeader>
                           <CardTitle className="flex items-start gap-3 pr-10">
                             <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
