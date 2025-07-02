@@ -2,7 +2,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 
@@ -18,9 +17,17 @@ type ProgressCardProps = {
 };
 
 const chartConfig = {
-  solved: {
-    label: "Solved",
+  easy: {
+    label: "Easy",
+    color: "hsl(142.1 76.2% 41%)", // green-500
+  },
+  medium: {
+    label: "Medium",
     color: "hsl(var(--primary))",
+  },
+  hard: {
+    label: "Hard",
+    color: "hsl(var(--destructive))",
   },
 } satisfies ChartConfig;
 
@@ -34,8 +41,14 @@ export function ProgressCard({
   hardSolved,
   hardTotal,
 }: ProgressCardProps) {
-  const overallPercentage = totalAvailable > 0 ? (totalSolved / totalAvailable) * 100 : 0;
-  const chartData = [{ name: "Overall", value: overallPercentage, fill: "var(--color-solved)" }];
+  const chartData = [
+    {
+      name: "progress",
+      easy: easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0,
+      medium: mediumTotal > 0 ? (mediumSolved / mediumTotal) * 100 : 0,
+      hard: hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0,
+    },
+  ];
 
   return (
     <Card>
@@ -52,9 +65,8 @@ export function ProgressCard({
               data={chartData}
               startAngle={90}
               endAngle={-270}
-              innerRadius="80%"
-              outerRadius="100%"
-              barSize={10}
+              barSize={8}
+              innerRadius="30%"
             >
               <PolarAngleAxis
                 type="number"
@@ -63,60 +75,65 @@ export function ProgressCard({
                 tick={false}
               />
               <RadialBar
-                background={{ fill: "hsl(var(--muted))" }}
-                dataKey="value"
-                cornerRadius={10}
+                background
+                dataKey="hard"
+                fill="var(--color-hard)"
+                cornerRadius={5}
+                innerRadius="40%"
+                outerRadius="55%"
+              />
+              <RadialBar
+                background
+                dataKey="medium"
+                fill="var(--color-medium)"
+                cornerRadius={5}
+                innerRadius="65%"
+                outerRadius="80%"
+              />
+               <RadialBar
+                background
+                dataKey="easy"
+                fill="var(--color-easy)"
+                cornerRadius={5}
+                innerRadius="90%"
+                outerRadius="105%"
               />
             </RadialBarChart>
           </ChartContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-3xl font-bold">{totalSolved}</span>
+            <span className="text-sm text-muted-foreground">Solved</span>
           </div>
         </div>
 
-        <div className="w-full flex-1 space-y-4">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-green-500">Easy</span>
-              <span className="text-muted-foreground">
-                {easySolved} / {easyTotal}
-              </span>
+        <div className="w-full flex-1 space-y-2" style={{
+            '--color-easy': 'hsl(142.1 76.2% 41%)',
+            '--color-medium': 'hsl(var(--primary))',
+            '--color-hard': 'hsl(var(--destructive))',
+        } as React.CSSProperties}>
+            <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--color-easy)' }} />
+                    <span className="font-medium text-muted-foreground">Easy</span>
+                </div>
+                <span className="font-semibold">{easySolved} / {easyTotal}</span>
             </div>
-            <Progress
-              value={(easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0)}
-              className="h-2 bg-muted [&>div]:bg-green-500"
-            />
-          </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-primary">Medium</span>
-              <span className="text-muted-foreground">
-                {mediumSolved} / {mediumTotal}
-              </span>
+             <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--color-medium)' }} />
+                    <span className="font-medium text-muted-foreground">Medium</span>
+                </div>
+                <span className="font-semibold">{mediumSolved} / {mediumTotal}</span>
             </div>
-            <Progress
-              value={
-                (mediumTotal > 0 ? (mediumSolved / mediumTotal) * 100 : 0)
-              }
-              className="h-2 bg-muted [&>div]:bg-primary"
-            />
-          </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-destructive">Hard</span>
-              <span className="text-muted-foreground">
-                {hardSolved} / {hardTotal}
-              </span>
+             <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--color-hard)' }} />
+                    <span className="font-medium text-muted-foreground">Hard</span>
+                </div>
+                <span className="font-semibold">{hardSolved} / {hardTotal}</span>
             </div>
-            <Progress
-              value={(hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0)}
-              className="h-2 bg-muted [&>div]:bg-destructive"
-            />
-          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
-
-    
