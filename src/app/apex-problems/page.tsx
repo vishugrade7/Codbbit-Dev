@@ -10,9 +10,11 @@ import type { ApexProblemsData } from "@/types";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardTitle } from "@/components/ui/card";
 import { Loader2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 type CategoryInfo = {
   name: string;
@@ -93,22 +95,27 @@ export default function ApexProblems() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category) => (
               category.firstProblemId && (
-                <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                   <Card className="flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 overflow-hidden border-transparent hover:border-primary/30">
-                    <div className="relative aspect-video">
-                      <Image
-                        src={category.imageUrl || 'https://placehold.co/600x400.png'}
-                        alt={category.name}
-                        fill
-                        className="object-cover"
-                        data-ai-hint="abstract code"
-                      />
-                    </div>
-                    <div className="p-4 flex flex-col">
-                      <div>
-                        <h3 className="text-lg font-semibold group-hover:text-primary">{category.name}</h3>
-                        <p className="text-sm text-muted-foreground">{category.problemCount} Problems</p>
-                        <div className="mt-4 space-y-2">
+                <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group h-full">
+                  <Card className="transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 overflow-hidden border bg-card/50 backdrop-blur-sm h-full flex flex-col">
+                    <CardContent className="p-6 flex flex-col items-center text-center flex-grow">
+                      <Avatar className="h-28 w-28 mb-4 rounded-xl">
+                        <AvatarImage 
+                          src={category.imageUrl || 'https://placehold.co/112x112.png'} 
+                          alt={category.name} 
+                          className="object-cover" 
+                          data-ai-hint="abstract code"
+                        />
+                        <AvatarFallback className="rounded-xl text-2xl bg-muted">
+                            {category.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <h3 className="text-xl font-semibold group-hover:text-primary">{category.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{category.problemCount} Problems</p>
+                      
+                      <Separator className="my-2" />
+
+                      <div className="w-full space-y-2 py-4">
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Easy</span>
                             <Badge variant="outline" className="bg-green-400/10 text-green-400 border-green-400/20">{category.difficulties.Easy}</Badge>
@@ -121,15 +128,15 @@ export default function ApexProblems() {
                             <span className="text-muted-foreground">Hard</span>
                             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">{category.difficulties.Hard}</Badge>
                           </div>
+                      </div>
+                    </CardContent>
+
+                    <CardFooter className="justify-center pt-0 pb-6 mt-auto">
+                        <div className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors flex items-center">
+                            <span>View Problems</span>
+                            <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </div>
-                      </div>
-                      <div className="mt-4 text-right flex justify-end items-center">
-                        <span className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                          View Problems
-                        </span>
-                        <ChevronRight className="ml-2 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </div>
+                    </CardFooter>
                   </Card>
                 </Link>
               )
