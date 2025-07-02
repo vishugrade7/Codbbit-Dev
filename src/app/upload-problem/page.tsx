@@ -1234,31 +1234,32 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
 
     const metadataTypeValue = form.watch("metadataType");
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            setLoadingCategories(true);
-            try {
-                const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const existingCategories = (data && data.Category) ? Object.keys(data.Category) : [];
-                    if (existingCategories.length > 0) {
-                        setCategories(existingCategories.sort());
-                    } else {
-                        setIsAddingNewCategory(true);
-                    }
+    const fetchCategories = useCallback(async () => {
+        setLoadingCategories(true);
+        try {
+            const apexDocRef = doc(db, "problems", "Apex");
+            const docSnap = await getDoc(apexDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const existingCategories = (data && data.Category) ? Object.keys(data.Category) : [];
+                if (existingCategories.length > 0) {
+                    setCategories(existingCategories.sort());
                 } else {
                     setIsAddingNewCategory(true);
                 }
-            } catch (error) {
-                toast({ variant: "destructive", title: "Could not load categories." });
-            } finally {
-                setLoadingCategories(false);
+            } else {
+                setIsAddingNewCategory(true);
             }
-        };
-        fetchCategories();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Could not load categories." });
+        } finally {
+            setLoadingCategories(false);
+        }
     }, [toast]);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
 
     const { fields: exampleFields, append: appendExample, remove: removeExample } = useFieldArray({ control: form.control, name: "examples" });
     const { fields: hintFields, append: appendHint, remove: removeHint } = useFieldArray({ control: form.control, name: "hints" });
