@@ -66,6 +66,10 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
+      
+      // Force a new session to be created to log out other devices.
+      sessionStorage.removeItem('appSessionId');
+
       toast({
         title: "Login Successful",
         description: "Welcome back!",
