@@ -7,17 +7,20 @@ import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ApexProblemsData } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Loader2, ArrowRight, Cog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 type CategoryInfo = {
   name: string;
   problemCount: number;
+  solvedCount: number;
   firstProblemId: string | null;
   difficulties: {
     Easy: number;
@@ -30,6 +33,7 @@ type CategoryInfo = {
 export default function ApexProblems() {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const { userData } = useAuth();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -55,9 +59,14 @@ export default function ApexProblems() {
                   },
                   { Easy: 0, Medium: 0, Hard: 0 }
                 );
+                
+                const solvedCount = userData 
+                    ? questions.filter(q => userData.solvedProblems?.[q.id]).length 
+                    : 0;
+
                 const imageUrl = categoryData.imageUrl;
 
-                return { name, problemCount, firstProblemId, difficulties, imageUrl };
+                return { name, problemCount, solvedCount, firstProblemId, difficulties, imageUrl };
               })
               .filter(cat => cat.problemCount > 0)
               .sort((a, b) => a.name.localeCompare(b.name));
@@ -73,7 +82,7 @@ export default function ApexProblems() {
     };
 
     fetchCategories();
-  }, []);
+  }, [userData]);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -95,26 +104,46 @@ export default function ApexProblems() {
             {categories.map((category) => (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className="transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 overflow-hidden border flex flex-col p-5 h-full bg-card/90 backdrop-blur-sm">
-                    <div className="flex items-center gap-4 mb-3">
-                      <Avatar className="h-11 w-11 shrink-0">
-                          <AvatarImage src={category.imageUrl} alt={category.name} className="object-cover" />
-                          <AvatarFallback className="bg-yellow-400/20">
-                              <Cog className="h-6 w-6 text-yellow-500" />
-                          </AvatarFallback>
-                      </Avatar>
-                      <h3 className="text-xl font-bold">{category.name}</h3>
-                    </div>
+                  <Card className="transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 overflow-hidden border flex flex-col h-full bg-card/90 backdrop-blur-sm">
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-11 w-11 shrink-0">
+                            <AvatarImage src={category.imageUrl} alt={category.name} className="object-cover" />
+                            <AvatarFallback className="bg-yellow-400/20">
+                                <Cog className="h-6 w-6 text-yellow-500" />
+                            </AvatarFallback>
+                        </Avatar>
+                        <h3 className="text-xl font-bold">{category.name}</h3>
+                      </div>
+                    </CardHeader>
                     
-                    <p className="text-muted-foreground text-sm flex-grow mb-4">
-                      Explore our collection of {category.problemCount} problems to sharpen your Apex and SOQL skills.
-                    </p>
+                    <CardContent className="flex-grow">
+                      <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                              <span className="text-muted-foreground">Total Problems</span>
+                              <span className="font-semibold">{category.problemCount}</span>
+                          </div>
+                          {userData && category.problemCount > 0 ? (
+                              <div>
+                                  <div className="flex justify-between mb-1">
+                                      <span className="text-muted-foreground">Your Progress</span>
+                                      <span className="font-semibold">{category.solvedCount} / {category.problemCount}</span>
+                                  </div>
+                                  <Progress value={(category.solvedCount / category.problemCount) * 100} className="h-2" />
+                              </div>
+                          ) : (
+                              <p className="text-muted-foreground text-xs pt-2">
+                                <Link href="/login" className="underline text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>Log in</Link> to track your progress.
+                              </p>
+                          )}
+                      </div>
+                    </CardContent>
 
-                    <div className="mt-auto">
-                      <Button>
+                    <CardFooter>
+                      <Button className="w-full">
                         Solve <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Button>
-                    </div>
+                    </CardFooter>
                   </Card>
                 </Link>
               )
