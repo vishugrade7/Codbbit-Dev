@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 // Icons for lesson types
 const lessonIcons = {
@@ -28,10 +29,13 @@ const lessonIcons = {
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const { userData } = useAuth();
     const courseId = params.courseId as string;
 
     const [course, setCourse] = useState<Course | null>(null);
     const [loading, setLoading] = useState(true);
+    
+    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
 
     useEffect(() => {
         if (!courseId) return;
@@ -58,6 +62,8 @@ export default function CourseDetailPage() {
         fetchCourse();
     }, [courseId]);
 
+    const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id;
+
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -79,6 +85,8 @@ export default function CourseDetailPage() {
             </div>
         );
     }
+
+    const startCourseHref = firstLessonId ? `/courses/${courseId}/lessons/${firstLessonId}` : '#';
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -118,12 +126,15 @@ export default function CourseDetailPage() {
                                                     <ul className="space-y-1 pt-2">
                                                         {moduleItem.lessons.map((lesson: Lesson) => (
                                                             <li key={lesson.id} className="ml-6">
-                                                                <Link href="#" className="flex items-center justify-between p-3 rounded-md hover:bg-muted transition-colors group">
+                                                                <Link 
+                                                                    href={(!lesson.isFree && !isPro) ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                                    className="flex items-center justify-between p-3 rounded-md hover:bg-muted transition-colors group"
+                                                                >
                                                                     <div className="flex items-center gap-3">
                                                                         {lessonIcons[lesson.contentType as keyof typeof lessonIcons] || <BookOpen className="h-5 w-5 text-primary" />}
                                                                         <span className="font-medium group-hover:text-primary">{lesson.title}</span>
                                                                     </div>
-                                                                    {lesson.isFree === false && <Lock className="h-4 w-4 text-muted-foreground" />}
+                                                                    {(!lesson.isFree && !isPro) && <Lock className="h-4 w-4 text-muted-foreground" />}
                                                                 </Link>
                                                             </li>
                                                         ))}
@@ -147,8 +158,8 @@ export default function CourseDetailPage() {
                                             className="object-cover"
                                         />
                                     </div>
-                                    <Button asChild size="lg" className="w-full">
-                                        <Link href="#">Start Course</Link>
+                                    <Button asChild size="lg" className="w-full" disabled={!firstLessonId}>
+                                        <Link href={startCourseHref}>Start Course</Link>
                                     </Button>
                                     <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                                         <p><strong>{course.modules.length}</strong> {course.modules.length === 1 ? 'module' : 'modules'}</p>
