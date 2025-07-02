@@ -48,19 +48,38 @@ const bulkUploadSchema = z.array(bulkProblemSchema);
 // #endregion
 
 // #region Course Schemas
-const contentBlockSchema = z.object({
-  id: z.string(),
-  type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive']),
-  content: z.string().min(1, 'Content cannot be empty'),
-  language: z.string().optional(),
-  caption: z.string().optional(),
-});
+type ActionContentBlock = {
+    id: string;
+    type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive' | 'columns';
+    content: string;
+    language?: string | undefined;
+    caption?: string | undefined;
+    columnData?: { blocks: ActionContentBlock[] }[] | undefined;
+};
+
+const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object({
+    id: z.string(),
+    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns']),
+    content: z.string(),
+    language: z.string().optional(),
+    caption: z.string().optional(),
+    columnData: z.array(z.object({
+        blocks: z.array(z.lazy(() => contentBlockSchema))
+    })).optional()
+}).refine(data => {
+    if (data.type === 'columns') return true;
+    return !!data.content;
+}, {
+    message: "Content cannot be empty for this block type.",
+    path: ["content"],
+}));
+
 
 const lessonSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Lesson title is required'),
     isFree: z.boolean().optional(),
-    contentBlocks: z.array(contentBlockSchema).min(1, 'Each lesson must have at least one content block.'),
+    contentBlocks: z.array(contentBlockSchema),
 });
 
 const moduleSchema = z.object({

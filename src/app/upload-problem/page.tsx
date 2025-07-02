@@ -36,7 +36,7 @@ import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, Arro
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -76,28 +76,33 @@ const problemFormSchema = z.object({
     path: ["triggerSObject"],
 });
 
-const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() =>
+type ClientContentBlock = {
+    id: string;
+    type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive' | 'columns';
+    content: string;
+    language?: string | undefined;
+    caption?: string | undefined;
+    columnData?: { blocks: ClientContentBlock[] }[] | undefined;
+};
+
+const contentBlockSchema: z.ZodType<ClientContentBlock> = z.lazy(() =>
   z.object({
     id: z.string(),
     type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns']),
     content: z.string(),
     language: z.string().optional(),
     caption: z.string().optional(),
-    columns: z.array(z.array(contentBlockSchema)).optional(),
+    columnData: z.array(z.object({
+      blocks: z.array(z.lazy(() => contentBlockSchema))
+    })).optional(),
   }).refine(data => {
-    if (data.type !== 'columns' && data.type !== 'problem' && !data.content) {
-      return false;
-    }
-    if (data.type === 'problem' && !data.content) {
-      return false;
-    }
-    return true;
+    if (data.type === 'columns') return true;
+    return !!data.content;
   }, {
     message: "Content cannot be empty for this block type.",
     path: ["content"],
   })
 );
-
 
 const lessonSchema = z.object({
     id: z.string(),
@@ -2024,7 +2029,7 @@ function ContentBlockList({ name, control, allProblems, loadingProblems, isNeste
     const addBlock = (type: ContentBlock['type']) => {
         const newBlock: any = { id: crypto.randomUUID(), type, content: '' };
         if (type === 'columns') {
-            newBlock.columns = [ [], [] ]; // Initialize with two empty columns
+            newBlock.columnData = [ { blocks: [] }, { blocks: [] } ];
         }
         append(newBlock);
     };
@@ -2187,12 +2192,12 @@ function ContentBlockItem({ parentName, blockIndex, control, allProblems, loadin
                     <div>
                         <Label className="font-semibold">Two-Column Layout</Label>
                         <div className="grid grid-cols-2 gap-4 mt-2">
-                            {(block.columns || []).map((_, colIndex) => (
+                            {(block.columnData || []).map((_, colIndex) => (
                                 <div key={`${block.id}-${colIndex}`} className="p-2 border rounded-md bg-muted/30 flex flex-col gap-2">
                                    <h4 className="font-bold text-sm text-muted-foreground p-2">Column {colIndex + 1}</h4>
                                     <ContentBlockList
                                         control={control}
-                                        name={`${parentName}.${blockIndex}.columns.${colIndex}`}
+                                        name={`${parentName}.${blockIndex}.columnData.${colIndex}.blocks`}
                                         allProblems={allProblems}
                                         loadingProblems={loadingProblems}
                                         isNested={true}

@@ -85,7 +85,7 @@ export type ContentBlock = {
   content: string;
   language?: string;
   caption?: string;
-  columns?: ContentBlock[][];
+  columnData?: { blocks: ContentBlock[] }[];
 };
 
 export type Lesson = {
