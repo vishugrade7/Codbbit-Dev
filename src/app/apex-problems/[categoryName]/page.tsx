@@ -27,8 +27,7 @@ import {
 export default function CategoryProblemsPage() {
   const params = useParams();
   const router = useRouter();
-  const { userData } = useAuth();
-  const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
+  const { userData, isPro } = useAuth();
   
   const categoryName = useMemo(() => params?.categoryName ? decodeURIComponent(params.categoryName as string) : null, [params]);
 

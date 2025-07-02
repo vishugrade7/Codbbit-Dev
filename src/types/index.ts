@@ -56,6 +56,8 @@ export type User = {
   razorpayOrderId?: string;
   razorpaySubscriptionId?: string;
   razorpaySubscriptionStatus?: string;
+  subscriptionEndDate?: any; // Firestore Timestamp
+  subscriptionPeriod?: 'monthly' | 'biannually' | 'annually';
 };
 
 export type LeaderboardUser = {

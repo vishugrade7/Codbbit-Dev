@@ -36,14 +36,12 @@ const getLessonIcon = (lesson: Lesson) => {
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { user, userData, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isPro } = useAuth();
     const courseId = params.courseId as string;
 
     const [course, setCourse] = useState<Course | null>(null);
     const [loading, setLoading] = useState(true);
     
-    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
-
     useEffect(() => {
         if (authLoading) return; // Wait for auth status to resolve
 
@@ -76,7 +74,7 @@ export default function CourseDetailPage() {
         };
 
         fetchCourse();
-    }, [courseId, isPro, router, user, authLoading]);
+    }, [courseId, router, user, authLoading]);
 
     const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id;
 

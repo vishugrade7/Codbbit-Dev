@@ -40,8 +40,7 @@ export default function ProblemWorkspacePage() {
         problemId: params?.problemId ? (params.problemId as string) : null
     }), [params]);
     
-    const { user, userData } = useAuth();
-    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
+    const { user, userData, isPro } = useAuth();
     const { toast } = useToast();
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);

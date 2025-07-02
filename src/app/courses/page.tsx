@@ -19,8 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const { userData } = useAuth();
-  const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
+  const { isPro } = useAuth();
 
   useEffect(() => {
     const fetchCourses = async () => {

@@ -31,7 +31,7 @@ const loadRazorpayScript = () => {
 
 
 export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'biannually' | 'annually'>("monthly");
   const { user, userData } = useAuth();
   const isIndianUser = userData?.country === 'India';
   const { toast } = useToast();
@@ -71,6 +71,7 @@ export default function PricingPage() {
 
     return {
       monthly: {
+        id: 'monthly' as const,
         price: prices.monthly.price,
         total: prices.monthly.total,
         suffix: "/month",
@@ -80,6 +81,7 @@ export default function PricingPage() {
         save: null,
       },
       biannually: {
+        id: 'biannually' as const,
         price: prices.biannually.price,
         total: prices.biannually.total,
         suffix: "/month",
@@ -89,6 +91,7 @@ export default function PricingPage() {
         currencyCode,
       },
       annually: {
+        id: 'annually' as const,
         price: prices.annually.price,
         total: prices.annually.total,
         suffix: "/month",
@@ -103,7 +106,7 @@ export default function PricingPage() {
     };
   }, [isIndianUser]);
 
-  const currentPlan = plans[billingCycle as keyof Omit<typeof plans, 'free'>];
+  const currentPlan = plans[billingCycle];
   const freePlan = plans.free;
 
   const handleUpgrade = async () => {
@@ -147,7 +150,8 @@ export default function PricingPage() {
               response,
               user.uid,
               currentPlan.total * 100, // Pass amount in subunits
-              currentPlan.currencyCode
+              currentPlan.currencyCode,
+              currentPlan.id
             );
             if (verificationResult.success) {
                 toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
@@ -199,7 +203,7 @@ export default function PricingPage() {
         </div>
 
         <div className="flex justify-center mb-10">
-            <Tabs value={billingCycle} onValueChange={setBillingCycle} className="w-auto">
+            <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="w-auto">
                 <TabsList>
                     <TabsTrigger value="monthly">Monthly</TabsTrigger>
                     <TabsTrigger value="biannually">6 Months</TabsTrigger>

@@ -11,18 +11,21 @@ interface AuthContextType {
   user: FirebaseUser | null;
   userData: AppUser | null;
   loading: boolean;
+  isPro: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userData: null,
   loading: true,
+  isPro: false,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     if (!auth) {
@@ -34,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(firebaseUser);
       if (!firebaseUser) {
         setUserData(null);
+        setIsPro(false);
         setLoading(false);
       }
     });
@@ -46,14 +50,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
-          setUserData(doc.data() as AppUser);
+          const currentData = doc.data() as AppUser;
+          setUserData(currentData);
+
+          const isAdmin = currentData.isAdmin || false;
+          const status = currentData.razorpaySubscriptionStatus;
+          const endDate = currentData.subscriptionEndDate?.toDate();
+
+          const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
+          
+          setIsPro(isAdmin || hasActiveSub);
+
         } else {
           setUserData(null);
+          setIsPro(false);
         }
         setLoading(false);
       }, (error) => {
         console.error("Error fetching user data:", error);
         setUserData(null);
+        setIsPro(false);
         setLoading(false);
       });
 
@@ -62,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading }}>
+    <AuthContext.Provider value={{ user, userData, loading, isPro }}>
       {children}
     </AuthContext.Provider>
   );

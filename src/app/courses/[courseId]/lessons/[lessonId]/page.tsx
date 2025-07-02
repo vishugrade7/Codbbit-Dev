@@ -155,7 +155,7 @@ const LessonContent = ({ lesson, problemMap }: { lesson: Lesson; problemMap: Map
 export default function LessonPage() {
     const params = useParams();
     const router = useRouter();
-    const { user, userData, loading: authLoading } = useAuth();
+    const { user, userData, loading: authLoading, isPro } = useAuth();
 
     const courseId = params.courseId as string;
     const lessonId = params.lessonId as string;
@@ -168,8 +168,6 @@ export default function LessonPage() {
     const [problemMap, setProblemMap] = useState<Map<string, ProblemWithCategory>>(new Map());
     const [loading, setLoading] = useState(true);
     
-    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
-
     useEffect(() => {
         const fetchAllProblems = async () => {
             if (!db) return;

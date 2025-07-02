@@ -61,6 +61,7 @@ export async function verifyAndSavePayment(
     userId: string,
     expectedAmount: number,
     expectedCurrency: string,
+    planId: 'monthly' | 'biannually' | 'annually'
 ): Promise<VerifyPaymentResponse> {
     if (!userId || !db) {
         return { success: false, error: 'User or database not found.' };
@@ -105,12 +106,23 @@ export async function verifyAndSavePayment(
             return { success: false, error: `Payment currency mismatch. Expected ${expectedCurrency}, got ${payment.currency}` };
         }
 
-        // Step 3: All checks passed, update user in Firestore
+        // Step 3: All checks passed, calculate subscription end date and update user in Firestore
+        const endDate = new Date();
+        if (planId === 'monthly') {
+            endDate.setMonth(endDate.getMonth() + 1);
+        } else if (planId === 'biannually') {
+            endDate.setMonth(endDate.getMonth() + 6);
+        } else if (planId === 'annually') {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+        }
+
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, {
             razorpayPaymentId: razorpay_payment_id,
             razorpayOrderId: razorpay_order_id,
             razorpaySubscriptionStatus: 'active',
+            subscriptionEndDate: endDate,
+            subscriptionPeriod: planId,
         });
         return { success: true };
 

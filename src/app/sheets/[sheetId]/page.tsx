@@ -30,9 +30,8 @@ export default function SheetDisplayPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { user: authUser, userData } = useAuth();
+    const { user: authUser, userData, isPro } = useAuth();
     const sheetId = params.sheetId as string;
-    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
     
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
     const [problems, setProblems] = useState<ProblemDetailWithCategory[]>([]);
