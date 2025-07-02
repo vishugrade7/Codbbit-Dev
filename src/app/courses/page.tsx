@@ -74,8 +74,8 @@ export default function Courses() {
               const isLocked = course.isPremium && !isPro;
               return (
               <Link key={course.id} href={`/courses/${course.id}`} className="block group">
-                <Card className="h-full overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
-                  <CardContent className="p-0 flex flex-col h-full">
+                <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
+                  <CardContent className="p-0 flex flex-col">
                     <div className="aspect-video relative">
                        {isLocked && (
                           <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center">
@@ -93,7 +93,7 @@ export default function Courses() {
                          )}
                        />
                     </div>
-                    <div className="p-4 flex flex-col flex-grow">
+                    <div className="p-4 flex flex-col">
                         <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
                         <h3 className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
                             {course.title || 'Untitled Course'}

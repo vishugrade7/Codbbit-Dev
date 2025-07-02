@@ -104,8 +104,8 @@ export default function ApexProblems() {
                         data-ai-hint="abstract code"
                       />
                     </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <div className="flex-grow">
+                    <div className="p-4 flex flex-col">
+                      <div>
                         <h3 className="text-lg font-semibold group-hover:text-primary">{category.name}</h3>
                         <p className="text-sm text-muted-foreground">{category.problemCount} Problems</p>
                         <div className="mt-4 space-y-2">
