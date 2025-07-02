@@ -91,7 +91,7 @@ export default function ApexProblems() {
             {categories.map((category) => (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-105">
+                  <Card className="h-full flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
                     <CardHeader className="flex-row items-center gap-4">
                         <div className="p-3 bg-primary/10 rounded-lg">
                             <BookOpen className="h-6 w-6 text-primary" />

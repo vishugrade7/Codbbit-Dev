@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,6 +12,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Loader2, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -34,7 +36,7 @@ export default function Courses() {
         coursesData.sort((a, b) => {
           const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
           const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-          return dateB.getTime() - dateA.getTime();
+          return dateB.getTime() - a.getTime();
         });
 
         setCourses(coursesData);
@@ -67,23 +69,25 @@ export default function Courses() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {courses.map((course) => (
               <Link key={course.id} href={`/courses/${course.id}`} className="block group">
-                <div className="flex flex-col h-full gap-3">
-                    <div className="aspect-video relative overflow-hidden rounded-lg">
+                <Card className="h-full overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
+                  <CardContent className="p-0 flex flex-col h-full">
+                    <div className="aspect-video relative">
                        <Image 
                          src={course.thumbnailUrl || 'https://placehold.co/600x400.png'} 
                          alt={course.title || 'Course thumbnail'}
                          fill
                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                         className="object-cover transition-transform duration-300 group-hover:scale-105 rounded-lg"
+                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                        />
                     </div>
-                    <div className="flex flex-col">
-                        <Badge variant="outline" className="w-fit mb-2">{course.category}</Badge>
+                    <div className="p-4 flex flex-col flex-grow">
+                        <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
                         <h3 className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
                             {course.title || 'Untitled Course'}
                         </h3>
                     </div>
-                </div>
+                  </CardContent>
+                </Card>
               </Link>
             ))}
           </div>

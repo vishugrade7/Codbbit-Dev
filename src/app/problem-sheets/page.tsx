@@ -103,7 +103,7 @@ export default function ProblemSheetsListPage() {
                     </Button>
                   )}
                   <Link href={`/sheets/${sheet.id}`} className="block h-full">
-                    <Card className="h-full flex flex-col bg-card hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.03]">
+                    <Card className="h-full flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
                       <CardHeader>
                           <CardTitle className="flex items-start gap-3 pr-10">
                             <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
