@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
         hostname: 'logo.clearbit.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'studio.firebase.google.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
