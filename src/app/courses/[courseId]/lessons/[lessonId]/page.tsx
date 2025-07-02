@@ -201,6 +201,12 @@ export default function LessonPage() {
 
                 if (docSnap.exists()) {
                     const courseData = { id: docSnap.id, ...docSnap.data() } as Course;
+                    
+                    if (courseData.isPremium && !isPro) {
+                        router.push('/pricing');
+                        return; 
+                    }
+                    
                     setCourse(courseData);
 
                     const allLessons: ({ lesson: Lesson, moduleId: string })[] = courseData.modules.flatMap(m => m.lessons.map(l => ({ lesson: l, moduleId: m.id })));

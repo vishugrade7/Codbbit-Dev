@@ -103,6 +103,7 @@ const courseFormSchema = z.object({
     thumbnailUrl: z.string().url('Must be a valid URL').min(1, 'Thumbnail URL is required'),
     modules: z.array(moduleSchema).min(1, 'At least one module is required'),
     isPublished: z.boolean(),
+    isPremium: z.boolean().optional(),
 });
 
 const navLinksSchema = z.object({
@@ -1641,6 +1642,7 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
             thumbnailUrl: course?.thumbnailUrl || '',
             modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', isFree: true, contentBlocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] }] }],
             isPublished: course?.isPublished || false,
+            isPremium: course?.isPremium || false,
         },
     });
 
@@ -1660,6 +1662,7 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
                     }))
                 })),
                 isPublished: course.isPublished,
+                isPremium: course.isPremium || false,
             });
         }
     }, [course, form]);
@@ -1712,11 +1715,27 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
                                 <FormItem className="flex flex-col h-full"><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the course..." {...field} className="flex-grow" /></FormControl><FormMessage /></FormItem>
                             )} />
                         </div>
-                         <div className="md:col-span-2">
+                         <div className="md:col-span-2 space-y-4">
                              <FormField control={form.control} name="isPublished" render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5"><FormLabel>Publish Course</FormLabel><FormDescription>Make this course visible to all users.</FormDescription></div>
                                     <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                </FormItem>
+                             )} />
+                             <FormField control={form.control} name="isPremium" render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Premium Course</FormLabel>
+                                        <FormDescription>
+                                            Mark this course as premium content.
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
                                 </FormItem>
                              )} />
                         </div>

@@ -55,7 +55,12 @@ export default function CourseDetailPage() {
                 const docSnap = await getDoc(courseDocRef);
 
                 if (docSnap.exists()) {
-                    setCourse({ id: docSnap.id, ...docSnap.data() } as Course);
+                    const courseData = { id: docSnap.id, ...docSnap.data() } as Course;
+                    if (courseData.isPremium && !isPro) {
+                        router.push('/pricing');
+                        return;
+                    }
+                    setCourse(courseData);
                 } else {
                     console.log("No such course!");
                 }
@@ -67,7 +72,7 @@ export default function CourseDetailPage() {
         };
 
         fetchCourse();
-    }, [courseId]);
+    }, [courseId, isPro, router]);
 
     const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id;
 

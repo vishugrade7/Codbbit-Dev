@@ -78,6 +78,7 @@ const courseSchema = z.object({
     modules: z.array(moduleSchema).min(1, 'At least one module is required'),
     isPublished: z.boolean(),
     createdBy: z.string(),
+    isPremium: z.boolean().optional(),
 });
 // #endregion
 

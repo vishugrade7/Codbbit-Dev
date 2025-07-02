@@ -106,6 +106,7 @@ export type Course = {
   isPublished: boolean;
   createdAt: any; // Firestore Timestamp
   createdBy: string; // user UID
+  isPremium?: boolean;
 };
 
 export type Example = {
