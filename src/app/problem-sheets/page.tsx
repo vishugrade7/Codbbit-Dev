@@ -20,12 +20,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 const cardColorClasses = [
-  "bg-sky-100 dark:bg-sky-900/30 hover:border-sky-500/50",
-  "bg-amber-100 dark:bg-amber-900/30 hover:border-amber-500/50",
-  "bg-emerald-100 dark:bg-emerald-900/30 hover:border-emerald-500/50",
-  "bg-violet-100 dark:bg-violet-900/30 hover:border-violet-500/50",
-  "bg-rose-100 dark:bg-rose-900/30 hover:border-rose-500/50",
-  "bg-fuchsia-100 dark:bg-fuchsia-900/30 hover:border-fuchsia-500/50",
+  "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
+  "bg-amber-100/50 dark:bg-amber-900/30 hover:border-amber-500/50",
+  "bg-emerald-100/50 dark:bg-emerald-900/30 hover:border-emerald-500/50",
+  "bg-violet-100/50 dark:bg-violet-900/30 hover:border-violet-500/50",
+  "bg-rose-100/50 dark:bg-rose-900/30 hover:border-rose-500/50",
+  "bg-fuchsia-100/50 dark:bg-fuchsia-900/30 hover:border-fuchsia-500/50",
 ];
 
 export default function ProblemSheetsListPage() {
@@ -113,9 +113,9 @@ export default function ProblemSheetsListPage() {
                       <span className="sr-only">Edit Sheet</span>
                     </Button>
                   )}
-                  <Link href={`/sheets/${sheet.id}`} className="block h-full">
+                  <Link href={`/sheets/${sheet.id}`} className="block">
                     <Card className={cn(
-                        "h-full flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent",
+                        "flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent backdrop-blur-sm",
                         colorClass
                     )}>
                       <CardHeader>
