@@ -27,6 +27,7 @@ const problemObjectSchema = z.object({
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
   company: z.string().optional(),
+  companyLogoUrl: z.string().url().optional().or(z.literal('')),
   isPremium: z.boolean().optional(),
 });
 
@@ -193,6 +194,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                     examples: cleanExamples,
                     hints: data.hints ? data.hints.map(h => h.value) : [],
                     company: data.company,
+                    companyLogoUrl: data.companyLogoUrl,
                     isPremium: data.isPremium,
                 };
 
@@ -224,6 +226,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
                 examples: cleanExamples,
                 hints: data.hints ? data.hints.map(h => h.value) : [],
                 company: data.company,
+                companyLogoUrl: data.companyLogoUrl,
                 isPremium: data.isPremium || false,
             };
             
@@ -285,6 +288,7 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
                 examples: data.examples,
                 hints: data.hints ? data.hints.map(h => h.value) : [],
                 company: data.company,
+                companyLogoUrl: data.companyLogoUrl,
                 isPremium: data.isPremium || false,
             };
             

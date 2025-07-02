@@ -15,6 +15,7 @@ import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import Image from "next/image";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -60,6 +61,7 @@ const problemFormSchema = z.object({
   examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
   company: z.string().optional(),
+  companyLogoUrl: z.string().url().optional().or(z.literal('')),
   isPremium: z.boolean().optional(),
 }).refine(data => {
     if (data.metadataType === 'Trigger') {
@@ -133,6 +135,47 @@ const badgeFormSchema = z.object({
 
 type FormMode = 'add' | 'edit';
 type ProblemWithCategory = Problem & { categoryName: string };
+type CompanySuggestion = {
+  name: string;
+  domain: string;
+  logo: string;
+};
+
+const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySuggestion, onClick: (suggestion: CompanySuggestion) => void }) => {
+  const [logoError, setLogoError] = useState(false);
+
+  return (
+    <li>
+      <button
+        type="button"
+        className="flex items-center w-full text-left px-3 py-2.5 cursor-pointer hover:bg-accent"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onClick(suggestion);
+        }}
+      >
+        {logoError ? (
+          <div className="h-[24px] w-[24px] mr-3 rounded-sm bg-muted flex items-center justify-center shrink-0">
+            <Building className="h-4 w-4 text-muted-foreground" />
+          </div>
+        ) : (
+          <Image
+            src={suggestion.logo}
+            alt={`${suggestion.name} logo`}
+            width={24}
+            height={24}
+            className="mr-3 rounded-sm shrink-0"
+            onError={() => setLogoError(true)}
+          />
+        )}
+        <div className="flex-1 overflow-hidden">
+          <p className="text-sm font-medium text-foreground truncate">{suggestion.name}</p>
+        </div>
+        <p className="text-sm text-muted-foreground ml-4 shrink-0">{suggestion.domain}</p>
+      </button>
+    </li>
+  );
+};
 
 function UploadProblemContent() {
     const { user: authUser, userData, loading: authLoading } = useAuth();
@@ -1146,6 +1189,12 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
 
     const formMode = problem ? 'edit' : 'add';
 
+    const [companyLogo, setCompanyLogo] = useState<string | null>(problem?.companyLogoUrl || null);
+    const [logoError, setLogoError] = useState(false);
+    const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
+    const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+    const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(problem?.company || null);
+
     const form = useForm<z.infer<typeof problemFormSchema>>({
         resolver: zodResolver(problemFormSchema),
         // defaultValues are now set in useEffect to handle prop changes
@@ -1168,8 +1217,11 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
                 examples: problem.examples?.length ? problem.examples.map(e => ({...e})) : [{ input: "", output: "", explanation: "" }],
                 hints: problem.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
                 company: problem.company || "",
+                companyLogoUrl: problem.companyLogoUrl || "",
                 isPremium: problem.isPremium || false,
             });
+            setCompanyLogo(problem.companyLogoUrl || null);
+            setSelectedCompanyName(problem.company || null);
         } else {
              form.reset({
                 id: undefined,
@@ -1184,12 +1236,65 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
                 examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
                 hints: [{value: ""}],
                 company: "",
+                companyLogoUrl: "",
                 isPremium: false,
             });
+            setCompanyLogo(null);
+            setSelectedCompanyName(null);
         }
     }, [problem, form, formMode]);
 
     const metadataTypeValue = form.watch("metadataType");
+    const companyValue = form.watch("company");
+
+    useEffect(() => {
+        if (companyValue !== selectedCompanyName) {
+            setCompanyLogo(null);
+            setSelectedCompanyName(null);
+            form.setValue('companyLogoUrl', '');
+        }
+
+        if (!companyValue || companyValue.trim().length < 2 || companyValue === selectedCompanyName) {
+            setSuggestions([]);
+            setIsSuggestionsOpen(false);
+            return;
+        }
+
+        const handler = setTimeout(async () => {
+            try {
+                const response = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(companyValue)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        setSuggestions(data);
+                        setIsSuggestionsOpen(true);
+                    } else {
+                        setSuggestions([]);
+                        setIsSuggestionsOpen(false);
+                    }
+                } else {
+                    setSuggestions([]);
+                    setIsSuggestionsOpen(false);
+                }
+            } catch (error) {
+                console.error("Failed to fetch company suggestions:", error);
+                setSuggestions([]);
+                setIsSuggestionsOpen(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [companyValue, selectedCompanyName, form]);
+
+    const handleSuggestionClick = (suggestion: CompanySuggestion) => {
+        form.setValue('company', suggestion.name, { shouldValidate: true });
+        form.setValue('companyLogoUrl', suggestion.logo, { shouldValidate: true });
+        setCompanyLogo(suggestion.logo);
+        setSelectedCompanyName(suggestion.name);
+        setLogoError(false);
+        setIsSuggestionsOpen(false);
+        setSuggestions([]);
+    };
 
     const fetchCategories = useCallback(async () => {
         setLoadingCategories(true);
@@ -1273,7 +1378,44 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
                                 <FormField control={form.control} name="company" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Company (Optional)</FormLabel>
-                                        <FormControl><Input placeholder="e.g., Google, Amazon" {...field} /></FormControl>
+                                        <div className="relative">
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                        {companyLogo && !logoError ? (
+                                                            <Image
+                                                                src={companyLogo}
+                                                                alt="Company Logo"
+                                                                width={20}
+                                                                height={20}
+                                                                onError={() => setLogoError(true)}
+                                                            />
+                                                        ) : (
+                                                            <Building className="h-5 w-5 text-muted-foreground" />
+                                                        )}
+                                                    </div>
+                                                    <Input
+                                                        placeholder="e.g., Google, Amazon"
+                                                        {...field}
+                                                        className="pl-10"
+                                                        autoComplete="off"
+                                                        onFocus={() => companyValue && suggestions.length > 0 && setIsSuggestionsOpen(true)}
+                                                        onBlur={() => setIsSuggestionsOpen(false)}
+                                                    />
+                                                </div>
+                                            </FormControl>
+                                            {isSuggestionsOpen && suggestions.length > 0 && (
+                                                <Card className="absolute z-10 w-full mt-1 bg-popover border-border shadow-lg">
+                                                    <CardContent className="p-0">
+                                                        <ul className="flex flex-col">
+                                                            {suggestions.map((suggestion) => (
+                                                                <CompanySuggestionItem key={suggestion.domain} suggestion={suggestion} onClick={handleSuggestionClick} />
+                                                            ))}
+                                                        </ul>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )} />

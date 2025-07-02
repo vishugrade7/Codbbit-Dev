@@ -12,6 +12,7 @@ import type { ImperativePanelHandle } from "react-resizable-panels";
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
+import Image from "next/image";
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -360,9 +361,15 @@ export default function ProblemWorkspacePage() {
                         </TabsList>
                         <TabsContent value="description" className="mt-4 space-y-6">
                             <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-wrap">
                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                                <Badge variant="secondary">{categoryName}</Badge>
+                               {problem.company && (
+                                    <div className="flex items-center gap-1.5">
+                                        {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
+                                        <span className="text-sm font-medium">{problem.company}</span>
+                                    </div>
+                                )}
                                {isSolved && (
                                 <div className="flex items-center gap-1.5 text-sm text-green-400">
                                    <CheckCircle2 className="h-4 w-4" />

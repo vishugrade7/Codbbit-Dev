@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -135,6 +128,7 @@ export type Problem = {
   testcases: string;
   categoryName?: string; // Added for convenience
   company?: string;
+  companyLogoUrl?: string;
   isPremium?: boolean;
 };
 
