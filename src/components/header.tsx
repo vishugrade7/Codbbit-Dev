@@ -142,10 +142,16 @@ export default function Header() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
-                        <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                      </Avatar>
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
+                            <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                        </Avatar>
+                        <span
+                            className={cn(
+                                "absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-background",
+                                userData?.sfdcAuth?.connected ? "bg-green-500" : "bg-red-500"
+                            )}
+                        />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -189,10 +195,18 @@ export default function Header() {
                 </div>
                  <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                     <Avatar className="h-10 w-10 cursor-pointer">
-                        <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                        <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                    </Avatar>
+                     <div className="relative">
+                        <Avatar className="h-10 w-10 cursor-pointer">
+                            <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                            <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                        </Avatar>
+                        <span
+                            className={cn(
+                                "absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-background",
+                                userData?.sfdcAuth?.connected ? "bg-green-500" : "bg-red-500"
+                            )}
+                        />
+                    </div>
                   </DropdownMenuTrigger>
                    <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
