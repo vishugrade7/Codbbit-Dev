@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Loader2, ArrowRight, Cog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 type CategoryInfo = {
   name: string;
@@ -124,12 +124,34 @@ export default function ApexProblems() {
                               <span className="font-semibold">{category.problemCount}</span>
                           </div>
                           {userData && category.problemCount > 0 ? (
-                              <div>
-                                  <div className="flex justify-between mb-1">
-                                      <span className="text-muted-foreground">Your Progress</span>
-                                      <span className="font-semibold">{category.solvedCount} / {category.problemCount}</span>
-                                  </div>
-                                  <Progress value={(category.solvedCount / category.problemCount) * 100} className="h-2" />
+                              <div className="flex flex-col items-center gap-2 pt-2">
+                                <div className="relative h-20 w-20">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { value: category.solvedCount },
+                                                    { value: category.problemCount - category.solvedCount }
+                                                ]}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={24}
+                                                outerRadius={30}
+                                                dataKey="value"
+                                                stroke="none"
+                                                startAngle={90}
+                                                endAngle={-270}
+                                            >
+                                                <Cell fill="hsl(var(--primary))" />
+                                                <Cell fill="hsl(var(--muted))" />
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-sm font-bold">{Math.round((category.solvedCount / category.problemCount) * 100)}%</span>
+                                    </div>
+                                </div>
+                                <p className="font-semibold">{category.solvedCount} / {category.problemCount} Solved</p>
                               </div>
                           ) : (
                               <p className="text-muted-foreground text-xs pt-2">
