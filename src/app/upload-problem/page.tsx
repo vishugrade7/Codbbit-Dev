@@ -20,7 +20,7 @@ import Image from "next/image";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategory, deleteCategory } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -36,6 +36,7 @@ import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, Arro
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -440,6 +441,7 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
     const fetchProblems = useCallback(async () => {
         setLoading(true);
@@ -523,6 +525,10 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                     </CardDescription>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                     <Button onClick={() => setIsManageModalOpen(true)} variant="secondary">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Manage Categories
+                    </Button>
                      <Button onClick={() => setIsCategoryModalOpen(true)} variant="secondary">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Category
@@ -540,6 +546,7 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
             <CardContent>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
+                <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
 
                 <div className="flex flex-col md:flex-row gap-4 mt-4 border-t pt-6">
                     <div className="relative flex-1">
@@ -1187,6 +1194,118 @@ function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: b
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Category
                     </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+// #endregion
+
+// #region ManageCategoriesModal
+function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onCategoriesUpdated: () => void }) {
+    const { toast } = useToast();
+    const [categories, setCategories] = useState<{ name: string; imageUrl?: string; problemCount: number }[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchCategories = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await getProblemCategories();
+            setCategories(data);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to load categories.' });
+        } finally {
+            setLoading(false);
+        }
+    }, [toast]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchCategories();
+        }
+    }, [isOpen, fetchCategories]);
+    
+    const handleUrlChange = (categoryName: string, newUrl: string) => {
+        setCategories(cats => cats.map(cat => cat.name === categoryName ? { ...cat, imageUrl: newUrl } : cat));
+    };
+
+    const handleSave = async (categoryName: string) => {
+        const category = categories.find(c => c.name === categoryName);
+        if (!category) return;
+        
+        const result = await updateCategory(categoryName, category.imageUrl || '');
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+            onCategoriesUpdated();
+        } else {
+            toast({ variant: 'destructive', title: "Error", description: result.error });
+            fetchCategories();
+        }
+    };
+    
+    const handleDelete = async (categoryName: string) => {
+        const result = await deleteCategory(categoryName);
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+            fetchCategories();
+            onCategoriesUpdated();
+        } else {
+            toast({ variant: 'destructive', title: "Error", description: result.error });
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Manage Categories</DialogTitle>
+                    <DialogDescription>Edit image URLs or delete empty categories.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    {loading ? (
+                        <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                    ) : (
+                        <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-4">
+                            {categories.map(cat => (
+                                <div key={cat.name} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50">
+                                    <div className="flex-1 space-y-2">
+                                        <p className="font-semibold">{cat.name} <span className="text-muted-foreground font-normal">({cat.problemCount} problems)</span></p>
+                                        <Input
+                                            value={cat.imageUrl}
+                                            onChange={e => handleUrlChange(cat.name, e.target.value)}
+                                            placeholder="Image URL"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Button size="sm" onClick={() => handleSave(cat.name)}>Save</Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button size="sm" variant="destructive" disabled={cat.problemCount > 0}>Delete</Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the "{cat.name}" category. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(cat.name)}>Continue</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                </div>
+                            ))}
+                             {categories.length === 0 && (
+                                <p className="text-muted-foreground text-center py-8">No categories found.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

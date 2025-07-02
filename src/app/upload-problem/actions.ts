@@ -4,7 +4,7 @@
 
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, User, NavLink, Badge } from '@/types';
+import type { Problem, Course, User, NavLink, Badge, ApexProblemsData } from '@/types';
 import { z } from "zod";
 
 // #region Problem Schemas
@@ -504,6 +504,80 @@ export async function deleteBadge(badgeId: string) {
     try {
         await deleteDoc(doc(db, 'badges', badgeId));
         return { success: true, message: "Badge deleted successfully." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+// #endregion
+
+// #region Category Management
+export async function getProblemCategories(): Promise<{ name: string; imageUrl?: string; problemCount: number }[]> {
+    if (!db) {
+        throw new Error("Database not initialized.");
+    }
+    const apexDocRef = doc(db, "problems", "Apex");
+    const docSnap = await getDoc(apexDocRef);
+    if (!docSnap.exists()) {
+        return [];
+    }
+
+    const data = docSnap.data().Category as ApexProblemsData;
+    if (!data) return [];
+    
+    return Object.entries(data).map(([name, categoryData]) => ({
+        name,
+        imageUrl: categoryData.imageUrl || '',
+        problemCount: categoryData.Questions?.length || 0
+    })).sort((a,b) => a.name.localeCompare(b.name));
+}
+
+export async function updateCategory(categoryName: string, newImageUrl: string) {
+     if (!categoryName) {
+        return { success: false, error: 'Category name is required.' };
+    }
+
+    const apexDocRef = doc(db, 'problems', 'Apex');
+
+    try {
+        await updateDoc(apexDocRef, {
+            [`Category.${categoryName}.imageUrl`]: newImageUrl
+        });
+        return { success: true, message: `Category '${categoryName}' updated successfully.` };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function deleteCategory(categoryName: string) {
+    if (!categoryName) {
+        return { success: false, error: 'Category name is required.' };
+    }
+
+    const apexDocRef = doc(db, 'problems', 'Apex');
+    try {
+        const docSnap = await getDoc(apexDocRef);
+        if (!docSnap.exists()) {
+            throw new Error("Apex document not found.");
+        }
+        const categories = docSnap.data().Category as ApexProblemsData;
+        
+        if (!categories[categoryName]) {
+             return { success: false, error: 'Category not found.' };
+        }
+
+        if (categories[categoryName].Questions && categories[categoryName].Questions.length > 0) {
+            return { success: false, error: 'Cannot delete a category that contains problems.' };
+        }
+        
+        delete categories[categoryName];
+
+        await updateDoc(apexDocRef, {
+            Category: categories
+        });
+
+        return { success: true, message: `Category '${categoryName}' deleted successfully.` };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
