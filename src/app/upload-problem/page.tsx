@@ -1701,6 +1701,11 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
         name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.type`
     });
 
+    const languageValue = useWatch({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.language`
+    });
+
     const getBlockContent = () => {
         switch (blockType) {
             case 'text':
@@ -1738,7 +1743,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
                          <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
                             <FormItem><FormLabel>Code</FormLabel><FormControl>
                                 <div className="rounded-md border h-60 w-full">
-                                <MonacoEditor height="100%" language={field.value || 'apex'} value={field.value} onChange={v => field.onChange(v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
+                                <MonacoEditor height="100%" language={languageValue || 'apex'} value={field.value} onChange={v => field.onChange(v || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
                                 </div>
                             </FormControl><FormMessage /></FormItem>
                         )} />
@@ -1761,7 +1766,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
                     <FormItem><FormLabel>Interactive HTML</FormLabel><FormControl>
                         <div className="rounded-md border h-96 w-full">
-                            <MonacoEditor height="100%" language="html" value={field.value} onChange={v => field.onChange(v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
+                            <MonacoEditor height="100%" language="html" value={field.value} onChange={v => field.onChange(v || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
                         </div>
                     </FormControl><FormMessage /></FormItem>
                 )} />;
