@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, CheckCircle2, ArrowLeft, Circle } from "lucide-react";
+import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -28,6 +28,7 @@ export default function CategoryProblemsPage() {
   const params = useParams();
   const router = useRouter();
   const { userData } = useAuth();
+  const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
   
   const categoryName = useMemo(() => params?.categoryName ? decodeURIComponent(params.categoryName as string) : null, [params]);
 
@@ -152,8 +153,23 @@ export default function CategoryProblemsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProblems.map((problem) => (
-                  <TableRow key={problem.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${problem.id}`)}>
+                {filteredProblems.map((problem) => {
+                  const isLocked = problem.isPremium && !isPro;
+                  return (
+                  <TableRow 
+                    key={problem.id} 
+                    className={cn(
+                        "cursor-pointer hover:bg-muted/50",
+                        isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
+                    )} 
+                    onClick={() => {
+                        if (isLocked) {
+                            router.push('/pricing');
+                        } else {
+                            router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${problem.id}`)
+                        }
+                    }}
+                  >
                     <TableCell>
                       <div className="flex justify-center">
                         {userData?.solvedProblems?.[problem.id] ? (
@@ -163,14 +179,19 @@ export default function CategoryProblemsPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{problem.title}</TableCell>
+                    <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                           {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
+                           <span className={cn(isLocked && "filter blur-sm")}>{problem.title}</span>
+                        </div>
+                    </TableCell>
                     <TableCell className="text-right">
                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
                          {problem.difficulty}
                        </Badge>
                     </TableCell>
                   </TableRow>
-                ))}
+                )})}
               </TableBody>
             </Table>
           </div>

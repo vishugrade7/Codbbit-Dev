@@ -40,6 +40,7 @@ export default function ProblemWorkspacePage() {
     }), [params]);
     
     const { user, userData } = useAuth();
+    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
     const { toast } = useToast();
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
@@ -94,6 +95,10 @@ export default function ProblemWorkspacePage() {
 
                     const currentProblem = allQuestions.find(p => p.id === problemId);
                     if (currentProblem) {
+                        if (currentProblem.isPremium && !isPro) {
+                            router.push('/pricing');
+                            return;
+                        }
                         setProblem({...currentProblem, categoryName});
                         setCode(currentProblem.sampleCode);
                     } else {
@@ -114,7 +119,7 @@ export default function ProblemWorkspacePage() {
         });
 
         return () => unsubscribe();
-    }, [categoryName, problemId]);
+    }, [categoryName, problemId, isPro, router]);
     
     useEffect(() => {
         if (userData?.starredProblems && problemId) {

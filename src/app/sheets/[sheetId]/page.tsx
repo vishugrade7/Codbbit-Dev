@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +32,7 @@ export default function SheetDisplayPage() {
     const { toast } = useToast();
     const { user: authUser, userData } = useAuth();
     const sheetId = params.sheetId as string;
+    const isPro = userData?.razorpaySubscriptionStatus === 'active' || userData?.isAdmin;
     
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
     const [problems, setProblems] = useState<ProblemDetailWithCategory[]>([]);
@@ -362,10 +363,29 @@ export default function SheetDisplayPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredProblems.map((problem, index) => (
-                                    <TableRow key={problem.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)}>
+                                {filteredProblems.map((problem, index) => {
+                                    const isLocked = problem.isPremium && !isPro;
+                                    return (
+                                    <TableRow 
+                                        key={problem.id} 
+                                        className={cn(
+                                            "cursor-pointer hover:bg-muted/50",
+                                            isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
+                                        )}
+                                        onClick={() => {
+                                            if (isLocked) {
+                                                router.push('/pricing');
+                                            } else {
+                                                router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
+                                            }
+                                        }}>
                                         <TableCell className="font-medium">{index + 1}</TableCell>
-                                        <TableCell>{problem.title}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
+                                                <span className={cn(isLocked && "filter blur-sm")}>{problem.title}</span>
+                                            </div>
+                                        </TableCell>
                                         <TableCell><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
                                         <TableCell className="text-right">
                                             <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
@@ -382,7 +402,7 @@ export default function SheetDisplayPage() {
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )})}
                             </TableBody>
                         </Table>
                     </div>
