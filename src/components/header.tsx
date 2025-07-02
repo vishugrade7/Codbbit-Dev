@@ -135,8 +135,8 @@ export default function Header() {
             <>
               {/* Desktop view */}
               <div className="hidden md:flex items-center gap-4">
-                <div className="flex items-center gap-1.5 font-semibold text-primary">
-                    <Flame className="h-5 w-5" />
+                <div className="flex items-center gap-1.5 font-semibold">
+                    <Flame className="h-5 w-5 text-orange-500" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
                 <DropdownMenu>
@@ -189,8 +189,8 @@ export default function Header() {
 
               {/* Mobile view */}
               <div className="flex items-center gap-2 md:hidden">
-                 <div className="flex items-center gap-1.5 font-semibold text-primary">
-                    <Flame className="h-5 w-5" />
+                 <div className="flex items-center gap-1.5 font-semibold">
+                    <Flame className="h-5 w-5 text-orange-500" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
                  <DropdownMenu>
