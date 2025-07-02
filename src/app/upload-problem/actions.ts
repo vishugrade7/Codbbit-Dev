@@ -376,6 +376,7 @@ const defaultNavLinks: NavLink[] = [
     { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true },
     { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true },
     { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true },
+    { id: 'lwc-playground', label: 'LWC Playground', href: '/lwc-playground', isEnabled: true, isProtected: false },
 ];
 
 export async function getNavigationSettings(): Promise<NavLink[]> {
