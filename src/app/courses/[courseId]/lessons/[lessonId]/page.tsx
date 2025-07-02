@@ -89,7 +89,15 @@ const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; prob
              const videoId = block.content.split('/').pop()?.split('?')[0];
              videoUrl = `https://www.youtube.com/embed/${videoId}`;
         } else if (block.content.includes('box.com/s/')) {
-            videoUrl = block.content.replace('/s/', '/embed/s/');
+            const baseUrl = block.content.replace('/s/', '/embed/s/');
+            try {
+              const url = new URL(baseUrl);
+              url.searchParams.set('theme', 'dark');
+              url.searchParams.set('show_parent_path', '0');
+              videoUrl = url.toString();
+            } catch (e) {
+              videoUrl = baseUrl; // Fallback if URL parsing fails
+            }
         }
          return (
             <div className="aspect-video my-4">
