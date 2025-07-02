@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -28,7 +28,7 @@ export default function SheetDisplayPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { user: authUser } = useAuth();
+    const { user: authUser, userData } = useAuth();
     const sheetId = params.sheetId as string;
     
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
@@ -300,6 +300,7 @@ export default function SheetDisplayPage() {
                                     <TableHead>Title</TableHead>
                                     <TableHead>Category</TableHead>
                                     <TableHead className="text-right">Difficulty</TableHead>
+                                    <TableHead className="w-[80px] text-center">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -312,6 +313,15 @@ export default function SheetDisplayPage() {
                                             <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
                                                 {problem.difficulty}
                                             </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex justify-center">
+                                                {userData?.solvedProblems?.[problem.id] ? (
+                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                ) : (
+                                                    <Circle className="h-5 w-5 text-muted-foreground/50" />
+                                                )}
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
