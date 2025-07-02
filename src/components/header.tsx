@@ -23,7 +23,7 @@ import { getQuickTip } from "@/ai/flows/quick-tip-flow";
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userData, loading: authLoading } = useAuth();
+  const { user, userData, loading: authLoading, isPro } = useAuth();
   const { toast } = useToast();
   
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
@@ -87,7 +87,7 @@ export default function Header() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <CodeXml className="h-6 w-6" />
-            <span className="text-lg font-bold font-headline">Codbbit</span>
+            <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
              {loadingNav ? (
@@ -172,7 +172,7 @@ export default function Header() {
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
                     </DropdownMenuItem>
-                    {!isAuthorizedAdmin && (
+                    {!isPro && (
                         <DropdownMenuItem onClick={() => router.push('/pricing')}>
                             <Rocket className="mr-2 h-4 w-4" />
                             <span>Upgrade</span>
@@ -226,7 +226,7 @@ export default function Header() {
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
                     </DropdownMenuItem>
-                    {!isAuthorizedAdmin && (
+                    {!isPro && (
                         <DropdownMenuItem onClick={() => router.push('/pricing')}>
                             <Rocket className="mr-2 h-4 w-4" />
                             <span>Upgrade</span>
@@ -251,7 +251,7 @@ export default function Header() {
                     <div className="grid gap-6 py-6">
                       <Link href="/" className="flex items-center gap-2 mb-4">
                         <CodeXml className="h-6 w-6" />
-                        <span className="text-lg font-bold font-headline">Codbbit</span>
+                        <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
                       </Link>
                       <nav className="grid gap-4">
                         {navLinks.map((link) => (
