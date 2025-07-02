@@ -74,7 +74,7 @@ export default function Courses() {
             {courses.map((course) => {
               const isLocked = course.isPremium && !isPro;
               return (
-              <Link key={course.id} href={isLocked ? '/pricing' : `/courses/${course.id}`} className="block group">
+              <Link key={course.id} href={`/courses/${course.id}`} className="block group">
                 <Card className="h-full overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
                   <CardContent className="p-0 flex flex-col h-full">
                     <div className="aspect-video relative">
