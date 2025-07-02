@@ -143,7 +143,12 @@ export default function PricingPage() {
         image: "https://placehold.co/128x128.png", // You should have a logo in your public folder
         order_id: orderResponse.orderId,
         handler: async function (response: any) {
-            const verificationResult = await verifyAndSavePayment(response, user.uid);
+            const verificationResult = await verifyAndSavePayment(
+              response,
+              user.uid,
+              currentPlan.total * 100, // Pass amount in subunits
+              currentPlan.currencyCode
+            );
             if (verificationResult.success) {
                 toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
                 router.push('/profile');

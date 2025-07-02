@@ -58,10 +58,15 @@ export async function verifyAndSavePayment(
         razorpay_payment_id: string;
         razorpay_signature: string;
     },
-    userId: string
+    userId: string,
+    expectedAmount: number,
+    expectedCurrency: string,
 ): Promise<VerifyPaymentResponse> {
     if (!userId || !db) {
         return { success: false, error: 'User or database not found.' };
+    }
+    if (!razorpay) {
+        return { success: false, error: 'Payment processing is not configured on the server.' };
     }
 
     const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -72,27 +77,43 @@ export async function verifyAndSavePayment(
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData;
-    const body = razorpay_order_id + '|' + razorpay_payment_id;
 
     try {
+        // Step 1: Verify signature
+        const body = razorpay_order_id + '|' + razorpay_payment_id;
         const expectedSignature = crypto
             .createHmac('sha256', razorpaySecret)
             .update(body.toString())
             .digest('hex');
         
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (isAuthentic) {
-            const userDocRef = doc(db, 'users', userId);
-            await updateDoc(userDocRef, {
-                razorpayPaymentId: razorpay_payment_id,
-                razorpayOrderId: razorpay_order_id,
-                razorpaySubscriptionStatus: 'active',
-            });
-            return { success: true };
-        } else {
-            return { success: false, error: 'Payment verification failed.' };
+        if (expectedSignature !== razorpay_signature) {
+            return { success: false, error: 'Payment verification failed: Invalid signature.' };
         }
+
+        // Step 2: Fetch payment from Razorpay to verify amount and status
+        const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+        if (payment.status !== 'captured') {
+            return { success: false, error: `Payment not successful. Status: ${payment.status}` };
+        }
+
+        if (payment.amount !== expectedAmount) {
+            return { success: false, error: `Payment amount mismatch. Expected ${expectedAmount}, got ${payment.amount}` };
+        }
+        
+        if (payment.currency !== expectedCurrency) {
+            return { success: false, error: `Payment currency mismatch. Expected ${expectedCurrency}, got ${payment.currency}` };
+        }
+
+        // Step 3: All checks passed, update user in Firestore
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, {
+            razorpayPaymentId: razorpay_payment_id,
+            razorpayOrderId: razorpay_order_id,
+            razorpaySubscriptionStatus: 'active',
+        });
+        return { success: true };
+
     } catch (error: any) {
         console.error('Error verifying payment:', error);
         return { success: false, error: error.message || 'An unknown error occurred during verification.' };
