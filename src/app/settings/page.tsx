@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { format } from 'date-fns';
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -33,7 +35,7 @@ const generateCodeChallenge = async (verifier: string) => {
 };
 
 export default function Settings() {
-  const { user, userData, loading } = useAuth();
+  const { user, userData, loading, isPro } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -91,17 +93,33 @@ export default function Settings() {
           <p className="text-muted-foreground mt-2">Manage your account and app settings.</p>
 
           <div className="mt-8 space-y-8">
+
             <Card>
-              <CardHeader>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Customize the look and feel of the application.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="theme">Theme</Label>
-                  <ThemeToggle />
-                </div>
-              </CardContent>
+                <CardHeader>
+                    <CardTitle>Subscription</CardTitle>
+                    <CardDescription>
+                    {isPro
+                        ? "Manage your subscription details."
+                        : "Upgrade to unlock premium features."}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div>
+                            <p className="font-semibold">{isPro ? "Pro Plan" : "Free Plan"}</p>
+                            <p className="text-sm text-muted-foreground">
+                            {isPro && userData?.subscriptionEndDate
+                                ? `Your plan renews on ${format(userData.subscriptionEndDate.toDate(), "PPP")}.`
+                                : "Access to free problems and core features."}
+                            </p>
+                        </div>
+                        <Button asChild variant={isPro ? "outline" : "default"}>
+                            <Link href="/pricing">
+                            {isPro ? "Manage Plan" : "Upgrade"}
+                            </Link>
+                        </Button>
+                    </div>
+                </CardContent>
             </Card>
 
             <Card>
@@ -151,6 +169,20 @@ export default function Settings() {
                  </div>
               </CardContent>
             </Card>
+
+             <Card>
+              <CardHeader>
+                <CardTitle>Appearance</CardTitle>
+                <CardDescription>Customize the look and feel of the application.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="theme">Theme</Label>
+                  <ThemeToggle />
+                </div>
+              </CardContent>
+            </Card>
+
           </div>
         </div>
       </main>
