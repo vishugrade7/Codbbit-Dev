@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, MousePointerClick } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -24,6 +24,7 @@ const lessonIcons = {
     pdf: <FileText className="h-5 w-5 text-primary" />,
     text: <BookOpen className="h-5 w-5 text-primary" />,
     problem: <BrainCircuit className="h-5 w-5 text-primary" />,
+    interactive: <MousePointerClick className="h-5 w-5 text-primary" />,
 };
 
 export default function CourseDetailPage() {

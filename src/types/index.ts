@@ -4,6 +4,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -83,7 +84,7 @@ export type Contribution = {
 export type Lesson = {
   id: string;
   title: string;
-  contentType: 'video' | 'pdf' | 'text' | 'problem';
+  contentType: 'video' | 'pdf' | 'text' | 'problem' | 'interactive';
   content: string; // URL for video/pdf, markdown for text, problemId for problem
   isFree?: boolean;
 };

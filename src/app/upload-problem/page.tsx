@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -71,7 +71,7 @@ const problemFormSchema = z.object({
 const lessonSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Lesson title is required'),
-    contentType: z.enum(['video', 'pdf', 'text', 'problem']),
+    contentType: z.enum(['video', 'pdf', 'text', 'problem', 'interactive']),
     content: z.string().min(1, 'Lesson content is required'),
     isFree: z.boolean().optional(),
 });
@@ -1571,7 +1571,8 @@ const lessonIcons = {
     video: <FileVideo className="h-4 w-4" />,
     pdf: <FileText className="h-4 w-4" />,
     text: <FileText className="h-4 w-4" />,
-    problem: <BrainCircuit className="h-4 w-4" />
+    problem: <BrainCircuit className="h-4 w-4" />,
+    interactive: <MousePointerClick className="h-4 w-4" />
 };
 
 function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { moduleIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
@@ -1581,6 +1582,7 @@ function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { mo
     });
 
     const LessonContentInput = ({ lessonIndex }: { lessonIndex: number }) => {
+        const { resolvedTheme } = useTheme();
         const contentType = useWatch({
             control,
             name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentType`
@@ -1618,12 +1620,32 @@ function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { mo
                         <FormMessage />
                     </FormItem>
                 )} />;
+            case 'interactive':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>HTML Content</FormLabel>
+                        <FormControl>
+                            <div className="rounded-md border h-96 w-full">
+                                <MonacoEditor
+                                    height="100%"
+                                    language="html"
+                                    value={field.value}
+                                    onChange={(value) => field.onChange(value || "")}
+                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                    options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)'}}
+                                />
+                            </div>
+                        </FormControl>
+                        <FormDescription>Enter the full HTML code, including CSS and JS if needed.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )} />;
             case 'text':
             default:
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
                     <FormItem>
                         <FormLabel>Text Content</FormLabel>
-                        <FormControl><Textarea placeholder="Enter content here. You can use Markdown for formatting, and include HTML for images (<img src='...'>) and videos." {...field} rows={4} /></FormControl>
+                        <FormControl><Textarea placeholder="Enter content here. You can use Markdown for formatting." {...field} rows={4} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />;
@@ -1641,7 +1663,8 @@ function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { mo
                         )} />
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentType`} render={({ field }) => (
                             <FormItem><FormLabel>Content Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger>{lessonIcons[field.value as keyof typeof lessonIcons]}<span className="ml-2"><SelectValue /></span></SelectTrigger></FormControl><SelectContent>
-                                <SelectItem value="text">Text / HTML</SelectItem>
+                                <SelectItem value="text">Text / Markdown</SelectItem>
+                                <SelectItem value="interactive">Interactive HTML</SelectItem>
                                 <SelectItem value="video">Video</SelectItem>
                                 <SelectItem value="pdf">PDF</SelectItem>
                                 <SelectItem value="problem">Problem</SelectItem>

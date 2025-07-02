@@ -11,7 +11,7 @@ import type { Course, Module, Lesson, Problem, ApexProblemsData } from '@/types'
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, ArrowRight, MousePointerClick } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,15 @@ type ProblemWithCategory = Problem & { categoryName: string };
 // Lesson content renderer component
 const LessonContent = ({ lesson, problemMap }: { lesson: Lesson; problemMap: Map<string, ProblemWithCategory> }) => {
     switch(lesson.contentType) {
+        case 'interactive':
+            return (
+                <iframe
+                    srcDoc={lesson.content}
+                    title={lesson.title}
+                    className="w-full h-[80vh] border rounded-lg bg-white"
+                    sandbox="allow-scripts allow-same-origin"
+                />
+            );
         case 'video': {
             let videoUrl = lesson.content;
             if (lesson.content.includes('youtube.com/watch?v=')) {
@@ -158,6 +167,7 @@ export default function LessonPage() {
         pdf: <FileText className="h-5 w-5" />,
         text: <BookOpen className="h-5 w-5" />,
         problem: <BrainCircuit className="h-5 w-5" />,
+        interactive: <MousePointerClick className="h-5 w-5" />,
     };
 
     if (loading) {
