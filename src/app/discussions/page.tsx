@@ -1,6 +1,11 @@
-
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Discussions | Codbbit',
+  description: 'Join the Codbbit community. Discuss Salesforce development, Apex problems, LWC, and share your knowledge with other developers.',
+};
 
 export default function Discussions() {
   return (
