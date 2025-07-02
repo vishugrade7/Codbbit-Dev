@@ -209,11 +209,6 @@ export default function LessonPage() {
                 if (docSnap.exists()) {
                     const courseData = { id: docSnap.id, ...docSnap.data() } as Course;
                     
-                    if (courseData.isPremium && !isPro) {
-                        router.push('/pricing');
-                        return; 
-                    }
-                    
                     setCourse(courseData);
 
                     const allLessons: ({ lesson: Lesson, moduleId: string })[] = courseData.modules.flatMap(m => m.lessons.map(l => ({ lesson: l, moduleId: m.id })));
@@ -221,14 +216,17 @@ export default function LessonPage() {
 
                     if (currentLessonIndex !== -1) {
                         const { lesson, moduleId } = allLessons[currentLessonIndex];
-                        setCurrentLesson(lesson);
-                        setCurrentModuleId(moduleId);
-                        
-                        if (!lesson.isFree && !isPro) {
+
+                        const isLessonLocked = (courseData.isPremium && !isPro) || (!lesson.isFree && !isPro);
+
+                        if(isLessonLocked) {
                             router.push('/pricing');
                             return; 
                         }
 
+                        setCurrentLesson(lesson);
+                        setCurrentModuleId(moduleId);
+                        
                         setPrevLesson(currentLessonIndex > 0 ? { lessonId: allLessons[currentLessonIndex - 1].lesson.id } : null);
                         setNextLesson(currentLessonIndex < allLessons.length - 1 ? { lessonId: allLessons[currentLessonIndex + 1].lesson.id } : null);
                     } else {
@@ -274,10 +272,12 @@ export default function LessonPage() {
                                     <AccordionTrigger className="text-base font-semibold hover:no-underline">{moduleItem.title}</AccordionTrigger>
                                     <AccordionContent>
                                         <ul className="space-y-1 pt-2">
-                                            {moduleItem.lessons.map((lesson) => (
+                                            {moduleItem.lessons.map((lesson) => {
+                                                const isLessonLocked = (course.isPremium && !isPro) || (!lesson.isFree && !isPro);
+                                                return (
                                                  <li key={lesson.id}>
                                                     <Link 
-                                                        href={(!lesson.isFree && !isPro) ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                        href={isLessonLocked ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
                                                         className={cn(
                                                             "flex items-center justify-between p-3 rounded-md transition-colors group",
                                                             lesson.id === lessonId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
@@ -287,10 +287,10 @@ export default function LessonPage() {
                                                             {getLessonIcon(lesson)}
                                                             <span className="font-medium">{lesson.title}</span>
                                                         </div>
-                                                        {(!lesson.isFree && !isPro) && <Lock className="h-4 w-4 text-muted-foreground" />}
+                                                        {isLessonLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
                                                     </Link>
                                                 </li>
-                                            ))}
+                                            )})}
                                         </ul>
                                     </AccordionContent>
                                 </AccordionItem>

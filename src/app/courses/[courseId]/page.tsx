@@ -63,10 +63,6 @@ export default function CourseDetailPage() {
 
                 if (docSnap.exists()) {
                     const courseData = { id: docSnap.id, ...docSnap.data() } as Course;
-                    if (courseData.isPremium && !isPro) {
-                        router.push('/pricing');
-                        return;
-                    }
                     setCourse(courseData);
                 } else {
                     console.log("No such course!");
@@ -144,20 +140,25 @@ export default function CourseDetailPage() {
                                                 </AccordionTrigger>
                                                 <AccordionContent>
                                                     <ul className="space-y-1 pt-2">
-                                                        {moduleItem.lessons.map((lesson: Lesson) => (
+                                                        {moduleItem.lessons.map((lesson: Lesson) => {
+                                                            const isLessonLocked = (course.isPremium && !isPro) || (!lesson.isFree && !isPro);
+                                                            return (
                                                             <li key={lesson.id} className="ml-6">
                                                                 <Link 
-                                                                    href={(!lesson.isFree && !isPro) ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
-                                                                    className="flex items-center justify-between p-3 rounded-md hover:bg-muted transition-colors group"
+                                                                    href={isLessonLocked ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                                    className={cn(
+                                                                        "flex items-center justify-between p-3 rounded-md transition-colors group",
+                                                                        isLessonLocked ? "cursor-pointer" : "hover:bg-muted"
+                                                                    )}
                                                                 >
                                                                     <div className="flex items-center gap-3">
                                                                         {getLessonIcon(lesson)}
                                                                         <span className="font-medium group-hover:text-primary">{lesson.title}</span>
                                                                     </div>
-                                                                    {(!lesson.isFree && !isPro) && <Lock className="h-4 w-4 text-muted-foreground" />}
+                                                                    {isLessonLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
                                                                 </Link>
                                                             </li>
-                                                        ))}
+                                                        )})}
                                                     </ul>
                                                 </AccordionContent>
                                             </AccordionItem>
