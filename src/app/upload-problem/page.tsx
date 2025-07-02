@@ -42,6 +42,7 @@ import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { FormDescription } from "@/components/ui/form";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // #region Schemas
 const problemExampleSchema = z.object({
@@ -2066,14 +2067,19 @@ function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, load
                     </DndContext>
                 </div>
             )}
-            <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('text')}><PlusCircle className="mr-2 h-4 w-4"/>Add Text</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('image')}><PlusCircle className="mr-2 h-4 w-4"/>Add Image</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('code')}><PlusCircle className="mr-2 h-4 w-4"/>Add Code</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('video')}><PlusCircle className="mr-2 h-4 w-4"/>Add Video</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('problem')}><PlusCircle className="mr-2 h-4 w-4"/>Add Problem</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('interactive')}><PlusCircle className="mr-2 h-4 w-4"/>Add Interactive</Button>
-            </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" />Add Content Block</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => addBlock('text')}><FileText className="mr-2 h-4 w-4" />Text</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => addBlock('image')}><ImageIcon className="mr-2 h-4 w-4" />Image</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => addBlock('code')}><Code className="mr-2 h-4 w-4" />Code</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => addBlock('video')}><FileVideo className="mr-2 h-4 w-4" />Video</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => addBlock('problem')}><BrainCircuit className="mr-2 h-4 w-4" />Problem</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => addBlock('interactive')}><MousePointerClick className="mr-2 h-4 w-4" />Interactive</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }
@@ -2094,7 +2100,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
         switch (blockType) {
             case 'text':
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
-                    <FormItem><FormLabel className="capitalize">{blockType}</FormLabel><FormControl><Textarea placeholder="Enter Markdown-enabled text..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Text (Markdown supported)</FormLabel><FormControl><Textarea placeholder="Enter Markdown-enabled text..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>
                 )} />;
             case 'image':
                 return (
