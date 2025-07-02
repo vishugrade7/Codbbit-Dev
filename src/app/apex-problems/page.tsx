@@ -94,7 +94,7 @@ export default function ApexProblems() {
             {categories.map((category) => (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                   <Card className="h-full flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 overflow-hidden border-transparent hover:border-primary/30">
+                   <Card className="flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 overflow-hidden border-transparent hover:border-primary/30">
                     <div className="relative aspect-video">
                       <Image
                         src={category.imageUrl || 'https://placehold.co/600x400.png'}
