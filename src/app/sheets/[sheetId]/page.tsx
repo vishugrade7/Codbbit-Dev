@@ -17,10 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 
@@ -37,6 +39,10 @@ export default function SheetDisplayPage() {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [subscribersCount, setSubscribersCount] = useState(0);
     const [isSubscribing, setIsSubscribing] = useState(false);
+
+    const [searchTerm, setSearchTerm] = useState("");
+    const [difficultyFilter, setDifficultyFilter] = useState("All");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     useEffect(() => {
         if (!sheetId || !db) return;
@@ -93,6 +99,19 @@ export default function SheetDisplayPage() {
 
         return () => unsubscribe();
     }, [sheetId, toast, authUser]);
+
+    const filteredProblems = useMemo(() => {
+        return problems
+          .filter((p) => {
+            if (statusFilter === "All") return true;
+            const isSolved = !!userData?.solvedProblems?.[p.id];
+            if (statusFilter === "Solved") return isSolved;
+            if (statusFilter === "Unsolved") return !isSolved;
+            return true;
+          })
+          .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
+          .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [problems, searchTerm, difficultyFilter, statusFilter, userData]);
 
     const uniqueCategories = useMemo(() => {
         if (!problems || problems.length === 0) return [];
@@ -291,7 +310,42 @@ export default function SheetDisplayPage() {
                     </CardHeader>
                 </Card>
                 
-                {problems.length > 0 ? (
+                {problems.length > 0 && (
+                    <div className="flex flex-col md:flex-row gap-4 mb-8">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                            placeholder="Search problems..."
+                            className="w-full pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full md:w-[180px]">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Statuses</SelectItem>
+                                <SelectItem value="Solved">Solved</SelectItem>
+                                <SelectItem value="Unsolved">Unsolved</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                            <SelectTrigger className="w-full md:w-[180px]">
+                                <SelectValue placeholder="Difficulty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Difficulties</SelectItem>
+                                <SelectItem value="Easy">Easy</SelectItem>
+                                <SelectItem value="Medium">Medium</SelectItem>
+                                <SelectItem value="Hard">Hard</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                
+                {filteredProblems.length > 0 ? (
                     <div className="rounded-lg border">
                         <Table>
                             <TableHeader>
@@ -304,7 +358,7 @@ export default function SheetDisplayPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {problems.map((problem, index) => (
+                                {filteredProblems.map((problem, index) => (
                                     <TableRow key={problem.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)}>
                                         <TableCell className="font-medium">{index + 1}</TableCell>
                                         <TableCell>{problem.title}</TableCell>
@@ -330,7 +384,7 @@ export default function SheetDisplayPage() {
                     </div>
                 ) : (
                     <div className="text-center py-12">
-                        <p className="text-muted-foreground">This sheet has no problems yet.</p>
+                        <p className="text-muted-foreground">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
                     </div>
                 )}
             </main>
