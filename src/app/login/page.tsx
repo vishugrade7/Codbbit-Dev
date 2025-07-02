@@ -70,6 +70,7 @@ export default function LoginPage() {
         title: "Login Successful",
         description: "Welcome back!",
       });
+      sessionStorage.setItem('showWelcomeTip', 'true');
       router.push("/");
     } catch (error: any) {
       toast({

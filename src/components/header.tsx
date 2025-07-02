@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,12 +16,15 @@ import { useEffect, useState } from "react";
 import type { NavLink } from "@/types";
 import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { getQuickTip } from "@/ai/flows/quick-tip-flow";
 
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const [loadingNav, setLoadingNav] = useState(true);
@@ -35,6 +38,31 @@ export default function Header() {
     };
     fetchNavLinks();
   }, []);
+  
+  useEffect(() => {
+    const showTip = sessionStorage.getItem('showWelcomeTip');
+    if (showTip === 'true' && user) {
+        sessionStorage.removeItem('showWelcomeTip');
+        const fetchAndShowTip = async () => {
+            try {
+                const { tip } = await getQuickTip();
+                toast({
+                    title: (
+                        <div className="flex items-center gap-2">
+                            <Lightbulb className="h-5 w-5 text-yellow-400" />
+                            <span className="font-semibold">Quick Tip</span>
+                        </div>
+                    ),
+                    description: tip,
+                    duration: 9000,
+                });
+            } catch (error) {
+                console.error("Failed to fetch quick tip:", error);
+            }
+        };
+        fetchAndShowTip();
+    }
+  }, [user, toast]);
 
   const adminNavLinks = [
       { href: "/upload-problem", label: "Admin Page", icon: UploadCloud }
