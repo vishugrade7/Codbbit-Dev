@@ -46,12 +46,19 @@ const bulkUploadSchema = z.array(bulkProblemSchema);
 // #endregion
 
 // #region Course Schemas
+const contentBlockSchema = z.object({
+  id: z.string(),
+  type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive']),
+  content: z.string().min(1, 'Content cannot be empty'),
+  language: z.string().optional(),
+  caption: z.string().optional(),
+});
+
 const lessonSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Lesson title is required'),
-    contentType: z.enum(['video', 'pdf', 'text', 'problem']),
-    content: z.string().min(1, 'Lesson content is required'),
     isFree: z.boolean().optional(),
+    contentBlocks: z.array(contentBlockSchema).min(1, 'Each lesson must have at least one content block.'),
 });
 
 const moduleSchema = z.object({
