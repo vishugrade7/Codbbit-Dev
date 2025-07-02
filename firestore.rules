@@ -4,48 +4,63 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Target the specific document used by your app
-    match /problems/{document=**}{
-      // Allow anyone to read and write to the problem_data collection
-      allow read, write: if true;
+    // Helper function to check for admin status.
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Allow anyone to read and write to the users collection
-    match /users/{document=**} {
-      allow read, write: if true;  // Allow public read and write
-    }
-
-    // Allow authenticated users to create/write sheets, and anyone to read them.
-    match /problem-sheets/{sheetId} {
+    // A user can be created on signup, and can only update their own document.
+    // Anyone can read public user profiles.
+    match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
+      allow delete: if false; // Disallow client-side user deletion.
+    }
+
+    // Problems can be read by anyone, but only written by admins.
+    match /problems/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
+    // Courses can be read by anyone, but only written by admins.
     match /courses/{courseId} {
       allow read: if true;
-      // Only authenticated admins can write (create, update, delete) courses.
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow create, update, delete: if isAdmin();
     }
-
-    match /settings/{setting} {
+    
+    // Problem sheets can be read by anyone.
+    // They can be created by any authenticated user.
+    // They can only be deleted by their original creator.
+    // Updating is allowed for the owner (to edit content) or for any user if they are only changing their subscription status.
+    match /problem-sheets/{sheetId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow create: if request.auth != null;
+      allow update: if request.auth.uid == resource.data.createdBy ||
+                      (
+                        request.auth != null &&
+                        request.resource.data.name == resource.data.name &&
+                        request.resource.data.problemIds == resource.data.problemIds
+                      );
+      allow delete: if request.auth.uid == resource.data.createdBy;
+    }
+    
+    // Settings can be read by anyone, but only written by admins.
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
+    // Badge definitions can be read by anyone, but only written by admins.
     match /badges/{badgeId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow write: if isAdmin();
     }
-
-    // Salesforce Data: Allow authenticated users to access this data
-    match /salesforceData/{document=**} {
-      allow read, write: if request.auth != null;  // Only authenticated users can access this
-    }
-
-    // Catch-all: Deny writes, allow reads to anything else not matched
-    match /{document=**} {
-      allow read: if true;  // Allow public read
-      allow write: if false;  // Deny write to all other documents
+    
+    // This collection is used for ID generation and should not be client-accessible.
+    match /dummy/{docId} {
+      allow read, write: if false;
     }
   }
 }
