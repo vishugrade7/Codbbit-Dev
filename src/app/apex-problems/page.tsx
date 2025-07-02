@@ -3,14 +3,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ApexProblemsData } from "@/types";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ChevronRight, BookOpen } from "lucide-react";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Loader2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type CategoryInfo = {
@@ -22,6 +23,7 @@ type CategoryInfo = {
     Medium: number;
     Hard: number;
   };
+  imageUrl?: string;
 };
 
 export default function ApexProblems() {
@@ -52,8 +54,9 @@ export default function ApexProblems() {
                   },
                   { Easy: 0, Medium: 0, Hard: 0 }
                 );
+                const imageUrl = categoryData.imageUrl;
 
-                return { name, problemCount, firstProblemId, difficulties };
+                return { name, problemCount, firstProblemId, difficulties, imageUrl };
               })
               .filter(cat => cat.problemCount > 0)
               .sort((a, b) => a.name.localeCompare(b.name));
@@ -91,35 +94,41 @@ export default function ApexProblems() {
             {categories.map((category) => (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className="h-full flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
-                    <CardHeader className="flex-row items-center gap-4">
-                        <div className="p-3 bg-primary/10 rounded-lg">
-                            <BookOpen className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                            <CardTitle>{category.name}</CardTitle>
-                            <CardDescription>{category.problemCount} Problems</CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-2">
-                        <div className="flex justify-between items-center text-sm">
+                   <Card className="h-full flex flex-col bg-card transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 overflow-hidden border-transparent hover:border-primary/30">
+                    <div className="relative aspect-video">
+                      <Image
+                        src={category.imageUrl || 'https://placehold.co/600x400.png'}
+                        alt={category.name}
+                        fill
+                        className="object-cover"
+                        data-ai-hint="abstract code"
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col flex-grow">
+                      <div className="flex-grow">
+                        <h3 className="text-lg font-semibold group-hover:text-primary">{category.name}</h3>
+                        <p className="text-sm text-muted-foreground">{category.problemCount} Problems</p>
+                        <div className="mt-4 space-y-2">
+                          <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Easy</span>
                             <Badge variant="outline" className="bg-green-400/10 text-green-400 border-green-400/20">{category.difficulties.Easy}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Medium</span>
                             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{category.difficulties.Medium}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Hard</span>
                             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">{category.difficulties.Hard}</Badge>
+                          </div>
                         </div>
-                    </CardContent>
-                    <div className="p-4 pt-0 text-right flex justify-end items-center">
+                      </div>
+                      <div className="mt-4 text-right flex justify-end items-center">
                         <span className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                            View Problems
+                          View Problems
                         </span>
                         <ChevronRight className="ml-2 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
+                      </div>
                     </div>
                   </Card>
                 </Link>

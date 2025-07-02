@@ -138,6 +138,7 @@ export type Problem = {
 export type ApexProblemsData = {
     [categoryName: string]: {
         Questions: Problem[];
+        imageUrl?: string;
     }
 }
 

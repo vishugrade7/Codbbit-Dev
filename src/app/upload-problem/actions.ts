@@ -311,7 +311,7 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
     }
 }
 
-export async function addCategory(categoryName: string) {
+export async function addCategory(categoryName: string, imageUrl: string) {
     if (!categoryName || categoryName.trim().length === 0) {
         return { success: false, error: 'Category name cannot be empty.' };
     }
@@ -323,7 +323,7 @@ export async function addCategory(categoryName: string) {
         if (!docSnap.exists()) {
             await setDoc(apexDocRef, { 
                 Category: {
-                    [categoryName.trim()]: { Questions: [] }
+                    [categoryName.trim()]: { Questions: [], imageUrl: imageUrl.trim() }
                 } 
             });
             return { success: true, message: `Category '${categoryName.trim()}' added successfully!` };
@@ -337,7 +337,7 @@ export async function addCategory(categoryName: string) {
             return { success: false, error: `Category '${sanitizedCategoryName}' already exists.` };
         }
 
-        categories[sanitizedCategoryName] = { Questions: [] };
+        categories[sanitizedCategoryName] = { Questions: [], imageUrl: imageUrl.trim() };
         await updateDoc(apexDocRef, { Category: categories });
         return { success: true, message: `Category '${sanitizedCategoryName}' added successfully!` };
 

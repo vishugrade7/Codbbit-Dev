@@ -1129,6 +1129,7 @@ function BadgeFormDialog({ isOpen, onOpenChange, badge, onFormSubmit }: { isOpen
 // #region AddCategoryModal
 function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onCategoryAdded: () => void }) {
     const [categoryName, setCategoryName] = useState("");
+    const [imageUrl, setImageUrl] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
@@ -1138,10 +1139,11 @@ function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: b
             return;
         }
         setIsSaving(true);
-        const result = await addCategory(categoryName);
+        const result = await addCategory(categoryName, imageUrl);
         if (result.success) {
             toast({ title: 'Success', description: result.message });
             setCategoryName("");
+            setImageUrl("");
             onCategoryAdded();
             onOpenChange(false);
         } else {
@@ -1157,15 +1159,27 @@ function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: b
                     <DialogTitle>Add New Category</DialogTitle>
                     <DialogDescription>Enter the name for the new problem category.</DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Label htmlFor="category-name">Category Name</Label>
-                    <Input
-                        id="category-name"
-                        value={categoryName}
-                        onChange={(e) => setCategoryName(e.target.value)}
-                        placeholder="e.g., SOQL"
-                        className="mt-2"
-                    />
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="category-name">Category Name</Label>
+                        <Input
+                            id="category-name"
+                            value={categoryName}
+                            onChange={(e) => setCategoryName(e.target.value)}
+                            placeholder="e.g., SOQL"
+                            className="mt-2"
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="category-image-url">Image URL (Optional)</Label>
+                        <Input
+                            id="category-image-url"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                            placeholder="https://placehold.co/600x400.png"
+                            className="mt-2"
+                        />
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -1285,7 +1299,9 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
             }
         }, 300);
 
-        return () => clearTimeout(handler);
+        return () => {
+            clearTimeout(handler);
+        };
     }, [companyValue, selectedCompanyName, form]);
 
     const handleSuggestionClick = (suggestion: CompanySuggestion) => {
