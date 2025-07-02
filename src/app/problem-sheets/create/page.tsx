@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Search, ClipboardList, X, ArrowLeft } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -221,18 +222,17 @@ function CreateProblemSheetClient() {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
-                                <div className="flex gap-2">
-                                    {["All", "Easy", "Medium", "Hard"].map((diff) => (
-                                    <Button
-                                        key={diff}
-                                        variant={difficultyFilter === diff ? "default" : "outline"}
-                                        onClick={() => setDifficultyFilter(diff)}
-                                        className="flex-1 md:flex-none"
-                                    >
-                                        {diff}
-                                    </Button>
-                                    ))}
-                                </div>
+                                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                                    <SelectTrigger className="w-full md:w-[180px]">
+                                        <SelectValue placeholder="Difficulty" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Difficulties</SelectItem>
+                                        <SelectItem value="Easy">Easy</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="Hard">Hard</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                         <ScrollArea className="flex-1">
