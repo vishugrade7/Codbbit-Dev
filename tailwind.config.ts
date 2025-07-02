@@ -103,11 +103,16 @@ export default {
           '50%': { transform: 'scale(1.2)', opacity: '1' },
           '100%': { transform: 'scale(1)', opacity: '0' },
         },
+        'marquee': {
+          'from': { transform: 'translateX(0)' },
+          'to': { transform: 'translateX(-100%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'points-animation': 'points-animation 2s ease-in-out forwards',
+        'marquee': 'marquee 60s linear infinite',
       },
     },
   },
