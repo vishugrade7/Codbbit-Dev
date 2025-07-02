@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { cancelSubscription } from '@/app/razorpay/actions';
 
 // Helper function to generate a random string for the code verifier
 const generateCodeVerifier = () => {
@@ -37,6 +38,7 @@ const generateCodeChallenge = async (verifier: string) => {
 export default function Settings() {
   const { user, userData, loading, isPro } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -70,6 +72,18 @@ export default function Settings() {
         });
         setIsConnecting(false);
     }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user) return;
+    setIsCancelling(true);
+    const result = await cancelSubscription(user.uid);
+    if (result.success) {
+      toast({ title: 'Subscription Cancelled', description: 'Your Pro access has been removed.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+    setIsCancelling(false);
   };
   
   if (loading) {
@@ -113,11 +127,32 @@ export default function Settings() {
                                 : "Access to free problems and core features."}
                             </p>
                         </div>
-                        <Button asChild variant={isPro ? "outline" : "default"}>
-                            <Link href="/pricing">
-                            {isPro ? "Manage Plan" : "Upgrade"}
-                            </Link>
-                        </Button>
+                        {isPro ? (
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline">Manage Plan</Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. You will immediately lose access to all Pro features and your plan will not auto-renew.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleCancelSubscription} disabled={isCancelling}>
+                                    {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Cancel Subscription
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        ) : (
+                           <Button asChild>
+                              <Link href="/pricing">Upgrade</Link>
+                           </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>

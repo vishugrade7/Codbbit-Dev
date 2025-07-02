@@ -131,3 +131,22 @@ export async function verifyAndSavePayment(
         return { success: false, error: error.message || 'An unknown error occurred during verification.' };
     }
 }
+
+export async function cancelSubscription(userId: string): Promise<{ success: boolean; error?: string }> {
+    if (!userId || !db) {
+        return { success: false, error: 'User or database not found.' };
+    }
+
+    try {
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, {
+            razorpaySubscriptionStatus: 'cancelled',
+            // Set end date to now to immediately expire
+            subscriptionEndDate: new Date(),
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error cancelling subscription:', error);
+        return { success: false, error: error.message || 'An unknown error occurred during cancellation.' };
+    }
+}
