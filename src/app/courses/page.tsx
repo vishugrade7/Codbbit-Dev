@@ -36,7 +36,7 @@ export default function Courses() {
         coursesData.sort((a, b) => {
           const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
           const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-          return dateB.getTime() - a.getTime();
+          return dateB.getTime() - dateA.getTime();
         });
 
         setCourses(coursesData);
