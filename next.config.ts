@@ -33,7 +33,11 @@ const nextConfig: NextConfig = {
         hostname: 'codolio.com',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
 };
