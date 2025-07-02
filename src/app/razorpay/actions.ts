@@ -1,3 +1,4 @@
+
 'use server';
 
 import { razorpay } from '@/lib/razorpay';
@@ -5,6 +6,10 @@ import shortid from 'shortid';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import crypto from 'crypto';
+
+export async function isRazorpayConfigured(): Promise<boolean> {
+    return !!razorpay;
+}
 
 type CreateOrderResponse = {
     orderId?: string;

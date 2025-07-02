@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -11,7 +11,8 @@ import { Check, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { createRazorpayOrder, verifyAndSavePayment } from '@/app/razorpay/actions';
+import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -36,6 +37,19 @@ export default function PricingPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isRazorpayReady, setIsRazorpayReady] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+
+  useEffect(() => {
+    const checkConfig = async () => {
+      setLoadingConfig(true);
+      const configured = await isRazorpayConfigured();
+      setIsRazorpayReady(configured);
+      setLoadingConfig(false);
+    };
+    checkConfig();
+  }, []);
+
 
   const plans = useMemo(() => {
     const priceData = {
@@ -98,8 +112,8 @@ export default function PricingPage() {
         router.push('/login');
         return;
     }
-    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
-        toast({ variant: 'destructive', title: 'Configuration Error', description: 'Razorpay is not configured correctly.' });
+    if (!isRazorpayReady) {
+        toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment processing is not configured on the server. Please contact the site administrator.' });
         return;
     }
     
@@ -136,6 +150,7 @@ export default function PricingPage() {
             } else {
                  toast({ variant: 'destructive', title: 'Payment Verification Failed', description: verificationResult.error || 'Please contact support.' });
             }
+            setIsCheckingOut(false);
         },
         prefill: {
             name: userData.name,
@@ -143,19 +158,25 @@ export default function PricingPage() {
         },
         theme: {
             color: "#1976D2" // A blue shade similar to your primary color
+        },
+        modal: {
+            ondismiss: function() {
+                setIsCheckingOut(false);
+            }
         }
     };
 
-    const paymentObject = new (window as any).Razorpay(options);
-    paymentObject.on('payment.failed', function (response: any){
-        toast({ variant: 'destructive', title: 'Payment Failed', description: response.error.description });
-        setIsCheckingOut(false);
-    });
-    paymentObject.open();
-
-    // The checkout process is now modal, so we don't want to keep the button in a loading state indefinitely.
-    // The payment failed handler will reset it if needed.
-    // setIsCheckingOut(false); 
+    try {
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.on('payment.failed', function (response: any){
+          toast({ variant: 'destructive', title: 'Payment Failed', description: response.error.description });
+          setIsCheckingOut(false);
+      });
+      paymentObject.open();
+    } catch(error) {
+       toast({ variant: 'destructive', title: 'Payment Error', description: 'Failed to initialize the payment gateway.' });
+       setIsCheckingOut(false);
+    }
   };
 
 
@@ -230,9 +251,27 @@ export default function PricingPage() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut}>
-                {isCheckingOut ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Upgrade to Pro'}
-              </Button>
+              {!isRazorpayReady && !loadingConfig ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="w-full" tabIndex={0}>
+                        <Button className="w-full" disabled>
+                          Upgrade to Pro
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Payment processing is not available.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig}>
+                  {(isCheckingOut || loadingConfig) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loadingConfig ? 'Initializing...' : 'Upgrade to Pro'}
+                </Button>
+              )}
             </CardFooter>
           </Card>
 
