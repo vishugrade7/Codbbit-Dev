@@ -11,7 +11,7 @@ import { useTheme } from "next-themes";
 import { doc, getDoc, collection, query, getDocs, orderBy, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink, Badge } from "@/types";
+import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink, Badge, ContentBlock } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -68,12 +68,19 @@ const problemFormSchema = z.object({
     path: ["triggerSObject"],
 });
 
+const contentBlockSchema = z.object({
+  id: z.string(),
+  type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive']),
+  content: z.string().min(1, 'Content cannot be empty'),
+  language: z.string().optional(),
+  caption: z.string().optional(),
+});
+
 const lessonSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Lesson title is required'),
-    contentType: z.enum(['video', 'pdf', 'text', 'problem', 'interactive']),
-    content: z.string().min(1, 'Lesson content is required'),
     isFree: z.boolean().optional(),
+    contentBlocks: z.array(contentBlockSchema).min(1, 'Each lesson must have at least one content block.'),
 });
 
 const moduleSchema = z.object({
@@ -1455,10 +1462,30 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '', isFree: true }] }],
+            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', isFree: true, contentBlocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] }] }],
             isPublished: course?.isPublished || false,
         },
     });
+
+     useEffect(() => {
+        if (course) {
+            form.reset({
+                id: course.id,
+                title: course.title,
+                description: course.description,
+                category: course.category,
+                thumbnailUrl: course.thumbnailUrl,
+                modules: course.modules.map(m => ({
+                    ...m,
+                    lessons: m.lessons.map(l => ({
+                        ...l,
+                        contentBlocks: l.contentBlocks || [],
+                    }))
+                })),
+                isPublished: course.isPublished,
+            });
+        }
+    }, [course, form]);
 
     const { fields: moduleFields, append: appendModule, remove: removeModule } = useFieldArray({ control: form.control, name: "modules" });
 
@@ -1551,7 +1578,7 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
                                 </AccordionItem>
                             ))}
                         </Accordion>
-                        <Button type="button" variant="outline" onClick={() => appendModule({ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '', isFree: true }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
+                        <Button type="button" variant="outline" onClick={() => appendModule({ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', isFree: true, contentBlocks: [{id: crypto.randomUUID(), type: 'text', content: '' }] }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
                     </CardContent>
                 </Card>
 
@@ -1567,108 +1594,20 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
     );
 }
 
-const lessonIcons = {
-    video: <FileVideo className="h-4 w-4" />,
-    pdf: <FileText className="h-4 w-4" />,
-    text: <FileText className="h-4 w-4" />,
-    problem: <BrainCircuit className="h-4 w-4" />,
-    interactive: <MousePointerClick className="h-4 w-4" />
-};
-
 function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { moduleIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
     const { fields, append, remove } = useFieldArray({
         control,
         name: `modules.${moduleIndex}.lessons`
     });
 
-    const LessonContentInput = ({ lessonIndex }: { lessonIndex: number }) => {
-        const { resolvedTheme } = useTheme();
-        const contentType = useWatch({
-            control,
-            name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentType`
-        });
-
-        switch (contentType) {
-            case 'video':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
-                    <FormItem><FormLabel>Video URL</FormLabel><FormControl><Input placeholder="https://www.youtube.com/watch?v=..." {...field} /></FormControl><FormMessage /></FormItem>
-                )} />;
-            case 'pdf':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
-                    <FormItem><FormLabel>PDF URL</FormLabel><FormControl><Input placeholder="https://example.com/document.pdf" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />;
-            case 'problem':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Problem</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger disabled={loadingProblems}>
-                                    <SelectValue placeholder="Select a problem to link..." />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {loadingProblems ? (
-                                    <SelectItem value="loading" disabled>Loading problems...</SelectItem>
-                                ) : (
-                                    allProblems.map(p => (
-                                        <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )} />;
-            case 'interactive':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>HTML Content</FormLabel>
-                        <FormControl>
-                            <div className="rounded-md border h-96 w-full">
-                                <MonacoEditor
-                                    height="100%"
-                                    language="html"
-                                    value={field.value}
-                                    onChange={(value) => field.onChange(value || "")}
-                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)'}}
-                                />
-                            </div>
-                        </FormControl>
-                        <FormDescription>Enter the full HTML code, including CSS and JS if needed.</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )} />;
-            case 'text':
-            default:
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Text Content</FormLabel>
-                        <FormControl><Textarea placeholder="Enter content here. You can use Markdown for formatting." {...field} rows={4} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />;
-        }
-    };
-
     return (
         <div className="space-y-3 pl-6 border-l-2 border-dashed">
             {fields.map((lessonItem, lessonIndex) => (
                 <div key={lessonItem.id} className="p-4 border rounded-md bg-background/50 relative">
                      <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive" onClick={() => remove(lessonIndex)}><Trash2 className="h-4 w-4" /></Button>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
                             <FormItem><FormLabel>Lesson Title</FormLabel><FormControl><Input placeholder={`Lesson ${lessonIndex + 1}`} {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentType`} render={({ field }) => (
-                            <FormItem><FormLabel>Content Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger>{lessonIcons[field.value as keyof typeof lessonIcons]}<span className="ml-2"><SelectValue /></span></SelectTrigger></FormControl><SelectContent>
-                                <SelectItem value="text">Text / Markdown</SelectItem>
-                                <SelectItem value="interactive">Interactive HTML</SelectItem>
-                                <SelectItem value="video">Video</SelectItem>
-                                <SelectItem value="pdf">PDF</SelectItem>
-                                <SelectItem value="problem">Problem</SelectItem>
-                            </SelectContent></Select><FormMessage /></FormItem>
                         )} />
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm h-full mt-auto">
@@ -1685,13 +1624,152 @@ function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { mo
                          )} />
                     </div>
                      <div className="mt-4">
-                        <LessonContentInput lessonIndex={lessonIndex} />
+                        <ContentBlockList 
+                            moduleIndex={moduleIndex} 
+                            lessonIndex={lessonIndex} 
+                            control={control} 
+                            allProblems={allProblems} 
+                            loadingProblems={loadingProblems} 
+                        />
                      </div>
                 </div>
             ))}
-             <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: crypto.randomUUID(), title: '', contentType: 'text', content: '', isFree: true })}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
+             <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: crypto.randomUUID(), title: '', isFree: true, contentBlocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
         </div>
     );
 }
 
+const contentBlockIcons = {
+    text: <FileText className="h-4 w-4" />,
+    image: <ImageIcon className="h-4 w-4" />,
+    video: <FileVideo className="h-4 w-4" />,
+    code: <Code className="h-4 w-4" />,
+    problem: <BrainCircuit className="h-4 w-4" />,
+    interactive: <MousePointerClick className="h-4 w-4" />,
+};
+
+function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, loadingProblems }: { moduleIndex: number, lessonIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`
+    });
+
+    const addBlock = (type: ContentBlock['type']) => {
+        append({ id: crypto.randomUUID(), type, content: '' });
+    };
+
+    return (
+        <div className="space-y-4">
+            <Label>Lesson Content</Label>
+            {fields.length > 0 && (
+                <div className="space-y-4 rounded-md border p-4">
+                    {fields.map((block, blockIndex) => (
+                        <div key={block.id} className="p-3 border rounded bg-card/50">
+                             <div className="flex justify-end">
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(blockIndex)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                             </div>
+                            <ContentBlockItem
+                                moduleIndex={moduleIndex}
+                                lessonIndex={lessonIndex}
+                                blockIndex={blockIndex}
+                                control={control}
+                                allProblems={allProblems}
+                                loadingProblems={loadingProblems}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('text')}><PlusCircle className="mr-2 h-4 w-4"/>Add Text</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('image')}><PlusCircle className="mr-2 h-4 w-4"/>Add Image</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('code')}><PlusCircle className="mr-2 h-4 w-4"/>Add Code</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('video')}><PlusCircle className="mr-2 h-4 w-4"/>Add Video</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('problem')}><PlusCircle className="mr-2 h-4 w-4"/>Add Problem</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addBlock('interactive')}><PlusCircle className="mr-2 h-4 w-4"/>Add Interactive</Button>
+            </div>
+        </div>
+    );
+}
+
+function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allProblems, loadingProblems }: { moduleIndex: number, lessonIndex: number, blockIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
+    const { resolvedTheme } = useTheme();
+    const blockType = useWatch({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.type`
+    });
+
+    const getBlockContent = () => {
+        switch (blockType) {
+            case 'text':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                    <FormItem><FormLabel className="capitalize">{blockType}</FormLabel><FormControl><Textarea placeholder="Enter Markdown-enabled text..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>
+                )} />;
+            case 'image':
+                return (
+                    <div className="space-y-4">
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                            <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.caption`} render={({ field }) => (
+                            <FormItem><FormLabel>Caption (optional)</FormLabel><FormControl><Input placeholder="A descriptive caption" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                );
+            case 'code':
+                return (
+                     <div className="space-y-4">
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.language`} render={({ field }) => (
+                            <FormItem><FormLabel>Language</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="apex">Apex</SelectItem>
+                                        <SelectItem value="javascript">JavaScript</SelectItem>
+                                        <SelectItem value="soql">SOQL</SelectItem>
+                                        <SelectItem value="html">HTML</SelectItem>
+                                        <SelectItem value="css">CSS</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            <FormMessage /></FormItem>
+                        )} />
+                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                            <FormItem><FormLabel>Code</FormLabel><FormControl>
+                                <div className="rounded-md border h-60 w-full">
+                                <MonacoEditor height="100%" language={field.value || 'apex'} value={field.value} onChange={v => field.onChange(v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
+                                </div>
+                            </FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                );
+            case 'video':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                    <FormItem><FormLabel>Video URL</FormLabel><FormControl><Input placeholder="https://www.youtube.com/watch?v=..." {...field} /></FormControl><FormMessage /></FormItem>
+                )} />;
+            case 'problem':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                    <FormItem><FormLabel>Problem</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger disabled={loadingProblems}><SelectValue placeholder="Select a problem..." /></SelectTrigger></FormControl>
+                            <SelectContent>{loadingProblems ? <SelectItem value="loading" disabled>Loading...</SelectItem> : allProblems.map(p => (<SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>))}</SelectContent>
+                        </Select>
+                    <FormMessage /></FormItem>
+                )} />;
+            case 'interactive':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                    <FormItem><FormLabel>Interactive HTML</FormLabel><FormControl>
+                        <div className="rounded-md border h-96 w-full">
+                            <MonacoEditor height="100%" language="html" value={field.value} onChange={v => field.onChange(v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
+                        </div>
+                    </FormControl><FormMessage /></FormItem>
+                )} />;
+            default:
+                return null;
+        }
+    };
+
+    return getBlockContent();
+}
 // #endregion

@@ -7,77 +7,139 @@ import Link from 'next/link';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
-import type { Course, Module, Lesson, Problem, ApexProblemsData } from '@/types';
+import type { Course, Module, Lesson, Problem, ApexProblemsData, ContentBlock } from '@/types';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, ArrowRight, MousePointerClick } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, ArrowRight, MousePointerClick, Code, Image as ImageIcon } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import MonacoEditor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
+import Image from 'next/image';
 
-// Problem with category for linking
 type ProblemWithCategory = Problem & { categoryName: string };
 
-// Lesson content renderer component
-const LessonContent = ({ lesson, problemMap }: { lesson: Lesson; problemMap: Map<string, ProblemWithCategory> }) => {
-    switch(lesson.contentType) {
-        case 'interactive':
-            return (
-                <iframe
-                    srcDoc={lesson.content}
-                    title={lesson.title}
-                    className="w-full h-[80vh] border rounded-lg bg-white"
-                    sandbox="allow-scripts allow-same-origin"
-                />
-            );
-        case 'video': {
-            let videoUrl = lesson.content;
-            if (lesson.content.includes('youtube.com/watch?v=')) {
-                const videoId = lesson.content.split('v=')[1]?.split('&')[0];
-                videoUrl = `https://www.youtube.com/embed/${videoId}`;
-            } else if (lesson.content.includes('youtu.be/')) {
-                 const videoId = lesson.content.split('/').pop()?.split('?')[0];
-                 videoUrl = `https://www.youtube.com/embed/${videoId}`;
-            }
-             return (
-                <div className="aspect-video">
-                    <iframe className="w-full h-full rounded-lg" src={videoUrl} title={lesson.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                </div>
-            );
-        }
+const getLessonIcon = (lesson: Lesson) => {
+    // For simplicity, we'll use the icon of the first content block.
+    // A more sophisticated approach could be to have a predefined icon for the lesson.
+    const firstBlockType = lesson.contentBlocks?.[0]?.type;
+    switch (firstBlockType) {
+        case 'video': return <PlayCircle className="h-5 w-5" />;
+        case 'problem': return <BrainCircuit className="h-5 w-5" />;
+        case 'interactive': return <MousePointerClick className="h-5 w-5" />;
+        case 'image': return <ImageIcon className="h-5 w-5" />;
+        case 'code': return <Code className="h-5 w-5" />;
         case 'text':
-             // NOTE: Using dangerouslySetInnerHTML is risky if content isn't sanitized.
-             // For a real app, use a library like 'react-markdown' or 'sanitize-html'.
-            return <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: lesson.content.replace(/\n/g, '<br />') }} />;
-        case 'pdf':
-             return (
-                <div className="w-full h-[80vh] border rounded-lg overflow-hidden">
-                    <iframe src={lesson.content} className="w-full h-full" title={lesson.title}></iframe>
-                </div>
-            );
-        case 'problem': {
-            const problem = problemMap.get(lesson.content);
-            if (!problem) {
-                return <p>Error: Problem with ID "{lesson.content}" not found.</p>;
-            }
-            return (
-                <div className="text-center p-8 border rounded-lg bg-card">
-                    <BrainCircuit className="h-12 w-12 mx-auto text-primary mb-4" />
-                    <h3 className="text-xl font-bold mb-2">Practice Problem: {problem.title}</h3>
-                    <p className="text-muted-foreground mb-6">This lesson includes a practice problem to test your knowledge.</p>
-                    <Button asChild>
-                        <Link href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`}>
-                            Go to Problem
-                        </Link>
-                    </Button>
-                </div>
-            )
-        }
         default:
-            return <p>Content type not supported.</p>;
+            return <BookOpen className="h-5 w-5" />;
     }
 }
+
+// Block renderer component
+const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; problemMap: Map<string, ProblemWithCategory> }) => {
+  const { resolvedTheme } = useTheme();
+
+  switch (block.type) {
+    case 'text':
+      return <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose dark:prose-invert max-w-none">{block.content}</ReactMarkdown>;
+    
+    case 'image':
+      return (
+        <div className="my-4">
+          <Image src={block.content} alt={block.caption || 'Lesson image'} width={800} height={450} className="object-contain rounded-lg border mx-auto" />
+          {block.caption && <p className="text-center text-sm text-muted-foreground mt-2">{block.caption}</p>}
+        </div>
+      );
+
+    case 'code':
+      const editorHeight = `${(block.content.split('\n').length * 21) + 32}px`;
+      return (
+        <div className="my-4 rounded-lg border overflow-hidden bg-card">
+            <div className="px-4 py-2 bg-muted/50 border-b">
+                <span className="text-sm font-semibold uppercase text-muted-foreground">{block.language || 'Code'}</span>
+            </div>
+            <MonacoEditor
+                height={editorHeight}
+                language={block.language || 'apex'}
+                value={block.content}
+                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                options={{
+                    readOnly: true,
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    padding: { top: 16, bottom: 16 },
+                    fontFamily: 'var(--font-source-code-pro)',
+                    automaticLayout: true,
+                }}
+            />
+        </div>
+      );
+
+    case 'video': {
+        let videoUrl = block.content;
+        if (block.content.includes('youtube.com/watch?v=')) {
+            const videoId = block.content.split('v=')[1]?.split('&')[0];
+            videoUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (block.content.includes('youtu.be/')) {
+             const videoId = block.content.split('/').pop()?.split('?')[0];
+             videoUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+         return (
+            <div className="aspect-video my-4">
+                <iframe className="w-full h-full rounded-lg" src={videoUrl} title="Lesson Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+            </div>
+        );
+    }
+
+    case 'problem': {
+        const problem = problemMap.get(block.content);
+        if (!problem) {
+            return <p>Error: Problem with ID "{block.content}" not found.</p>;
+        }
+        return (
+            <div className="text-center p-8 border rounded-lg bg-card my-4">
+                <BrainCircuit className="h-12 w-12 mx-auto text-primary mb-4" />
+                <h3 className="text-xl font-bold mb-2">Practice Problem: {problem.title}</h3>
+                <p className="text-muted-foreground mb-6">This lesson includes a practice problem to test your knowledge.</p>
+                <Button asChild>
+                    <Link href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`}>
+                        Go to Problem
+                    </Link>
+                </Button>
+            </div>
+        );
+    }
+      
+    case 'interactive':
+      return (
+        <iframe
+            srcDoc={block.content}
+            title="Interactive Content"
+            className="w-full h-[80vh] border rounded-lg bg-white my-4"
+            sandbox="allow-scripts allow-same-origin"
+        />
+      );
+      
+    default:
+      return null;
+  }
+};
+
+const LessonContent = ({ lesson, problemMap }: { lesson: Lesson; problemMap: Map<string, ProblemWithCategory> }) => {
+    return (
+        <div className="space-y-6">
+            {lesson.contentBlocks?.map(block => (
+                <ContentBlockRenderer key={block.id} block={block} problemMap={problemMap} />
+            ))}
+        </div>
+    );
+};
+
 
 // Main page component
 export default function LessonPage() {
@@ -162,14 +224,6 @@ export default function LessonPage() {
         fetchCourse();
     }, [courseId, lessonId, router, isPro]);
 
-    const lessonIcons = {
-        video: <PlayCircle className="h-5 w-5" />,
-        pdf: <FileText className="h-5 w-5" />,
-        text: <BookOpen className="h-5 w-5" />,
-        problem: <BrainCircuit className="h-5 w-5" />,
-        interactive: <MousePointerClick className="h-5 w-5" />,
-    };
-
     if (loading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
@@ -207,7 +261,7 @@ export default function LessonPage() {
                                                         )}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            {lessonIcons[lesson.contentType as keyof typeof lessonIcons] || <BookOpen className="h-5 w-5 text-primary" />}
+                                                            {getLessonIcon(lesson)}
                                                             <span className="font-medium">{lesson.title}</span>
                                                         </div>
                                                         {(!lesson.isFree && !isPro) && <Lock className="h-4 w-4 text-muted-foreground" />}

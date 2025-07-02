@@ -5,6 +5,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -81,12 +82,19 @@ export type Contribution = {
   count: number;
 };
 
+export type ContentBlock = {
+  id: string;
+  type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive';
+  content: string;
+  language?: string;
+  caption?: string;
+};
+
 export type Lesson = {
   id: string;
   title: string;
-  contentType: 'video' | 'pdf' | 'text' | 'problem' | 'interactive';
-  content: string; // URL for video/pdf, markdown for text, problemId for problem
   isFree?: boolean;
+  contentBlocks: ContentBlock[];
 };
 
 export type Module = {
