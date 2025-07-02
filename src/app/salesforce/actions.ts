@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -481,28 +482,26 @@ async function deployLwcBundle(
         body: JSON.stringify({
             DeveloperName: name,
             MasterLabel: name,
-            ApiVersion: '59.0',
+            Metadata: {
+                apiVersion: 59.0,
+                isExposed: true,
+                targets: {
+                    target: [
+                        "lightning__AppPage",
+                        "lightning__HomePage",
+                        "lightning__RecordPage",
+                    ],
+                },
+            },
         }),
     });
     const bundleId = bundleRecord.id;
     log.push(`> Bundle created with ID: ${bundleId}.`);
 
-    const metaXml = `<?xml version="1.0" encoding="UTF-8"?>
-<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
-    <apiVersion>59.0</apiVersion>
-    <isExposed>true</isExposed>
-    <targets>
-        <target>lightning__AppPage</target>
-        <target>lightning__HomePage</target>
-        <target>lightning__RecordPage</target>
-    </targets>
-</LightningComponentBundle>`;
-
     const resources = [
         { FilePath: `lwc/${name}/${name}.html`, Format: 'HTML', Source: files.html },
         { FilePath: `lwc/${name}/${name}.js`, Format: 'JS', Source: files.js },
         { FilePath: `lwc/${name}/${name}.css`, Format: 'CSS', Source: files.css },
-        { FilePath: `lwc/${name}/${name}.js-meta.xml`, Format: 'XML', Source: metaXml },
     ];
     
     log.push(`> Deploying ${resources.length} resources...`);
