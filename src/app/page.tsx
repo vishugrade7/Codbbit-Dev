@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Rocket, BarChart, Database, Code, Trophy } from "lucide-react";
 import FeaturedContent from "@/components/featured-content";
+import Testimonials from "@/components/testimonials";
 
 export default function Home() {
   return (
@@ -79,6 +80,8 @@ export default function Home() {
         </section>
 
         <FeaturedContent />
+
+        <Testimonials />
 
       </main>
       <Footer />
