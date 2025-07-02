@@ -58,7 +58,7 @@ export default function ProblemSheetsListPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <Header />
       <main className="flex-1 container py-8">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
