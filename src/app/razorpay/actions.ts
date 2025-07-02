@@ -15,6 +15,10 @@ type CreateOrderResponse = {
 };
 
 export async function createRazorpayOrder(amount: number, currency: 'INR' | 'USD'): Promise<CreateOrderResponse> {
+    if (!razorpay) {
+        return { error: 'Payment processing is not configured on the server. Please contact the site administrator.' };
+    }
+    
     const payment_capture = 1;
     const amountInSubunits = amount * 100;
     const options = {
@@ -23,11 +27,6 @@ export async function createRazorpayOrder(amount: number, currency: 'INR' | 'USD
         receipt: shortid.generate(),
         payment_capture,
     };
-
-    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET.includes('REPLACE_WITH')) {
-        console.error("Razorpay keys are not configured on the server. Please check your .env file and ensure RAZORPAY_KEY_SECRET is set.");
-        return { error: 'Payment processing is not configured on the server. Please contact the site administrator.' };
-    }
 
     try {
         const response = await razorpay.orders.create(options);
