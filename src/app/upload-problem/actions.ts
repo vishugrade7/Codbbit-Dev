@@ -72,10 +72,6 @@ const courseSchema = z.object({
 });
 // #endregion
 
-const makeAdminSchema = z.object({
-  email: z.string().email("Invalid email address."),
-});
-
 const setAdminStatusSchema = z.object({
     userId: z.string().min(1, "User ID is required."),
     status: z.boolean(),
@@ -101,60 +97,25 @@ const badgeSchema = z.object({
 // #endregion
 
 
-export async function makeUserAdmin(email: string) {
-    const validation = makeAdminSchema.safeParse({ email });
-    if (!validation.success) {
-        return { success: false, error: validation.error.errors[0].message };
-    }
-
-    if (!db) {
-        return { success: false, error: "Database not initialized." };
-    }
-
-    try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", email));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            return { success: false, error: `User with email '${email}' not found.` };
-        }
-
-        const userDoc = querySnapshot.docs[0];
-        
-        if (userDoc.data().isAdmin) {
-             return { success: false, error: `User '${email}' is already an admin.` };
-        }
-
-        await updateDoc(userDoc.ref, { isAdmin: true });
-
-        return { success: true, message: `Successfully promoted '${email}' to admin.` };
-    } catch (error) {
-        console.error("Error making user admin:", error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return { success: false, error: errorMessage };
-    }
-}
-
-export async function getAdminUsers(): Promise<{ success: boolean; users: User[]; error?: string }> {
+export async function getAllUsers(): Promise<{ success: boolean; users: User[]; error?: string }> {
     if (!db) {
         return { success: false, error: "Database not initialized.", users: [] };
     }
 
     try {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("isAdmin", "==", true), orderBy("name"));
+        const q = query(usersRef, orderBy("name"));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
             return { success: true, users: [] };
         }
         
-        const adminUsers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        return { success: true, users: adminUsers };
+        const allUsers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        return { success: true, users: allUsers };
 
     } catch (error) {
-        console.error("Error fetching admin users:", error);
+        console.error("Error fetching all users:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage, users: [] };
     }

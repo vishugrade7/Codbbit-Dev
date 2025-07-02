@@ -15,7 +15,7 @@ import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, makeUserAdmin, getAdminUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -211,7 +211,7 @@ function UploadProblemContent() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Dashboard
                 </Button>
-                <UserManagementView />
+                <AllUsersList />
             </div>
         )
     }
@@ -642,27 +642,18 @@ function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNe
 // #endregion
 
 // #region UserManagement
-function UserManagementView() {
-    return (
-        <div className="space-y-8">
-            <AdminUsersList />
-            <AddAdminCard />
-        </div>
-    );
-}
-
-function AdminUsersList() {
+function AllUsersList() {
     const { user: authUser } = useAuth();
     const { toast } = useToast();
-    const [admins, setAdmins] = useState<AppUser[]>([]);
+    const [users, setUsers] = useState<AppUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-    const fetchAdmins = useCallback(async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
-        const result = await getAdminUsers();
+        const result = await getAllUsers();
         if (result.success) {
-            setAdmins(result.users);
+            setUsers(result.users);
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
@@ -670,8 +661,8 @@ function AdminUsersList() {
     }, [toast]);
 
     useEffect(() => {
-        fetchAdmins();
-    }, [fetchAdmins]);
+        fetchUsers();
+    }, [fetchUsers]);
 
     const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
         if (userId === authUser?.uid) {
@@ -682,7 +673,7 @@ function AdminUsersList() {
         const result = await setAdminStatus(userId, !currentStatus);
         if (result.success) {
             toast({ title: 'Success!', description: result.message });
-            await fetchAdmins();
+            await fetchUsers();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
@@ -693,7 +684,7 @@ function AdminUsersList() {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Current Administrators</CardTitle>
+                    <CardTitle>User Management</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -705,8 +696,8 @@ function AdminUsersList() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Current Administrators</CardTitle>
-                <CardDescription>Toggle the switch to revoke admin access. An admin cannot revoke their own access.</CardDescription>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Grant or revoke admin privileges for any user. An admin cannot revoke their own access.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="rounded-lg border">
@@ -718,35 +709,35 @@ function AdminUsersList() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {admins.length === 0 ? (
+                            {users.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={2} className="text-center h-24">No admin users found.</TableCell>
+                                    <TableCell colSpan={2} className="text-center h-24">No users found.</TableCell>
                                 </TableRow>
                             ) : (
-                                admins.map(admin => (
-                                    <TableRow key={admin.id}>
+                                users.map(user => (
+                                    <TableRow key={user.id}>
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar>
-                                                    <AvatarImage src={admin.avatarUrl} alt={admin.name} />
-                                                    <AvatarFallback>{admin.name.charAt(0)}</AvatarFallback>
+                                                    <AvatarImage src={user.avatarUrl} alt={user.name} />
+                                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="font-medium">{admin.name}</p>
-                                                    <p className="text-sm text-muted-foreground">{admin.email}</p>
+                                                    <p className="font-medium">{user.name}</p>
+                                                    <p className="text-sm text-muted-foreground">{user.email}</p>
                                                 </div>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end">
-                                                {updatingId === admin.id ? (
+                                                {updatingId === user.id ? (
                                                     <Loader2 className="h-5 w-5 animate-spin" />
                                                 ) : (
                                                     <Switch
-                                                        checked={admin.isAdmin}
-                                                        onCheckedChange={() => handleToggleAdmin(admin.id, admin.isAdmin ?? false)}
-                                                        disabled={admin.id === authUser?.uid}
-                                                        aria-label={`Toggle admin status for ${admin.name}`}
+                                                        checked={!!user.isAdmin}
+                                                        onCheckedChange={() => handleToggleAdmin(user.id, user.isAdmin ?? false)}
+                                                        disabled={user.id === authUser?.uid}
+                                                        aria-label={`Toggle admin status for ${user.name}`}
                                                     />
                                                 )}
                                             </div>
@@ -762,51 +753,6 @@ function AdminUsersList() {
     );
 }
 
-function AddAdminCard() {
-    const [email, setEmail] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-
-    const handleMakeAdmin = async () => {
-        if (!email) {
-            toast({ variant: 'destructive', title: 'Email is required' });
-            return;
-        }
-        setIsLoading(true);
-        const result = await makeUserAdmin(email);
-        if (result.success) {
-            toast({ title: 'Success!', description: result.message });
-            setEmail("");
-            // Ideally, we'd refetch the list in the sibling component.
-            // For simplicity, we can just rely on the user to see the result.
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error });
-        }
-        setIsLoading(false);
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Add New Admin</CardTitle>
-                <CardDescription>Grant admin privileges to a user by their email address.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <Input 
-                        placeholder="user@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        type="email"
-                    />
-                    <Button onClick={handleMakeAdmin} disabled={isLoading}>
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Make Admin'}
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    )
-}
 // #endregion
 
 // #region NavigationManagementView
@@ -1631,5 +1577,3 @@ function LessonList({ moduleIndex, control }: { moduleIndex: number, control: an
 }
 
 // #endregion
-
-    
