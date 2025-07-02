@@ -29,7 +29,7 @@ type StarredProblemDetail = Problem & { categoryName: string };
 
 // This is the new public profile page
 export default function UserProfilePage() {
-    const { user: authUser } = useAuth(); // Logged-in user
+    const { user: authUser, userData } = useAuth(); // Logged-in user
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
@@ -255,7 +255,24 @@ export default function UserProfilePage() {
     <>
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 relative">
+         {userData && (
+            <div
+              className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
+              aria-hidden="true"
+            >
+              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-10">
+                {Array.from({ length: 200 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="text-foreground/50 font-bold text-lg -rotate-45 whitespace-nowrap"
+                  >
+                    {userData.email}
+                  </span>
+                ))}
+              </div>
+            </div>
+        )}
         <div className="container mx-auto px-4 md:px-6 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* --- LEFT COLUMN --- */}

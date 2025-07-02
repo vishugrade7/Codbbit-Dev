@@ -283,7 +283,7 @@ export default function LessonPage() {
                               className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
                               aria-hidden="true"
                             >
-                              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-5">
+                              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-10">
                                 {Array.from({ length: 200 }).map((_, i) => (
                                   <span
                                     key={i}
