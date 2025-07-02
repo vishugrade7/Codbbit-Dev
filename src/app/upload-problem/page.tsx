@@ -32,11 +32,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building, Columns } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -76,19 +76,34 @@ const problemFormSchema = z.object({
     path: ["triggerSObject"],
 });
 
-const contentBlockSchema = z.object({
-  id: z.string(),
-  type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive']),
-  content: z.string().min(1, 'Content cannot be empty'),
-  language: z.string().optional(),
-  caption: z.string().optional(),
-});
+const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() =>
+  z.object({
+    id: z.string(),
+    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns']),
+    content: z.string(),
+    language: z.string().optional(),
+    caption: z.string().optional(),
+    columns: z.array(z.array(contentBlockSchema)).optional(),
+  }).refine(data => {
+    if (data.type !== 'columns' && data.type !== 'problem' && !data.content) {
+      return false;
+    }
+    if (data.type === 'problem' && !data.content) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Content cannot be empty for this block type.",
+    path: ["content"],
+  })
+);
+
 
 const lessonSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Lesson title is required'),
     isFree: z.boolean().optional(),
-    contentBlocks: z.array(contentBlockSchema).min(1, 'Each lesson must have at least one content block.'),
+    contentBlocks: z.array(contentBlockSchema),
 });
 
 const moduleSchema = z.object({
@@ -1986,9 +2001,8 @@ function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { mo
                          )} />
                     </div>
                      <div className="mt-4">
-                        <ContentBlockList 
-                            moduleIndex={moduleIndex} 
-                            lessonIndex={lessonIndex} 
+                        <ContentBlockList
+                            name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`}
                             control={control} 
                             allProblems={allProblems} 
                             loadingProblems={loadingProblems} 
@@ -2001,23 +2015,18 @@ function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { mo
     );
 }
 
-const contentBlockIcons = {
-    text: <FileText className="h-4 w-4" />,
-    image: <ImageIcon className="h-4 w-4" />,
-    video: <FileVideo className="h-4 w-4" />,
-    code: <Code className="h-4 w-4" />,
-    problem: <BrainCircuit className="h-4 w-4" />,
-    interactive: <MousePointerClick className="h-4 w-4" />,
-};
-
-function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, loadingProblems }: { moduleIndex: number, lessonIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
+function ContentBlockList({ name, control, allProblems, loadingProblems, isNested = false }: { name: string, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean, isNested?: boolean }) {
     const { fields, append, remove, move } = useFieldArray({
         control,
-        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`
+        name
     });
 
     const addBlock = (type: ContentBlock['type']) => {
-        append({ id: crypto.randomUUID(), type, content: '' });
+        const newBlock: any = { id: crypto.randomUUID(), type, content: '' };
+        if (type === 'columns') {
+            newBlock.columns = [ [], [] ]; // Initialize with two empty columns
+        }
+        append(newBlock);
     };
 
     const sensors = useSensors(
@@ -2035,6 +2044,24 @@ function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, load
             }
         }
     };
+    
+    const listContent = (
+        <div className="space-y-4">
+            {fields.map((block, blockIndex) => (
+                <div key={block.id}>
+                    <ContentBlockItem
+                        parentName={name}
+                        blockIndex={blockIndex}
+                        control={control}
+                        allProblems={allProblems}
+                        loadingProblems={loadingProblems}
+                        onRemove={() => remove(blockIndex)}
+                        isNested={isNested}
+                    />
+                </div>
+            ))}
+        </div>
+    );
 
 
     return (
@@ -2042,29 +2069,15 @@ function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, load
             <Label>Lesson Content</Label>
             {fields.length > 0 && (
                  <div className="space-y-4 rounded-md border p-4">
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={fields} strategy={verticalListSortingStrategy}>
-                            {fields.map((block, blockIndex) => (
-                                <DraggableContentBlock key={block.id} id={block.id}>
-                                    <div className="relative w-full">
-                                        <div className="absolute top-0 right-0 z-10">
-                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(blockIndex)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <ContentBlockItem
-                                            moduleIndex={moduleIndex}
-                                            lessonIndex={lessonIndex}
-                                            blockIndex={blockIndex}
-                                            control={control}
-                                            allProblems={allProblems}
-                                            loadingProblems={loadingProblems}
-                                        />
-                                    </div>
-                                </DraggableContentBlock>
-                            ))}
-                        </SortableContext>
-                    </DndContext>
+                    {!isNested ? (
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                            <SortableContext items={fields} strategy={verticalListSortingStrategy}>
+                                {listContent}
+                            </SortableContext>
+                        </DndContext>
+                    ) : (
+                        listContent
+                    )}
                 </div>
             )}
             <DropdownMenu>
@@ -2078,37 +2091,46 @@ function ContentBlockList({ moduleIndex, lessonIndex, control, allProblems, load
                     <DropdownMenuItem onSelect={() => addBlock('video')}><FileVideo className="mr-2 h-4 w-4" />Video</DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => addBlock('problem')}><BrainCircuit className="mr-2 h-4 w-4" />Problem</DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => addBlock('interactive')}><MousePointerClick className="mr-2 h-4 w-4" />Interactive</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => addBlock('columns')}><Columns className="mr-2 h-4 w-4" />Two Column Layout</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
     );
 }
 
-function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allProblems, loadingProblems }: { moduleIndex: number, lessonIndex: number, blockIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
+function ContentBlockItem({ parentName, blockIndex, control, allProblems, loadingProblems, onRemove, isNested }: { parentName: string, blockIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean, onRemove: () => void, isNested: boolean }) {
     const { resolvedTheme } = useTheme();
-    const blockType = useWatch({
-        control,
-        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.type`
-    });
+    
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: useWatch({ control, name: `${parentName}.${blockIndex}.id` }) });
 
-    const languageValue = useWatch({
-        control,
-        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.language`
-    });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 'auto',
+    };
+    
+    const block = useWatch({ control, name: `${parentName}.${blockIndex}`});
 
     const getBlockContent = () => {
-        switch (blockType) {
+        switch (block.type) {
             case 'text':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                return <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
                     <FormItem><FormLabel>Text (Markdown supported)</FormLabel><FormControl><Textarea placeholder="Enter Markdown-enabled text..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>
                 )} />;
             case 'image':
                 return (
                     <div className="space-y-4">
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                        <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
                             <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.caption`} render={({ field }) => (
+                         <FormField control={control} name={`${parentName}.${blockIndex}.caption`} render={({ field }) => (
                             <FormItem><FormLabel>Caption (optional)</FormLabel><FormControl><Input placeholder="A descriptive caption" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </div>
@@ -2116,9 +2138,9 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
             case 'code':
                 return (
                      <div className="space-y-4">
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.language`} render={({ field }) => (
+                        <FormField control={control} name={`${parentName}.${blockIndex}.language`} render={({ field }) => (
                             <FormItem><FormLabel>Language</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         <SelectItem value="apex">Apex</SelectItem>
@@ -2130,21 +2152,21 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
                                 </Select>
                             <FormMessage /></FormItem>
                         )} />
-                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                         <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
                             <FormItem><FormLabel>Code</FormLabel><FormControl>
                                 <div className="rounded-md border h-60 w-full">
-                                <MonacoEditor height="100%" language={languageValue || 'apex'} value={field.value} onChange={v => field.onChange(v || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
+                                <MonacoEditor height="100%" language={block.language || 'apex'} value={field.value} onChange={v => field.onChange(v || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
                                 </div>
                             </FormControl><FormMessage /></FormItem>
                         )} />
                     </div>
                 );
             case 'video':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                return <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
                     <FormItem><FormLabel>Video URL</FormLabel><FormControl><Input placeholder="https://www.youtube.com/watch?v=..." {...field} /></FormControl><FormMessage /></FormItem>
                 )} />;
             case 'problem':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                return <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
                     <FormItem><FormLabel>Problem</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger disabled={loadingProblems}><SelectValue placeholder="Select a problem..." /></SelectTrigger></FormControl>
@@ -2153,18 +2175,67 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, control, allPr
                     <FormMessage /></FormItem>
                 )} />;
             case 'interactive':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                return <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
                     <FormItem><FormLabel>Interactive HTML</FormLabel><FormControl>
                         <div className="rounded-md border h-96 w-full">
                             <MonacoEditor height="100%" language="html" value={field.value} onChange={v => field.onChange(v || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
                         </div>
                     </FormControl><FormMessage /></FormItem>
                 )} />;
+            case 'columns':
+                return (
+                    <div>
+                        <Label className="font-semibold">Two-Column Layout</Label>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                            {(block.columns || []).map((_, colIndex) => (
+                                <div key={`${block.id}-${colIndex}`} className="p-2 border rounded-md bg-muted/30 flex flex-col gap-2">
+                                   <h4 className="font-bold text-sm text-muted-foreground p-2">Column {colIndex + 1}</h4>
+                                    <ContentBlockList
+                                        control={control}
+                                        name={`${parentName}.${blockIndex}.columns.${colIndex}`}
+                                        allProblems={allProblems}
+                                        loadingProblems={loadingProblems}
+                                        isNested={true}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
             default:
                 return null;
         }
     };
 
-    return getBlockContent();
+    const mainContent = (
+         <div className="p-3 border rounded bg-card/50 flex items-start gap-2">
+            {!isNested && (
+                <span {...attributes} {...listeners} className="cursor-grab py-2 touch-none">
+                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                </span>
+            )}
+            <div className="flex-grow">
+                 <div className="relative w-full">
+                    <div className="absolute top-0 right-0 z-10">
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={onRemove}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    {getBlockContent()}
+                </div>
+            </div>
+        </div>
+    );
+    
+     if (isNested) {
+        return mainContent;
+    }
+
+    return (
+        <div ref={setNodeRef} style={style} className={cn(isDragging && "shadow-lg opacity-90")}>
+            {mainContent}
+        </div>
+    );
 }
+
 // #endregion

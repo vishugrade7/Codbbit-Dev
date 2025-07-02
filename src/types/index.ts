@@ -1,4 +1,5 @@
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -80,10 +81,11 @@ export type Contribution = {
 
 export type ContentBlock = {
   id: string;
-  type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive';
+  type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive' | 'columns';
   content: string;
   language?: string;
   caption?: string;
+  columns?: ContentBlock[][];
 };
 
 export type Lesson = {
