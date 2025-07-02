@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -62,11 +63,15 @@ export default function Chatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100]">
+    <div className={cn(
+        "fixed bottom-6 right-6 z-[100]",
+        !isOpen && "pointer-events-none"
+    )}>
       {/* Chat Window */}
       <div className={cn(
         "transition-all duration-300 ease-in-out origin-bottom-right",
-        isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 pointer-events-none"
+        isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 pointer-events-none",
+        isOpen && "pointer-events-auto"
       )}>
         <Card className="w-80 h-[28rem] sm:w-96 sm:h-[32rem] flex flex-col shadow-2xl rounded-2xl overflow-hidden">
           <CardHeader className="flex flex-row items-center gap-3 p-4 bg-gradient-to-r from-primary to-blue-500 text-primary-foreground">
@@ -140,7 +145,7 @@ export default function Chatbot() {
        {/* Floating Action Button */}
        <Button 
             size="icon" 
-            className="w-16 h-16 rounded-full shadow-lg absolute bottom-0 right-0 bg-primary hover:bg-primary/90"
+            className="w-16 h-16 rounded-full shadow-lg absolute bottom-0 right-0 bg-primary hover:bg-primary/90 pointer-events-auto"
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close chat" : "Open chat"}
         >
