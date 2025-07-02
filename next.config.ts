@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
         hostname: 'studio.firebase.google.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'codolio.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
