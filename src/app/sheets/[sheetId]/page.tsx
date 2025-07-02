@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
+import { toggleSheetSubscription } from '../actions';
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -111,33 +112,21 @@ export default function SheetDisplayPage() {
         if (isSubscribing || !db) return;
     
         setIsSubscribing(true);
+    
+        const result = await toggleSheetSubscription(authUser.uid, sheetId, isSubscribed);
 
-        const sheetDocRef = doc(db, 'problem-sheets', sheetId);
-        const userDocRef = doc(db, 'users', authUser.uid);
-
-        try {
-            if (isSubscribed) {
-                // Unsubscribe
-                await updateDoc(sheetDocRef, { subscribers: arrayRemove(authUser.uid) });
-                await updateDoc(userDocRef, { subscribedSheetIds: arrayRemove(sheetId) });
-            } else {
-                // Subscribe
-                await updateDoc(sheetDocRef, { subscribers: arrayUnion(authUser.uid) });
-                await updateDoc(userDocRef, { subscribedSheetIds: arrayUnion(sheetId) });
-            }
+        if (result.success) {
             toast({
                 title: isSubscribed ? 'Unsubscribed successfully' : 'Subscribed successfully',
             });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        } else {
             toast({
                 variant: 'destructive',
                 title: 'An error occurred',
-                description: errorMessage,
+                description: result.error,
             });
-        } finally {
-            setIsSubscribing(false);
         }
+        setIsSubscribing(false);
     };
 
     const getDifficultyBadgeClass = (difficulty: string) => {
