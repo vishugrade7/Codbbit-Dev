@@ -88,6 +88,8 @@ const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; prob
         } else if (block.content.includes('youtu.be/')) {
              const videoId = block.content.split('/').pop()?.split('?')[0];
              videoUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (block.content.includes('box.com/s/')) {
+            videoUrl = block.content.replace('/s/', '/embed/s/');
         }
          return (
             <div className="aspect-video my-4">
@@ -283,7 +285,7 @@ export default function LessonPage() {
                               className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
                               aria-hidden="true"
                             >
-                              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-10">
+                              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-20">
                                 {Array.from({ length: 200 }).map((_, i) => (
                                   <span
                                     key={i}
