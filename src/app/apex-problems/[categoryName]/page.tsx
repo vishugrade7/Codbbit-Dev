@@ -15,16 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Filter } from "lucide-react";
+import { Loader2, Search, CheckCircle2, ArrowLeft, Circle } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CategoryProblemsPage() {
   const params = useParams();
@@ -87,8 +85,6 @@ export default function CategoryProblemsPage() {
     }
   };
 
-  const activeFilterCount = (difficultyFilter !== 'All' ? 1 : 0) + (statusFilter !== 'All' ? 1 : 0);
-
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
@@ -106,46 +102,38 @@ export default function CategoryProblemsPage() {
             </div>
         </div>
 
-        <div className="mb-8">
-          <div className="relative">
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search problems by title..."
-              className="w-full pl-10 pr-12"
+              className="w-full pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-             <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Filter className="h-5 w-5" />
-                        <span className="sr-only">Filters</span>
-                         {activeFilterCount > 0 && (
-                            <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 justify-center p-0 rounded-full text-xs">{activeFilterCount}</Badge>
-                        )}
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                        <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Filter by Difficulty</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                        <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Solved">Solved</SelectItem>
+                    <SelectItem value="Unsolved">Unsolved</SelectItem>
+                </SelectContent>
+            </Select>
+            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="All">All Difficulties</SelectItem>
+                    <SelectItem value="Easy">Easy</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Hard">Hard</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
         </div>
 
