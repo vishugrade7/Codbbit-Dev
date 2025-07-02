@@ -20,7 +20,7 @@ import Image from "next/image";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategory, deleteCategory } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "./actions";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -1202,16 +1202,25 @@ function AddCategoryModal({ isOpen, onOpenChange, onCategoryAdded }: { isOpen: b
 // #endregion
 
 // #region ManageCategoriesModal
+type EditableCategory = {
+    originalName: string;
+    name: string;
+    imageUrl?: string;
+    problemCount: number;
+}
+
 function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onCategoriesUpdated: () => void }) {
     const { toast } = useToast();
-    const [categories, setCategories] = useState<{ name: string; imageUrl?: string; problemCount: number }[]>([]);
+    const [editableCategories, setEditableCategories] = useState<EditableCategory[]>([]);
     const [loading, setLoading] = useState(true);
+    const [savingState, setSavingState] = useState<{ [key: string]: boolean }>({});
+
 
     const fetchCategories = useCallback(async () => {
         setLoading(true);
         try {
             const data = await getProblemCategories();
-            setCategories(data);
+            setEditableCategories(data.map(c => ({...c, originalName: c.name })));
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to load categories.' });
         } finally {
@@ -1225,22 +1234,26 @@ function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { 
         }
     }, [isOpen, fetchCategories]);
     
-    const handleUrlChange = (categoryName: string, newUrl: string) => {
-        setCategories(cats => cats.map(cat => cat.name === categoryName ? { ...cat, imageUrl: newUrl } : cat));
+    const handleFieldChange = (index: number, field: 'name' | 'imageUrl', value: string) => {
+        const updated = [...editableCategories];
+        updated[index] = { ...updated[index], [field]: value };
+        setEditableCategories(updated);
     };
 
-    const handleSave = async (categoryName: string) => {
-        const category = categories.find(c => c.name === categoryName);
-        if (!category) return;
+    const handleSave = async (index: number) => {
+        const category = editableCategories[index];
+        setSavingState(prev => ({...prev, [category.originalName]: true}));
         
-        const result = await updateCategory(categoryName, category.imageUrl || '');
+        const result = await updateCategoryDetails(category.originalName, category.name, category.imageUrl || '');
         if (result.success) {
             toast({ title: "Success", description: result.message });
             onCategoriesUpdated();
+            // Refetch to get the latest state including new original names
+            fetchCategories();
         } else {
             toast({ variant: 'destructive', title: "Error", description: result.error });
-            fetchCategories();
         }
+        setSavingState(prev => ({...prev, [category.originalName]: false}));
     };
     
     const handleDelete = async (categoryName: string) => {
@@ -1259,25 +1272,42 @@ function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { 
             <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>Manage Categories</DialogTitle>
-                    <DialogDescription>Edit image URLs or delete empty categories.</DialogDescription>
+                    <DialogDescription>Edit names, image URLs, or delete empty categories.</DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                     {loading ? (
                         <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
                     ) : (
                         <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-4">
-                            {categories.map(cat => (
-                                <div key={cat.name} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50">
+                            {editableCategories.map((cat, index) => (
+                                <div key={cat.originalName} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50">
                                     <div className="flex-1 space-y-2">
-                                        <p className="font-semibold">{cat.name} <span className="text-muted-foreground font-normal">({cat.problemCount} problems)</span></p>
-                                        <Input
-                                            value={cat.imageUrl}
-                                            onChange={e => handleUrlChange(cat.name, e.target.value)}
-                                            placeholder="Image URL"
-                                        />
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <Label htmlFor={`name-${index}`} className="text-xs">Category Name</Label>
+                                                <Input
+                                                    id={`name-${index}`}
+                                                    value={cat.name}
+                                                    onChange={e => handleFieldChange(index, 'name', e.target.value)}
+                                                    placeholder="Category Name"
+                                                />
+                                            </div>
+                                            <p className="text-sm text-muted-foreground mt-auto pb-2 whitespace-nowrap">({cat.problemCount} problems)</p>
+                                        </div>
+                                         <div>
+                                            <Label htmlFor={`url-${index}`} className="text-xs">Image URL</Label>
+                                            <Input
+                                                id={`url-${index}`}
+                                                value={cat.imageUrl}
+                                                onChange={e => handleFieldChange(index, 'imageUrl', e.target.value)}
+                                                placeholder="Image URL"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <Button size="sm" onClick={() => handleSave(cat.name)}>Save</Button>
+                                        <Button size="sm" onClick={() => handleSave(index)} disabled={savingState[cat.originalName]}>
+                                            {savingState[cat.originalName] ? <Loader2 className="h-4 w-4 animate-spin"/> : "Save"}
+                                        </Button>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button size="sm" variant="destructive" disabled={cat.problemCount > 0}>Delete</Button>
@@ -1298,7 +1328,7 @@ function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { 
                                     </div>
                                 </div>
                             ))}
-                             {categories.length === 0 && (
+                             {editableCategories.length === 0 && (
                                 <p className="text-muted-foreground text-center py-8">No categories found.</p>
                             )}
                         </div>

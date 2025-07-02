@@ -2,7 +2,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Problem, Course, User, NavLink, Badge, ApexProblemsData } from '@/types';
 import { z } from "zod";
@@ -532,18 +532,54 @@ export async function getProblemCategories(): Promise<{ name: string; imageUrl?:
     })).sort((a,b) => a.name.localeCompare(b.name));
 }
 
-export async function updateCategory(categoryName: string, newImageUrl: string) {
-     if (!categoryName) {
-        return { success: false, error: 'Category name is required.' };
+export async function updateCategoryDetails(oldName: string, newName: string, newImageUrl: string) {
+    if (!oldName || !newName) {
+        return { success: false, error: 'Category names are required.' };
     }
 
     const apexDocRef = doc(db, 'problems', 'Apex');
+    const docSnap = await getDoc(apexDocRef);
+    if (!docSnap.exists()) {
+        return { success: false, error: "Apex problems document not found." };
+    }
+
+    const categories = docSnap.data().Category as ApexProblemsData;
+
+    if (!categories[oldName]) {
+        return { success: false, error: `Category '${oldName}' not found.` };
+    }
+
+    // If renaming, check if new name already exists
+    if (oldName !== newName && categories[newName]) {
+        return { success: false, error: `Category '${newName}' already exists.` };
+    }
 
     try {
-        await updateDoc(apexDocRef, {
-            [`Category.${categoryName}.imageUrl`]: newImageUrl
-        });
-        return { success: true, message: `Category '${categoryName}' updated successfully.` };
+        if (oldName === newName) {
+            // Just update image URL
+            await updateDoc(apexDocRef, {
+                [`Category.${newName}.imageUrl`]: newImageUrl || ''
+            });
+        } else {
+            // Rename and update image URL.
+            // This is a complex operation if we consider migrating user data.
+            // For now, we just rename the category key.
+            // WARNING: This will lead to data inconsistencies for user stats.
+            const categoryData = categories[oldName];
+            categoryData.imageUrl = newImageUrl || '';
+
+            const batch = writeBatch(db);
+            
+            // Set new category data
+            batch.update(apexDocRef, { [`Category.${newName}`]: categoryData });
+            
+            // Delete old category
+            batch.update(apexDocRef, { [`Category.${oldName}`]: deleteField() });
+
+            await batch.commit();
+        }
+        return { success: true, message: "Category updated successfully." };
+
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
