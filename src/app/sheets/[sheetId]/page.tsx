@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -99,6 +100,26 @@ export default function SheetDisplayPage() {
         return Array.from(categorySet);
     }, [problems]);
     
+    const difficultyStats = useMemo(() => {
+        if (!problems || problems.length === 0) {
+            return { Easy: 0, Medium: 0, Hard: 0, total: 0 };
+        }
+        const stats = problems.reduce((acc, problem) => {
+            const difficulty = problem.difficulty as keyof typeof acc;
+            if (difficulty in acc) {
+                acc[difficulty]++;
+            }
+            return acc;
+        }, { Easy: 0, Medium: 0, Hard: 0 });
+
+        return { ...stats, total: problems.length };
+    }, [problems]);
+
+    const getPercentage = (count: number, total: number) => {
+        if (total === 0) return 0;
+        return (count / total) * 100;
+    };
+
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
         toast({ title: 'Link copied to clipboard!' });
@@ -225,14 +246,46 @@ export default function SheetDisplayPage() {
                                 </div>
                             </div>
                         </div>
-                        {uniqueCategories.length > 0 && (
-                            <div className="border-t pt-4 mt-6">
-                                <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {uniqueCategories.map(category => (
-                                        <Badge key={category} variant="secondary">{category}</Badge>
-                                    ))}
-                                </div>
+                        {(uniqueCategories.length > 0 || problems.length > 0) && (
+                            <div className="border-t pt-4 mt-6 space-y-6">
+                                {uniqueCategories.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {uniqueCategories.map(category => (
+                                                <Badge key={category} variant="secondary">{category}</Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {problems.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-16 text-muted-foreground">Easy</span>
+                                                <div className="flex-1 bg-muted rounded-full h-2">
+                                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                                </div>
+                                                <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-16 text-muted-foreground">Medium</span>
+                                                <div className="flex-1 bg-muted rounded-full h-2">
+                                                    <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                                </div>
+                                                <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-16 text-muted-foreground">Hard</span>
+                                                <div className="flex-1 bg-muted rounded-full h-2">
+                                                    <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                                </div>
+                                                <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </CardHeader>
