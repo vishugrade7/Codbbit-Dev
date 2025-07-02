@@ -73,6 +73,7 @@ const lessonSchema = z.object({
     title: z.string().min(1, 'Lesson title is required'),
     contentType: z.enum(['video', 'pdf', 'text', 'problem']),
     content: z.string().min(1, 'Lesson content is required'),
+    isFree: z.boolean().optional(),
 });
 
 const moduleSchema = z.object({
@@ -1420,6 +1421,31 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const formMode = course ? 'edit' : 'add';
+    const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
+    const [loadingProblems, setLoadingProblems] = useState(true);
+
+    useEffect(() => {
+        const fetchAllProblems = async () => {
+            setLoadingProblems(true);
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data().Category as ApexProblemsData;
+                    const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                    );
+                    setAllProblems(problems);
+                }
+            } catch (error) {
+                console.error("Error fetching problems:", error);
+                toast({ variant: 'destructive', title: 'Failed to load problems' });
+            } finally {
+                setLoadingProblems(false);
+            }
+        };
+        fetchAllProblems();
+    }, [toast]);
 
     const form = useForm<z.infer<typeof courseFormSchema>>({
         resolver: zodResolver(courseFormSchema),
@@ -1429,7 +1455,7 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '' }] }],
+            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '', isFree: true }] }],
             isPublished: course?.isPublished || false,
         },
     });
@@ -1514,13 +1540,18 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 border-t">
-                                        <LessonList moduleIndex={moduleIndex} control={form.control} />
+                                        <LessonList
+                                            moduleIndex={moduleIndex}
+                                            control={form.control}
+                                            allProblems={allProblems}
+                                            loadingProblems={loadingProblems}
+                                        />
                                         <Button type="button" variant="secondary" size="sm" className="mt-4" onClick={() => removeModule(moduleIndex)}><Trash2 className="mr-2 h-4 w-4"/>Remove Module</Button>
                                     </AccordionContent>
                                 </AccordionItem>
                             ))}
                         </Accordion>
-                        <Button type="button" variant="outline" onClick={() => appendModule({ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '' }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
+                        <Button type="button" variant="outline" onClick={() => appendModule({ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', contentType: 'text', content: '', isFree: true }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
                     </CardContent>
                 </Card>
 
@@ -1543,35 +1574,99 @@ const lessonIcons = {
     problem: <BrainCircuit className="h-4 w-4" />
 };
 
-function LessonList({ moduleIndex, control }: { moduleIndex: number, control: any }) {
+function LessonList({ moduleIndex, control, allProblems, loadingProblems }: { moduleIndex: number, control: any, allProblems: ProblemWithCategory[], loadingProblems: boolean }) {
     const { fields, append, remove } = useFieldArray({
         control,
         name: `modules.${moduleIndex}.lessons`
     });
+
+    const LessonContentInput = ({ lessonIndex }: { lessonIndex: number }) => {
+        const contentType = useWatch({
+            control,
+            name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentType`
+        });
+
+        switch (contentType) {
+            case 'video':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
+                    <FormItem><FormLabel>Video URL</FormLabel><FormControl><Input placeholder="https://www.youtube.com/watch?v=..." {...field} /></FormControl><FormMessage /></FormItem>
+                )} />;
+            case 'pdf':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
+                    <FormItem><FormLabel>PDF URL</FormLabel><FormControl><Input placeholder="https://example.com/document.pdf" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />;
+            case 'problem':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Problem</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger disabled={loadingProblems}>
+                                    <SelectValue placeholder="Select a problem to link..." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {loadingProblems ? (
+                                    <SelectItem value="loading" disabled>Loading problems...</SelectItem>
+                                ) : (
+                                    allProblems.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                                    ))
+                                )}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )} />;
+            case 'text':
+            default:
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Text Content</FormLabel>
+                        <FormControl><Textarea placeholder="Enter content here. You can use Markdown for formatting, and include HTML for images (<img src='...'>) and videos." {...field} rows={4} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />;
+        }
+    };
 
     return (
         <div className="space-y-3 pl-6 border-l-2 border-dashed">
             {fields.map((lessonItem, lessonIndex) => (
                 <div key={lessonItem.id} className="p-4 border rounded-md bg-background/50 relative">
                      <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive" onClick={() => remove(lessonIndex)}><Trash2 className="h-4 w-4" /></Button>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
                             <FormItem><FormLabel>Lesson Title</FormLabel><FormControl><Input placeholder={`Lesson ${lessonIndex + 1}`} {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentType`} render={({ field }) => (
                             <FormItem><FormLabel>Content Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger>{lessonIcons[field.value as keyof typeof lessonIcons]}<span className="ml-2"><SelectValue /></span></SelectTrigger></FormControl><SelectContent>
-                                <SelectItem value="video">Video</SelectItem><SelectItem value="pdf">PDF</SelectItem><SelectItem value="text">Text / Markdown</SelectItem><SelectItem value="problem">Problem</SelectItem>
+                                <SelectItem value="text">Text / HTML</SelectItem>
+                                <SelectItem value="video">Video</SelectItem>
+                                <SelectItem value="pdf">PDF</SelectItem>
+                                <SelectItem value="problem">Problem</SelectItem>
                             </SelectContent></Select><FormMessage /></FormItem>
                         )} />
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm h-full mt-auto">
+                                <div className="space-y-0.5">
+                                    <FormLabel>Free Lesson</FormLabel>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                         )} />
                     </div>
                      <div className="mt-4">
-                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`} render={({ field }) => (
-                            <FormItem><FormLabel>Content</FormLabel><FormControl><Textarea placeholder="Enter video URL, PDF URL, Markdown, or Problem ID..." {...field} rows={4} /></FormControl><FormMessage /></FormItem>
-                        )} />
+                        <LessonContentInput lessonIndex={lessonIndex} />
                      </div>
                 </div>
             ))}
-             <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: crypto.randomUUID(), title: '', contentType: 'text', content: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
+             <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: crypto.randomUUID(), title: '', contentType: 'text', content: '', isFree: true })}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
         </div>
     );
 }
