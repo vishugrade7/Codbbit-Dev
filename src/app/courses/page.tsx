@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Course } from "@/types";
 
@@ -27,9 +27,18 @@ export default function Courses() {
       setLoading(true);
       try {
         const coursesRef = collection(db, "courses");
-        const q = query(coursesRef, where("isPublished", "==", true), orderBy("createdAt", "desc"));
+        // Removed orderBy to avoid needing a composite index, sorting will be done on the client.
+        const q = query(coursesRef, where("isPublished", "==", true));
         const querySnapshot = await getDocs(q);
         const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+        
+        // Sort client-side to ensure newest courses appear first.
+        coursesData.sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
         setCourses(coursesData);
       } catch (error) {
         console.error("Error fetching courses:", error);
@@ -65,7 +74,7 @@ export default function Courses() {
                     <div className="aspect-video relative overflow-hidden rounded-t-lg">
                        <Image 
                          src={course.thumbnailUrl || 'https://placehold.co/600x400.png'} 
-                         alt={course.title}
+                         alt={course.title || 'Course thumbnail'}
                          fill
                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                          className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -74,7 +83,7 @@ export default function Courses() {
                   </CardHeader>
                   <CardContent className="p-6 flex flex-col flex-grow">
                     <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
-                    <CardTitle className="text-xl mb-2">{course.title}</CardTitle>
+                    <CardTitle className="text-xl mb-2">{course.title || 'Untitled Course'}</CardTitle>
                     <CardDescription className="flex-grow">{course.description}</CardDescription>
                   </CardContent>
                   <CardFooter>
