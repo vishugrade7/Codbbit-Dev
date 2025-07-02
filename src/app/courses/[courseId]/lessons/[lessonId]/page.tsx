@@ -50,7 +50,7 @@ const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; prob
     case 'image':
       return (
         <div className="my-4">
-          <Image src={block.content} alt={block.caption || 'Lesson image'} width={800} height={450} className="object-contain rounded-lg border mx-auto" />
+          <Image src={block.content} alt={block.caption || 'Lesson image'} width={800} height={450} className="object-contain rounded-lg border mx-auto" onContextMenu={(e) => e.preventDefault()} />
           {block.caption && <p className="text-center text-sm text-muted-foreground mt-2">{block.caption}</p>}
         </div>
       );
@@ -91,7 +91,7 @@ const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; prob
         }
          return (
             <div className="aspect-video my-4">
-                <iframe className="w-full h-full rounded-lg" src={videoUrl} title="Lesson Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                <iframe onContextMenu={(e) => e.preventDefault()} className="w-full h-full rounded-lg" src={videoUrl} title="Lesson Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
             </div>
         );
     }

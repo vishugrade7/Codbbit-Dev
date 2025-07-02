@@ -87,3 +87,9 @@
     font-family: var(--font-inter);
   }
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
