@@ -385,9 +385,22 @@ export async function getNavigationSettings(): Promise<NavLink[]> {
     const docSnap = await getDoc(settingsDocRef);
 
     if (docSnap.exists()) {
-        const data = docSnap.data();
-        return data.links || defaultNavLinks;
+        const savedLinks = (docSnap.data().links || []) as NavLink[];
+        const savedLinkIds = new Set(savedLinks.map(link => link.id));
+        
+        // Find default links that are not in the saved links
+        const missingLinks = defaultNavLinks.filter(defaultLink => !savedLinkIds.has(defaultLink.id));
+
+        if (missingLinks.length > 0) {
+            // If there are new links to add, merge them and update Firestore
+            const updatedLinks = [...savedLinks, ...missingLinks];
+            await setDoc(settingsDocRef, { links: updatedLinks });
+            return updatedLinks;
+        }
+
+        return savedLinks;
     } else {
+        // If the document doesn't exist, create it with the defaults
         await setDoc(settingsDocRef, { links: defaultNavLinks });
         return defaultNavLinks;
     }
