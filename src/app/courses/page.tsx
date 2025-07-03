@@ -69,7 +69,7 @@ export default function Courses() {
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
         ) : courses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {courses.map((course) => {
               const isLocked = course.isPremium && !isPro;
               return (
@@ -86,16 +86,16 @@ export default function Courses() {
                          src={course.thumbnailUrl || 'https://placehold.co/600x400.png'} 
                          alt={course.title || 'Course thumbnail'}
                          fill
-                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                          className={cn(
                            "object-cover transition-transform duration-300 group-hover:scale-105",
                            isLocked && "filter blur-sm"
                          )}
                        />
                     </div>
-                    <div className="p-4 flex flex-col">
+                    <div className="p-3 flex flex-col">
                         <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
-                        <h3 className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
+                        <h3 className="font-semibold leading-snug group-hover:text-primary transition-colors text-base">
                             {course.title || 'Untitled Course'}
                         </h3>
                     </div>
