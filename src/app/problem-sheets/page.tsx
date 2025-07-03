@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const cardColorClasses = [
   "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
@@ -31,9 +32,10 @@ const cardColorClasses = [
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user: authUser } = useAuth();
+  const { user: authUser, userData } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const [filterMode, setFilterMode] = useState<'all' | 'subscribed'>('all');
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -58,6 +60,15 @@ export default function ProblemSheetsListPage() {
     fetchSheets();
   }, []);
 
+  const filteredSheets = useMemo(() => {
+    if (filterMode === 'subscribed') {
+      if (!userData?.subscribedSheetIds) return [];
+      const subscribedIds = new Set(userData.subscribedSheetIds);
+      return sheets.filter(sheet => subscribedIds.has(sheet.id));
+    }
+    return sheets;
+  }, [sheets, filterMode, userData]);
+
   const getRelativeDate = (date: any) => {
     if (!date) return 'Just now';
     try {
@@ -78,7 +89,7 @@ export default function ProblemSheetsListPage() {
                     Browse community-created problem sheets or create your own.
                 </p>
             </div>
-            <Button asChild>
+             <Button asChild>
                 <Link href="/problem-sheets/create">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create New Sheet
@@ -86,13 +97,22 @@ export default function ProblemSheetsListPage() {
             </Button>
         </div>
 
+        <div className="flex justify-between items-center mb-8">
+            <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)} className="w-auto">
+                <TabsList>
+                    <TabsTrigger value="all">All Sheets</TabsTrigger>
+                    <TabsTrigger value="subscribed" disabled={!authUser}>My Sheets</TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
-        ) : sheets.length > 0 ? (
+        ) : filteredSheets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sheets.map((sheet, index) => {
+            {filteredSheets.map((sheet, index) => {
               const isCreator = authUser?.uid === sheet.createdBy;
               const subscribersCount = sheet.subscribers?.length || 0;
               const colorClass = cardColorClasses[index % cardColorClasses.length];
@@ -162,8 +182,14 @@ export default function ProblemSheetsListPage() {
         ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No problem sheets yet</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Get started by creating a new sheet.</p>
+                <h3 className="mt-4 text-lg font-semibold">
+                    {filterMode === 'subscribed' ? 'No Subscribed Sheets' : 'No Problem Sheets Yet'}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {filterMode === 'subscribed'
+                        ? 'Subscribe to sheets to see them here.'
+                        : 'Get started by creating a new sheet.'}
+                </p>
             </div>
         )}
       </main>
