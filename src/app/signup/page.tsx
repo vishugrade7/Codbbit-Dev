@@ -150,6 +150,7 @@ export default function SignupPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    sessionStorage.setItem('isLoggingIn', 'true');
 
     if (!auth || !db) {
         toast({
@@ -158,6 +159,7 @@ export default function SignupPage() {
             description: "Firebase is not configured. Please check your environment variables.",
         });
         setIsLoading(false);
+        sessionStorage.removeItem('isLoggingIn');
         return;
     }
 
@@ -215,6 +217,7 @@ export default function SignupPage() {
       });
     } finally {
         setIsLoading(false);
+        sessionStorage.removeItem('isLoggingIn');
     }
   }
 

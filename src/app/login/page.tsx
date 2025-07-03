@@ -54,6 +54,7 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    sessionStorage.setItem('isLoggingIn', 'true');
 
     if (!auth) {
         toast({
@@ -62,6 +63,7 @@ export default function LoginPage() {
             description: "Firebase is not configured. Please check your environment variables.",
         });
         setIsLoading(false);
+        sessionStorage.removeItem('isLoggingIn');
         return;
     }
 
@@ -88,6 +90,7 @@ export default function LoginPage() {
       });
     } finally {
       setIsLoading(false);
+      sessionStorage.removeItem('isLoggingIn');
     }
   }
 

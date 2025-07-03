@@ -53,12 +53,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
         const localSessionId = sessionStorage.getItem('appSessionId');
+        const isLoggingIn = sessionStorage.getItem('isLoggingIn') === 'true';
 
         if (doc.exists()) {
           const currentData = doc.data() as AppUser;
           
-          // Session validation: If a session ID exists locally and in the DB, but they don't match, log out.
-          if (localSessionId && currentData.activeSessionId && currentData.activeSessionId !== localSessionId) {
+          // Session validation
+          if (!isLoggingIn && localSessionId && currentData.activeSessionId && currentData.activeSessionId !== localSessionId) {
             auth?.signOut();
             toast({
               variant: 'destructive',
