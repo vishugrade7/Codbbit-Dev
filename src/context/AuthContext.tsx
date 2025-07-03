@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (doc.exists()) {
           const currentData = doc.data() as AppUser;
           
-          // Session validation
+          // Session validation for other devices
           if (!isLoggingIn && localSessionId && currentData.activeSessionId && currentData.activeSessionId !== localSessionId) {
             auth?.signOut();
             toast({
@@ -67,6 +67,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               description: 'Your account has been logged into from another device.',
             });
             return; // Stop further processing to prevent flicker
+          }
+
+          // If we are in the process of logging in, and we've successfully received the snapshot
+          // with the new session data, we can now safely remove the flag.
+          if (isLoggingIn && localSessionId && currentData.activeSessionId === localSessionId) {
+              sessionStorage.removeItem('isLoggingIn');
           }
 
           setUserData(currentData);

@@ -88,9 +88,9 @@ export default function LoginPage() {
         title: "Login failed",
         description: "Invalid email or password. Please try again.",
       });
+      sessionStorage.removeItem('isLoggingIn'); // Remove flag on failure
     } finally {
       setIsLoading(false);
-      sessionStorage.removeItem('isLoggingIn');
     }
   }
 

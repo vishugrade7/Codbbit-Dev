@@ -215,9 +215,9 @@ export default function SignupPage() {
             ? 'This email is already associated with an account.'
             : 'An unexpected error occurred. Please try again.',
       });
+      sessionStorage.removeItem('isLoggingIn'); // Remove flag on failure
     } finally {
         setIsLoading(false);
-        sessionStorage.removeItem('isLoggingIn');
     }
   }
 
