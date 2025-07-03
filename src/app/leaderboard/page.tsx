@@ -251,8 +251,8 @@ export default function Leaderboard() {
             </div>
             <div className="lg:col-span-2">
               {suggestedProblem ? (
-                  <Card className="bg-gradient-to-br from-card to-muted/50">
-                    <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
+                    <CardContent className="p-6 flex flex-col h-full">
                         <div className="flex-grow">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -270,7 +270,7 @@ export default function Leaderboard() {
                                 </Badge>
                             </div>
                         </div>
-                        <Button asChild className="w-full sm:w-auto mt-4 sm:mt-0 flex-shrink-0">
+                        <Button asChild className="w-full mt-4 flex-shrink-0">
                           <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
                             Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
                           </Link>
