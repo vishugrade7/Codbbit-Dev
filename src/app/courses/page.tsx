@@ -69,13 +69,13 @@ export default function Courses() {
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
         ) : courses.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {courses.map((course) => {
               const isLocked = course.isPremium && !isPro;
               return (
               <Link key={course.id} href={`/courses/${course.id}`} className="block group">
-                <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30">
-                  <CardContent className="p-0 flex flex-col">
+                <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30 h-full flex flex-col">
+                  <CardContent className="p-0 flex flex-col flex-grow">
                     <div className="aspect-video relative">
                        {isLocked && (
                           <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center">
@@ -93,9 +93,9 @@ export default function Courses() {
                          )}
                        />
                     </div>
-                    <div className="p-3 flex flex-col">
+                    <div className="p-4 flex flex-col flex-grow">
                         <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
-                        <h3 className="font-semibold leading-snug group-hover:text-primary transition-colors text-base">
+                        <h3 className="font-semibold leading-snug group-hover:text-primary transition-colors text-sm">
                             {course.title || 'Untitled Course'}
                         </h3>
                     </div>
