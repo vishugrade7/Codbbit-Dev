@@ -193,8 +193,8 @@ export default function Leaderboard() {
         {currentUserEntry && (
           <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-              <Card className="bg-primary/10 border-primary/20 shadow-lg">
-                <CardContent className="p-6">
+              <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
+                <CardContent className="p-6 flex flex-col flex-grow">
                   <Link href={`/profile/${currentUserEntry.username}`} className="block">
                       <div className="flex justify-between items-start">
                           <div className="flex items-center gap-4">
@@ -216,7 +216,7 @@ export default function Leaderboard() {
                           </div>
                       </div>
                   </Link>
-                  <div className="mt-4 flex justify-between items-end">
+                  <div className="mt-auto pt-4 flex justify-between items-end">
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                             {currentUserEntry.company && (
                                 <div className="flex items-center gap-1.5">
