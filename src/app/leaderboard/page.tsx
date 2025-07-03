@@ -18,8 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -299,68 +299,50 @@ export default function Leaderboard() {
           </div>
         )}
         
-        <Card className="mb-8">
-            <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1">
-                        <Label htmlFor="filter-type" className="text-xs text-muted-foreground">SCOPE</Label>
-                        <Select
-                            value={filterType}
-                            onValueChange={(value: "Global" | "Country" | "Company") => setFilterType(value)}
-                        >
-                            <SelectTrigger id="filter-type" className="mt-1">
-                                <SelectValue placeholder="Select scope" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Global">Global</SelectItem>
-                                <SelectItem value="Country">By Country</SelectItem>
-                                <SelectItem value="Company">By Company</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+        <div className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-4">
+            <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-auto">
+                <TabsList>
+                    <TabsTrigger value="Global">Global</TabsTrigger>
+                    <TabsTrigger value="Country">By Country</TabsTrigger>
+                    <TabsTrigger value="Company">By Company</TabsTrigger>
+                </TabsList>
+            </Tabs>
 
-                    {filterType === "Country" && (
-                        <div className="flex-1">
-                            <Label htmlFor="country-filter" className="text-xs text-muted-foreground">COUNTRY</Label>
-                            <Select
-                                value={filterValue ?? ''}
-                                onValueChange={(value) => setFilterValue(value)}
-                                disabled={countryOptions.length === 0}
-                            >
-                                <SelectTrigger id="country-filter" className="mt-1">
-                                    <SelectValue placeholder="Select a country" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {countryOptions.map(country => (
-                                        <SelectItem key={country} value={country}>{country}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
+            {filterType === "Country" && (
+                <Select
+                    value={filterValue ?? ''}
+                    onValueChange={(value) => setFilterValue(value)}
+                    disabled={countryOptions.length === 0}
+                >
+                    <SelectTrigger className="w-full md:w-[220px]">
+                        <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {countryOptions.map(country => (
+                            <SelectItem key={country} value={country}>{country}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
 
-                    {filterType === "Company" && (
-                        <div className="flex-1">
-                            <Label htmlFor="company-filter" className="text-xs text-muted-foreground">COMPANY</Label>
-                            <Select
-                                value={filterValue ?? ''}
-                                onValueChange={(value) => setFilterValue(value)}
-                                disabled={companyOptions.length === 0}
-                            >
-                                <SelectTrigger id="company-filter" className="mt-1">
-                                    <SelectValue placeholder="Select a company" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {companyOptions.map(company => (
-                                        <SelectItem key={company} value={company}>{company}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+            {filterType === "Company" && (
+                <Select
+                    value={filterValue ?? ''}
+                    onValueChange={(value) => setFilterValue(value)}
+                    disabled={companyOptions.length === 0}
+                >
+                    <SelectTrigger className="w-full md:w-[220px]">
+                        <SelectValue placeholder="Select a company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {companyOptions.map(company => (
+                            <SelectItem key={company} value={company}>{company}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+        </div>
+
 
         <div className="rounded-lg border">
             <Table>
