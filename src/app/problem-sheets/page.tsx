@@ -35,7 +35,7 @@ export default function ProblemSheetsListPage() {
   const { user: authUser, userData } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const [filterMode, setFilterMode] = useState<'all' | 'subscribed'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'my-sheets' | 'subscribed'>('all');
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -66,8 +66,12 @@ export default function ProblemSheetsListPage() {
       const subscribedIds = new Set(userData.subscribedSheetIds);
       return sheets.filter(sheet => subscribedIds.has(sheet.id));
     }
+    if (filterMode === 'my-sheets') {
+        if (!authUser) return [];
+        return sheets.filter(sheet => sheet.createdBy === authUser.uid);
+    }
     return sheets;
-  }, [sheets, filterMode, userData]);
+  }, [sheets, filterMode, userData, authUser]);
 
   const getRelativeDate = (date: any) => {
     if (!date) return 'Just now';
@@ -101,7 +105,8 @@ export default function ProblemSheetsListPage() {
             <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)} className="w-auto">
                 <TabsList>
                     <TabsTrigger value="all">All Sheets</TabsTrigger>
-                    <TabsTrigger value="subscribed" disabled={!authUser}>My Sheets</TabsTrigger>
+                    <TabsTrigger value="my-sheets" disabled={!authUser}>My Sheets</TabsTrigger>
+                    <TabsTrigger value="subscribed" disabled={!authUser}>Subscribed</TabsTrigger>
                 </TabsList>
             </Tabs>
         </div>
@@ -183,12 +188,14 @@ export default function ProblemSheetsListPage() {
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-semibold">
-                    {filterMode === 'subscribed' ? 'No Subscribed Sheets' : 'No Problem Sheets Yet'}
+                    {filterMode === 'all' && 'No Problem Sheets Yet'}
+                    {filterMode === 'my-sheets' && 'You haven\'t created any sheets'}
+                    {filterMode === 'subscribed' && 'No Subscribed Sheets'}
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    {filterMode === 'subscribed'
-                        ? 'Subscribe to sheets to see them here.'
-                        : 'Get started by creating a new sheet.'}
+                    {filterMode === 'all' && 'Get started by creating a new sheet.'}
+                    {filterMode === 'my-sheets' && 'Create a sheet to see it here.'}
+                    {filterMode === 'subscribed' && 'Subscribe to sheets to see them here.'}
                 </p>
             </div>
         )}
