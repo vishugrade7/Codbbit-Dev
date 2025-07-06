@@ -1,6 +1,9 @@
 [
   {
-    "origin": ["https://codbbit.com"],
+    "origin": [
+      "https://codbbit.com",
+      "https://6000-firebase-studio-1751152719763.cluster-htdgsbmflbdmov5xrjithceibm.cloudworkstations.dev"
+    ],
     "method": ["GET", "POST", "PUT", "DELETE"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type", "Authorization", "x-goog-meta-test"]
