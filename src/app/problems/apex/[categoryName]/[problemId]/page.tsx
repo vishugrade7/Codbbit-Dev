@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -22,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -30,63 +31,74 @@ import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 
 
-const LogLine = ({ line, index }: { line: string; index: number }) => {
-  const getLineStyle = () => {
-    if (line.includes('--- ERROR ---') || line.includes('Failed')) {
-      return { 
-        icon: <XCircle className="h-5 w-5 text-destructive" />, 
-        textClass: 'text-destructive font-semibold', 
-        wrapperClass: 'bg-destructive/10 border border-destructive/20 rounded-md p-3'
-      };
-    }
-    if (line.trim().startsWith('---') && !line.includes('ERROR')) {
-      return { icon: null, textClass: 'text-foreground font-bold pt-4 pb-1', wrapperClass: '' };
-    }
-    if (line.includes('Congratulations')) {
-      return { icon: <Star className="h-5 w-5 text-yellow-400" />, textClass: 'text-foreground font-semibold', wrapperClass: '' };
-    }
-    // Default for success lines (e.g. "Completed", "passed")
-    return { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, textClass: 'text-muted-foreground', wrapperClass: '' };
-  };
+const DefaultLine = ({ line, index }: { line: string, index: number }) => (
+  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
+    <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+    <p className="font-code text-sm flex-1 text-muted-foreground">{line.replace(/^>/, '').trim()}</p>
+  </div>
+);
 
-  const { icon, textClass, wrapperClass } = getLineStyle();
+const CongratsLine = ({ line, index }: { line: string, index: number }) => (
+  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
+    <Star className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+    <p className="font-code text-sm flex-1 text-foreground font-semibold">{line.replace(/^>/, '').trim()}</p>
+  </div>
+);
 
-  if (!line.trim()) return null;
+const BadgeLine = ({ line, index }: { line: string, index: number }) => (
+  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
+    <Award className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+    <p className="font-code text-sm flex-1 text-foreground font-semibold">{line.replace(/^>/, '').trim()}</p>
+  </div>
+);
 
-  // Render wrapper for headings, which don't get an icon
-  if (line.trim().startsWith('---')) {
-    return (
-       <div style={{ animationDelay: `${index * 75}ms` }} className={cn("opacity-0 animate-fade-in-up", wrapperClass)}>
-        <p className={cn('font-code text-sm', textClass)}>{line}</p>
+const HeadingLine = ({ line, index }: { line: string, index: number }) => (
+   <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
+    <p className="font-code text-sm text-foreground font-bold pt-4 pb-1">{line}</p>
+  </div>
+);
+
+const ErrorBlock = ({ lines, index }: { lines: string[], index: number }) => (
+  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-1">
+    {lines.map((line, idx) => (
+      <div key={idx} className="flex items-start gap-3">
+        {idx === 0 && <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />}
+        <p className={`font-code text-sm text-destructive flex-1 ${idx > 0 ? 'pl-8' : 'font-semibold'}`}>{line}</p>
       </div>
-    );
-  }
-
-  // Render wrapper for other lines
-  return (
-    <div style={{ animationDelay: `${index * 75}ms` }} className={cn("opacity-0 animate-fade-in-up flex items-start gap-3", wrapperClass)}>
-      {icon && <div className="flex-shrink-0 mt-0.5">{icon}</div>}
-      <p className={cn('font-code text-sm flex-1', textClass)}>{line.replace(/^>/, '').trim()}</p>
-    </div>
-  );
-};
+    ))}
+  </div>
+);
 
 
 const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmitting: boolean }) => {
-  const [lines, setLines] = useState<string[]>([]);
+  const logElements = useMemo(() => {
+    if (!log) return [];
+    const lines = log.split('\n').filter(l => l.trim() !== '');
+    const elements: React.ReactNode[] = [];
 
-  useEffect(() => {
-    if (isSubmitting) {
-      setLines([]);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.includes('--- ERROR ---')) {
+        const errorContent: string[] = [];
+        errorContent.push(line.replace('--- ERROR ---', 'ERROR').trim());
+        while (i + 1 < lines.length && !lines[i + 1].trim().startsWith('---')) {
+          i++;
+          errorContent.push(lines[i].replace(/^>/, '').trim());
+        }
+        elements.push(<ErrorBlock key={`error-block-${i}`} lines={errorContent} index={elements.length} />);
+      } else if (line.includes('Congratulations')) {
+        elements.push(<CongratsLine key={i} line={line} index={elements.length} />);
+      } else if (line.includes('New Badges Earned')) {
+        elements.push(<BadgeLine key={i} line={line} index={elements.length} />);
+      } else if (line.trim().startsWith('---')) {
+        elements.push(<HeadingLine key={i} line={line} index={elements.length} />);
+      } else {
+        elements.push(<DefaultLine key={i} line={line} index={elements.length} />);
+      }
     }
-  }, [isSubmitting]);
-
-  useEffect(() => {
-    if (!isSubmitting && log) {
-      const allLines = log.split('\n').filter(l => l.trim() !== '');
-      setLines(allLines);
-    }
-  }, [log, isSubmitting]);
+    return elements;
+  }, [log]);
+  
 
   if (isSubmitting) {
     return (
@@ -112,9 +124,7 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
 
   return (
     <div className="space-y-2">
-      {lines.map((line, index) => (
-        <LogLine key={index} line={line} index={index} />
-      ))}
+      {logElements}
     </div>
   );
 };
