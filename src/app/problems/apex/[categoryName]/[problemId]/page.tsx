@@ -19,7 +19,6 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -29,6 +28,7 @@ import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -352,61 +352,49 @@ export default function ProblemWorkspacePage() {
                 onExpand={() => setIsFullScreen(false)}
                 className={cn(isFullScreen && "transition-all duration-300 ease-in-out")}
             >
-                <div className="p-4 h-full overflow-y-auto">
-                    <Tabs defaultValue="description">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="description">Description</TabsTrigger>
-                            <TabsTrigger value="submissions">Submissions</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="description" className="mt-4 space-y-6">
-                            <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
-                            <div className="flex items-center gap-4 flex-wrap">
-                               <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                               <Badge variant="secondary">{categoryName}</Badge>
-                               {problem.company && (
-                                    <div className="flex items-center gap-1.5">
-                                        {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
-                                        <span className="text-sm font-medium">{problem.company}</span>
-                                    </div>
-                                )}
-                               {isSolved && (
-                                <div className="flex items-center gap-1.5 text-sm text-green-400">
-                                   <CheckCircle2 className="h-4 w-4" />
-                                   <span>Solved</span>
-                                </div>
-                               )}
+                <div className="p-4 h-full overflow-y-auto space-y-6">
+                    <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
+                    <div className="flex items-center gap-4 flex-wrap">
+                       <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                       <Badge variant="secondary">{categoryName}</Badge>
+                       {problem.company && (
+                            <div className="flex items-center gap-1.5">
+                                {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
+                                <span className="text-sm font-medium">{problem.company}</span>
                             </div>
-                            <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
-                            
-                            {problem.examples.map((example, index) => (
-                                <div key={index}>
-                                    <h3 className="font-semibold mb-2">Example {index + 1}</h3>
-                                    <Card className="bg-card/50">
-                                        <CardContent className="p-4 font-code text-sm">
-                                            {example.input && <p><strong>Input:</strong> {example.input}</p>}
-                                            <p><strong>Output:</strong> {example.output}</p>
-                                            {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            ))}
+                        )}
+                       {isSolved && (
+                        <div className="flex items-center gap-1.5 text-sm text-green-400">
+                           <CheckCircle2 className="h-4 w-4" />
+                           <span>Solved</span>
+                        </div>
+                       )}
+                    </div>
+                    <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
+                    
+                    {problem.examples.map((example, index) => (
+                        <div key={index}>
+                            <h3 className="font-semibold mb-2">Example {index + 1}</h3>
+                            <Card className="bg-card/50">
+                                <CardContent className="p-4 font-code text-sm">
+                                    {example.input && <p><strong>Input:</strong> {example.input}</p>}
+                                    <p><strong>Output:</strong> {example.output}</p>
+                                    {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ))}
 
-                             {problem.hints && problem.hints.length > 0 && (
-                                <div>
-                                    <h3 className="font-semibold mb-2">Constraints</h3>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                        {problem.hints.map((hint, index) => (
-                                            <li key={index}>{hint}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                             )}
-
-                        </TabsContent>
-                         <TabsContent value="submissions" className="mt-4">
-                            <p className="text-muted-foreground text-center py-8">No submissions yet.</p>
-                        </TabsContent>
-                    </Tabs>
+                     {problem.hints && problem.hints.length > 0 && (
+                        <div>
+                            <h3 className="font-semibold mb-2">Constraints</h3>
+                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                {problem.hints.map((hint, index) => (
+                                    <li key={index}>{hint}</li>
+                                ))}
+                            </ul>
+                        </div>
+                     )}
                 </div>
             </ResizablePanel>
             <ResizableHandle withHandle />
