@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { countries } from "@/lib/countries";
 
@@ -23,7 +23,24 @@ import { Loader2, User, AtSign, Building, Globe, Mail, Lock, Eye, EyeOff } from 
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
-  username: z.string().optional(),
+  username: z.string()
+    .min(3, { message: "Username must be 3-20 characters." })
+    .max(20, { message: "Username must be 3-20 characters." })
+    .regex(/^[a-zA-Z0-9_.]+$/, { message: "Only letters, numbers, '_', '.' are allowed." })
+    .refine(async (username) => {
+        if (!db) return false;
+        try {
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("username", "==", username.toLowerCase()), limit(1));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.empty;
+        } catch (error) {
+            console.error("Error checking username uniqueness:", error);
+            return false;
+        }
+    }, {
+        message: "This username is already taken.",
+    }),
   company: z.string().optional(),
   country: z.string({ required_error: "Please select a country." }),
   email: z.string().email({ message: "Invalid email address." }),
@@ -95,6 +112,8 @@ export default function SignupPage() {
       email: "",
       password: "",
     },
+    mode: "onBlur",
+    reValidateMode: "onChange",
   });
 
   const companyValue = form.watch("company");
@@ -178,7 +197,7 @@ export default function SignupPage() {
           uid: user.uid,
           email: user.email,
           name: values.fullName,
-          username: values.username || values.email?.split('@')[0] || `user${user.uid.substring(0,5)}`,
+          username: values.username.toLowerCase(),
           company: values.company || '',
           country: values.country,
           points: 0,
@@ -258,7 +277,7 @@ export default function SignupPage() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username <span className="text-muted-foreground">(Optional)</span></FormLabel>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
                         <div className="relative">
                             <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
