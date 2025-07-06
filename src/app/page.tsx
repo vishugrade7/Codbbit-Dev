@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Rocket, BarChart, Database, Code, Trophy } from "lucide-react";
+import { Rocket, BarChart, Database, Code, Trophy, ArrowRight } from "lucide-react";
 import Testimonials from "@/components/testimonials";
 import Image from "next/image";
 
@@ -103,40 +103,55 @@ export default function Home() {
 
       <section className="w-full py-12 md:py-24 lg:py-32 bg-card/50">
         <div className="container px-4 md:px-6">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="bg-card">
-              <CardHeader className="items-center text-center">
-                <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <Database className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle>SOQL Mastery</CardTitle>
-                <CardDescription>
+          <div className="grid sm:grid-cols-3 border border-border rounded-lg overflow-hidden">
+            {/* Card 1: SOQL Mastery */}
+            <div className="flex flex-col justify-between p-8 h-[24rem] bg-card">
+              <Database className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="text-sm text-muted-foreground">SOQL Mastery</h3>
+                <p className="text-xl font-medium mt-2">
                   Practice complex queries with real-time validation and feedback.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader className="items-center text-center">
-                <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <Code className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle>Apex Development</CardTitle>
-                <CardDescription>
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Apex Development */}
+            <div className="flex flex-col justify-between p-8 border-l border-border h-[24rem] bg-card">
+              <Code className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="text-sm text-muted-foreground">Apex Development</h3>
+                <p className="text-xl font-medium mt-2">
                   Write and execute Apex code with instant testing on live Salesforce orgs.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader className="items-center text-center">
-                 <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <Trophy className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle>Competitive Learning</CardTitle>
-                <CardDescription>
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: Competitive Learning */}
+            <div className="relative flex flex-col justify-between p-8 border-l border-border h-[24rem] group bg-card">
+              <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <Image
+                  src="https://placehold.co/600x800.png"
+                  alt="Competitive coding background"
+                  fill
+                  className="object-cover scale-105"
+                  data-ai-hint="abstract lines"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+              </div>
+              
+              <div className="relative z-10">
+                  <Trophy className="h-8 w-8 text-primary transition-colors duration-500 group-hover:text-primary-foreground" />
+              </div>
+              <div className="relative z-10 transition-colors duration-500 group-hover:text-primary-foreground">
+                <h3 className="text-sm text-muted-foreground transition-colors duration-500 group-hover:text-primary-foreground/80">Competitive Learning</h3>
+                <p className="text-xl font-medium mt-2">
                   Compete with developers worldwide and track your progress.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+                </p>
+                 <Link href="/leaderboard" className="inline-flex items-center text-sm font-medium text-primary mt-4 group-hover:underline">
+                    View Leaderboard <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
