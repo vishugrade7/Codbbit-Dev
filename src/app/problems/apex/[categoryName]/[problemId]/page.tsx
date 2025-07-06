@@ -28,42 +28,44 @@ import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const LogLine = ({ line, index }: { line: string; index: number }) => {
   const getLineStyle = () => {
     if (line.includes('--- ERROR ---') || line.includes('Failed')) {
-      return { icon: <XCircle className="h-5 w-5 text-destructive" />, textClass: 'text-destructive font-semibold' };
+      return { 
+        icon: <XCircle className="h-5 w-5 text-destructive" />, 
+        textClass: 'text-destructive font-semibold', 
+        wrapperClass: 'bg-destructive/10 border border-destructive/20 rounded-md p-3'
+      };
     }
     if (line.trim().startsWith('---') && !line.includes('ERROR')) {
-      return { icon: null, textClass: 'text-foreground font-bold pt-4 pb-1' };
-    }
-    if (line.includes('successful') || line.includes('passed') || line.includes('Completed')) {
-      return { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, textClass: 'text-muted-foreground' };
+      return { icon: null, textClass: 'text-foreground font-bold pt-4 pb-1', wrapperClass: '' };
     }
     if (line.includes('Congratulations')) {
-      return { icon: <Star className="h-5 w-5 text-yellow-400" />, textClass: 'text-foreground font-semibold' };
+      return { icon: <Star className="h-5 w-5 text-yellow-400" />, textClass: 'text-foreground font-semibold', wrapperClass: '' };
     }
-    return { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, textClass: 'text-muted-foreground' };
+    // Default for success lines (e.g. "Completed", "passed")
+    return { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, textClass: 'text-muted-foreground', wrapperClass: '' };
   };
 
-  const { icon, textClass } = getLineStyle();
+  const { icon, textClass, wrapperClass } = getLineStyle();
 
   if (!line.trim()) return null;
 
-  // Don't show icon for headings
+  // Render wrapper for headings, which don't get an icon
   if (line.trim().startsWith('---')) {
     return (
-       <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
+       <div style={{ animationDelay: `${index * 75}ms` }} className={cn("opacity-0 animate-fade-in-up", wrapperClass)}>
         <p className={cn('font-code text-sm', textClass)}>{line}</p>
       </div>
     );
   }
 
+  // Render wrapper for other lines
   return (
-    <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
-      <div className="flex-shrink-0 mt-0.5">{icon}</div>
+    <div style={{ animationDelay: `${index * 75}ms` }} className={cn("opacity-0 animate-fade-in-up flex items-start gap-3", wrapperClass)}>
+      {icon && <div className="flex-shrink-0 mt-0.5">{icon}</div>}
       <p className={cn('font-code text-sm flex-1', textClass)}>{line.replace(/^>/, '').trim()}</p>
     </div>
   );
@@ -547,14 +549,12 @@ export default function ProblemWorkspacePage() {
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={35} minSize={15}>
                         <div className="flex flex-col h-full">
-                            <Tabs defaultValue="results" className="h-full flex flex-col">
-                                <TabsList className="shrink-0 rounded-none border-b bg-transparent justify-start px-2">
-                                    <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none text-sm">Test Results</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="results" className="flex-1 p-4 overflow-auto">
-                                    <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
-                                </TabsContent>
-                            </Tabs>
+                            <div className="p-2 border-b">
+                                <h3 className="font-semibold text-sm">Test Results</h3>
+                            </div>
+                            <div className="flex-1 p-4 overflow-auto">
+                                <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                            </div>
                         </div>
                     </ResizablePanel>
                  </ResizablePanelGroup>
