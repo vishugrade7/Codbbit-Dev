@@ -22,13 +22,101 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+
+const LogLine = ({ line, index }: { line: string; index: number }) => {
+  const getLineStyle = () => {
+    if (line.includes('--- ERROR ---') || line.includes('Failed')) {
+      return { icon: <XCircle className="h-5 w-5 text-destructive" />, textClass: 'text-destructive font-semibold' };
+    }
+    if (line.trim().startsWith('---') && !line.includes('ERROR')) {
+      return { icon: null, textClass: 'text-foreground font-bold pt-4 pb-1' };
+    }
+    if (line.includes('successful') || line.includes('passed') || line.includes('Completed')) {
+      return { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, textClass: 'text-muted-foreground' };
+    }
+    if (line.includes('Congratulations')) {
+      return { icon: <Star className="h-5 w-5 text-yellow-400" />, textClass: 'text-foreground font-semibold' };
+    }
+    return { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, textClass: 'text-muted-foreground' };
+  };
+
+  const { icon, textClass } = getLineStyle();
+
+  if (!line.trim()) return null;
+
+  // Don't show icon for headings
+  if (line.trim().startsWith('---')) {
+    return (
+       <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
+        <p className={cn('font-code text-sm', textClass)}>{line}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
+      <div className="flex-shrink-0 mt-0.5">{icon}</div>
+      <p className={cn('font-code text-sm flex-1', textClass)}>{line.replace(/^>/, '').trim()}</p>
+    </div>
+  );
+};
+
+
+const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmitting: boolean }) => {
+  const [lines, setLines] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isSubmitting) {
+      setLines([]);
+    }
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    if (!isSubmitting && log) {
+      const allLines = log.split('\n').filter(l => l.trim() !== '');
+      setLines(allLines);
+    }
+  }, [log, isSubmitting]);
+
+  if (isSubmitting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <p className="font-semibold">Running Submission...</p>
+          <p className="text-sm text-muted-foreground">Please wait while we connect to Salesforce and run your tests.</p>
+      </div>
+    );
+  }
+
+  if (!log.trim() && !isSubmitting) {
+      return (
+         <div className="flex flex-col items-center justify-center h-full text-center">
+             <div className="p-3 bg-primary/10 rounded-full mb-4">
+                <Play className="h-8 w-8 text-primary" />
+             </div>
+             <p className="font-semibold">Ready to Run</p>
+             <p className="text-sm text-muted-foreground">Submit your solution to run tests against the problem's criteria.</p>
+         </div>
+      )
+  }
+
+  return (
+    <div className="space-y-2">
+      {lines.map((line, index) => (
+        <LogLine key={index} line={line} index={index} />
+      ))}
+    </div>
+  );
+};
+
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -47,7 +135,7 @@ export default function ProblemWorkspacePage() {
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [code, setCode] = useState("");
-    const [results, setResults] = useState("Submit your solution to run tests and see results.");
+    const [results, setResults] = useState("");
     const [isStarred, setIsStarred] = useState(false);
     const [isStarring, setIsStarring] = useState(false);
 
@@ -165,7 +253,7 @@ export default function ProblemWorkspacePage() {
         }
 
         setIsSubmitting(true);
-        setResults("Initializing submission process...");
+        setResults("");
 
         const response = await submitApexSolution(user.uid, problem, code);
         
@@ -464,7 +552,7 @@ export default function ProblemWorkspacePage() {
                                     <TabsTrigger value="results" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none text-sm">Test Results</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="results" className="flex-1 p-4 overflow-auto">
-                                    <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results}</pre>
+                                    <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
                                 </TabsContent>
                             </Tabs>
                         </div>
