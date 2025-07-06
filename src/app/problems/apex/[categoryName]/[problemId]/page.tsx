@@ -392,7 +392,6 @@ export default function ProblemWorkspacePage() {
 
     const EditorAndResults = () => (
         <div className="flex flex-col h-full">
-            {/* Editor Panel */}
             <div className="flex flex-col h-[60%] min-h-[10rem]">
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-2 border-b">
@@ -449,7 +448,6 @@ export default function ProblemWorkspacePage() {
                     </div>
                 </div>
             </div>
-            {/* Results Panel */}
             <div className="flex flex-col flex-1 min-h-0 border-t">
                 <div className="p-2 border-b">
                     <h3 className="font-semibold text-sm">Test Results</h3>
@@ -567,23 +565,21 @@ export default function ProblemWorkspacePage() {
         </header>
 
         <main className="flex-1 overflow-auto">
-            {/* Mobile View */}
             <div className="md:hidden h-full">
                 <Tabs defaultValue="problem" className="flex flex-col h-full">
                     <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none border-b">
                         <TabsTrigger value="problem" className="rounded-none">Problem</TabsTrigger>
                         <TabsTrigger value="code" className="rounded-none">Code</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="problem" className="flex-1 overflow-y-auto">
+                    <TabsContent value="problem" className="flex-auto overflow-y-auto">
                         <ProblemDetails />
                     </TabsContent>
-                    <TabsContent value="code" className="flex-1 flex flex-col m-0 overflow-hidden">
+                    <TabsContent value="code" className="flex-auto flex flex-col m-0 overflow-hidden">
                         <EditorAndResults />
                     </TabsContent>
                 </Tabs>
             </div>
 
-            {/* Desktop View */}
             <div className="hidden md:flex h-full">
                 <ResizablePanelGroup direction="horizontal">
                     <ResizablePanel 
