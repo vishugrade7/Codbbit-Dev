@@ -2,67 +2,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper function to check if the signed-in user is an admin.
-    // This now includes a hardcoded "super admin" email to solve the initial bootstrap problem.
-    function isSuperAdmin() {
-      return request.auth.token.email == 'gradevishu@gmail.com';
-    }
-
-    function isAdmin() {
-      // A user is an admin if their document says so, OR if they are the super admin.
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || isSuperAdmin();
-    }
-  
-    // Users can read their own data. Admins can read anyone's data.
-    // Users can update their own profile, but cannot change protected fields like 'points' or 'isAdmin'.
-    // Admins can update anyone's profile.
+    // Users can read any profile, but only write to their own.
     match /users/{userId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow create: if request.auth.uid == userId;
-      // Let admins update any field, but users can only update specific, non-critical fields.
-      allow update: if (request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'isEmailPublic', 'company', 'companyLogoUrl', 'trailheadUrl', 'githubUrl', 'linkedinUrl', 'twitterUrl', 'avatarUrl', 'starredProblems', 'subscribedSheetIds'])) || isAdmin();
-      allow delete: if isAdmin(); // Only admins can delete users
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Only admins can write to problems, courses, settings, and badges. Anyone can read them.
-    match /problems/{docId} {
+    // Problems are publicly readable. Writing is restricted to admins.
+    match /problems/{doc=**} {
       allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    match /settings/{settingId} {
+    // Courses are publicly readable. Writing is restricted to admins.
+    match /courses/{doc=**} {
       allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /badges/{badgeId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Authenticated users can read/write to their own Salesforce data.
-    match /salesforceData/{userId}/{document=**} {
-      allow read, write: if request.auth.uid == userId;
-    }
-
-    // Users can read all sheets.
-    // Users can create sheets.
-    // Users can only update/delete sheets they created. Admins can manage any sheet.
+    // Problem sheets are publicly readable.
     match /problem-sheets/{sheetId} {
       allow read: if true;
+      // Authenticated users can create sheets.
       allow create: if request.auth != null;
-      allow update, delete: if resource.data.createdBy == request.auth.uid || isAdmin();
+      // Users can update a sheet to subscribe/unsubscribe, and creators can edit.
+      allow update: if request.auth != null;
+      // For now, nobody can delete sheets from the client.
+      allow delete: if false;
     }
     
-    // Default deny all other writes.
-    match /{path=**} {
-      allow write: if false;
+    // Settings can be written to by admins.
+    match /settings/{docId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Badges can be written to by admins.
+    match /badges/{badgeId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
   }
 }
