@@ -214,62 +214,65 @@ export default function UserProfilePage() {
     <main className="flex-1 relative">
       <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
           {/* User Info Header */}
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-               <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                  <Avatar className="h-28 w-28 border-4 border-primary/50">
-                      <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                      <AvatarFallback className="text-4xl">
-                          {profileUser.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                  </Avatar>
-                  {isOwnProfile && (
-                      <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                          {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
-                      </div>
-                  )}
-              </div>
-              {isOwnProfile && (
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
-              )}
-              <div className="flex-1 text-center sm:text-left">
-                  <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
-                  <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
-                  <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      {profileUser.company && (
-                          <div className="flex items-center gap-2">
-                              {profileUser.companyLogoUrl ? (
-                                  <Image
-                                      src={profileUser.companyLogoUrl}
-                                      alt={`${profileUser.company} logo`}
-                                      width={16}
-                                      height={16}
-                                      className="rounded-sm object-contain"
-                                  />
-                              ) : (
-                                  <Building className="h-4 w-4 shrink-0" />
-                              )}
-                              <span>{profileUser.company}</span>
-                          </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 shrink-0" />
-                          <span>{profileUser.country}</span>
-                      </div>
-                  </div>
-              </div>
-              <div className="flex items-center gap-2">
-                  {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
-                  {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
-                  {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
-                  {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
-                  {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>}
-              </div>
-          </div>
+          <Card className="bg-gradient-to-br from-card to-muted/30 p-6 -mx-6 -mt-8 mb-8 sm:rounded-xl shadow-lg">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+                 <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                    <Avatar className="h-28 w-28 border-4 border-primary/50">
+                        <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
+                        <AvatarFallback className="text-4xl">
+                            {profileUser.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                    </Avatar>
+                    {isOwnProfile && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
+                        </div>
+                    )}
+                </div>
+                {isOwnProfile && (
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
+                )}
+                <div className="flex-1 text-center sm:text-left">
+                    <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
+                    <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+                    <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        {profileUser.company && (
+                            <div className="flex items-center gap-2">
+                                {profileUser.companyLogoUrl ? (
+                                    <Image
+                                        src={profileUser.companyLogoUrl}
+                                        alt={`${profileUser.company} logo`}
+                                        width={16}
+                                        height={16}
+                                        className="rounded-sm object-contain"
+                                    />
+                                ) : (
+                                    <Building className="h-4 w-4 shrink-0" />
+                                )}
+                                <span>{profileUser.company}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 shrink-0" />
+                            <span>{profileUser.country}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
+                    {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
+                    {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
+                    {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
+                    {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>}
+                </div>
+            </div>
+          </Card>
+
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Problems Solved */}
-              <Card>
+              <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
                       <CardDescription>Number of problems solved by difficulty.</CardDescription>
@@ -293,7 +296,7 @@ export default function UserProfilePage() {
               </Card>
 
               {/* Category Breakdown */}
-              <Card className="flex flex-col">
+              <Card className="flex flex-col animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
                       <CardDescription>Points earned per problem category.</CardDescription>
@@ -329,7 +332,7 @@ export default function UserProfilePage() {
               </Card>
               
               {/* Achievements */}
-              <Card>
+              <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" /> Achievements</CardTitle>
                       <CardDescription>Badges earned from your activity.</CardDescription>

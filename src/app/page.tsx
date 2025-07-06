@@ -32,14 +32,14 @@ export default function Home() {
       <section className="w-full py-20 md:py-32 lg:py-40">
         <div className="container px-4 md:px-6">
           <div className="max-w-3xl mx-auto space-y-4 text-center">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline">
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               Master Salesforce Development
             </h1>
-            <p className="text-lg text-muted-foreground md:text-xl">
+            <p className="text-lg text-muted-foreground md:text-xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               Build, test, and deploy Salesforce solutions faster with our comprehensive platform for SOQL queries, Apex code, and Lightning Web Components.
             </p>
           </div>
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <Button asChild size="lg">
               <Link href="/apex-problems">
                 <Rocket className="mr-2 h-5 w-5" />
@@ -87,7 +87,7 @@ export default function Home() {
               {/* Foreground Mobile */}
               <div className="absolute top-[10%] -right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
-                  src="https://placehold.co/400x800.png"
+                  src="https://firebasestorage.googleapis.com/v0/b/showcase-canvas-rx61p.firebasestorage.app/o/cards%2Fmobile.png?alt=media&token=1c15d481-8079-4d1c-b5f7-873b889345e6"
                   alt="Codbbit mobile preview"
                   width={400}
                   height={800}
