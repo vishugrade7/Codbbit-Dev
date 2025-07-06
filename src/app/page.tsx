@@ -1,4 +1,7 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -8,6 +11,23 @@ import Testimonials from "@/components/testimonials";
 import Image from "next/image";
 
 export default function Home() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Make it smaller as you scroll down, clamped between 0.8 and 1
+  const scale = Math.max(0.8, 1 - scrollY * 0.0005);
+
   return (
     <>
       <section className="w-full py-20 md:py-32 lg:py-40">
@@ -35,15 +55,16 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="mt-16 aspect-video max-w-5xl mx-auto">
+          <div className="mt-16 aspect-video max-w-5xl mx-auto overflow-hidden">
             <Image
               src="https://placehold.co/1200x700.png"
               alt="Codbbit Platform Screenshot"
               width={1200}
               height={700}
-              className="mx-auto rounded-xl shadow-2xl ring-1 ring-border w-full h-full object-cover"
+              className="mx-auto rounded-xl shadow-2xl ring-1 ring-border w-full h-full object-cover transition-transform duration-100 ease-out"
               data-ai-hint="development workspace"
               priority
+              style={{ transform: `scale(${scale})` }}
             />
           </div>
 
