@@ -36,7 +36,7 @@ export default function RootLayout({
        <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={cn(inter.variable, sourceCodePro.variable, "bg-background font-body text-foreground select-none no-print")}>
+      <body className={cn(inter.variable, sourceCodePro.variable, "font-body text-foreground select-none no-print")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

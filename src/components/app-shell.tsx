@@ -43,7 +43,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Render public layout for logged-out users
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex min-h-screen w-full flex-col">
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />
