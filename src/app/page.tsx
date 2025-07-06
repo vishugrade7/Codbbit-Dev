@@ -73,7 +73,7 @@ export default function Home() {
               </div>
 
               {/* Foreground Chat */}
-              <div className="absolute bottom-[5%] left-[5%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
+              <div className="absolute bottom-[5%] -left-[5%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
                   src="https://placehold.co/600x400.png"
                   alt="Codbbit AI chat"
@@ -85,7 +85,7 @@ export default function Home() {
               </div>
               
               {/* Foreground Mobile */}
-              <div className="absolute top-[10%] right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
+              <div className="absolute top-[10%] -right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
                   src="https://placehold.co/400x800.png"
                   alt="Codbbit mobile preview"
