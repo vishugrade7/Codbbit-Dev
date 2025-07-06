@@ -8,24 +8,32 @@ import Footer from "@/components/footer";
 import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History } from "lucide-react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
-import type { Problem, ApexProblemsData, User as AppUser, Achievement } from "@/types";
+import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
 import { PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
-import { ProgressCard } from "@/components/progress-card";
-import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { formatDistanceToNow } from 'date-fns';
+
 
 type StarredProblemDetail = Problem & { categoryName: string };
+type RecentlySolvedProblem = SolvedProblemType & {
+    id: string;
+    title?: string;
+    difficulty?: 'Easy' | 'Medium' | 'Hard';
+    categoryName?: string;
+};
+
 
 // This is the new public profile page
 export default function UserProfilePage() {
@@ -46,12 +54,13 @@ export default function UserProfilePage() {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
     const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
     const [loadingProblems, setLoadingProblems] = useState(true);
 
-    // Effect to fetch all problem counts
+    // Effect to fetch all problem counts and details
     useEffect(() => {
-        const fetchAllProblems = async () => {
+        const fetchAllProblemsData = async () => {
             if (!db) {
                 setLoadingProblems(false);
                 return;
@@ -62,20 +71,24 @@ export default function UserProfilePage() {
                 const docSnap = await getDoc(apexDocRef);
                 if (docSnap.exists()) {
                     const categoriesData = docSnap.data().Category as ApexProblemsData;
-                    const allProblems = Object.values(categoriesData).flatMap(cat => cat.Questions || []);
-                    const counts = allProblems.reduce((acc, problem) => {
+                    const allProblemsData = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) =>
+                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                    );
+                    setAllProblems(allProblemsData);
+
+                    const counts = allProblemsData.reduce((acc, problem) => {
                         acc[problem.difficulty as keyof typeof acc] = (acc[problem.difficulty as keyof typeof acc] || 0) + 1;
                         return acc;
                     }, { Easy: 0, Medium: 0, Hard: 0 });
                     setTotalProblemsByDifficulty(counts);
                 }
             } catch (error) {
-                console.error("Error fetching problem counts:", error);
+                console.error("Error fetching problem data:", error);
             } finally {
                 setLoadingProblems(false);
             }
         };
-        fetchAllProblems();
+        fetchAllProblemsData();
     }, []);
 
     // Effect to fetch the profile data based on username from URL using a real-time listener
@@ -109,40 +122,45 @@ export default function UserProfilePage() {
 
     // Effect to fetch starred problems for the profile being viewed
     useEffect(() => {
-        if (!profileUser?.starredProblems || profileUser.starredProblems.length === 0) {
+        if (!profileUser?.starredProblems || profileUser.starredProblems.length === 0 || allProblems.length === 0) {
             setLoadingStarred(false);
             setStarredProblems([]);
             return;
         }
-        if (!db) {
-            setLoadingStarred(false);
-            return;
-        }
 
-        const fetchStarredProblems = async () => {
-            setLoadingStarred(true);
-            try {
-                const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
+        setLoadingStarred(true);
+        const starredIds = new Set(profileUser.starredProblems);
+        const details = allProblems.filter(p => starredIds.has(p.id));
+        setStarredProblems(details);
+        setLoadingStarred(false);
 
-                if (docSnap.exists()) {
-                    const categoriesData = docSnap.data().Category as ApexProblemsData;
-                    const allProblemsWithCategory = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) =>
-                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                    );
+    }, [profileUser, allProblems]);
+    
+    const recentlySolvedProblems = useMemo(() => {
+        if (!profileUser?.solvedProblems || allProblems.length === 0) return [];
 
-                    const starredIds = new Set(profileUser.starredProblems);
-                    const details = allProblemsWithCategory.filter(p => starredIds.has(p.id));
-                    setStarredProblems(details);
-                }
-            } catch (error) {
-                console.error("Error fetching starred problems:", error);
-            } finally {
-                setLoadingStarred(false);
-            }
-        };
-        fetchStarredProblems();
-    }, [profileUser]);
+        const solvedDetails: RecentlySolvedProblem[] = Object.entries(profileUser.solvedProblems).map(([id, details]) => ({
+            id,
+            ...details,
+        }));
+
+        solvedDetails.sort((a, b) => {
+            const dateA = a.solvedAt?.toDate ? a.solvedAt.toDate() : new Date(0);
+            const dateB = b.solvedAt?.toDate ? b.solvedAt.toDate() : new Date(0);
+            return dateB.getTime() - dateA.getTime();
+        });
+        
+        return solvedDetails.slice(0, 5).map(solved => {
+            const problemDetail = allProblems.find(p => p.id === solved.id);
+            return {
+                ...solved,
+                title: problemDetail?.title,
+                difficulty: problemDetail?.difficulty,
+                categoryName: problemDetail?.categoryName
+            };
+        });
+    }, [profileUser?.solvedProblems, allProblems]);
+
 
     const handleAvatarClick = () => {
         if (!isUploading) {
@@ -273,203 +291,200 @@ export default function UserProfilePage() {
               </div>
             </div>
         )}
-        <div className="container mx-auto px-4 md:px-6 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* --- LEFT COLUMN --- */}
-                <div className="lg:col-span-1 flex flex-col gap-8">
-                    {/* Profile Card */}
-                    <Card>
-                        <CardContent className="pt-6 flex flex-col items-center text-center">
-                            <div className="relative group mb-4" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                                <Avatar className="h-28 w-28 border-4 border-primary/50">
-                                    <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                                    <AvatarFallback className="text-4xl">
-                                        {profileUser.name.split(' ').map(n => n[0]).join('')}
-                                    </AvatarFallback>
-                                </Avatar>
-                                {isOwnProfile && (
-                                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                        {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
-                                    </div>
-                                )}
-                            </div>
-                             {isOwnProfile && (
-                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
-                            )}
-                            <h1 className="text-2xl font-bold font-headline">{profileUser.name}</h1>
-                            <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                            
-                            <div className="mt-4 text-left w-full space-y-2 text-sm text-muted-foreground">
-                                {profileUser.company && (
-                                    <div className="flex items-center gap-2">
-                                        <Building className="h-4 w-4 shrink-0" />
-                                        <span>{profileUser.company}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-2">
-                                    <Globe className="h-4 w-4 shrink-0" />
-                                    <span>{profileUser.country}</span>
-                                </div>
-                                {profileUser.isEmailPublic && (
-                                <div className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{profileUser.email}</span>
-                                </div>
-                                )}
-                            </div>
-                            
-                            <div className="mt-4 flex justify-center flex-wrap gap-2">
-                                {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
-                                {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
-                                {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
-                                {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
-                            </div>
-
-                            {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)} className="w-full mt-6"><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
-                        </CardContent>
-                    </Card>
-
-                    {/* Achievements Card */}
-                    <Card>
-                        <CardHeader><CardTitle>Achievements</CardTitle></CardHeader>
-                        <CardContent>
-                            {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                                <div className="grid grid-cols-3 gap-4">
-                                    {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
-                                        <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
-                                            <div className="p-3 bg-amber-400/10 rounded-full">
-                                                <Award className="h-6 w-6 text-amber-500" />
-                                            </div>
-                                            <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No achievements yet. Keep coding!</p>
-                            )}
-                        </CardContent>
-                    </Card>
+        <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
+            {/* User Info Header */}
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+                 <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                    <Avatar className="h-28 w-28 border-4 border-primary/50">
+                        <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
+                        <AvatarFallback className="text-4xl">
+                            {profileUser.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                    </Avatar>
+                    {isOwnProfile && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
+                        </div>
+                    )}
                 </div>
-
-                {/* --- RIGHT COLUMN --- */}
-                <div className="lg:col-span-3 flex flex-col gap-8">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <ProgressCard 
-                            totalSolved={totalSolved}
-                            totalAvailable={totalAvailable}
-                            easySolved={profileUser.dsaStats?.Easy || 0}
-                            easyTotal={totalProblemsByDifficulty.Easy}
-                            mediumSolved={profileUser.dsaStats?.Medium || 0}
-                            mediumTotal={totalProblemsByDifficulty.Medium}
-                            hardSolved={profileUser.dsaStats?.Hard || 0}
-                            hardTotal={totalProblemsByDifficulty.Hard}
-                        />
-                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
-                                <CardDescription>Points earned per problem category.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {categoryData.length > 0 ? (
-                                    <ChartContainer
-                                        config={chartConfig}
-                                        className="mx-auto aspect-square h-[200px]"
-                                    >
-                                        <PieChart>
-                                            <ChartTooltip
-                                                cursor={false}
-                                                content={<ChartTooltipContent hideLabel nameKey="name" />}
-                                            />
-                                            <Pie
-                                                data={categoryData}
-                                                dataKey="value"
-                                                nameKey="name"
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={90}
-                                                innerRadius={60}
-                                                paddingAngle={2}
-                                            >
-                                                {categoryData.map((entry) => (
-                                                    <Cell
-                                                        key={entry.name}
-                                                        fill={`var(--color-${entry.name})`}
-                                                        className="stroke-background hover:opacity-80"
-                                                    />
-                                                ))}
-                                            </Pie>
-                                        </PieChart>
-                                    </ChartContainer>
-                                ) : (
-                                    <p className="text-muted-foreground text-center py-4 text-sm">No points earned in categories yet.</p>
-                                )}
-                            </CardContent>
-                            {categoryData.length > 0 && (
-                                <CardFooter className="flex-col items-start gap-3 border-t pt-4">
-                                    <div className="font-semibold text-muted-foreground">Legend</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {categoryData.map((item, index) => {
-                                            const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
-                                            return (
-                                                <div
-                                                    key={item.name}
-                                                    className="flex items-center gap-2 rounded-full border py-1 px-3 text-sm"
-                                                    style={{
-                                                        '--badge-color': color,
-                                                        backgroundColor: 'hsl(var(--badge-color) / 0.1)',
-                                                        borderColor: 'hsl(var(--badge-color) / 0.4)',
-                                                    } as React.CSSProperties}
-                                                >
-                                                    <span className="font-medium" style={{ color: 'hsl(var(--badge-color))' }}>{item.name}</span>
-                                                    <Separator orientation="vertical" className="h-4" style={{ backgroundColor: 'hsl(var(--badge-color) / 0.4)' }} />
-                                                    <span className="font-bold" style={{ color: 'hsl(var(--badge-color))' }}>
-                                                        {item.value.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </CardFooter>
-                            )}
-                        </Card>
-                     </div>
-
-                    <Card>
-                        <CardContent className="pt-6">
-                            {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                                <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                            ) : (
-                                <div className="text-center py-10">
-                                    <h3 className="text-lg font-semibold">Start your journey!</h3>
-                                    <p className="text-muted-foreground mt-2">Solve a problem to see your contribution graph here.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
-                        <CardContent>
-                            {loadingStarred ? (
-                                <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
-                            ) : starredProblems.length > 0 ? (
-                                <div className="space-y-2">
-                                    {starredProblems.map(problem => (
-                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
-                                            <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                                <span className="font-medium">{problem.title}</span>
-                                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
-                            )}
-                        </CardContent>
-                    </Card>
+                {isOwnProfile && (
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
+                )}
+                <div className="flex-1 text-center sm:text-left">
+                    <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
+                    <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+                    <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        {profileUser.company && (
+                            <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4 shrink-0" />
+                                <span>{profileUser.company}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 shrink-0" />
+                            <span>{profileUser.country}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
+                    {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
+                    {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
+                    {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
+                    {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>}
                 </div>
             </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Problems Solved */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
+                        <CardDescription>You've solved {totalSolved} out of {totalAvailable} problems.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>Easy</span>
+                                <span>{profileUser.dsaStats?.Easy || 0} / {totalProblemsByDifficulty.Easy}</span>
+                            </div>
+                            <Progress value={(profileUser.dsaStats?.Easy || 0) * 100 / (totalProblemsByDifficulty.Easy || 1)} className="h-2 [&>div]:bg-green-500" />
+                        </div>
+                         <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>Medium</span>
+                                <span>{profileUser.dsaStats?.Medium || 0} / {totalProblemsByDifficulty.Medium}</span>
+                            </div>
+                            <Progress value={(profileUser.dsaStats?.Medium || 0) * 100 / (totalProblemsByDifficulty.Medium || 1)} className="h-2" />
+                        </div>
+                         <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>Hard</span>
+                                <span>{profileUser.dsaStats?.Hard || 0} / {totalProblemsByDifficulty.Hard}</span>
+                            </div>
+                            <Progress value={(profileUser.dsaStats?.Hard || 0) * 100 / (totalProblemsByDifficulty.Hard || 1)} className="h-2 [&>div]:bg-destructive" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Category Breakdown */}
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
+                        <CardDescription>Points earned per problem category.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-center justify-center">
+                        {categoryData.length > 0 ? (
+                            <ChartContainer
+                                config={chartConfig}
+                                className="mx-auto aspect-square h-[180px]"
+                            >
+                                <PieChart>
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel nameKey="name" />}
+                                    />
+                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} paddingAngle={2}>
+                                        {categoryData.map((entry) => (
+                                            <Cell key={entry.name} fill={`var(--color-${entry.name})`} className="stroke-background hover:opacity-80" />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                        ) : (
+                            <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+                
+                {/* Achievements */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" /> Achievements</CardTitle>
+                        <CardDescription>Badges earned from your activity.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                            <div className="grid grid-cols-3 gap-4">
+                                {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
+                                    <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
+                                        <div className="p-3 bg-amber-400/10 rounded-full">
+                                            <Award className="h-6 w-6 text-amber-500" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-muted-foreground text-center py-4 text-sm">No achievements yet. Keep coding!</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Contribution Heatmap */}
+            <Card>
+                <CardContent className="pt-6">
+                    {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                        <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                    ) : (
+                        <div className="text-center py-10">
+                            <h3 className="text-lg font-semibold">Start your journey!</h3>
+                            <p className="text-muted-foreground mt-2">Solve a problem to see your contribution graph here.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Recently Solved */}
+            <Card>
+                <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
+                <CardContent>
+                    {recentlySolvedProblems.length > 0 ? (
+                        <div className="space-y-2">
+                            {recentlySolvedProblems.map(problem => (
+                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                    <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                        <div>
+                                            <p className="font-medium">{problem.title}</p>
+                                            <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</p>
+                                        </div>
+                                        <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Starred Problems */}
+            <Card>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
+                <CardContent>
+                    {loadingStarred ? (
+                        <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
+                    ) : starredProblems.length > 0 ? (
+                        <div className="space-y-2">
+                            {starredProblems.map(problem => (
+                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
+                                    <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                        <span className="font-medium">{problem.title}</span>
+                                        <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
+                    )}
+                </CardContent>
+            </Card>
         </div>
       </main>
       <Footer />
@@ -478,5 +493,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
-    
