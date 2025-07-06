@@ -12,12 +12,12 @@ import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { doc, getDoc, collection, query, where, onSnapshot, limit, updateDoc } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
+import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateUserProfilePicture } from "@/app/profile/actions";
 import { PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
@@ -108,29 +108,45 @@ export default function UserProfilePage() {
             return;
         }
 
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast({ variant: 'destructive', title: 'File Too Large', description: 'Please select an image smaller than 5MB.' });
+            return;
+        }
+
         setIsUploading(true);
-        try {
-            const avatarStorageRef = storageRef(storage, `profile-pictures/${authUser.uid}`);
-            await uploadBytes(avatarStorageRef, file, { contentType: file.type });
-            const downloadURL = await getDownloadURL(avatarStorageRef);
 
-            const userDocRef = doc(db, "users", authUser.uid);
-            await updateDoc(userDocRef, {
-                avatarUrl: downloadURL
-            });
-
-            toast({ title: 'Avatar updated successfully!' });
-        } catch (error: any) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            try {
+                const dataUrl = reader.result as string;
+                const result = await updateUserProfilePicture(authUser.uid, dataUrl);
+                
+                if (result.success) {
+                    toast({ title: 'Avatar updated successfully!' });
+                } else {
+                    throw new Error(result.error || 'An unknown server error occurred.');
+                }
+            } catch (error: any) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Upload Failed',
+                    description: error.message,
+                });
+            } finally {
+                setIsUploading(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+            }
+        };
+        reader.onerror = () => {
+            setIsUploading(false);
             toast({
                 variant: 'destructive',
-                title: 'Upload Failed',
-                description: error.message || 'An error occurred while uploading your avatar.',
+                title: 'File Read Error',
+                description: 'Could not read the selected file.',
             });
-        } finally {
-            setIsUploading(false);
-            if(fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
         }
     };
 

@@ -1,13 +1,15 @@
+
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Public read access for avatars, secure write for the owner.
+    // Default deny all access to prevent unauthorized operations
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Allow public read access for profile pictures
     match /profile-pictures/{userId} {
-      allow read;
-      allow write: if request.auth != null &&
-                      request.auth.uid == userId &&
-                      request.resource.size < 5 * 1024 * 1024 &&
-                      request.resource.contentType.matches('image/.*');
+      allow read: if true;
     }
   }
 }
