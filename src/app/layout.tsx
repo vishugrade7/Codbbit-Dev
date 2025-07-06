@@ -24,9 +24,6 @@ export const metadata: Metadata = {
   title: 'Codbbit: Master Apex, LWC & Salesforce Development',
   description: 'Accelerate your career with our interactive courses and practice problems in Apex, LWC, and SOQL. The ultimate playground for Salesforce developers.',
   keywords: ['codbbit', 'apex coding', 'lwc learn', 'lwc course', 'learn salesforce', 'salesforce developer', 'soql practice', 'salesforce interview'],
-  icons: {
-    icon: '/favicon.ico',
-  },
 };
 
 export default function RootLayout({
