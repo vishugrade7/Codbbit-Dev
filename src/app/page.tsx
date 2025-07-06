@@ -131,14 +131,14 @@ export default function Home() {
               <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/20 via-card to-card" />
               
               <div className="relative z-10">
-                  <Trophy className="h-8 w-8 text-primary transition-colors duration-500 group-hover:text-primary-foreground" />
+                  <Trophy className="h-8 w-8 text-primary transition-colors duration-500" />
               </div>
               <div className="relative z-10">
-                <h3 className="text-sm text-muted-foreground transition-colors duration-500 group-hover:text-primary-foreground/80">Competitive Learning</h3>
-                <p className="text-xl font-medium mt-2 transition-colors duration-500 group-hover:text-primary-foreground">
+                <h3 className="text-sm text-muted-foreground transition-colors duration-500 group-hover:text-foreground/80">Competitive Learning</h3>
+                <p className="text-xl font-medium mt-2 transition-colors duration-500 group-hover:text-foreground">
                   Compete with developers worldwide and track your progress.
                 </p>
-                 <Link href="/leaderboard" className="inline-flex items-center text-sm font-medium text-primary mt-4 transition-colors duration-500 group-hover:text-primary-foreground group-hover:underline">
+                 <Link href="/leaderboard" className="inline-flex items-center text-sm font-medium text-primary mt-4 transition-colors duration-500 group-hover:text-primary group-hover:underline">
                     View Leaderboard <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </div>
