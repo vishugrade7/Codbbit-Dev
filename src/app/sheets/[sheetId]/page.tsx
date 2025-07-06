@@ -10,8 +10,6 @@ import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { toggleSheetSubscription } from '../actions';
 
-import Header from '@/components/header';
-import Footer from '@/components/footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -200,218 +198,210 @@ export default function SheetDisplayPage() {
     
     if (!sheet) {
          return (
-            <div className="flex h-screen w-full flex-col bg-background">
-                <Header />
-                <main className="flex-1 container py-8 flex items-center justify-center text-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-destructive">Sheet Not Found</h1>
-                        <p className="text-muted-foreground">The requested problem sheet could not be found.</p>
-                        <Button asChild className="mt-4" variant="outline"><Link href="/problem-sheets">Create a Sheet</Link></Button>
-                    </div>
-                </main>
-                <Footer />
-            </div>
+            <main className="flex-1 container py-8 flex items-center justify-center text-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-destructive">Sheet Not Found</h1>
+                    <p className="text-muted-foreground">The requested problem sheet could not be found.</p>
+                    <Button asChild className="mt-4" variant="outline"><Link href="/problem-sheets">Create a Sheet</Link></Button>
+                </div>
+            </main>
         );
     }
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-background">
-            <Header />
-            <main className="flex-1 container py-8">
-                <div className="flex items-center gap-4 mb-4">
-                    <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => router.push('/problem-sheets')}>
-                        <ArrowLeft className="h-5 w-5" />
-                        <span className="sr-only">Back to Problem Sheets</span>
-                    </Button>
-                </div>
-                
-                <Card className="mb-8">
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-primary/10 rounded-lg mt-1">
-                                        <FileText className="h-6 w-6 text-primary" />
-                                    </div>
+        <main className="flex-1 container py-8">
+            <div className="flex items-center gap-4 mb-4">
+                <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => router.push('/problem-sheets')}>
+                    <ArrowLeft className="h-5 w-5" />
+                    <span className="sr-only">Back to Problem Sheets</span>
+                </Button>
+            </div>
+            
+            <Card className="mb-8">
+                <CardHeader>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                        <div className="flex-1">
+                            <div className="flex items-start gap-4">
+                                <div className="p-3 bg-primary/10 rounded-lg mt-1">
+                                    <FileText className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
+                                    <CardDescription className="flex items-center gap-2 mt-2">
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                            <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <span>Created by {sheet.creatorName} {timeAgo}</span>
+                                    </CardDescription>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0">
+                            <div className="flex flex-row items-center gap-4">
+                                <Button onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
+                                    {isSubscribing ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : isSubscribed ? (
+                                        <UserCheck className="mr-2 h-4 w-4" />
+                                    ) : (
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                                </Button>
+                                <Button onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
+                            </div>
+                            <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
+                                <Users className="h-4 w-4" />
+                                <span>{subscribersCount} {subscribersCount === 1 ? 'Subscriber' : 'Subscribers'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {(uniqueCategories.length > 0 || problems.length > 0) && (
+                        <div className="border-t pt-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="md:col-span-2">
+                                {uniqueCategories.length > 0 && (
                                     <div>
-                                        <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
-                                        <CardDescription className="flex items-center gap-2 mt-2">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                                <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span>Created by {sheet.creatorName} {timeAgo}</span>
-                                        </CardDescription>
+                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {uniqueCategories.map(category => (
+                                                <Badge key={category} variant="secondary">{category}</Badge>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
-                            <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0">
-                                <div className="flex flex-row items-center gap-4">
-                                    <Button onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
-                                        {isSubscribing ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : isSubscribed ? (
-                                            <UserCheck className="mr-2 h-4 w-4" />
-                                        ) : (
-                                            <UserPlus className="mr-2 h-4 w-4" />
-                                        )}
-                                        {isSubscribed ? 'Subscribed' : 'Subscribe'}
-                                    </Button>
-                                    <Button onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
-                                </div>
-                                <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
-                                    <Users className="h-4 w-4" />
-                                    <span>{subscribersCount} {subscribersCount === 1 ? 'Subscriber' : 'Subscribers'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {(uniqueCategories.length > 0 || problems.length > 0) && (
-                            <div className="border-t pt-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div className="md:col-span-2">
-                                    {uniqueCategories.length > 0 && (
-                                        <div>
-                                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {uniqueCategories.map(category => (
-                                                    <Badge key={category} variant="secondary">{category}</Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="md:col-span-1">
-                                    {problems.length > 0 && (
-                                        <div>
-                                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-16 text-muted-foreground">Easy</span>
-                                                    <div className="flex-1 bg-muted rounded-full h-2">
-                                                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
-                                                    </div>
-                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-16 text-muted-foreground">Medium</span>
-                                                    <div className="flex-1 bg-muted rounded-full h-2">
-                                                        <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
-                                                    </div>
-                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-16 text-muted-foreground">Hard</span>
-                                                    <div className="flex-1 bg-muted rounded-full h-2">
-                                                        <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
-                                                    </div>
-                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </CardHeader>
-                </Card>
-                
-                {problems.length > 0 && (
-                    <div className="flex flex-col md:flex-row gap-4 mb-8">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input
-                            placeholder="Search problems..."
-                            className="w-full pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-full md:w-[180px]">
-                                <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Statuses</SelectItem>
-                                <SelectItem value="Solved">Solved</SelectItem>
-                                <SelectItem value="Unsolved">Unsolved</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                            <SelectTrigger className="w-full md:w-[180px]">
-                                <SelectValue placeholder="Difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Difficulties</SelectItem>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-                
-                {filteredProblems.length > 0 ? (
-                    <div className="rounded-lg border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[50px]">#</TableHead>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead className="text-right">Difficulty</TableHead>
-                                    <TableHead className="w-[80px] text-center">Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredProblems.map((problem, index) => {
-                                    const isLocked = problem.isPremium && !isPro;
-                                    return (
-                                    <TableRow 
-                                        key={problem.id} 
-                                        className={cn(
-                                            "cursor-pointer hover:bg-muted/50",
-                                            isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
-                                        )}
-                                        onClick={() => {
-                                            if (isLocked) {
-                                                router.push('/pricing');
-                                            } else {
-                                                router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
-                                            }
-                                        }}>
-                                        <TableCell className="font-medium">{index + 1}</TableCell>
-                                        <TableCell>
+                            <div className="md:col-span-1">
+                                {problems.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
+                                        <div className="space-y-2 text-sm">
                                             <div className="flex items-center gap-2">
-                                                {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
-                                                <span className={cn(isLocked && "filter blur-sm")}>{problem.title}</span>
+                                                <span className="w-16 text-muted-foreground">Easy</span>
+                                                <div className="flex-1 bg-muted rounded-full h-2">
+                                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                                </div>
+                                                <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
                                             </div>
-                                        </TableCell>
-                                        <TableCell><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                {problem.difficulty}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex justify-center">
-                                                {userData?.solvedProblems?.[problem.id] ? (
-                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                ) : (
-                                                    <Circle className="h-5 w-5 text-muted-foreground/50" />
-                                                )}
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-16 text-muted-foreground">Medium</span>
+                                                <div className="flex-1 bg-muted rounded-full h-2">
+                                                    <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                                </div>
+                                                <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )})}
-                            </TableBody>
-                        </Table>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-16 text-muted-foreground">Hard</span>
+                                                <div className="flex-1 bg-muted rounded-full h-2">
+                                                    <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                                </div>
+                                                <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </CardHeader>
+            </Card>
+            
+            {problems.length > 0 && (
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                        placeholder="Search problems..."
+                        className="w-full pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                ) : (
-                    <div className="text-center py-12">
-                        <p className="text-muted-foreground">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
-                    </div>
-                )}
-            </main>
-            <Footer />
-        </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Statuses</SelectItem>
+                            <SelectItem value="Solved">Solved</SelectItem>
+                            <SelectItem value="Unsolved">Unsolved</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectValue placeholder="Difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Difficulties</SelectItem>
+                            <SelectItem value="Easy">Easy</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Hard">Hard</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+            
+            {filteredProblems.length > 0 ? (
+                <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px]">#</TableHead>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Category</TableHead>
+                                <TableHead className="text-right">Difficulty</TableHead>
+                                <TableHead className="w-[80px] text-center">Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredProblems.map((problem, index) => {
+                                const isLocked = problem.isPremium && !isPro;
+                                return (
+                                <TableRow 
+                                    key={problem.id} 
+                                    className={cn(
+                                        "cursor-pointer hover:bg-muted/50",
+                                        isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
+                                    )}
+                                    onClick={() => {
+                                        if (isLocked) {
+                                            router.push('/pricing');
+                                        } else {
+                                            router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
+                                        }
+                                    }}>
+                                    <TableCell className="font-medium">{index + 1}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
+                                            <span className={cn(isLocked && "filter blur-sm")}>{problem.title}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                            {problem.difficulty}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center">
+                                            {userData?.solvedProblems?.[problem.id] ? (
+                                                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                            ) : (
+                                                <Circle className="h-5 w-5 text-muted-foreground/50" />
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )})}
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
+                <div className="text-center py-12">
+                    <p className="text-muted-foreground">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
+                </div>
+            )}
+        </main>
     );
 }
