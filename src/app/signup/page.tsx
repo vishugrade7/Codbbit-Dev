@@ -19,7 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, AtSign, Building, Globe, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, User, AtSign, Building, Globe, Mail, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -29,6 +29,8 @@ const formSchema = z.object({
     .regex(/^[a-zA-Z0-9_.]+$/, { message: "Only letters, numbers, '_', '.' are allowed." })
     .refine(async (username) => {
         if (!db) return false;
+        // Do not run check for short usernames
+        if (username.length < 3) return true;
         try {
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("username", "==", username.toLowerCase()), limit(1));
@@ -112,7 +114,7 @@ export default function SignupPage() {
       email: "",
       password: "",
     },
-    mode: "onBlur",
+    mode: "onChange",
     reValidateMode: "onChange",
   });
 
@@ -281,7 +283,15 @@ export default function SignupPage() {
                       <FormControl>
                         <div className="relative">
                             <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="e.g. tim_cook" {...field} className="pl-10" />
+                            <Input placeholder="e.g. tim_cook" {...field} className="pl-10 pr-10" />
+                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                {form.formState.isValidating && field.value.length >= 3 && (
+                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                )}
+                                {!form.formState.isValidating && !form.formState.errors.username && field.value.length >= 3 && (
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                )}
+                            </div>
                         </div>
                       </FormControl>
                       <FormMessage />
