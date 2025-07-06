@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -70,21 +69,9 @@ export default function Home() {
                   data-ai-hint="development workspace"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent rounded-xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-primary/10 to-transparent rounded-xl" />
               </div>
 
-              {/* Foreground Mobile */}
-              <div className="absolute top-[10%] right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
-                <Image
-                  src="https://placehold.co/400x800.png"
-                  alt="Codbbit mobile preview"
-                  width={400}
-                  height={800}
-                  className="w-full h-auto"
-                  data-ai-hint="mobile app"
-                />
-              </div>
-              
               {/* Foreground Chat */}
               <div className="absolute bottom-[10%] left-[-5%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
@@ -94,6 +81,18 @@ export default function Home() {
                   height={400}
                   className="w-full h-auto"
                   data-ai-hint="ai chat"
+                />
+              </div>
+              
+              {/* Foreground Mobile */}
+              <div className="absolute top-[10%] right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
+                <Image
+                  src="https://placehold.co/400x800.png"
+                  alt="Codbbit mobile preview"
+                  width={400}
+                  height={800}
+                  className="w-full h-auto"
+                  data-ai-hint="mobile app"
                 />
               </div>
             </div>
