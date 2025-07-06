@@ -27,7 +27,6 @@ import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
 
 
-type StarredProblemDetail = Problem & { categoryName: string };
 type RecentlySolvedProblem = SolvedProblemType & { id: string };
 
 
