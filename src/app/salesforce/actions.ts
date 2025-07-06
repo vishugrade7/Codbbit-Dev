@@ -99,7 +99,21 @@ async function sfdcFetch(auth: SfdcAuth, path: string, options: RequestInit = {}
     });
     if (!response.ok) {
         const errorBody = await response.json();
-        const errorMessage = Array.isArray(errorBody) ? errorBody[0]?.message : (errorBody.message || 'An unknown Salesforce API error occurred.');
+        let errorMessage;
+
+        if (Array.isArray(errorBody) && errorBody.length > 0) {
+            const firstError = errorBody[0];
+            errorMessage = firstError.message || 'An unknown Salesforce API error occurred.';
+            // Check for lineNumber and columnNumber for compilation errors
+            if (firstError.lineNumber && firstError.columnNumber) {
+                errorMessage += ` (Line: ${firstError.lineNumber}, Column: ${firstError.columnNumber})`;
+            }
+        } else if (errorBody.message) {
+            errorMessage = errorBody.message;
+        } else {
+            errorMessage = 'An unknown Salesforce API error occurred.';
+        }
+        
         throw new Error(errorMessage);
     }
     if (response.status === 204) {
@@ -343,7 +357,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     const log: string[] = [];
     
     try {
-        log.push("Starting submission...");
+        log.push("--- Starting Submission ---");
         const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
         const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
         const problemTypeKeyword = problem.metadataType.toLowerCase();
