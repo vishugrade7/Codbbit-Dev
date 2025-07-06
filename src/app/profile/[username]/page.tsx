@@ -11,12 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
-import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, onSnapshot, limit, updateDoc } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { uploadAvatar } from "../actions";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
@@ -99,8 +99,8 @@ export default function UserProfilePage() {
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !authUser) return;
-        if (authUser.uid !== profileUser?.uid) return;
+        if (!file || !authUser || !profileUser) return;
+        if (authUser.uid !== profileUser.uid) return;
 
         if (!file.type.startsWith('image/')) {
             toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please select an image.' });
@@ -109,16 +109,16 @@ export default function UserProfilePage() {
 
         setIsUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('avatar', file);
+            const avatarStorageRef = storageRef(storage, `profile-pictures/${authUser.uid}`);
+            await uploadBytes(avatarStorageRef, file, { contentType: file.type });
+            const downloadURL = await getDownloadURL(avatarStorageRef);
 
-            const result = await uploadAvatar(authUser.uid, formData);
+            const userDocRef = doc(db, "users", authUser.uid);
+            await updateDoc(userDocRef, {
+                avatarUrl: downloadURL
+            });
 
-            if (result.success) {
-                toast({ title: 'Avatar updated successfully!' });
-            } else {
-                throw new Error(result.error);
-            }
+            toast({ title: 'Avatar updated successfully!' });
         } catch (error: any) {
             toast({
                 variant: 'destructive',

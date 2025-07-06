@@ -32,40 +32,6 @@ export async function toggleStarProblem(userId: string, problemId: string, isCur
 }
 
 
-export async function uploadAvatar(userId: string, formData: FormData) {
-    if (!userId || !formData) {
-        return { success: false, error: 'User ID and form data are required.' };
-    }
-    const file = formData.get('avatar') as File | null;
-
-    if (!file) {
-        return { success: false, error: 'No avatar file provided.' };
-    }
-
-    if (!db || !storage) {
-        return { success: false, error: 'Firebase is not configured correctly.' };
-    }
-
-    const userDocRef = doc(db, 'users', userId);
-    const avatarStorageRef = storageRef(storage, `profile-pictures/${userId}`);
-    
-    try {
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
-        await uploadBytes(avatarStorageRef, fileBuffer, { contentType: file.type });
-        const downloadURL = await getDownloadURL(avatarStorageRef);
-
-        await updateDoc(userDocRef, {
-            avatarUrl: downloadURL
-        });
-
-        return { success: true, url: downloadURL };
-    } catch (error) {
-        console.error("Error uploading avatar:", error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-        return { success: false, error: errorMessage };
-    }
-}
-
 export async function updateActiveSession(userId: string, sessionId: string) {
     if (!userId || !sessionId) {
         return { success: false, error: 'User ID and Session ID are required.' };
