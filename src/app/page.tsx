@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -10,8 +11,8 @@ export default function Home() {
   return (
     <>
       <section className="w-full py-20 md:py-32 lg:py-40">
-        <div className="container px-4 md:px-6 text-center">
-          <div className="max-w-3xl mx-auto space-y-4">
+        <div className="container px-4 md:px-6">
+          <div className="max-w-3xl mx-auto space-y-4 text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline">
               Master Salesforce Development
             </h1>
@@ -19,7 +20,7 @@ export default function Home() {
               Build, test, and deploy Salesforce solutions faster with our comprehensive platform for SOQL queries, Apex code, and Lightning Web Components.
             </p>
           </div>
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 px-8 sm:px-0">
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
             <Button asChild size="lg">
               <Link href="/apex-problems">
                 <Rocket className="mr-2 h-5 w-5" />
@@ -33,6 +34,19 @@ export default function Home() {
               </Link>
             </Button>
           </div>
+
+          <div className="mt-16 aspect-video max-w-5xl mx-auto">
+            <Image
+              src="https://placehold.co/1200x700.png"
+              alt="Codbbit Platform Screenshot"
+              width={1200}
+              height={700}
+              className="mx-auto rounded-xl shadow-2xl ring-1 ring-border w-full h-full object-cover"
+              data-ai-hint="development workspace"
+              priority
+            />
+          </div>
+
         </div>
       </section>
 
