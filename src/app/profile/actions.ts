@@ -2,7 +2,8 @@
 'use server';
 
 import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export async function toggleStarProblem(userId: string, problemId: string, isCurrentlyStarred: boolean) {
     if (!userId || !problemId) {
@@ -31,27 +32,37 @@ export async function toggleStarProblem(userId: string, problemId: string, isCur
 }
 
 
-export async function updateAvatar(userId: string, newAvatarUrl: string) {
-    if (!userId || !newAvatarUrl) {
-        return { success: false, error: 'User ID and new avatar URL are required.' };
+export async function uploadAvatar(userId: string, formData: FormData) {
+    if (!userId || !formData) {
+        return { success: false, error: 'User ID and form data are required.' };
     }
-    if (!db) {
+    const file = formData.get('avatar') as File | null;
+
+    if (!file) {
+        return { success: false, error: 'No avatar file provided.' };
+    }
+
+    if (!db || !storage) {
         return { success: false, error: 'Firebase is not configured correctly.' };
     }
 
     const userDocRef = doc(db, 'users', userId);
-
+    const avatarStorageRef = storageRef(storage, `profile-pictures/${userId}`);
+    
     try {
-        // Just update Firestore with the new URL.
-        // The file in Storage is overwritten by the client-side upload.
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        await uploadBytes(avatarStorageRef, fileBuffer, { contentType: file.type });
+        const downloadURL = await getDownloadURL(avatarStorageRef);
+
         await updateDoc(userDocRef, {
-            avatarUrl: newAvatarUrl
+            avatarUrl: downloadURL
         });
 
-        return { success: true };
+        return { success: true, url: downloadURL };
     } catch (error) {
-        console.error("Error updating avatar URL in Firestore:", error);
-        return { success: false, error: 'Failed to update profile picture URL.' };
+        console.error("Error uploading avatar:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
     }
 }
 

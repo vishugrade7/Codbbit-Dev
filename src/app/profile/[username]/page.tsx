@@ -16,8 +16,7 @@ import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { updateAvatar } from "../actions";
+import { uploadAvatar } from "../actions";
 import { PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
@@ -100,7 +99,7 @@ export default function UserProfilePage() {
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !authUser || !storage) return;
+        if (!file || !authUser) return;
         if (authUser.uid !== profileUser?.uid) return;
 
         if (!file.type.startsWith('image/')) {
@@ -110,11 +109,10 @@ export default function UserProfilePage() {
 
         setIsUploading(true);
         try {
-            const avatarStorageRef = storageRef(storage, `profile-pictures/${authUser.uid}`);
-            await uploadBytes(avatarStorageRef, file);
-            const downloadURL = await getDownloadURL(avatarStorageRef);
-            
-            const result = await updateAvatar(authUser.uid, downloadURL);
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            const result = await uploadAvatar(authUser.uid, formData);
 
             if (result.success) {
                 toast({ title: 'Avatar updated successfully!' });
