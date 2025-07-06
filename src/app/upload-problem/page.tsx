@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, Menu as MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building, Columns } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building, Columns, DownloadCloud } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -468,6 +468,44 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
         }
     };
 
+    const handleDownloadSample = () => {
+        const sampleData = [
+            {
+                title: "Sample Problem: Two Sum",
+                description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.",
+                category: "Arrays & Hashing",
+                difficulty: "Easy",
+                metadataType: "Class",
+                triggerSObject: "",
+                sampleCode: "public class Solution {\n    public List<Integer> twoSum(List<Integer> nums, Integer target) {\n        // Your code here\n    }\n}",
+                testcases: "@isTest\nprivate class SolutionTest {\n    @isTest\n    static void testTwoSum_basic() {\n        Solution s = new Solution();\n        List<Integer> result = s.twoSum(new List<Integer>{2, 7, 11, 15}, 9);\n        System.assertEquals(new List<Integer>{0, 1}, result);\n    }\n}",
+                examples: [
+                    {
+                        input: "nums = [2,7,11,15], target = 9",
+                        output: "[0,1]",
+                        explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]."
+                    },
+                    {
+                        input: "nums = [3,2,4], target = 6",
+                        output: "[1,2]",
+                        explanation: ""
+                    }
+                ],
+                hints: [
+                    { value: "A really simple way to solve this is using a HashMap to store the numbers you've seen and their indices." }
+                ],
+                company: "Google",
+                companyLogoUrl: "https://logo.clearbit.com/google.com",
+                isPremium: false
+            }
+        ];
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(sampleData, null, 2))}`;
+        const link = document.createElement("a");
+        link.href = jsonString;
+        link.download = "problem_sample.json";
+        link.click();
+    };
+
     const filteredProblems = useMemo(() => {
         return problems
           .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
@@ -500,6 +538,10 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                      <Button onClick={() => setIsCategoryModalOpen(true)} variant="secondary">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Category
+                    </Button>
+                    <Button onClick={handleDownloadSample} variant="outline">
+                        <DownloadCloud className="mr-2 h-4 w-4" />
+                        Sample JSON
                     </Button>
                     <Button onClick={handleBulkUploadClick} variant="outline" disabled={isUploading}>
                         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
