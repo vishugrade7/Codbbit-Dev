@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export async function toggleStarProblem(userId: string, problemId: string, isCurrentlyStarred: boolean) {
@@ -73,5 +73,26 @@ export async function updateActiveSession(userId: string, sessionId: string) {
     } catch (error) {
         console.error("Error updating active session:", error);
         return { success: false, error: 'Failed to update user session.' };
+    }
+}
+
+export async function markLessonAsComplete(userId: string, lessonId: string) {
+    if (!userId || !lessonId) {
+        return { success: false, error: 'User ID and Lesson ID are required.' };
+    }
+    if (!db) {
+        return { success: false, error: 'Firebase is not configured correctly.' };
+    }
+
+    const userDocRef = doc(db, 'users', userId);
+
+    try {
+        await updateDoc(userDocRef, {
+            [`completedLessons.${lessonId}`]: serverTimestamp()
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error marking lesson as complete:", error);
+        return { success: false, error: 'Failed to update lesson completion status.' };
     }
 }

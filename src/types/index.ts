@@ -51,6 +51,7 @@ export type User = {
   maxStreak?: number;
   lastSolvedDate?: string; // YYYY-MM-DD
   subscribedSheetIds?: string[];
+  completedLessons?: { [lessonId: string]: any }; // Firestore Timestamp
 
   // Razorpay Payment Fields
   razorpayPaymentId?: string;

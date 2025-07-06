@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, getDoc } from 'firebase/firestore';
@@ -20,6 +20,8 @@ import remarkGfm from 'remark-gfm';
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import Image from 'next/image';
+import { Progress } from '@/components/ui/progress';
+import { markLessonAsComplete } from '@/app/profile/actions';
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -243,6 +245,39 @@ export default function LessonPage() {
         fetchCourse();
     }, [courseId, lessonId, router, isPro, user, authLoading]);
 
+    const { progressPercentage, completedLessonsCount, totalLessonsCount } = useMemo(() => {
+        if (!course || !course.modules) {
+            return { progressPercentage: 0, completedLessonsCount: 0, totalLessonsCount: 0 };
+        }
+
+        const allLessonIds = new Set(course.modules.flatMap(m => m.lessons.map(l => l.id)));
+        const totalLessons = allLessonIds.size;
+
+        if (totalLessons === 0) {
+            return { progressPercentage: 0, completedLessonsCount: 0, totalLessonsCount: 0 };
+        }
+        
+        const completedInCourse = userData?.completedLessons 
+            ? Object.keys(userData.completedLessons).filter(id => allLessonIds.has(id)).length 
+            : 0;
+
+        const percentage = (completedInCourse / totalLessons) * 100;
+        
+        return { 
+            progressPercentage: percentage, 
+            completedLessonsCount: completedInCourse, 
+            totalLessonsCount: totalLessons 
+        };
+    }, [course, userData?.completedLessons]);
+
+    const handleCompleteAndNavigate = async () => {
+        if (user && lessonId && !userData?.completedLessons?.[lessonId]) {
+            await markLessonAsComplete(user.uid, lessonId);
+        }
+        const targetUrl = nextLesson ? `/courses/${courseId}/lessons/${nextLesson.lessonId}` : `/courses/${courseId}`;
+        router.push(targetUrl);
+    };
+
     if (loading || authLoading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
@@ -263,6 +298,12 @@ export default function LessonPage() {
                                 Back to Course
                             </Button>
                             <h2 className="text-lg font-semibold">{course.title}</h2>
+                            {totalLessonsCount > 0 && (
+                                <div className="mt-2 space-y-1">
+                                    <Progress value={progressPercentage} className="h-2" />
+                                    <p className="text-xs text-muted-foreground">{completedLessonsCount} / {totalLessonsCount} lessons completed</p>
+                                </div>
+                            )}
                         </div>
                         <Accordion type="single" collapsible defaultValue={currentModuleId ?? undefined} className="w-full">
                              {course.modules.map((moduleItem) => (
@@ -272,6 +313,8 @@ export default function LessonPage() {
                                         <ul className="space-y-1 pt-2">
                                             {moduleItem.lessons.map((lesson) => {
                                                 const isLessonLocked = (course.isPremium && !isPro) || (!lesson.isFree && !isPro);
+                                                const isCompleted = !!userData?.completedLessons?.[lesson.id];
+
                                                 return (
                                                  <li key={lesson.id}>
                                                     <Link 
@@ -281,7 +324,7 @@ export default function LessonPage() {
                                                             lesson.id === lessonId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                                                         )}
                                                     >
-                                                        <div className="flex items-center gap-3">
+                                                        <div className={cn("flex items-center gap-3", isCompleted && !isLessonLocked && "text-muted-foreground")}>
                                                             {getLessonIcon(lesson)}
                                                             <span className="font-medium">{lesson.title}</span>
                                                         </div>
@@ -329,7 +372,7 @@ export default function LessonPage() {
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Previous
                             </Button>
-                            <Button onClick={() => nextLesson ? router.push(`/courses/${courseId}/lessons/${nextLesson.lessonId}`) : router.push(`/courses/${courseId}`)} >
+                            <Button onClick={handleCompleteAndNavigate} >
                                 {nextLesson ? 'Next Lesson' : 'Finish Course'} <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </div>
