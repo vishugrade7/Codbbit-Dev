@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -568,41 +567,45 @@ export default function ProblemWorkspacePage() {
             </div>
         </header>
 
-        {/* Mobile View */}
-        <div className="md:hidden flex-1 flex flex-col overflow-hidden">
-            <Tabs defaultValue="problem" className="flex-1 flex flex-col w-full">
-                <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none border-b">
-                    <TabsTrigger value="problem" className="rounded-none">Problem</TabsTrigger>
-                    <TabsTrigger value="code" className="rounded-none">Code</TabsTrigger>
-                </TabsList>
-                <TabsContent value="problem" className="flex-1 overflow-y-auto">
-                    <ProblemDetails />
-                </TabsContent>
-                <TabsContent value="code" className="flex-1 flex flex-col m-0">
-                    <EditorAndResults />
-                </TabsContent>
-            </Tabs>
-        </div>
+        <main className="flex-1 overflow-auto">
+            {/* Mobile View */}
+            <div className="md:hidden h-full">
+                <Tabs defaultValue="problem" className="flex flex-col h-full">
+                    <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none border-b">
+                        <TabsTrigger value="problem" className="rounded-none">Problem</TabsTrigger>
+                        <TabsTrigger value="code" className="rounded-none">Code</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="problem" className="flex-1 overflow-y-auto">
+                        <ProblemDetails />
+                    </TabsContent>
+                    <TabsContent value="code" className="flex-1 flex flex-col m-0 overflow-hidden">
+                        <EditorAndResults />
+                    </TabsContent>
+                </Tabs>
+            </div>
 
-        {/* Desktop View */}
-        <ResizablePanelGroup direction="horizontal" className="hidden md:flex flex-1">
-            <ResizablePanel 
-                ref={leftPanelRef}
-                defaultSize={33}
-                minSize={20}
-                collapsible
-                collapsedSize={0}
-                onCollapse={() => setIsFullScreen(true)}
-                onExpand={() => setIsFullScreen(false)}
-                className={cn("transition-all duration-300 ease-in-out")}
-            >
-                <ProblemDetails />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={67} minSize={30}>
-                 <EditorAndResults />
-            </ResizablePanel>
-        </ResizablePanelGroup>
+            {/* Desktop View */}
+            <ResizablePanelGroup direction="horizontal" className="hidden md:flex h-full">
+                <ResizablePanel 
+                    ref={leftPanelRef}
+                    defaultSize={33}
+                    minSize={20}
+                    collapsible
+                    collapsedSize={0}
+                    onCollapse={() => setIsFullScreen(true)}
+                    onExpand={() => setIsFullScreen(false)}
+                    className={cn("transition-all duration-300 ease-in-out")}
+                >
+                    <ProblemDetails />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={67} minSize={30}>
+                     <EditorAndResults />
+                </ResizablePanel>
+            </ResizablePanelGroup>
+        </main>
     </div>
     )
 }
+
+    
