@@ -82,7 +82,7 @@ export default function Header() {
   const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
+    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
@@ -133,113 +133,17 @@ export default function Header() {
             </div>
           ) : user ? (
             <>
-              {/* Desktop view */}
+              {/* This desktop view is now handled by the sidebar */}
               <div className="hidden md:flex items-center gap-4">
-                <div className="flex items-center gap-1.5 font-semibold">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                        <Avatar className="h-10 w-10">
-                            <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
-                            <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                        </Avatar>
-                        <span
-                            className={cn(
-                                "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background",
-                                userData?.sfdcAuth?.connected ? "bg-green-500" : "bg-red-500"
-                            )}
-                        />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/profile')}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/settings')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </DropdownMenuItem>
-                    {!isPro && (
-                        <DropdownMenuItem onClick={() => router.push('/pricing')}>
-                            <Rocket className="mr-2 h-4 w-4" />
-                            <span>Upgrade</span>
-                        </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Kept empty for spacing consistency if needed, but sidebar takes over */}
               </div>
 
-              {/* Mobile view */}
+              {/* Mobile view with Sheet */}
               <div className="flex items-center gap-2 md:hidden">
                  <div className="flex items-center gap-1.5 font-semibold">
                     <Flame className="h-5 w-5 text-orange-500" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                     <div className="relative">
-                        <Avatar className="h-10 w-10 cursor-pointer">
-                            <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                            <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                        </Avatar>
-                        <span
-                            className={cn(
-                                "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background",
-                                userData?.sfdcAuth?.connected ? "bg-green-500" : "bg-red-500"
-                            )}
-                        />
-                    </div>
-                  </DropdownMenuTrigger>
-                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/profile')}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/settings')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </DropdownMenuItem>
-                    {!isPro && (
-                        <DropdownMenuItem onClick={() => router.push('/pricing')}>
-                            <Rocket className="mr-2 h-4 w-4" />
-                            <span>Upgrade</span>
-                        </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -253,6 +157,39 @@ export default function Header() {
                         <CodeXml className="h-6 w-6" />
                         <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
                       </Link>
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                             <div className="relative flex items-center gap-4 text-left p-2 rounded-lg hover:bg-muted">
+                                <Avatar className="h-12 w-12 cursor-pointer">
+                                    <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                                    <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                    {user.email}
+                                    </p>
+                                </div>
+                            </div>
+                          </DropdownMenuTrigger>
+                           <DropdownMenuContent className="w-56" align="end" forceMount>
+                            <DropdownMenuItem onClick={() => router.push('/profile')}>
+                              <UserIcon className="mr-2 h-4 w-4" />
+                              <span>Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/settings')}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                            </DropdownMenuItem>
+                            {!isPro && (
+                                <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                                    <Rocket className="mr-2 h-4 w-4" />
+                                    <span>Upgrade</span>
+                                </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      <Separator />
                       <nav className="grid gap-4">
                         {navLinks.map((link) => (
                           <Link
@@ -280,10 +217,10 @@ export default function Header() {
                             </Link>
                         ))}
                       </nav>
-                      {/* Separate actions for mobile sheet */}
-                      <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
-                        <Button variant="outline" asChild><Link href="/profile">Profile</Link></Button>
-                        <Button variant="secondary" onClick={handleLogout}>Logout</Button>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <Button variant="secondary" onClick={handleLogout} className="w-full">
+                           <LogOut className="mr-2 h-4 w-4" /> Logout
+                        </Button>
                       </div>
                     </div>
                   </SheetContent>

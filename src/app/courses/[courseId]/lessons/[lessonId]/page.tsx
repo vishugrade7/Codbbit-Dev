@@ -8,7 +8,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, Problem, ApexProblemsData, ContentBlock } from '@/types';
-import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, ArrowRight, MousePointerClick, Code, Image as ImageIcon } from 'lucide-react';
@@ -287,8 +286,7 @@ export default function LessonPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col">
-            <Header />
+        <div className="h-screen flex flex-col pt-16 md:pt-0">
             <ResizablePanelGroup direction="horizontal" className="flex-1">
                 <ResizablePanel defaultSize={25} minSize={20} className="hidden md:block bg-card">
                     <ScrollArea className="h-full p-4">

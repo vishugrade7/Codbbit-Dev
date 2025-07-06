@@ -345,7 +345,7 @@ export default function ProblemWorkspacePage() {
     };
 
     return (
-    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-16 md:pt-0">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
         {showSuccess && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">

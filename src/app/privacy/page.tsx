@@ -44,7 +44,7 @@ export default function Privacy() {
                 <div className="space-y-2">
                     <h2 className="text-2xl font-semibold text-foreground">5. Contact Us</h2>
                     <p>
-                        If you have any questions about this Privacy Policy, please contact us at support@codolio.com.
+                        If you have any questions about this Privacy Policy, please contact us at support@codbbit.com.
                     </p>
                 </div>
             </div>

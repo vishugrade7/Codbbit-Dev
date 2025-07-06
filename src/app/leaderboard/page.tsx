@@ -10,8 +10,6 @@ import type { LeaderboardUser, Problem, ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -169,253 +167,245 @@ export default function Leaderboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full flex-col bg-background">
-        <Header />
-        <main className="flex-1 container py-8 flex items-center justify-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
+      <main className="flex-1 container py-8 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </main>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex-1 container py-8">
-        <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
-            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-                See how you rank against the best Salesforce developers in the world. Keep solving problems to climb up the ranks!
-            </p>
-        </div>
+    <main className="flex-1 container py-8">
+      <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
+          <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
+              See how you rank against the best Salesforce developers in the world. Keep solving problems to climb up the ranks!
+          </p>
+      </div>
 
-        {currentUserEntry && (
-          <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-              <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
-                <CardContent className="p-6 flex flex-col flex-grow">
-                  <Link href={`/profile/${currentUserEntry.username}`} className="block">
-                      <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-4">
-                              <Avatar className="h-12 w-12 border-2 border-primary">
-                                  <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                                  <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                  <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                                  <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                              </div>
-                          </div>
-                          <div className="text-right">
-                              <div className="flex items-center gap-2 font-bold text-2xl">
-                                  <Trophy className="h-7 w-7 text-yellow-400" />
-                                  <span>{currentUserEntry.rank}</span>
-                              </div>
-                              <p className="text-sm text-muted-foreground">Rank</p>
-                          </div>
-                      </div>
-                  </Link>
-                  <div className="mt-auto pt-4 flex justify-between items-end">
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            {currentUserEntry.company && (
-                                <div className="flex items-center gap-1.5">
-                                    {currentUserEntry.companyLogoUrl ? (
-                                        <Image
-                                            src={currentUserEntry.companyLogoUrl}
-                                            alt={currentUserEntry.company || 'Company logo'}
-                                            width={16}
-                                            height={16}
-                                            className="rounded-sm object-contain"
-                                        />
-                                    ) : (
-                                        <Building className="h-4 w-4" />
-                                    )}
-                                    <span>{currentUserEntry.company}</span>
-                                </div>
-                            )}
-                            {currentUserEntry.country && (
-                                <div className="flex items-center gap-1.5">
-                                    <Globe className="h-4 w-4" />
-                                    <span>{currentUserEntry.country}</span>
-                                </div>
-                            )}
-                      </div>
-                      <div className="text-right">
-                        <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
-                        <p className="text-sm text-muted-foreground">Points</p>
-                      </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="lg:col-span-2">
-              {suggestedProblem ? (
-                  <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
-                    <CardContent className="p-6 flex flex-col h-full">
-                        <div className="flex-grow">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                    <BookOpen className="h-5 w-5 text-primary" />
-                                </div>
-                                <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
-                            </div>
-                            <p className="text-muted-foreground text-sm mb-3">
-                                Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
-                                <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
-                                {suggestedProblem.difficulty}
-                                </Badge>
+      {currentUserEntry && (
+        <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
+              <CardContent className="p-6 flex flex-col flex-grow">
+                <Link href={`/profile/${currentUserEntry.username}`} className="block">
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12 border-2 border-primary">
+                                <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                                <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold text-lg">{currentUserEntry.name}</p>
+                                <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                             </div>
                         </div>
-                        <Button asChild className="w-full mt-4 flex-shrink-0">
-                          <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
-                            Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
-                          </Link>
-                        </Button>
-                    </CardContent>
-                  </Card>
-              ) : (
-                <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed min-h-[160px]">
-                    <CardContent className="p-0">
-                        {allProblems.length > 0 && userData && userData.solvedProblems && Object.keys(userData.solvedProblems).length >= allProblems.length ? (
-                        <>
-                            <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold">You're a Champion!</h3>
-                            <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
-                        </>
-                        ) : (
-                        <>
-                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-                            <p className="text-muted-foreground">Finding a great challenge for you...</p>
-                        </>
-                        )}
-                    </CardContent>
-                </Card>
-              )}
-            </div>
+                        <div className="text-right">
+                            <div className="flex items-center gap-2 font-bold text-2xl">
+                                <Trophy className="h-7 w-7 text-yellow-400" />
+                                <span>{currentUserEntry.rank}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Rank</p>
+                        </div>
+                    </div>
+                </Link>
+                <div className="mt-auto pt-4 flex justify-between items-end">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          {currentUserEntry.company && (
+                              <div className="flex items-center gap-1.5">
+                                  {currentUserEntry.companyLogoUrl ? (
+                                      <Image
+                                          src={currentUserEntry.companyLogoUrl}
+                                          alt={currentUserEntry.company || 'Company logo'}
+                                          width={16}
+                                          height={16}
+                                          className="rounded-sm object-contain"
+                                      />
+                                  ) : (
+                                      <Building className="h-4 w-4" />
+                                  )}
+                                  <span>{currentUserEntry.company}</span>
+                              </div>
+                          )}
+                          {currentUserEntry.country && (
+                              <div className="flex items-center gap-1.5">
+                                  <Globe className="h-4 w-4" />
+                                  <span>{currentUserEntry.country}</span>
+                              </div>
+                          )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">Points</p>
+                    </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
-        
-        <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
-            <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-auto">
-                <TabsList>
-                    <TabsTrigger value="Global">Global</TabsTrigger>
-                    <TabsTrigger value="Country">By Country</TabsTrigger>
-                    <TabsTrigger value="Company">By Company</TabsTrigger>
-                </TabsList>
-            </Tabs>
-
-            {filterType === "Country" && (
-                <Select
-                    value={filterValue ?? ''}
-                    onValueChange={(value) => setFilterValue(value)}
-                    disabled={countryOptions.length === 0}
-                >
-                    <SelectTrigger className="w-full md:w-[220px]">
-                        <SelectValue placeholder="Select a country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {countryOptions.map(country => (
-                            <SelectItem key={country} value={country}>{country}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+          <div className="lg:col-span-2">
+            {suggestedProblem ? (
+                <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
+                  <CardContent className="p-6 flex flex-col h-full">
+                      <div className="flex-grow">
+                          <div className="flex items-center gap-3 mb-2">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                  <BookOpen className="h-5 w-5 text-primary" />
+                              </div>
+                              <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
+                          </div>
+                          <p className="text-muted-foreground text-sm mb-3">
+                              Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
+                          </p>
+                          <div className="flex items-center gap-2">
+                              <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
+                              <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
+                              {suggestedProblem.difficulty}
+                              </Badge>
+                          </div>
+                      </div>
+                      <Button asChild className="w-full mt-4 flex-shrink-0">
+                        <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
+                          Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                  </CardContent>
+                </Card>
+            ) : (
+              <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed min-h-[160px]">
+                  <CardContent className="p-0">
+                      {allProblems.length > 0 && userData && userData.solvedProblems && Object.keys(userData.solvedProblems).length >= allProblems.length ? (
+                      <>
+                          <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+                          <h3 className="text-xl font-bold">You're a Champion!</h3>
+                          <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
+                      </>
+                      ) : (
+                      <>
+                          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+                          <p className="text-muted-foreground">Finding a great challenge for you...</p>
+                      </>
+                      )}
+                  </CardContent>
+              </Card>
             )}
-
-            {filterType === "Company" && (
-                <Select
-                    value={filterValue ?? ''}
-                    onValueChange={(value) => setFilterValue(value)}
-                    disabled={companyOptions.length === 0}
-                >
-                    <SelectTrigger className="w-full md:w-[220px]">
-                        <SelectValue placeholder="Select a company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {companyOptions.map(company => (
-                            <SelectItem key={company} value={company}>{company}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            )}
+          </div>
         </div>
+      )}
+      
+      <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
+          <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-auto">
+              <TabsList>
+                  <TabsTrigger value="Global">Global</TabsTrigger>
+                  <TabsTrigger value="Country">By Country</TabsTrigger>
+                  <TabsTrigger value="Company">By Company</TabsTrigger>
+              </TabsList>
+          </Tabs>
+
+          {filterType === "Country" && (
+              <Select
+                  value={filterValue ?? ''}
+                  onValueChange={(value) => setFilterValue(value)}
+                  disabled={countryOptions.length === 0}
+              >
+                  <SelectTrigger className="w-full md:w-[220px]">
+                      <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {countryOptions.map(country => (
+                          <SelectItem key={country} value={country}>{country}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          )}
+
+          {filterType === "Company" && (
+              <Select
+                  value={filterValue ?? ''}
+                  onValueChange={(value) => setFilterValue(value)}
+                  disabled={companyOptions.length === 0}
+              >
+                  <SelectTrigger className="w-full md:w-[220px]">
+                      <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {companyOptions.map(company => (
+                          <SelectItem key={company} value={company}>{company}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          )}
+      </div>
 
 
-        <div className="rounded-lg border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[80px] text-center">Rank</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead className="hidden md:table-cell">Company</TableHead>
-                        <TableHead className="hidden md:table-cell text-center">Country</TableHead>
-                        <TableHead className="text-right">Points</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {paginatedData.map((user) => (
-                        <TableRow 
-                          key={user.id} 
-                          className={cn(user.id === authUser?.uid && "bg-primary/10 hover:bg-primary/20")}
-                        >
-                            <TableCell className="font-bold text-center text-xl">{getMedal(user.rank)}</TableCell>
-                            <TableCell>
-                                <Link href={`/profile/${user.username}`} className="flex items-center gap-4 group">
-                                    <Avatar>
-                                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-medium group-hover:underline">{user.name}</p>
-                                        <p className="text-sm text-muted-foreground">@{user.username}</p>
-                                    </div>
-                                </Link>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                                {user.company ? (
-                                    <div className="flex items-center gap-2">
-                                        {user.companyLogoUrl ? (
-                                            <Image
-                                                src={user.companyLogoUrl}
-                                                alt={user.company}
-                                                width={20}
-                                                height={20}
-                                                className="rounded-sm object-contain"
-                                            />
-                                        ) : (
-                                            <Building className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                        )}
-                                        <span>{user.company}</span>
-                                    </div>
-                                ) : null}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell text-center">{user.country}</TableCell>
-                            <TableCell className="text-right font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+      <div className="rounded-lg border">
+          <Table>
+              <TableHeader>
+                  <TableRow>
+                      <TableHead className="w-[80px] text-center">Rank</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead className="hidden md:table-cell">Company</TableHead>
+                      <TableHead className="hidden md:table-cell text-center">Country</TableHead>
+                      <TableHead className="text-right">Points</TableHead>
+                  </TableRow>
+              </TableHeader>
+              <TableBody>
+                  {paginatedData.map((user) => (
+                      <TableRow 
+                        key={user.id} 
+                        className={cn(user.id === authUser?.uid && "bg-primary/10 hover:bg-primary/20")}
+                      >
+                          <TableCell className="font-bold text-center text-xl">{getMedal(user.rank)}</TableCell>
+                          <TableCell>
+                              <Link href={`/profile/${user.username}`} className="flex items-center gap-4 group">
+                                  <Avatar>
+                                      <AvatarImage src={user.avatarUrl} alt={user.name} />
+                                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                      <p className="font-medium group-hover:underline">{user.name}</p>
+                                      <p className="text-sm text-muted-foreground">@{user.username}</p>
+                                  </div>
+                              </Link>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                              {user.company ? (
+                                  <div className="flex items-center gap-2">
+                                      {user.companyLogoUrl ? (
+                                          <Image
+                                              src={user.companyLogoUrl}
+                                              alt={user.company}
+                                              width={20}
+                                              height={20}
+                                              className="rounded-sm object-contain"
+                                          />
+                                      ) : (
+                                          <Building className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                      )}
+                                      <span>{user.company}</span>
+                                  </div>
+                              ) : null}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-center">{user.country}</TableCell>
+                          <TableCell className="text-right font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
+                      </TableRow>
+                  ))}
+              </TableBody>
+          </Table>
+      </div>
 
-        {totalPages > 1 && (
-            <div className="flex items-center justify-center space-x-4 mt-8">
-                <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline">
-                    Previous
-                </Button>
-                <span className="text-sm font-medium text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                </span>
-                <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline">
-                    Next
-                </Button>
-            </div>
-        )}
+      {totalPages > 1 && (
+          <div className="flex items-center justify-center space-x-4 mt-8">
+              <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline">
+                  Previous
+              </Button>
+              <span className="text-sm font-medium text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+              </span>
+              <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline">
+                  Next
+              </Button>
+          </div>
+      )}
 
-      </main>
-      <Footer />
-    </div>
+    </main>
   );
 }

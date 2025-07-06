@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'codolio.com',
+        hostname: 'codbbit.com',
         port: '',
         pathname: '/**',
       },

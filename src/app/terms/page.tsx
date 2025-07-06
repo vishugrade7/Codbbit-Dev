@@ -44,7 +44,7 @@ export default function Terms() {
                 </div>
                 <div className="space-y-2">
                     <h2 className="text-2xl font-semibold text-foreground">Contact Information</h2>
-                    <p>For any questions or concerns regarding these terms and conditions, please contact us at support@codolio.com.</p>
+                    <p>For any questions or concerns regarding these terms and conditions, please contact us at support@codbbit.com.</p>
                 </div>
             </div>
         </div>

@@ -6,8 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -88,140 +86,132 @@ export default function Settings() {
   
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full flex-col bg-background">
-        <Header />
-        <main className="flex-1 container py-8 flex justify-center items-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
+      <main className="flex-1 container py-8 flex justify-center items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </main>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex-1 container py-8">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold font-headline">Settings</h1>
-          <p className="text-muted-foreground mt-2">Manage your account and app settings.</p>
+    <main className="flex-1 container py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-4xl font-bold font-headline">Settings</h1>
+        <p className="text-muted-foreground mt-2">Manage your account and app settings.</p>
 
-          <div className="mt-8 space-y-8">
+        <div className="mt-8 space-y-8">
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Subscription</CardTitle>
-                    <CardDescription>
-                    {isPro
-                        ? "Manage your subscription details."
-                        : "Upgrade to unlock premium features."}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                        <div>
-                            <p className="font-semibold">{isPro ? "Pro Plan" : "Free Plan"}</p>
-                            <p className="text-sm text-muted-foreground">
-                            {isPro && userData?.subscriptionEndDate
-                                ? `Your plan renews on ${format(userData.subscriptionEndDate.toDate(), "PPP")}.`
-                                : "Access to free problems and core features."}
-                            </p>
-                        </div>
-                        {isPro ? (
-                           <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline">Manage Plan</Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. You will immediately lose access to all Pro features and your plan will not auto-renew.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleCancelSubscription} disabled={isCancelling}>
-                                    {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Cancel Subscription
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                        ) : (
-                           <Button asChild>
-                              <Link href="/pricing">Upgrade</Link>
-                           </Button>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
+          <Card>
               <CardHeader>
-                <CardTitle>Account</CardTitle>
-                <CardDescription>Manage your account settings.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                 <div className="flex items-center justify-between">
-                   <div className="flex flex-col">
-                      <Label>Salesforce Connection</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {userData?.sfdcAuth?.connected 
-                          ? "Your Salesforce org is connected."
-                          : "Connect your Salesforce org to run code."
-                        }
-                      </p>
-                   </div>
-                    <Button variant="outline" onClick={handleConnect} disabled={isConnecting}>
-                       {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                       {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
-                    </Button>
-                 </div>
-                 <div className="flex items-center justify-between">
-                   <div className="flex flex-col">
-                      <Label className="text-destructive">Delete Account</Label>
-                      <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data.</p>
-                   </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="destructive">Delete</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your account
-                            and remove your data from our servers.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => toast({ title: "Action not implemented."})}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                 </div>
-              </CardContent>
-            </Card>
-
-             <Card>
-              <CardHeader>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Customize the look and feel of the application.</CardDescription>
+                  <CardTitle>Subscription</CardTitle>
+                  <CardDescription>
+                  {isPro
+                      ? "Manage your subscription details."
+                      : "Upgrade to unlock premium features."}
+                  </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="theme">Theme</Label>
-                  <ThemeToggle />
-                </div>
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                      <div>
+                          <p className="font-semibold">{isPro ? "Pro Plan" : "Free Plan"}</p>
+                          <p className="text-sm text-muted-foreground">
+                          {isPro && userData?.subscriptionEndDate
+                              ? `Your plan renews on ${format(userData.subscriptionEndDate.toDate(), "PPP")}.`
+                              : "Access to free problems and core features."}
+                          </p>
+                      </div>
+                      {isPro ? (
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline">Manage Plan</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. You will immediately lose access to all Pro features and your plan will not auto-renew.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleCancelSubscription} disabled={isCancelling}>
+                                  {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  Cancel Subscription
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                      ) : (
+                         <Button asChild>
+                            <Link href="/pricing">Upgrade</Link>
+                         </Button>
+                      )}
+                  </div>
               </CardContent>
-            </Card>
+          </Card>
 
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Account</CardTitle>
+              <CardDescription>Manage your account settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+               <div className="flex items-center justify-between">
+                 <div className="flex flex-col">
+                    <Label>Salesforce Connection</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {userData?.sfdcAuth?.connected 
+                        ? "Your Salesforce org is connected."
+                        : "Connect your Salesforce org to run code."
+                      }
+                    </p>
+                 </div>
+                  <Button variant="outline" onClick={handleConnect} disabled={isConnecting}>
+                     {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                     {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
+                  </Button>
+               </div>
+               <div className="flex items-center justify-between">
+                 <div className="flex flex-col">
+                    <Label className="text-destructive">Delete Account</Label>
+                    <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data.</p>
+                 </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="destructive">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete your account
+                          and remove your data from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => toast({ title: "Action not implemented."})}>Continue</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+               </div>
+            </CardContent>
+          </Card>
+
+           <Card>
+            <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+              <CardDescription>Customize the look and feel of the application.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="theme">Theme</Label>
+                <ThemeToggle />
+              </div>
+            </CardContent>
+          </Card>
+
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </main>
   );
 }

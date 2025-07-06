@@ -22,8 +22,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "./actions";
 
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -245,209 +243,158 @@ function UploadProblemContent() {
         return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
     
-    if (viewMode === 'problem-form') {
-      return (
-        <ProblemForm
-          problem={currentProblem}
-          onClose={() => setViewMode('problem-list')}
-        />
-      );
-    }
+    const renderContent = () => {
+        switch (viewMode) {
+            case 'problem-form':
+                return <ProblemForm problem={currentProblem} onClose={() => setViewMode('problem-list')} />;
+            case 'problem-list':
+                return <ProblemList onEdit={handleEditProblem} onAddNew={handleAddNewProblem} />;
+            case 'course-list':
+                return <CourseList onEdit={handleEditCourse} onAddNew={handleAddNewCourse} />;
+            case 'course-form':
+                return <CourseForm course={currentCourse} onBack={() => setViewMode('course-list')} />;
+            case 'user-management':
+                return <AllUsersList />;
+            case 'navigation-management':
+                return <NavigationManagementView />;
+            case 'badge-management':
+                return <BadgeManagementView />;
+            default:
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('problem-list')}
+                        >
+                            <CardHeader>
+                                <CardTitle>Problem Management</CardTitle>
+                                <CardDescription>View, edit, or add new Apex coding challenges to the platform.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                    <FileQuestion className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                    Manage Problems <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                                </div>
+                            </CardFooter>
+                        </Card>
+                        <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('course-list')}
+                        >
+                            <CardHeader>
+                                <CardTitle>Course Management</CardTitle>
+                                <CardDescription>Add, edit, or remove courses from the platform.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                    <BookOpenCheck className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                    Manage Courses <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                                </div>
+                            </CardFooter>
+                        </Card>
+                         <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('user-management')}
+                        >
+                            <CardHeader>
+                                <CardTitle>User Management</CardTitle>
+                                <CardDescription>Grant or revoke admin privileges for users.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                   <UserCog className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                               <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                   Manage Users <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                               </div>
+                            </CardFooter>
+                        </Card>
+                         <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('navigation-management')}
+                        >
+                            <CardHeader>
+                                <CardTitle>Navigation Management</CardTitle>
+                                <CardDescription>Control the links displayed in the main app header.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                   <MenuIcon className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                               <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                   Manage Navigation <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                               </div>
+                            </CardFooter>
+                        </Card>
+                        <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('badge-management')}
+                        >
+                            <CardHeader>
+                                <CardTitle>Badge Management</CardTitle>
+                                <CardDescription>Define criteria for awarding badges to users.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                   <Award className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                               <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                   Manage Badges <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                               </div>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                );
+        }
+    };
     
-    if (viewMode === 'problem-list') {
-        return (
-            <div>
-                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Button>
-                <ProblemList onEdit={handleEditProblem} onAddNew={handleAddNewProblem} />
-            </div>
-        )
-    }
-
-    if (viewMode === 'course-list') {
-        return (
-            <div>
-                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Button>
-                <CourseList onEdit={handleEditCourse} onAddNew={handleAddNewCourse} />
-            </div>
-        )
-    }
-
-     if (viewMode === 'course-form') {
-        return <CourseForm course={currentCourse} onBack={() => setViewMode('course-list')} />
-    }
-
-    if (viewMode === 'user-management') {
-        return (
-            <div>
-                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Button>
-                <AllUsersList />
-            </div>
-        )
-    }
-
-     if (viewMode === 'navigation-management') {
-        return (
-            <div>
-                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Button>
-                <NavigationManagementView />
-            </div>
-        )
-    }
-
-    if (viewMode === 'badge-management') {
-        return (
-            <div>
-                 <Button variant="outline" onClick={() => setViewMode('dashboard')} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Button>
-                <BadgeManagementView />
-            </div>
-        )
-    }
-
     return (
-        <div>
-            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-8">
-                <div>
-                    <h1 className="text-4xl font-bold font-headline">Admin Dashboard</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Manage platform content including problems and courses.
-                    </p>
-                </div>
+        <div className="container py-8">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+                {viewMode === 'dashboard' ? (
+                     <div>
+                        <h1 className="text-4xl font-bold font-headline">Admin Dashboard</h1>
+                        <p className="text-muted-foreground mt-2">
+                            Manage platform content including problems and courses.
+                        </p>
+                    </div>
+                ) : (
+                    <Button variant="outline" onClick={() => setViewMode('dashboard')}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Dashboard
+                    </Button>
+                )}
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 <Card 
-                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                    onClick={() => setViewMode('problem-list')}
-                 >
-                    <CardHeader>
-                        <CardTitle>Problem Management</CardTitle>
-                        <CardDescription>View, edit, or add new Apex coding challenges to the platform.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center">
-                       <div className="text-muted-foreground/20">
-                           <FileQuestion className="h-24 w-24" />
-                       </div>
-                    </CardContent>
-                    <CardFooter>
-                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
-                           Manage Problems <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                       </div>
-                    </CardFooter>
-                </Card>
-
-                <Card 
-                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                    onClick={() => setViewMode('course-list')}
-                >
-                    <CardHeader>
-                        <CardTitle>Course Management</CardTitle>
-                        <CardDescription>Add, edit, or remove courses from the platform.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center">
-                        <div className="text-muted-foreground/20">
-                           <BookOpenCheck className="h-24 w-24" />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
-                           Manage Courses <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                       </div>
-                    </CardFooter>
-                </Card>
-
-                <Card 
-                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                    onClick={() => setViewMode('user-management')}
-                >
-                    <CardHeader>
-                        <CardTitle>User Management</CardTitle>
-                        <CardDescription>Grant or revoke admin privileges for users.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center">
-                        <div className="text-muted-foreground/20">
-                           <UserCog className="h-24 w-24" />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
-                           Manage Users <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                       </div>
-                    </CardFooter>
-                </Card>
-
-                 <Card 
-                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                    onClick={() => setViewMode('navigation-management')}
-                >
-                    <CardHeader>
-                        <CardTitle>Navigation Management</CardTitle>
-                        <CardDescription>Control the links displayed in the main app header.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center">
-                        <div className="text-muted-foreground/20">
-                           <MenuIcon className="h-24 w-24" />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
-                           Manage Navigation <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                       </div>
-                    </CardFooter>
-                </Card>
-                <Card 
-                    className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                    onClick={() => setViewMode('badge-management')}
-                >
-                    <CardHeader>
-                        <CardTitle>Badge Management</CardTitle>
-                        <CardDescription>Define criteria for awarding badges to users.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center">
-                        <div className="text-muted-foreground/20">
-                           <Award className="h-24 w-24" />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                       <div className="text-sm text-primary font-semibold flex items-center gap-2">
-                           Manage Badges <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                       </div>
-                    </CardFooter>
-                </Card>
-            </div>
+            {renderContent()}
         </div>
     );
 }
 
 export default function UploadProblemPage() {
     return (
-        <div className="flex min-h-screen w-full flex-col bg-background">
-            <Header />
-            <main className="flex-1 container py-8">
-                 <Suspense fallback={
-                    <div className="flex justify-center items-center flex-1">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    </div>
-                }>
-                    <UploadProblemContent />
-                </Suspense>
-            </main>
-            <Footer />
-        </div>
+        <main className="flex-1 w-full pt-16 md:pt-0">
+             <Suspense fallback={
+                <div className="flex justify-center items-center flex-1">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            }>
+                <UploadProblemContent />
+            </Suspense>
+        </main>
     );
 }
 
@@ -1528,10 +1475,6 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
 
     return (
         <div>
-             <Button variant="outline" onClick={onClose} className="mb-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Problem List
-            </Button>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                      <Card>
@@ -1874,10 +1817,6 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
     
     return (
       <div>
-        <Button variant="outline" onClick={onBack} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Course List
-        </Button>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
