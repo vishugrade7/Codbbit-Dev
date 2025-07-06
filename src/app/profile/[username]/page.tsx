@@ -273,24 +273,30 @@ export default function UserProfilePage() {
                       <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
                       <CardDescription>Points earned per problem category.</CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-grow flex items-center justify-center">
+                  <CardContent className="flex-grow flex items-center justify-center relative">
                       {categoryData.length > 0 ? (
-                          <ChartContainer
-                              config={chartConfig}
-                              className="mx-auto aspect-square h-[180px]"
-                          >
-                              <PieChart>
-                                  <ChartTooltip
-                                      cursor={false}
-                                      content={<ChartTooltipContent hideLabel nameKey="name" />}
-                                  />
-                                  <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} paddingAngle={2}>
-                                      {categoryData.map((entry) => (
-                                          <Cell key={entry.name} fill={`var(--color-${entry.name})`} className="stroke-background hover:opacity-80" />
-                                      ))}
-                                  </Pie>
-                              </PieChart>
-                          </ChartContainer>
+                          <>
+                            <ChartContainer
+                                config={chartConfig}
+                                className="mx-auto aspect-square h-[180px]"
+                            >
+                                <PieChart>
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel nameKey="name" />}
+                                    />
+                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} paddingAngle={2}>
+                                        {categoryData.map((entry) => (
+                                            <Cell key={entry.name} fill={`var(--color-${entry.name})`} className="stroke-background hover:opacity-80" />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span className="text-3xl font-bold text-foreground">{profileUser.points.toLocaleString()}</span>
+                                <span className="text-sm text-muted-foreground">Total Points</span>
+                            </div>
+                          </>
                       ) : (
                           <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
                       )}
