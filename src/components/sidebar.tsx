@@ -1,8 +1,10 @@
+
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { CodeXml, Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud } from 'lucide-react';
+import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -52,7 +54,7 @@ export default function Sidebar() {
     <TooltipProvider>
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-20 flex-col items-center border-r bg-background py-4 md:flex">
         <Link href="/" className="mb-4">
-          <CodeXml className="h-8 w-8 text-primary" />
+          <Image src="/favicon.ico" alt="Codbbit logo" width={32} height={32} />
         </Link>
         
         <Separator className="w-2/3" />

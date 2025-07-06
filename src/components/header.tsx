@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Lightbulb } from "lucide-react";
+import Image from "next/image";
+import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -87,7 +88,7 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <CodeXml className="h-6 w-6" />
+            <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
             <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
@@ -155,7 +156,7 @@ export default function Header() {
                   <SheetContent side="right">
                     <div className="grid gap-6 py-6">
                       <Link href="/" className="flex items-center gap-2 mb-4">
-                        <CodeXml className="h-6 w-6" />
+                        <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
                         <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
                       </Link>
                        <DropdownMenu>
@@ -252,7 +253,7 @@ export default function Header() {
                   <SheetContent side="right">
                     <div className="grid gap-6 py-6">
                       <Link href="/" className="flex items-center gap-2 mb-4">
-                        <CodeXml className="h-6 w-6" />
+                        <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
                         <span className="text-lg font-bold font-headline">Codbbit</span>
                       </Link>
                       <nav className="grid gap-4">

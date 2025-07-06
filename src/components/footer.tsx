@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { CodeXml } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -9,7 +9,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <CodeXml className="h-6 w-6" />
+              <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
               <span className="text-lg font-bold font-headline">Codbbit</span>
             </Link>
             <p className="text-sm text-muted-foreground">
