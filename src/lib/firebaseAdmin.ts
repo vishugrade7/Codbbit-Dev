@@ -6,9 +6,10 @@ import { getApps } from 'firebase-admin/app';
 // when running on Google Cloud infrastructure (like App Hosting).
 // For local development, it would require a service account key file.
 if (!getApps().length) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   admin.initializeApp({
     credential: admin.credential.applicationDefault(),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    storageBucket: projectId ? `${projectId}.appspot.com` : undefined,
   });
 }
 
