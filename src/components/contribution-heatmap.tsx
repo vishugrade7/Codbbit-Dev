@@ -14,35 +14,42 @@ type HeatmapProps = {
   maxStreak?: number;
 };
 
-const shiftDate = (date: Date, numDays: number) => {
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + numDays);
-    return newDate;
-}
+// Use UTC dates to avoid timezone issues
+const shiftDate = (date: Date, numDays: number): Date => {
+  const newDate = new Date(date);
+  newDate.setUTCDate(newDate.getUTCDate() + numDays);
+  return newDate;
+};
 
 export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak = 0 }: HeatmapProps) {
   const [duration, setDuration] = useState('1y'); // '6m' or '1y'
   
   const today = new Date();
-  const endDate = today;
-  const startDate = duration === '1y' ? shiftDate(today, -365) : shiftDate(today, -180);
+  const endDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const startDate = useMemo(() => {
+    return duration === '1y' ? shiftDate(endDate, -365) : shiftDate(endDate, -180);
+  }, [duration, endDate]);
 
   const activityData = useMemo(() => {
-    return Object.entries(data).map(([date, count]) => ({
-      date,
-      count,
-    }));
+    if (!data) return [];
+    return Object.entries(data).map(([dateString, count]) => {
+      // Ensure date strings are parsed as UTC
+      const parts = dateString.split('-').map(Number);
+      return {
+        date: new Date(Date.UTC(parts[0], parts[1] - 1, parts[2])),
+        count,
+      };
+    });
   }, [data]);
 
-  const totalSubmissions = React.useMemo(() => {
-    return Object.entries(data).reduce((sum, [date, count]) => {
-        const activityDate = new Date(date);
-        if (activityDate >= startDate && activityDate <= endDate) {
-            return sum + count;
-        }
-        return sum;
+  const totalSubmissions = useMemo(() => {
+    return activityData.reduce((sum, item) => {
+      if (item.date >= startDate && item.date <= endDate) {
+        return sum + item.count;
+      }
+      return sum;
     }, 0);
-  }, [data, startDate, endDate]);
+  }, [activityData, startDate, endDate]);
 
   return (
     <div className="text-foreground">
@@ -95,10 +102,15 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
             transformDayElement={(element, value, index) => (
               <Tooltip key={index}>
                 <TooltipTrigger asChild>{element}</TooltipTrigger>
-                {value && value.date && (
+                {value && value.date && value.count > 0 && (
                   <TooltipContent>
                     <p>
-                      <strong>{value.count || 0} {value.count === 1 ? 'submission' : 'submissions'}</strong> on {new Date(value.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      <strong>{value.count} {value.count === 1 ? 'submission' : 'submissions'}</strong> on {value.date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        timeZone: 'UTC', // Display the UTC date
+                      })}
                     </p>
                   </TooltipContent>
                 )}
