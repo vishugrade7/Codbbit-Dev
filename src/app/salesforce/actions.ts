@@ -187,23 +187,17 @@ export async function getSalesforceAccessToken(code: string, codeVerifier: strin
 }
 
 async function deployMetadata(log: string[], auth: SfdcAuth, objectType: 'ApexClass' | 'ApexTrigger', name: string, body: string, triggerSObject?: string): Promise<string> {
-    log.push(`\n--- Deploying ${objectType}: ${name} ---`);
     const existingRecord = await findToolingApiRecord(auth, objectType, name);
     
     if (existingRecord) {
-        log.push(`> Found existing record with ID: ${existingRecord.Id}. Deleting...`);
         try {
             await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/${objectType}/${existingRecord.Id}`, { method: 'DELETE' });
-            log.push(`> Deletion successful.`);
         } catch (e: any) {
-            log.push(`> Warning: Could not delete existing record. This may be expected if it was from a failed previous run. Error: ${e.message}`);
+            // Suppress error, as it might be from a failed previous run
         }
     }
 
-    log.push(`> Creating new ${objectType}...`);
     const newRecord = await createToolingApiRecord(auth, objectType, name, body, triggerSObject);
-    log.push(`> Creation successful. Record ID: ${newRecord.id}.`);
-    
     return newRecord.id;
 }
 
@@ -373,9 +367,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
         }
 
-        log.push("> Connecting to Salesforce...");
         const auth = await getSfdcConnection(userId);
-        log.push("> Connection successful.");
         
         const mainObjectName = getClassName(userCode);
         const testObjectName = getClassName(problem.testcases);
@@ -388,15 +380,12 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
 
         log.push("\n--- Running Tests ---");
-        log.push(`> Initiating test run for class ID: ${testClassId}`);
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
             method: 'POST',
             body: JSON.stringify({ classids: testClassId })
         });
         const apexTestRunId = testRunResult;
-        log.push(`> Test run queued with ID: ${apexTestRunId}`);
 
-        log.push("> Polling for test job completion...");
         let jobStatus;
         for (let i = 0; i < 30; i++) {
             await sleep(1000);
@@ -404,7 +393,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             const jobResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(jobQuery)}`);
             if (jobResult.records.length > 0) {
                 jobStatus = jobResult.records[0].Status;
-                log.push(`> Job status: ${jobStatus}`);
                 if (['Completed', 'Failed', 'Aborted'].includes(jobStatus)) break;
             }
         }
@@ -413,7 +401,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             throw new Error(`Test run did not complete successfully. Final status: ${jobStatus || 'Timed Out'}`);
         }
         
-        log.push("> Test job completed. Fetching results...");
         const resultQuery = `SELECT ApexClassId, Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
         const testResultData = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(resultQuery)}`);
         
@@ -426,8 +413,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         if (failedTest) {
              throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
-
-        log.push("> All tests passed!");
 
         log.push("\n--- Checking Code Coverage ---");
         const coverageQuery = `SELECT NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
