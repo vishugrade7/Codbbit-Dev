@@ -70,6 +70,7 @@ export default function Home() {
                   data-ai-hint="development workspace"
                   priority
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent rounded-xl" />
               </div>
 
               {/* Foreground Mobile */}
