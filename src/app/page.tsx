@@ -55,17 +55,45 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="mt-16 aspect-video max-w-5xl mx-auto overflow-hidden">
-            <Image
-              src="https://placehold.co/1200x700.png"
-              alt="Codbbit Platform Screenshot"
-              width={1200}
-              height={700}
-              className="mx-auto rounded-xl shadow-2xl ring-1 ring-border w-full h-full object-cover transition-transform duration-100 ease-out"
-              data-ai-hint="development workspace"
-              priority
-              style={{ transform: `scale(${scale})` }}
-            />
+          <div
+            className="mt-16 max-w-5xl mx-auto transition-transform duration-100 ease-out"
+            style={{ transform: `scale(${scale})` }}
+          >
+            <div className="grid grid-cols-5 gap-4 h-[500px]">
+              <div className="col-span-3 row-span-2 rounded-xl shadow-2xl ring-1 ring-border overflow-hidden">
+                <Image
+                  src="https://placehold.co/800x600.png"
+                  alt="Codbbit Platform Screenshot"
+                  width={800}
+                  height={600}
+                  className="w-full h-full object-cover"
+                  data-ai-hint="development workspace"
+                  priority
+                />
+              </div>
+              
+              <div className="col-span-2 row-span-1 rounded-xl shadow-2xl ring-1 ring-border overflow-hidden">
+                <Image
+                  src="https://placehold.co/400x240.png"
+                  alt="Codbbit mobile preview"
+                  width={400}
+                  height={240}
+                  className="w-full h-full object-cover"
+                  data-ai-hint="mobile app"
+                />
+              </div>
+
+              <div className="col-span-2 row-span-1 rounded-xl shadow-2xl ring-1 ring-border overflow-hidden">
+                <Image
+                  src="https://placehold.co/400x240.png"
+                  alt="Codbbit AI chat"
+                  width={400}
+                  height={240}
+                  className="w-full h-full object-cover"
+                  data-ai-hint="ai chat"
+                />
+              </div>
+            </div>
           </div>
 
         </div>
