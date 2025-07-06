@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
@@ -102,7 +102,7 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
 
   if (isSubmitting) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center">
+      <div className="flex flex-col items-center justify-center h-full text-center p-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
           <p className="font-semibold">Running Submission...</p>
           <p className="text-sm text-muted-foreground">Please wait while we connect to Salesforce and run your tests.</p>
@@ -112,7 +112,7 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
 
   if (!log.trim() && !isSubmitting) {
       return (
-         <div className="flex flex-col items-center justify-center h-full text-center">
+         <div className="flex flex-col items-center justify-center h-full text-center p-4">
              <div className="p-3 bg-primary/10 rounded-full mb-4">
                 <Play className="h-8 w-8 text-primary" />
              </div>
@@ -344,6 +344,125 @@ export default function ProblemWorkspacePage() {
         }
     };
 
+    const ProblemDetails = () => (
+        <div className="p-4 h-full overflow-y-auto space-y-6">
+            <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
+            <div className="flex items-center gap-4 flex-wrap">
+                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                <Badge variant="secondary">{categoryName}</Badge>
+                {problem.company && (
+                    <div className="flex items-center gap-1.5">
+                        {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
+                        <span className="text-sm font-medium">{problem.company}</span>
+                    </div>
+                )}
+                {isSolved && (
+                <div className="flex items-center gap-1.5 text-sm text-green-400">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Solved</span>
+                </div>
+                )}
+            </div>
+            <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
+            
+            {problem.examples.map((example, index) => (
+                <div key={index}>
+                    <h3 className="font-semibold mb-2">Example {index + 1}</h3>
+                    <Card className="bg-card/50">
+                        <CardContent className="p-4 font-code text-sm">
+                            {example.input && <p><strong>Input:</strong> {example.input}</p>}
+                            <p><strong>Output:</strong> {example.output}</p>
+                            {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
+                        </CardContent>
+                    </Card>
+                </div>
+            ))}
+
+                {problem.hints && problem.hints.length > 0 && (
+                <div>
+                    <h3 className="font-semibold mb-2">Constraints</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {problem.hints.map((hint, index) => (
+                            <li key={index}>{hint}</li>
+                        ))}
+                    </ul>
+                </div>
+                )}
+        </div>
+    );
+
+    const EditorAndResults = () => (
+        <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={65} minSize={25}>
+                <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between p-2 border-b">
+                        <div className="flex items-center gap-2 font-semibold">
+                            <Code className="h-5 w-5" />
+                            <span>Apex Code</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Reset Code</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={toggleFullScreen}>
+                                            {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                                            <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                Run
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="editor-container flex-1 w-full h-full overflow-auto">
+                        <MonacoEditor
+                            height="100%"
+                            language="java"
+                            value={code}
+                            onChange={(newValue) => setCode(newValue || "")}
+                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                            options={{
+                                fontSize: 14,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                padding: {
+                                    top: 16,
+                                    bottom: 16,
+                                },
+                                fontFamily: 'var(--font-source-code-pro)',
+                            }}
+                        />
+                    </div>
+                </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={35} minSize={15}>
+                <div className="flex flex-col h-full">
+                    <div className="p-2 border-b">
+                        <h3 className="font-semibold text-sm">Test Results</h3>
+                    </div>
+                    <div className="flex-1 p-4 overflow-auto">
+                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                    </div>
+                </div>
+            </ResizablePanel>
+        </ResizablePanelGroup>
+    );
+
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-16 md:pt-0">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
@@ -449,7 +568,24 @@ export default function ProblemWorkspacePage() {
             </div>
         </header>
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* Mobile View */}
+        <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+            <Tabs defaultValue="problem" className="flex-1 flex flex-col w-full">
+                <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none border-b">
+                    <TabsTrigger value="problem" className="rounded-none">Problem</TabsTrigger>
+                    <TabsTrigger value="code" className="rounded-none">Code</TabsTrigger>
+                </TabsList>
+                <TabsContent value="problem" className="flex-1 overflow-y-auto">
+                    <ProblemDetails />
+                </TabsContent>
+                <TabsContent value="code" className="flex-1 flex flex-col m-0">
+                    <EditorAndResults />
+                </TabsContent>
+            </Tabs>
+        </div>
+
+        {/* Desktop View */}
+        <ResizablePanelGroup direction="horizontal" className="hidden md:flex flex-1">
             <ResizablePanel 
                 ref={leftPanelRef}
                 defaultSize={33}
@@ -458,124 +594,13 @@ export default function ProblemWorkspacePage() {
                 collapsedSize={0}
                 onCollapse={() => setIsFullScreen(true)}
                 onExpand={() => setIsFullScreen(false)}
-                className={cn(isFullScreen && "transition-all duration-300 ease-in-out")}
+                className={cn("transition-all duration-300 ease-in-out")}
             >
-                <div className="p-4 h-full overflow-y-auto space-y-6">
-                    <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
-                    <div className="flex items-center gap-4 flex-wrap">
-                       <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                       <Badge variant="secondary">{categoryName}</Badge>
-                       {problem.company && (
-                            <div className="flex items-center gap-1.5">
-                                {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
-                                <span className="text-sm font-medium">{problem.company}</span>
-                            </div>
-                        )}
-                       {isSolved && (
-                        <div className="flex items-center gap-1.5 text-sm text-green-400">
-                           <CheckCircle2 className="h-4 w-4" />
-                           <span>Solved</span>
-                        </div>
-                       )}
-                    </div>
-                    <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
-                    
-                    {problem.examples.map((example, index) => (
-                        <div key={index}>
-                            <h3 className="font-semibold mb-2">Example {index + 1}</h3>
-                            <Card className="bg-card/50">
-                                <CardContent className="p-4 font-code text-sm">
-                                    {example.input && <p><strong>Input:</strong> {example.input}</p>}
-                                    <p><strong>Output:</strong> {example.output}</p>
-                                    {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
-                                </CardContent>
-                            </Card>
-                        </div>
-                    ))}
-
-                     {problem.hints && problem.hints.length > 0 && (
-                        <div>
-                            <h3 className="font-semibold mb-2">Constraints</h3>
-                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                {problem.hints.map((hint, index) => (
-                                    <li key={index}>{hint}</li>
-                                ))}
-                            </ul>
-                        </div>
-                     )}
-                </div>
+                <ProblemDetails />
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={67} minSize={30}>
-                 <ResizablePanelGroup direction="vertical">
-                    <ResizablePanel defaultSize={65} minSize={25}>
-                        <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-2 border-b">
-                                <div className="flex items-center gap-2 font-semibold">
-                                    <Code className="h-5 w-5" />
-                                    <span>Apex Code</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Reset Code</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
-                                                    {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                                                    <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                        Run
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="editor-container flex-1 w-full h-full overflow-auto">
-                                <MonacoEditor
-                                    height="100%"
-                                    language="java"
-                                    value={code}
-                                    onChange={(newValue) => setCode(newValue || "")}
-                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{
-                                        fontSize: 14,
-                                        minimap: { enabled: false },
-                                        scrollBeyondLastLine: false,
-                                        padding: {
-                                            top: 16,
-                                            bottom: 16,
-                                        },
-                                        fontFamily: 'var(--font-source-code-pro)',
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={35} minSize={15}>
-                        <div className="flex flex-col h-full">
-                            <div className="p-2 border-b">
-                                <h3 className="font-semibold text-sm">Test Results</h3>
-                            </div>
-                            <div className="flex-1 p-4 overflow-auto">
-                                <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
-                            </div>
-                        </div>
-                    </ResizablePanel>
-                 </ResizablePanelGroup>
+                 <EditorAndResults />
             </ResizablePanel>
         </ResizablePanelGroup>
     </div>
