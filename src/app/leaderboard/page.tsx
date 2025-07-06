@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { collection, query, orderBy, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, doc, getDoc, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { LeaderboardUser, Problem, ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -82,7 +82,8 @@ export default function Leaderboard() {
       setLoading(true);
       try {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, orderBy("points", "desc"));
+        // Fetch only the top 100 users for performance
+        const q = query(usersRef, orderBy("points", "desc"), limit(100));
         const querySnapshot = await getDocs(q);
         const users: LeaderboardUser[] = querySnapshot.docs.map((doc, index) => {
           const data = doc.data();
@@ -178,7 +179,7 @@ export default function Leaderboard() {
       <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
           <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              See how you rank against the best Salesforce developers in the world. Keep solving problems to climb up the ranks!
+              See how you rank against the top 100 developers. Keep solving problems to climb up the ranks!
           </p>
       </div>
 
