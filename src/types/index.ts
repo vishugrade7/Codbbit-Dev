@@ -5,6 +5,7 @@ export type SolvedProblemDetail = {
   points: number;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   categoryName: string;
+  title: string;
 };
 
 export type Achievement = {

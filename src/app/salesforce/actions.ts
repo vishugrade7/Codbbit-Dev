@@ -260,6 +260,7 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                 points: pointsToAward,
                 difficulty: problem.difficulty,
                 categoryName: categoryName,
+                title: problem.title,
             };
             const newTotalSolved = Object.keys(solvedProblems).length;
 

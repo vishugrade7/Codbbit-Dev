@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -27,12 +28,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 
 type StarredProblemDetail = Problem & { categoryName: string };
-type RecentlySolvedProblem = SolvedProblemType & {
-    id: string;
-    title?: string;
-    difficulty?: 'Easy' | 'Medium' | 'Hard';
-    categoryName?: string;
-};
+type RecentlySolvedProblem = SolvedProblemType & { id: string };
 
 
 // This is the new public profile page
@@ -49,49 +45,8 @@ export default function UserProfilePage() {
     const [error, setError] = useState<string | null>(null);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [starredProblems, setStarredProblems] = useState<StarredProblemDetail[]>([]);
-    const [loadingStarred, setLoadingStarred] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
-    const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
-    const [loadingProblems, setLoadingProblems] = useState(true);
-
-    type ProblemWithCategory = Problem & { categoryName: string };
-
-    // Effect to fetch all problem counts and details
-    useEffect(() => {
-        const fetchAllProblemsData = async () => {
-            if (!db) {
-                setLoadingProblems(false);
-                return;
-            }
-            setLoadingProblems(true);
-            try {
-                const apexDocRef = doc(db, "problems", "Apex");
-                const docSnap = await getDoc(apexDocRef);
-                if (docSnap.exists()) {
-                    const categoriesData = docSnap.data().Category as ApexProblemsData;
-                    const allProblemsData = Object.entries(categoriesData).flatMap(([categoryName, categoryData]) =>
-                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                    );
-                    setAllProblems(allProblemsData);
-
-                    const counts = allProblemsData.reduce((acc, problem) => {
-                        acc[problem.difficulty as keyof typeof acc] = (acc[problem.difficulty as keyof typeof acc] || 0) + 1;
-                        return acc;
-                    }, { Easy: 0, Medium: 0, Hard: 0 });
-                    setTotalProblemsByDifficulty(counts);
-                }
-            } catch (error) {
-                console.error("Error fetching problem data:", error);
-            } finally {
-                setLoadingProblems(false);
-            }
-        };
-        fetchAllProblemsData();
-    }, []);
 
     // Effect to fetch the profile data based on username from URL using a real-time listener
     useEffect(() => {
@@ -121,25 +76,9 @@ export default function UserProfilePage() {
 
         return () => unsubscribe();
     }, [username]);
-
-    // Effect to fetch starred problems for the profile being viewed
-    useEffect(() => {
-        if (!profileUser?.starredProblems || profileUser.starredProblems.length === 0 || allProblems.length === 0) {
-            setLoadingStarred(false);
-            setStarredProblems([]);
-            return;
-        }
-
-        setLoadingStarred(true);
-        const starredIds = new Set(profileUser.starredProblems);
-        const details = allProblems.filter(p => starredIds.has(p.id));
-        setStarredProblems(details);
-        setLoadingStarred(false);
-
-    }, [profileUser, allProblems]);
     
     const recentlySolvedProblems = useMemo(() => {
-        if (!profileUser?.solvedProblems || allProblems.length === 0) return [];
+        if (!profileUser?.solvedProblems) return [];
 
         const solvedDetails: RecentlySolvedProblem[] = Object.entries(profileUser.solvedProblems).map(([id, details]) => ({
             id,
@@ -152,16 +91,8 @@ export default function UserProfilePage() {
             return dateB.getTime() - dateA.getTime();
         });
         
-        return solvedDetails.slice(0, 5).map(solved => {
-            const problemDetail = allProblems.find(p => p.id === solved.id);
-            return {
-                ...solved,
-                title: problemDetail?.title,
-                difficulty: problemDetail?.difficulty,
-                categoryName: problemDetail?.categoryName
-            };
-        });
-    }, [profileUser?.solvedProblems, allProblems]);
+        return solvedDetails.slice(0, 5);
+    }, [profileUser?.solvedProblems]);
 
 
     const handleAvatarClick = () => {
@@ -208,7 +139,7 @@ export default function UserProfilePage() {
     };
 
 
-    if (loadingProfile || loadingProblems) {
+    if (loadingProfile) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -269,7 +200,6 @@ export default function UserProfilePage() {
     } satisfies ChartConfig;
     
     const totalSolved = (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0);
-    const totalAvailable = totalProblemsByDifficulty.Easy + totalProblemsByDifficulty.Medium + totalProblemsByDifficulty.Hard;
 
   return (
     <>
@@ -326,29 +256,22 @@ export default function UserProfilePage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
-                        <CardDescription>You've solved {totalSolved} out of {totalAvailable} problems.</CardDescription>
+                        <CardDescription>Number of problems solved by difficulty.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>Easy</span>
-                                <span>{profileUser.dsaStats?.Easy || 0} / {totalProblemsByDifficulty.Easy}</span>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center text-sm font-medium">
+                                <span className="text-green-500">Easy</span>
+                                <span>{profileUser.dsaStats?.Easy || 0} solved</span>
                             </div>
-                            <Progress value={(profileUser.dsaStats?.Easy || 0) * 100 / (totalProblemsByDifficulty.Easy || 1)} className="h-2 [&>div]:bg-green-500" />
-                        </div>
-                         <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>Medium</span>
-                                <span>{profileUser.dsaStats?.Medium || 0} / {totalProblemsByDifficulty.Medium}</span>
+                             <div className="flex justify-between items-center text-sm font-medium">
+                                <span className="text-primary">Medium</span>
+                                <span>{profileUser.dsaStats?.Medium || 0} solved</span>
                             </div>
-                            <Progress value={(profileUser.dsaStats?.Medium || 0) * 100 / (totalProblemsByDifficulty.Medium || 1)} className="h-2" />
-                        </div>
-                         <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>Hard</span>
-                                <span>{profileUser.dsaStats?.Hard || 0} / {totalProblemsByDifficulty.Hard}</span>
+                             <div className="flex justify-between items-center text-sm font-medium">
+                                <span className="text-destructive">Hard</span>
+                                <span>{profileUser.dsaStats?.Hard || 0} solved</span>
                             </div>
-                            <Progress value={(profileUser.dsaStats?.Hard || 0) * 100 / (totalProblemsByDifficulty.Hard || 1)} className="h-2 [&>div]:bg-destructive" />
                         </div>
                     </CardContent>
                 </Card>
@@ -448,28 +371,6 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
 
-            {/* Starred Problems */}
-            <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
-                <CardContent>
-                    {loadingStarred ? (
-                        <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
-                    ) : starredProblems.length > 0 ? (
-                        <div className="space-y-2">
-                            {starredProblems.map(problem => (
-                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
-                                    <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                        <span className="font-medium">{problem.title}</span>
-                                        <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
-                    )}
-                </CardContent>
-            </Card>
         </div>
       </main>
       <Footer />
