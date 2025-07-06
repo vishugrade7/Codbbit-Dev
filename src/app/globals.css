@@ -95,3 +95,33 @@
     display: none !important;
   }
 }
+
+/* react-calendar-heatmap styles */
+.react-calendar-heatmap text {
+  font-size: 10px;
+  fill: hsl(var(--muted-foreground));
+}
+
+.react-calendar-heatmap rect:hover {
+  stroke: hsl(var(--primary));
+  stroke-width: 1px;
+}
+
+.react-calendar-heatmap .color-empty {
+  fill: hsl(var(--muted) / 0.5);
+}
+
+.dark .react-calendar-heatmap .color-empty {
+  fill: hsl(var(--muted) / 0.3);
+}
+
+/* GitHub color scale */
+.react-calendar-heatmap .color-github-1 { fill: #9be9a8; }
+.react-calendar-heatmap .color-github-2 { fill: #40c463; }
+.react-calendar-heatmap .color-github-3 { fill: #30a14e; }
+.react-calendar-heatmap .color-github-4 { fill: #216e39; }
+
+.dark .react-calendar-heatmap .color-github-1 { fill: #0e4429; }
+.dark .react-calendar-heatmap .color-github-2 { fill: #006d32; }
+.dark .react-calendar-heatmap .color-github-3 { fill: #26a641; }
+.dark .react-calendar-heatmap .color-github-4 { fill: #39d353; }

@@ -1,12 +1,12 @@
 
 'use client';
 
-import ActivityCalendar, { type Activity } from 'react-activity-calendar';
-import { useTheme } from 'next-themes';
+import CalendarHeatmap from 'react-calendar-heatmap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flame } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import 'react-calendar-heatmap/dist/styles.css';
 
 type HeatmapProps = {
   data: { [date: string]: number };
@@ -14,45 +14,36 @@ type HeatmapProps = {
   maxStreak?: number;
 };
 
+const shiftDate = (date: Date, numDays: number) => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + numDays);
+    return newDate;
+}
+
 export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak = 0 }: HeatmapProps) {
-  const { theme } = useTheme();
   const [duration, setDuration] = useState('1y'); // '6m' or '1y'
+  
+  const today = new Date();
+  const endDate = today;
+  const startDate = duration === '1y' ? shiftDate(today, -365) : shiftDate(today, -180);
 
   const activityData = useMemo(() => {
-    const now = new Date();
-    let startDate: Date;
-
-    if (duration === '6m') {
-      const sixMonthsAgo = new Date(now);
-      sixMonthsAgo.setMonth(now.getMonth() - 6);
-      startDate = sixMonthsAgo;
-    } else {
-      const oneYearAgo = new Date(now);
-      oneYearAgo.setFullYear(now.getFullYear() - 1);
-      startDate = oneYearAgo;
-    }
-    
-    const filteredEntries = Object.entries(data).filter(([date]) => new Date(date) >= startDate);
-
-    return filteredEntries.map(([date, count]) => {
-      let level = 0;
-      if (count > 0 && count <= 2) level = 1;
-      if (count > 2 && count <= 5) level = 2;
-      if (count > 5 && count <= 8) level = 3;
-      if (count > 8) level = 4;
-      
-      return {
-        date,
-        count,
-        level,
-      };
-    });
-  }, [data, duration]);
+    return Object.entries(data).map(([date, count]) => ({
+      date,
+      count,
+    }));
+  }, [data]);
 
   const totalSubmissions = React.useMemo(() => {
-    return activityData.reduce((sum, activity) => sum + activity.count, 0);
-  }, [activityData]);
-  
+    return Object.entries(data).reduce((sum, [date, count]) => {
+        const activityDate = new Date(date);
+        if (activityDate >= startDate && activityDate <= endDate) {
+            return sum + count;
+        }
+        return sum;
+    }, 0);
+  }, [data, startDate, endDate]);
+
   return (
     <div className="text-foreground">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
@@ -80,29 +71,43 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
         </Select>
       </div>
 
-      <ActivityCalendar
-        data={activityData}
-        theme={{
-          light: ['hsl(0 0% 96%)', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-          dark: ['hsl(240 4% 15%)', '#0e4429', '#006d32', '#26a641', '#39d353'],
-        }}
-        colorScheme={theme === 'dark' ? 'dark' : 'light'}
-        blockSize={14}
-        blockMargin={4}
-        fontSize={14}
-        hideTotalCount
-        showWeekdayLabels
-        renderBlock={(block, activity) => (
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>{block}</TooltipTrigger>
-              <TooltipContent>
-                <p><strong>{activity.count} {activity.count === 1 ? 'submission' : 'submissions'}</strong> on {new Date(activity.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      />
+      <TooltipProvider>
+        <div className="react-calendar-heatmap-container">
+          <CalendarHeatmap
+            startDate={startDate}
+            endDate={endDate}
+            values={activityData}
+            classForValue={(value) => {
+                if (!value || value.count === 0) {
+                    return 'color-empty';
+                }
+                let level = 0;
+                if (value.count > 0 && value.count <= 2) level = 1;
+                else if (value.count > 2 && value.count <= 5) level = 2;
+                else if (value.count > 5 && value.count <= 8) level = 3;
+                else if (value.count > 8) level = 4;
+
+                if (level > 0) {
+                    return `color-github-${level}`;
+                }
+                return 'color-empty';
+            }}
+            transformDayElement={(element, value, index) => (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>{element}</TooltipTrigger>
+                {value && value.date && (
+                  <TooltipContent>
+                    <p>
+                      <strong>{value.count || 0} {value.count === 1 ? 'submission' : 'submissions'}</strong> on {new Date(value.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            )}
+            showWeekdayLabels={true}
+          />
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
