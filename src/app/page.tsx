@@ -58,7 +58,7 @@ export default function Home() {
             className="mt-16 max-w-5xl mx-auto transition-transform duration-100 ease-out"
             style={{ transform: `scale(${scale})` }}
           >
-            <div className="relative h-[600px]">
+            <div className="relative h-[600px] overflow-hidden">
               {/* Background */}
               <div className="absolute inset-0">
                 <Image
@@ -73,7 +73,7 @@ export default function Home() {
               </div>
 
               {/* Foreground Chat */}
-              <div className="absolute bottom-[5%] -left-[5%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
+              <div className="absolute -bottom-[5%] -left-[10%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
                   src="https://placehold.co/600x400.png"
                   alt="Codbbit AI chat"
@@ -127,27 +127,18 @@ export default function Home() {
             </div>
 
             {/* Card 3: Competitive Learning */}
-            <div className="relative flex flex-col justify-between p-8 border-l border-border h-[24rem] group bg-card">
-              <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <Image
-                  src="https://placehold.co/600x800.png"
-                  alt="Competitive coding background"
-                  fill
-                  className="object-cover scale-105"
-                  data-ai-hint="abstract lines"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
-              </div>
+            <div className="relative flex flex-col justify-between p-8 border-l border-border h-[24rem] group bg-card overflow-hidden">
+              <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/20 via-card to-card" />
               
               <div className="relative z-10">
                   <Trophy className="h-8 w-8 text-primary transition-colors duration-500 group-hover:text-primary-foreground" />
               </div>
-              <div className="relative z-10 transition-colors duration-500 group-hover:text-primary-foreground">
+              <div className="relative z-10">
                 <h3 className="text-sm text-muted-foreground transition-colors duration-500 group-hover:text-primary-foreground/80">Competitive Learning</h3>
-                <p className="text-xl font-medium mt-2">
+                <p className="text-xl font-medium mt-2 transition-colors duration-500 group-hover:text-primary-foreground">
                   Compete with developers worldwide and track your progress.
                 </p>
-                 <Link href="/leaderboard" className="inline-flex items-center text-sm font-medium text-primary mt-4 group-hover:underline">
+                 <Link href="/leaderboard" className="inline-flex items-center text-sm font-medium text-primary mt-4 transition-colors duration-500 group-hover:text-primary-foreground group-hover:underline">
                     View Leaderboard <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </div>
