@@ -3,6 +3,12 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ApexProblemsData, Problem } from "@/types";
 import ApexProblemsView from "@/components/apex-problems-view";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Apex Practice Problems | Codbbit',
+  description: 'Boost your Salesforce developer skills with our collection of Apex practice problems. Solve challenges in SOQL, Triggers, and more.',
+};
 
 export type CategoryInfo = {
   name: string;
