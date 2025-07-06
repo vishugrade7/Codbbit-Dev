@@ -59,37 +59,39 @@ export default function Home() {
             className="mt-16 max-w-5xl mx-auto transition-transform duration-100 ease-out"
             style={{ transform: `scale(${scale})` }}
           >
-            <div className="grid grid-cols-5 gap-4 h-[500px]">
-              <div className="col-span-3 row-span-2 rounded-xl shadow-2xl ring-1 ring-border overflow-hidden">
+            <div className="relative h-[600px]">
+              {/* Background */}
+              <div className="absolute inset-0">
                 <Image
-                  src="https://placehold.co/800x600.png"
+                  src="https://placehold.co/1200x800.png"
                   alt="Codbbit Platform Screenshot"
-                  width={800}
-                  height={600}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover rounded-xl"
                   data-ai-hint="development workspace"
                   priority
                 />
               </div>
-              
-              <div className="col-span-2 row-span-1 rounded-xl shadow-2xl ring-1 ring-border overflow-hidden">
+
+              {/* Foreground Mobile */}
+              <div className="absolute top-[10%] right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
-                  src="https://placehold.co/400x240.png"
+                  src="https://placehold.co/400x800.png"
                   alt="Codbbit mobile preview"
                   width={400}
-                  height={240}
-                  className="w-full h-full object-cover"
+                  height={800}
+                  className="w-full h-auto"
                   data-ai-hint="mobile app"
                 />
               </div>
-
-              <div className="col-span-2 row-span-1 rounded-xl shadow-2xl ring-1 ring-border overflow-hidden">
+              
+              {/* Foreground Chat */}
+              <div className="absolute bottom-[-5%] left-[-2%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
-                  src="https://placehold.co/400x240.png"
+                  src="https://placehold.co/600x400.png"
                   alt="Codbbit AI chat"
-                  width={400}
-                  height={240}
-                  className="w-full h-full object-cover"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto"
                   data-ai-hint="ai chat"
                 />
               </div>
