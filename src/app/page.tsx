@@ -86,7 +86,7 @@ export default function Home() {
               </div>
               
               {/* Foreground Chat */}
-              <div className="absolute bottom-[-5%] left-[-2%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
+              <div className="absolute bottom-[10%] left-[-5%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
                   src="https://placehold.co/600x400.png"
                   alt="Codbbit AI chat"
