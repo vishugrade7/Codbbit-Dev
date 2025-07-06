@@ -391,8 +391,9 @@ export default function ProblemWorkspacePage() {
     );
 
     const EditorAndResults = () => (
-        <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={65} minSize={25}>
+        <div className="flex flex-col h-full">
+            {/* Editor Panel */}
+            <div className="flex flex-col h-[60%] min-h-[10rem]">
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-2 border-b">
                         <div className="flex items-center gap-2 font-semibold">
@@ -447,19 +448,17 @@ export default function ProblemWorkspacePage() {
                         />
                     </div>
                 </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={35} minSize={15}>
-                <div className="flex flex-col h-full">
-                    <div className="p-2 border-b">
-                        <h3 className="font-semibold text-sm">Test Results</h3>
-                    </div>
-                    <div className="flex-1 p-4 overflow-auto">
-                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
-                    </div>
+            </div>
+            {/* Results Panel */}
+            <div className="flex flex-col flex-1 min-h-0 border-t">
+                <div className="p-2 border-b">
+                    <h3 className="font-semibold text-sm">Test Results</h3>
                 </div>
-            </ResizablePanel>
-        </ResizablePanelGroup>
+                <div className="flex-1 p-4 overflow-auto">
+                    <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                </div>
+            </div>
+        </div>
     );
 
     return (
@@ -585,27 +584,27 @@ export default function ProblemWorkspacePage() {
             </div>
 
             {/* Desktop View */}
-            <ResizablePanelGroup direction="horizontal" className="hidden md:flex h-full">
-                <ResizablePanel 
-                    ref={leftPanelRef}
-                    defaultSize={33}
-                    minSize={20}
-                    collapsible
-                    collapsedSize={0}
-                    onCollapse={() => setIsFullScreen(true)}
-                    onExpand={() => setIsFullScreen(false)}
-                    className={cn("transition-all duration-300 ease-in-out")}
-                >
-                    <ProblemDetails />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={67} minSize={30}>
-                     <EditorAndResults />
-                </ResizablePanel>
-            </ResizablePanelGroup>
+            <div className="hidden md:flex h-full">
+                <ResizablePanelGroup direction="horizontal">
+                    <ResizablePanel 
+                        ref={leftPanelRef}
+                        defaultSize={33}
+                        minSize={20}
+                        collapsible
+                        collapsedSize={0}
+                        onCollapse={() => setIsFullScreen(true)}
+                        onExpand={() => setIsFullScreen(false)}
+                        className={cn("transition-all duration-300 ease-in-out")}
+                    >
+                        <ProblemDetails />
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={67} minSize={30}>
+                         <EditorAndResults />
+                    </ResizablePanel>
+                </ResizablePanelGroup>
+            </div>
         </main>
     </div>
     )
 }
-
-    
