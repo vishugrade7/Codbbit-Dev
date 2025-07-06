@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { doc, getDoc, collection, query, where, onSnapshot, limit, updateDoc } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
@@ -220,7 +221,17 @@ export default function UserProfilePage() {
                   <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                       {profileUser.company && (
                           <div className="flex items-center gap-2">
-                              <Building className="h-4 w-4 shrink-0" />
+                              {profileUser.companyLogoUrl ? (
+                                  <Image
+                                      src={profileUser.companyLogoUrl}
+                                      alt={`${profileUser.company} logo`}
+                                      width={16}
+                                      height={16}
+                                      className="rounded-sm object-contain"
+                                  />
+                              ) : (
+                                  <Building className="h-4 w-4 shrink-0" />
+                              )}
                               <span>{profileUser.company}</span>
                           </div>
                       )}
