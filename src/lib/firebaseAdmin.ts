@@ -6,17 +6,13 @@ import { getApps } from 'firebase-admin/app';
 // when running on Google Cloud infrastructure (like App Hosting).
 // For local development, it would require a service account key file.
 if (!getApps().length) {
-  // More robust way to get Project ID on the server, using GCLOUD_PROJECT as the primary source
-  const projectId = process.env.GCLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-  if (!projectId) {
-    // This will help in debugging if the project ID is still not found.
-    console.error("Firebase Admin Init Error: Project ID could not be determined. Check GCLOUD_PROJECT or NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variables.");
-  }
+  // Directly using the known project ID to construct the bucket name.
+  // This is the most reliable way to ensure the correct bucket is targeted.
+  const bucketName = 'showcase-canvas-rx61p.appspot.com';
 
   admin.initializeApp({
     credential: admin.credential.applicationDefault(),
-    storageBucket: projectId ? `${projectId}.appspot.com` : undefined,
+    storageBucket: bucketName,
   });
 }
 
