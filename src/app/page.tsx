@@ -103,9 +103,9 @@ export default function Home() {
 
       <section className="w-full py-12 md:py-24 lg:py-32 bg-card/50">
         <div className="container px-4 md:px-6">
-          <div className="grid sm:grid-cols-3 border border-border rounded-lg overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 border border-border rounded-lg divide-y md:divide-y-0 md:divide-x divide-border overflow-hidden">
             {/* Card 1: SOQL Mastery */}
-            <div className="flex flex-col justify-between p-8 h-[24rem] bg-card">
+            <div className="flex flex-col justify-between p-8 min-h-[18rem] bg-card">
               <Database className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="text-sm text-muted-foreground">SOQL Mastery</h3>
@@ -116,7 +116,7 @@ export default function Home() {
             </div>
 
             {/* Card 2: Apex Development */}
-            <div className="flex flex-col justify-between p-8 border-l border-border h-[24rem] bg-card">
+            <div className="flex flex-col justify-between p-8 min-h-[18rem] bg-card">
               <Code className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="text-sm text-muted-foreground">Apex Development</h3>
@@ -127,7 +127,7 @@ export default function Home() {
             </div>
 
             {/* Card 3: Competitive Learning */}
-            <div className="relative flex flex-col justify-between p-8 border-l border-border h-[24rem] group bg-card overflow-hidden">
+            <div className="relative flex flex-col justify-between p-8 min-h-[18rem] group bg-card overflow-hidden">
               <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/20 via-card to-card" />
               
               <div className="relative z-10">
