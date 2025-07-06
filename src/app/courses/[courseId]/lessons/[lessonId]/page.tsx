@@ -342,23 +342,6 @@ export default function LessonPage() {
                  <ResizableHandle withHandle className="hidden md:flex"/>
                 <ResizablePanel defaultSize={75}>
                     <main className="h-full flex flex-col bg-background relative">
-                         {userData && (
-                            <div
-                              className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
-                              aria-hidden="true"
-                            >
-                              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-20">
-                                {Array.from({ length: 200 }).map((_, i) => (
-                                  <span
-                                    key={i}
-                                    className="text-foreground/50 font-bold text-lg -rotate-45 whitespace-nowrap"
-                                  >
-                                    {userData.email}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                        )}
                         <div className="p-6 border-b flex items-center justify-between">
                             <h1 className="text-3xl font-bold font-headline">{currentLesson.title}</h1>
                         </div>

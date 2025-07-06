@@ -58,6 +58,8 @@ export default function UserProfilePage() {
     const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
     const [loadingProblems, setLoadingProblems] = useState(true);
 
+    type ProblemWithCategory = Problem & { categoryName: string };
+
     // Effect to fetch all problem counts and details
     useEffect(() => {
         const fetchAllProblemsData = async () => {
@@ -274,23 +276,6 @@ export default function UserProfilePage() {
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <Header />
       <main className="flex-1 relative">
-         {userData && (
-            <div
-              className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
-              aria-hidden="true"
-            >
-              <div className="absolute inset-0 flex flex-wrap gap-x-20 gap-y-10 opacity-10">
-                {Array.from({ length: 200 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className="text-foreground/50 font-bold text-lg -rotate-45 whitespace-nowrap"
-                  >
-                    {userData.email}
-                  </span>
-                ))}
-              </div>
-            </div>
-        )}
         <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
             {/* User Info Header */}
             <div className="flex flex-col sm:flex-row items-center gap-6">

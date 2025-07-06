@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, MousePointerClick, Code, Image as ImageIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, MousePointerClick, Code, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -36,7 +36,7 @@ const getLessonIcon = (lesson: Lesson) => {
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { user, loading: authLoading, isPro } = useAuth();
+    const { user, userData, loading: authLoading, isPro } = useAuth();
     const courseId = params.courseId as string;
 
     const [course, setCourse] = useState<Course | null>(null);
@@ -76,7 +76,36 @@ export default function CourseDetailPage() {
         fetchCourse();
     }, [courseId, router, user, authLoading]);
 
-    const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id;
+    const { buttonText, buttonHref } = useMemo(() => {
+        if (!course?.modules) {
+            return { buttonText: "Start Course", buttonHref: '#' };
+        }
+
+        const allLessons = course.modules.flatMap(m => m.lessons);
+        if (allLessons.length === 0) {
+            return { buttonText: "No Lessons", buttonHref: '#' };
+        }
+
+        const completedLessonIds = new Set(Object.keys(userData?.completedLessons || {}));
+        
+        // Find the first uncompleted lesson
+        const nextLesson = allLessons.find(l => !completedLessonIds.has(l.id));
+        
+        // Check if at least one lesson of this course has been completed
+        const hasStarted = allLessons.some(l => completedLessonIds.has(l.id));
+
+        if (nextLesson) {
+            // There are uncompleted lessons
+            const text = hasStarted ? "Resume Course" : "Start Course";
+            const href = `/courses/${courseId}/lessons/${nextLesson.id}`;
+            return { buttonText: text, buttonHref: href };
+        } else {
+            // All lessons are completed
+            const firstLessonId = allLessons[0].id;
+            const href = `/courses/${courseId}/lessons/${firstLessonId}`;
+            return { buttonText: "Review Course", buttonHref: href };
+        }
+    }, [course, userData?.completedLessons, courseId]);
 
     if (loading || authLoading) {
         return (
@@ -99,8 +128,6 @@ export default function CourseDetailPage() {
             </div>
         );
     }
-
-    const startCourseHref = firstLessonId ? `/courses/${courseId}/lessons/${firstLessonId}` : '#';
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -128,11 +155,19 @@ export default function CourseDetailPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <Accordion type="multiple" defaultValue={[`module-${course.modules[0]?.id}`]} className="w-full">
-                                        {course.modules.map((moduleItem: Module, index: number) => (
+                                        {course.modules.map((moduleItem: Module, index: number) => {
+                                            const isModuleComplete = moduleItem.lessons.length > 0 && moduleItem.lessons.every(lesson => userData?.completedLessons?.[lesson.id]);
+                                            return (
                                             <AccordionItem key={moduleItem.id} value={`module-${moduleItem.id}`}>
                                                 <AccordionTrigger className="text-lg font-semibold hover:no-underline">
                                                     <div className="flex items-center gap-4 text-left">
-                                                        <span className="text-primary font-bold">{(index + 1).toString().padStart(2, '0')}</span>
+                                                        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                                            {isModuleComplete ? (
+                                                                <CheckCircle2 className="h-6 w-6 text-green-500" />
+                                                            ) : (
+                                                                <span className="text-primary font-bold">{(index + 1).toString().padStart(2, '0')}</span>
+                                                            )}
+                                                        </div>
                                                         <span>{moduleItem.title}</span>
                                                     </div>
                                                 </AccordionTrigger>
@@ -160,7 +195,7 @@ export default function CourseDetailPage() {
                                                     </ul>
                                                 </AccordionContent>
                                             </AccordionItem>
-                                        ))}
+                                        )})}
                                     </Accordion>
                                 </CardContent>
                             </Card>
@@ -177,8 +212,8 @@ export default function CourseDetailPage() {
                                             className="object-cover"
                                         />
                                     </div>
-                                    <Button asChild size="lg" className="w-full" disabled={!firstLessonId}>
-                                        <Link href={startCourseHref}>Start Course</Link>
+                                    <Button asChild size="lg" className="w-full" disabled={buttonHref === '#'}>
+                                        <Link href={buttonHref}>{buttonText}</Link>
                                     </Button>
                                     <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                                         <p><strong>{course.modules.length}</strong> {course.modules.length === 1 ? 'module' : 'modules'}</p>
