@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -428,8 +428,16 @@ export default function ProblemWorkspacePage() {
                     </SheetContent>
                 </Sheet>
             </div>
-            <div className="flex items-center gap-2">
-                 <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 font-semibold">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-semibold">
+                    <Award className="h-5 w-5 text-yellow-400" />
+                    <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
                     {isStarring ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
