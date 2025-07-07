@@ -11,23 +11,22 @@ import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { getCache, setCache } from "@/lib/cache";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
-const getMedal = (rank: number) => {
-  if (rank === 1) return '🥇';
-  if (rank === 2) return '🥈';
-  if (rank === 3) return '🥉';
-  return rank;
-}
+const getMedalColor = (rank: number) => {
+  if (rank === 1) return 'border-yellow-400 bg-yellow-400/10 hover:bg-yellow-400/20';
+  if (rank === 2) return 'border-slate-400 bg-slate-400/10 hover:bg-slate-400/20';
+  if (rank === 3) return 'border-orange-500 bg-orange-500/10 hover:bg-orange-500/20';
+  return 'border-border';
+};
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
@@ -35,7 +34,7 @@ export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 12;
   const { user: authUser, userData } = useAuth();
 
   const [filterType, setFilterType] = useState<"Global" | "Country" | "Company">("Global");
@@ -100,10 +99,10 @@ export default function Leaderboard() {
     const q = query(usersRef, orderBy("points", "desc"), limit(100));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const users: LeaderboardUser[] = querySnapshot.docs.map((doc, index) => {
+        const users: LeaderboardUser[] = querySnapshot.docs.map((doc) => {
             const data = doc.data();
             return {
-                rank: index + 1,
+                rank: 0, // Rank will be calculated on the client
                 id: doc.id,
                 name: data.name || 'N/A',
                 username: data.username || `user${doc.id.substring(0,5)}`,
@@ -146,6 +145,11 @@ export default function Leaderboard() {
     }
   };
 
+  const handleFilterValueChange = (value: string) => {
+    setCurrentPage(1);
+    setFilterValue(value);
+  }
+
   const filteredData = useMemo(() => {
     let data = leaderboardData;
     if (filterType === "Country" && filterValue) {
@@ -156,30 +160,22 @@ export default function Leaderboard() {
     return data.map((user, index) => ({ ...user, rank: index + 1 }));
   }, [leaderboardData, filterType, filterValue]);
 
-  const topThree = useMemo(() => filteredData.slice(0, 3), [filteredData]);
-  const otherUsers = useMemo(() => filteredData.slice(3), [filteredData]);
-
   const currentUserEntry = useMemo(() => {
     if (!authUser) return null;
-    return filteredData.find(entry => entry.id === authUser.uid);
-  }, [authUser, filteredData]);
+    const globalRankedData = leaderboardData.map((user, index) => ({ ...user, rank: index + 1 }));
+    return globalRankedData.find(entry => entry.id === authUser.uid);
+  }, [authUser, leaderboardData]);
 
-  const totalPages = Math.ceil(otherUsers.length / itemsPerPage);
-
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return otherUsers.slice(startIndex, endIndex);
-  }, [currentPage, otherUsers]);
+    return filteredData.slice(startIndex, endIndex);
+  }, [currentPage, filteredData]);
 
 
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
+  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
 
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
@@ -203,73 +199,41 @@ export default function Leaderboard() {
       <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
           <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              See how you rank against the top 100 developers. Keep solving problems to climb up the ranks!
+              See how you rank against the top developers. Keep solving problems to climb up the ranks!
           </p>
       </div>
 
-      {currentUserEntry && (
+       {currentUserEntry && (
         <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
-            <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
+             <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
               <CardContent className="p-6 flex flex-col flex-grow">
-                <Link href={`/profile/${currentUserEntry.username}`} className="block">
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12 border-2 border-primary">
-                                <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                                <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                                <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <div className="flex items-center gap-2 font-bold text-2xl">
-                                <Trophy className="h-7 w-7 text-yellow-400" />
-                                <span>{currentUserEntry.rank}</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Rank</p>
-                        </div>
-                    </div>
-                </Link>
-                <div className="mt-auto pt-4 flex justify-between items-end">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                          {currentUserEntry.company && (
-                              <div className="flex items-center gap-1.5">
-                                  {currentUserEntry.companyLogoUrl ? (
-                                      <Image
-                                          src={currentUserEntry.companyLogoUrl}
-                                          alt={currentUserEntry.company || 'Company logo'}
-                                          width={16}
-                                          height={16}
-                                          className="rounded-sm object-contain"
-                                      />
-                                  ) : (
-                                      <Building className="h-4 w-4" />
-                                  )}
-                                  <span>{currentUserEntry.company}</span>
-                              </div>
-                          )}
-                          {currentUserEntry.country && (
-                              <div className="flex items-center gap-1.5">
-                                  <Globe className="h-4 w-4" />
-                                  <span>{currentUserEntry.country}</span>
-                              </div>
-                          )}
-                    </div>
-                    <div className="text-right">
-                      <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">Points</p>
-                    </div>
-                </div>
+                  <div className="flex justify-between items-start">
+                      <Link href={`/profile/${currentUserEntry.username}`} className="flex items-center gap-4 group">
+                          <Avatar className="h-12 w-12 border-2 border-primary">
+                              <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                              <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
+                              <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                          </div>
+                      </Link>
+                      <div className="text-right">
+                          <div className="flex items-center gap-2 font-bold text-2xl">
+                              <Trophy className="h-7 w-7 text-yellow-400" />
+                              <span>{currentUserEntry.rank}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">Global Rank</p>
+                      </div>
+                  </div>
               </CardContent>
             </Card>
           </div>
           <div className="lg:col-span-2">
             {suggestedProblem ? (
                 <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
-                  <CardContent className="p-6 flex flex-col h-full">
+                  <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6 h-full">
                       <div className="flex-grow">
                           <div className="flex items-center gap-3 mb-2">
                               <div className="p-2 bg-primary/10 rounded-lg">
@@ -287,7 +251,7 @@ export default function Leaderboard() {
                               </Badge>
                           </div>
                       </div>
-                      <div className="flex justify-end mt-4 flex-shrink-0">
+                      <div className="flex-shrink-0">
                           <Button asChild size="sm">
                             <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
                               Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
@@ -297,20 +261,11 @@ export default function Leaderboard() {
                   </CardContent>
                 </Card>
             ) : (
-              <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed min-h-[160px]">
+              <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed h-full">
                   <CardContent className="p-0">
-                      {allProblems.length > 0 && userData && userData.solvedProblems && Object.keys(userData.solvedProblems).length >= allProblems.length ? (
-                      <>
-                          <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                          <h3 className="text-xl font-bold">You're a Champion!</h3>
-                          <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
-                      </>
-                      ) : (
-                      <>
-                          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-                          <p className="text-muted-foreground">Finding a great challenge for you...</p>
-                      </>
-                      )}
+                      <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold">You're a Champion!</h3>
+                      <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
                   </CardContent>
               </Card>
             )}
@@ -318,7 +273,7 @@ export default function Leaderboard() {
         </div>
       )}
       
-      <div className="mb-12 flex flex-col md:flex-row justify-center items-center gap-4">
+      <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
           <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
               <TabsList>
                   <TabsTrigger value="Global">Global</TabsTrigger>
@@ -330,10 +285,7 @@ export default function Leaderboard() {
           {filterType === "Country" && (
               <Select
                   value={filterValue ?? ''}
-                  onValueChange={(value) => {
-                    setFilterValue(value);
-                    setCurrentPage(1);
-                  }}
+                  onValueChange={handleFilterValueChange}
                   disabled={countryOptions.length === 0}
               >
                   <SelectTrigger className="w-full md:w-[220px]">
@@ -350,10 +302,7 @@ export default function Leaderboard() {
           {filterType === "Company" && (
               <Select
                   value={filterValue ?? ''}
-                  onValueChange={(value) => {
-                    setFilterValue(value);
-                    setCurrentPage(1);
-                  }}
+                  onValueChange={handleFilterValueChange}
                   disabled={companyOptions.length === 0}
               >
                   <SelectTrigger className="w-full md:w-[220px]">
@@ -368,161 +317,50 @@ export default function Leaderboard() {
           )}
       </div>
 
-        {topThree.length >= 3 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 items-end mb-16">
-                {/* Rank 2 */}
-                <div className="order-2 md:order-1 pt-8">
-                  <Link href={`/profile/${topThree[1].username}`}>
-                    <Card className="text-center p-4 bg-card/70 border-2 border-slate-300/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300">
-                        <div className="text-5xl">🥈</div>
-                        <Avatar className="w-20 h-20 mx-auto mt-2 border-2 border-slate-300">
-                            <AvatarImage src={topThree[1].avatarUrl} alt={topThree[1].name} />
-                            <AvatarFallback>{topThree[1].name.charAt(0)}</AvatarFallback>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {paginatedData.map((user) => (
+            <Link key={user.id} href={`/profile/${user.username}`} className="block">
+              <Card className={cn("hover:-translate-y-1 transition-transform duration-300 h-full", getMedalColor(user.rank))}>
+                <CardContent className="p-4 flex flex-col text-center items-center">
+                    <div className="relative mb-2">
+                        <Avatar className="h-16 w-16 border-2 border-background shadow-md">
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <h3 className="text-lg font-bold mt-2">{topThree[1].name}</h3>
-                        <p className="text-sm text-muted-foreground">@{topThree[1].username}</p>
-                        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                            {topThree[1].company && (
-                                <div className="flex items-center gap-1">
-                                {topThree[1].companyLogoUrl ? (
-                                    <Image src={topThree[1].companyLogoUrl} alt={topThree[1].company || ''} width={14} height={14} className="rounded-sm object-contain"/>
-                                ) : ( <Building className="h-3 w-3" /> )}
-                                <span>{topThree[1].company}</span>
-                                </div>
-                            )}
-                            {topThree[1].country && (
-                                <div className="flex items-center gap-1"><Globe className="h-3 w-3" /><span>{topThree[1].country}</span></div>
-                            )}
+                        <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-0.5">
+                            <div className={cn("h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs", getMedalColor(user.rank))}>
+                                {user.rank}
+                            </div>
                         </div>
-                        <div className="mt-2">
-                            <p className="text-2xl font-bold">{topThree[1].points.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground uppercase">Points</p>
-                        </div>
-                    </Card>
-                  </Link>
-                </div>
+                    </div>
+                  
+                    <h3 className="font-semibold text-sm truncate">{user.name}</h3>
+                    <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                    
+                    <div className="my-3 w-full">
+                       <p className="text-xl font-bold font-mono">{user.points.toLocaleString()}</p>
+                       <p className="text-xs text-muted-foreground uppercase">Points</p>
+                    </div>
 
-                {/* Rank 1 */}
-                <div className="order-1 md:order-2">
-                  <Link href={`/profile/${topThree[0].username}`}>
-                    <Card className="text-center p-4 relative border-2 border-yellow-400 bg-card shadow-2xl transform md:scale-110 hover:-translate-y-2 transition-transform duration-300">
-                        <div className="text-6xl">🥇</div>
-                        <Avatar className="w-24 h-24 mx-auto mt-2 border-4 border-yellow-400">
-                            <AvatarImage src={topThree[0].avatarUrl} alt={topThree[0].name} />
-                            <AvatarFallback>{topThree[0].name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <h3 className="text-xl font-bold mt-2">{topThree[0].name}</h3>
-                        <p className="text-sm text-muted-foreground">@{topThree[0].username}</p>
-                         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                            {topThree[0].company && (
-                                <div className="flex items-center gap-1">
-                                {topThree[0].companyLogoUrl ? (
-                                    <Image src={topThree[0].companyLogoUrl} alt={topThree[0].company || ''} width={14} height={14} className="rounded-sm object-contain"/>
-                                ) : ( <Building className="h-3 w-3" /> )}
-                                <span>{topThree[0].company}</span>
-                                </div>
-                            )}
-                            {topThree[0].country && (
-                                <div className="flex items-center gap-1"><Globe className="h-3 w-3" /><span>{topThree[0].country}</span></div>
-                            )}
-                        </div>
-                        <div className="mt-2">
-                            <p className="text-3xl font-bold">{topThree[0].points.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground uppercase">Points</p>
-                        </div>
-                    </Card>
-                  </Link>
-                </div>
-
-                {/* Rank 3 */}
-                <div className="order-3 pt-8">
-                   <Link href={`/profile/${topThree[2].username}`}>
-                    <Card className="text-center p-4 bg-card/70 border-2 border-orange-400/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300">
-                        <div className="text-5xl">🥉</div>
-                        <Avatar className="w-20 h-20 mx-auto mt-2 border-2 border-orange-400">
-                            <AvatarImage src={topThree[2].avatarUrl} alt={topThree[2].name} />
-                            <AvatarFallback>{topThree[2].name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <h3 className="text-lg font-bold mt-2">{topThree[2].name}</h3>
-                        <p className="text-sm text-muted-foreground">@{topThree[2].username}</p>
-                         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                            {topThree[2].company && (
-                                <div className="flex items-center gap-1">
-                                {topThree[2].companyLogoUrl ? (
-                                    <Image src={topThree[2].companyLogoUrl} alt={topThree[2].company || ''} width={14} height={14} className="rounded-sm object-contain"/>
-                                ) : ( <Building className="h-3 w-3" /> )}
-                                <span>{topThree[2].company}</span>
-                                </div>
-                            )}
-                            {topThree[2].country && (
-                                <div className="flex items-center gap-1"><Globe className="h-3 w-3" /><span>{topThree[2].country}</span></div>
-                            )}
-                        </div>
-                        <div className="mt-2">
-                            <p className="text-2xl font-bold">{topThree[2].points.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground uppercase">Points</p>
-                        </div>
-                    </Card>
-                  </Link>
-                </div>
-            </div>
-        )}
-
-      <div className="rounded-lg border">
-          <Table>
-              <TableHeader>
-                  <TableRow>
-                      <TableHead className="w-[80px] text-center">Rank</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead className="hidden md:table-cell">Company</TableHead>
-                      <TableHead className="hidden md:table-cell text-center">Country</TableHead>
-                      <TableHead className="text-right">Points</TableHead>
-                  </TableRow>
-              </TableHeader>
-              <TableBody>
-                  {paginatedData.map((user) => (
-                      <TableRow 
-                        key={user.id} 
-                        className={cn(user.id === authUser?.uid && "bg-primary/10 hover:bg-primary/20")}
-                      >
-                          <TableCell className="font-bold text-center text-xl">{getMedal(user.rank)}</TableCell>
-                          <TableCell>
-                              <Link href={`/profile/${user.username}`} className="flex items-center gap-4 group">
-                                  <Avatar>
-                                      <AvatarImage src={user.avatarUrl} alt={user.name} />
-                                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                      <p className="font-medium group-hover:underline">{user.name}</p>
-                                      <p className="text-sm text-muted-foreground">@{user.username}</p>
-                                  </div>
-                              </Link>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                              {user.company ? (
-                                  <div className="flex items-center gap-2">
-                                      {user.companyLogoUrl ? (
-                                          <Image
-                                              src={user.companyLogoUrl}
-                                              alt={user.company}
-                                              width={20}
-                                              height={20}
-                                              className="rounded-sm object-contain"
-                                          />
-                                      ) : (
-                                          <Building className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                      )}
-                                      <span>{user.company}</span>
-                                  </div>
-                              ) : null}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-center">{user.country}</TableCell>
-                          <TableCell className="text-right font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
-                      </TableRow>
-                  ))}
-              </TableBody>
-          </Table>
-      </div>
+                    <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        {user.company && (
+                            <div className="flex items-center gap-1.5">
+                            {user.companyLogoUrl ? (
+                                <Image src={user.companyLogoUrl} alt={user.company} width={14} height={14} className="rounded-sm object-contain"/>
+                            ) : ( <Building className="h-3.5 w-3.5" /> )}
+                            <span className="truncate">{user.company}</span>
+                            </div>
+                        )}
+                         {user.country && user.company && (<span className="text-muted-foreground/50">|</span>)}
+                        {user.country && (
+                            <div className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /><span>{user.country}</span></div>
+                        )}
+                    </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
 
       {totalPages > 1 && (
           <div className="flex items-center justify-center space-x-4 mt-8">
@@ -538,8 +376,13 @@ export default function Leaderboard() {
           </div>
       )}
 
+      {paginatedData.length === 0 && (
+         <div className="text-center py-16">
+            <h3 className="text-lg font-semibold">No users found</h3>
+            <p className="text-muted-foreground mt-1">Try adjusting your filters.</p>
+        </div>
+      )}
+
     </main>
   );
 }
-
-    
