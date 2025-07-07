@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, FileUp, X } from "lucide-react";
+import { Loader2, FileUp, X, Instagram } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -298,6 +299,16 @@ export default function ContactPage() {
           </CardContent>
         </Card>
       </div>
+      <Link
+        href="https://instagram.com/codbbit"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 z-50 h-16 w-16 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
+        aria-label="Connect on Instagram"
+      >
+        <Instagram className="h-8 w-8" />
+        <span className="sr-only">Quick Connect on Instagram</span>
+      </Link>
     </main>
   );
 }
