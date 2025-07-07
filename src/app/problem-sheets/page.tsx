@@ -19,6 +19,40 @@ import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { toggleSheetFollow } from "../sheets/actions";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+const cardColorThemes = [
+    { // Blue
+        card: "bg-blue-100 dark:bg-blue-900/30",
+        progressBg: "bg-blue-200 dark:bg-blue-800/30",
+        progressFg: "bg-blue-500",
+        progressText: "text-blue-900 dark:text-blue-200",
+    },
+    { // Orange
+        card: "bg-orange-100 dark:bg-orange-900/30",
+        progressBg: "bg-orange-200 dark:bg-orange-800/30",
+        progressFg: "bg-orange-500",
+        progressText: "text-orange-900 dark:text-orange-200",
+    },
+    { // Green
+        card: "bg-green-100 dark:bg-green-900/30",
+        progressBg: "bg-green-200 dark:bg-green-800/30",
+        progressFg: "bg-green-500",
+        progressText: "text-green-900 dark:text-green-200",
+    },
+    { // Purple
+        card: "bg-purple-100 dark:bg-purple-900/30",
+        progressBg: "bg-purple-200 dark:bg-purple-800/30",
+        progressFg: "bg-purple-500",
+        progressText: "text-purple-900 dark:text-purple-200",
+    },
+    { // Teal
+        card: "bg-teal-100 dark:bg-teal-900/30",
+        progressBg: "bg-teal-200 dark:bg-teal-800/30",
+        progressFg: "bg-teal-500",
+        progressText: "text-teal-900 dark:text-teal-200",
+    }
+];
 
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
@@ -121,7 +155,8 @@ export default function ProblemSheetsListPage() {
         </div>
       ) : filteredSheets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSheets.map((sheet) => {
+          {filteredSheets.map((sheet, index) => {
+            const theme = cardColorThemes[index % cardColorThemes.length];
             const isCreator = authUser?.uid === sheet.createdBy;
             const followersCount = sheet.followers?.length || 0;
             const totalProblems = sheet.problemIds.length;
@@ -131,7 +166,7 @@ export default function ProblemSheetsListPage() {
             const isTogglingThisFollow = isTogglingFollow === sheet.id;
 
             return (
-              <Card key={sheet.id} className="flex flex-col h-full overflow-hidden bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 border">
+              <Card key={sheet.id} className={cn("flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 border", theme.card)}>
                   {isCreator && (
                     <Button
                       variant="outline"
@@ -148,12 +183,12 @@ export default function ProblemSheetsListPage() {
                   )}
                   {/* Top progress bar */}
                   {authUser && (
-                      <div className="h-[30px] px-3 bg-orange-100 dark:bg-orange-900/30 relative flex items-center">
+                      <div className={cn("h-[30px] px-3 relative flex items-center", theme.progressBg)}>
                           <div 
-                              className="h-1.5 bg-orange-400 rounded-full transition-all duration-500"
+                              className={cn("h-1.5 rounded-full transition-all duration-500", theme.progressFg)}
                               style={{ width: `${progressPercentage}%` }}
                           />
-                          <span className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold text-orange-900 dark:text-orange-200">
+                          <span className={cn("absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold", theme.progressText)}>
                               {Math.round(progressPercentage)}%
                           </span>
                       </div>
@@ -185,23 +220,27 @@ export default function ProblemSheetsListPage() {
                           </div>
 
                           {!isCreator && authUser && (
-                              <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                      e.preventDefault();
-                                      handleFollow(sheet.id);
-                                  }}
-                                  disabled={isTogglingThisFollow}
-                                  className={cn(
-                                      "w-[110px]",
-                                      isFollowed
-                                          ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                                          : "bg-orange-500 text-white hover:bg-orange-600"
-                                  )}
-                              >
-                                  {isTogglingThisFollow ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bookmark className="h-4 w-4"/>}
-                                  <span>{isFollowed ? "Following" : "Follow"}</span>
-                              </Button>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground"
+                                          onClick={(e) => {
+                                              e.preventDefault();
+                                              handleFollow(sheet.id);
+                                          }}
+                                          disabled={isTogglingThisFollow}
+                                      >
+                                          {isTogglingThisFollow ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bookmark className={cn("h-5 w-5", isFollowed && "fill-current text-foreground")} />}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>{isFollowed ? 'Unfollow' : 'Follow'}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                           )}
                       </div>
                   </div>
