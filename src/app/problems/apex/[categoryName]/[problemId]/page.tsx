@@ -676,7 +676,7 @@ export default function ProblemWorkspacePage() {
                 <ResizablePanelGroup direction="horizontal">
                     <ResizablePanel 
                         ref={leftPanelRef}
-                        defaultSize={33}
+                        defaultSize={25}
                         minSize={20}
                         collapsible
                         collapsedSize={0}
@@ -687,7 +687,7 @@ export default function ProblemWorkspacePage() {
                         <ProblemDetails />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={67} minSize={30}>
+                    <ResizablePanel defaultSize={75} minSize={30}>
                          <EditorAndResults />
                     </ResizablePanel>
                 </ResizablePanelGroup>
