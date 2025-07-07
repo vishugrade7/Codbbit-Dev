@@ -625,15 +625,34 @@ export default function ProblemWorkspacePage() {
                     <Award className="h-5 w-5 text-yellow-400" />
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
-                    {isStarring ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Star className={cn("mr-2 h-4 w-4", isStarred && "fill-yellow-400 text-yellow-400")} />
-                    )}
-                    {isStarred ? 'Starred' : 'Star'}
-                </Button>
-                 <Button variant="outline" size="sm" onClick={() => router.push('/settings')}><Settings className="mr-2 h-4 w-4" />Settings</Button>
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleToggleStar} disabled={isStarring}>
+                                {isStarring ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Star className={cn("h-4 w-4", isStarred && "fill-yellow-400 text-yellow-400")} />
+                                )}
+                                <span className="sr-only">{isStarred ? 'Unstar problem' : 'Star problem'}</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{isStarred ? 'Unstar' : 'Star'}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push('/settings')}>
+                                <Settings className="h-4 w-4" />
+                                <span className="sr-only">Settings</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Settings</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
         </header>
 
