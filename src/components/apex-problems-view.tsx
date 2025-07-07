@@ -54,6 +54,9 @@ export default function ApexProblemsView({ initialCategories }: { initialCategor
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
                   <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30 h-full flex flex-col">
+                    {userData && category.problemCount > 0 && (
+                      <Progress value={(category.solvedCount / category.problemCount) * 100} className="h-1 rounded-none" />
+                    )}
                     <CardContent className="p-0 flex flex-col flex-grow">
                       <div className="aspect-video relative">
                          <Image 
@@ -73,8 +76,7 @@ export default function ApexProblemsView({ initialCategories }: { initialCategor
                           </div>
                           {userData && category.problemCount > 0 ? (
                                <div className="mt-auto pt-2">
-                                  <Progress value={(category.solvedCount / category.problemCount) * 100} className="h-2" />
-                                  <p className="text-xs text-muted-foreground mt-1 text-right">{category.solvedCount} / {category.problemCount} solved</p>
+                                  <p className="text-xs text-muted-foreground text-right">{category.solvedCount} / {category.problemCount} solved</p>
                               </div>
                           ) : (
                             <div className="mt-auto pt-2">
