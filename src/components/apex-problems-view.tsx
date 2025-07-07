@@ -17,26 +17,31 @@ import type { ApexProblemsData } from "@/types";
 const cardColorThemes = [
     { // Blue
         card: "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-900",
+        progressBg: "bg-blue-200 dark:bg-blue-800/30",
         progressFg: "bg-blue-500",
         title: "text-blue-900 dark:text-blue-200"
     },
     { // Orange
         card: "bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-900",
+        progressBg: "bg-orange-200 dark:bg-orange-800/30",
         progressFg: "bg-orange-500",
         title: "text-orange-900 dark:text-orange-200"
     },
     { // Green
         card: "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-900",
+        progressBg: "bg-green-200 dark:bg-green-800/30",
         progressFg: "bg-green-500",
         title: "text-green-900 dark:text-green-200"
     },
     { // Purple
         card: "bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-900",
+        progressBg: "bg-purple-200 dark:bg-purple-800/30",
         progressFg: "bg-purple-500",
         title: "text-purple-900 dark:text-purple-200"
     },
     { // Teal
         card: "bg-teal-100 dark:bg-teal-900/30 border-teal-200 dark:border-teal-900",
+        progressBg: "bg-teal-200 dark:bg-teal-800/30",
         progressFg: "bg-teal-500",
         title: "text-teal-900 dark:text-teal-200"
     }
@@ -147,7 +152,7 @@ export default function ApexProblemsView() {
                                 <span className={cn("font-medium", theme.title)}>Progress</span>
                                 <span className={cn("font-semibold opacity-80", theme.title)}>{category.solvedCount} / {category.problemCount}</span>
                             </div>
-                            <Progress value={progressPercentage} className="h-2 bg-black/10" indicatorClassName={theme.progressFg} />
+                            <Progress value={progressPercentage} className={cn("h-2", theme.progressBg)} indicatorClassName={theme.progressFg} />
                          </div>
                       )}
                       <div className="space-y-2 text-sm">
