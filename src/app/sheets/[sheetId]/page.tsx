@@ -237,10 +237,12 @@ export default function SheetDisplayPage() {
                                 <div>
                                     <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
                                     <CardDescription className="flex items-center gap-2 mt-2">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                            <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                        </Avatar>
+                                        {sheet.creatorAvatarUrl && (
+                                            <Avatar className="h-6 w-6">
+                                                <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                                <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                        )}
                                         <span>Created by {sheet.creatorName} {timeAgo}</span>
                                     </CardDescription>
                                 </div>
