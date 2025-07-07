@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 const cardColorClasses = [
   "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
@@ -117,6 +118,9 @@ export default function ProblemSheetsListPage() {
             const isCreator = authUser?.uid === sheet.createdBy;
             const subscribersCount = sheet.subscribers?.length || 0;
             const colorClass = cardColorClasses[index % cardColorClasses.length];
+            const totalProblems = sheet.problemIds.length;
+            const solvedCount = authUser && userData ? sheet.problemIds.filter(id => userData.solvedProblems?.[id]).length : 0;
+            const progressPercentage = totalProblems > 0 ? (solvedCount / totalProblems) * 100 : 0;
 
             return (
               <div key={sheet.id} className="relative group">
@@ -149,6 +153,12 @@ export default function ProblemSheetsListPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow flex flex-col justify-end">
+                      {authUser && totalProblems > 0 && (
+                          <div className="mb-4">
+                              <Progress value={progressPercentage} className="h-2" />
+                              <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {totalProblems} solved</p>
+                          </div>
+                      )}
                        <div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Avatar className="h-6 w-6">

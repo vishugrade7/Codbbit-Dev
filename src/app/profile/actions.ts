@@ -84,7 +84,7 @@ export async function updateUserProfilePicture(userId: string, dataUrl: string) 
 
   try {
     // Explicitly specify the bucket name to avoid configuration issues.
-    const bucket = adminStorage.bucket('showcase-canvas-rx61p.appspot.com');
+    const bucket = adminStorage.bucket('showcase-canvas-rx61p.firebasestorage.app');
     const filePath = `profile-pictures/${userId}`;
     const file = bucket.file(filePath);
 
