@@ -207,7 +207,13 @@ export default function UserProfilePage() {
         ),
     } satisfies ChartConfig;
     
-    const totalSolved = (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0);
+    const { easySolved, mediumSolved, hardSolved, totalSolved } = {
+        easySolved: profileUser.dsaStats?.Easy || 0,
+        mediumSolved: profileUser.dsaStats?.Medium || 0,
+        hardSolved: profileUser.dsaStats?.Hard || 0,
+        totalSolved: (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0),
+    };
+
 
   return (
     <>
@@ -272,28 +278,38 @@ export default function UserProfilePage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Problems Solved */}
-              <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+               <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
-                      <CardDescription>Number of problems solved by difficulty.</CardDescription>
+                      <CardDescription>Breakdown by difficulty ({totalSolved} total)</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                      <div className="space-y-3">
-                          <div className="flex justify-between items-center text-sm font-medium">
-                              <span className="text-green-500">Easy</span>
-                              <span>{profileUser.dsaStats?.Easy || 0} solved</span>
+                  <CardContent className="space-y-4 pt-4">
+                      <div className="space-y-4 text-sm">
+                          <div>
+                              <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                  <span>Easy</span>
+                                  <span className="font-semibold text-foreground">{easySolved}</span>
+                              </div>
+                              <Progress value={totalSolved > 0 ? (easySolved / totalSolved) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
                           </div>
-                           <div className="flex justify-between items-center text-sm font-medium">
-                              <span className="text-primary">Medium</span>
-                              <span>{profileUser.dsaStats?.Medium || 0} solved</span>
+                          <div>
+                              <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                  <span>Medium</span>
+                                   <span className="font-semibold text-foreground">{mediumSolved}</span>
+                              </div>
+                              <Progress value={totalSolved > 0 ? (mediumSolved / totalSolved) * 100 : 0} className="h-2" />
                           </div>
-                           <div className="flex justify-between items-center text-sm font-medium">
-                              <span className="text-destructive">Hard</span>
-                              <span>{profileUser.dsaStats?.Hard || 0} solved</span>
+                          <div>
+                              <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                  <span>Hard</span>
+                                   <span className="font-semibold text-foreground">{hardSolved}</span>
+                              </div>
+                              <Progress value={totalSolved > 0 ? (hardSolved / totalSolved) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
                           </div>
                       </div>
                   </CardContent>
               </Card>
+
 
               {/* Category Breakdown */}
               <Card className="flex flex-col animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
