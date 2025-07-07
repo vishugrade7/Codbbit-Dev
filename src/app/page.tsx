@@ -24,7 +24,7 @@ export default function Home() {
         <div className="container relative z-10 px-4 md:px-6 py-24 md:py-32 lg:py-40">
           <div className="relative max-w-4xl mx-auto">
             {/* Text in the center */}
-            <div className="relative z-10 space-y-4 text-center">
+            <div className="relative z-10 space-y-4 text-center max-w-3xl mx-auto">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 Master Salesforce Development
               </h1>
