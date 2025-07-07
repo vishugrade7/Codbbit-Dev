@@ -79,7 +79,7 @@
     --chart-4: 280 75% 60%;
     --chart-5: 340 85% 60%;
 
-    --body-bg-image: radial-gradient(ellipse 80% 50% at 50% 120%, hsl(12 80% 50% / 0.3), transparent);
+    --body-bg-image: radial-gradient(ellipse 80% 50% at 50% 120%, hsl(var(--primary) / 0.25), transparent);
     --body-bg-color: hsl(var(--background));
   }
 }
