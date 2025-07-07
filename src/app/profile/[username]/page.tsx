@@ -220,7 +220,7 @@ export default function UserProfilePage() {
     <main className="flex-1 relative">
       <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
           {/* User Info Header */}
-          <Card className="bg-gradient-to-br from-card to-muted/30 p-6 sm:rounded-xl shadow-lg">
+          <Card className="p-6 sm:rounded-xl shadow-lg">
             <div className="flex flex-col sm:flex-row items-center gap-6">
                  <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
                     <Avatar className="h-28 w-28 border-4 border-primary/50">
@@ -281,28 +281,28 @@ export default function UserProfilePage() {
                <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
-                      <CardDescription>Breakdown by difficulty ({totalSolved} total)</CardDescription>
+                      <CardDescription>Breakdown by difficulty</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-4">
                       <div className="space-y-4 text-sm">
                           <div>
                               <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
                                   <span>Easy</span>
-                                  <span className="font-semibold text-foreground">{easySolved}</span>
+                                  <span className="font-semibold text-foreground">{easySolved} solved</span>
                               </div>
                               <Progress value={totalSolved > 0 ? (easySolved / totalSolved) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
                           </div>
                           <div>
                               <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
                                   <span>Medium</span>
-                                   <span className="font-semibold text-foreground">{mediumSolved}</span>
+                                   <span className="font-semibold text-foreground">{mediumSolved} solved</span>
                               </div>
                               <Progress value={totalSolved > 0 ? (mediumSolved / totalSolved) * 100 : 0} className="h-2" />
                           </div>
                           <div>
                               <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
                                   <span>Hard</span>
-                                   <span className="font-semibold text-foreground">{hardSolved}</span>
+                                   <span className="font-semibold text-foreground">{hardSolved} solved</span>
                               </div>
                               <Progress value={totalSolved > 0 ? (hardSolved / totalSolved) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
                           </div>
@@ -317,30 +317,46 @@ export default function UserProfilePage() {
                       <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
                       <CardDescription>Points earned per problem category.</CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-grow flex items-center justify-center relative">
+                  <CardContent className="flex-grow flex items-center justify-center p-6">
                       {categoryData.length > 0 ? (
-                          <>
-                            <ChartContainer
-                                config={chartConfig}
-                                className="mx-auto aspect-square h-[180px]"
-                            >
-                                <PieChart>
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent hideLabel nameKey="name" />}
-                                    />
-                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} paddingAngle={2}>
-                                        {categoryData.map((entry) => (
-                                            <Cell key={entry.name} fill={`var(--color-${entry.name})`} className="stroke-background hover:opacity-80" />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ChartContainer>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-3xl font-bold text-foreground">{profileUser.points.toLocaleString()}</span>
-                                <span className="text-sm text-muted-foreground">Total Points</span>
-                            </div>
-                          </>
+                          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                              <div className="relative mx-auto aspect-square h-[150px]">
+                                  <ChartContainer
+                                      config={chartConfig}
+                                      className="w-full h-full"
+                                  >
+                                      <PieChart>
+                                          <ChartTooltip
+                                              cursor={false}
+                                              content={<ChartTooltipContent hideLabel nameKey="name" />}
+                                          />
+                                          <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
+                                              {categoryData.map((entry, index) => (
+                                                  <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
+                                              ))}
+                                          </Pie>
+                                      </PieChart>
+                                  </ChartContainer>
+                                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                      <span className="text-3xl font-bold text-foreground">{profileUser.points.toLocaleString()}</span>
+                                      <span className="text-sm text-muted-foreground">Total Points</span>
+                                  </div>
+                              </div>
+                              <div className="space-y-2 text-sm">
+                                  {categoryData.slice(0, 5).map(item => (
+                                      <div key={item.name} className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[item.name]?.color }} />
+                                              <span className="text-muted-foreground">{item.name}</span>
+                                          </div>
+                                          <span className="font-semibold text-right">{item.value.toLocaleString()} pts</span>
+                                      </div>
+                                  ))}
+                                  {categoryData.length > 5 && (
+                                      <p className="text-xs text-muted-foreground text-center pt-2">...and {categoryData.length - 5} more categories</p>
+                                  )}
+                              </div>
+                          </div>
                       ) : (
                           <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
                       )}
