@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, Users, Pencil, Bookmark, FileText, ClipboardList } from "lucide-react";
+import { Loader2, PlusCircle, Users, Pencil, Bookmark, FileText, ClipboardList, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { toggleSheetFollow } from "../sheets/actions";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 
 const cardColorThemes = [
     { // Blue
@@ -62,6 +63,7 @@ export default function ProblemSheetsListPage() {
   const router = useRouter();
   const [filterMode, setFilterMode] = useState<'all' | 'my-sheets' | 'following'>('all');
   const [isTogglingFollow, setIsTogglingFollow] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -110,17 +112,36 @@ export default function ProblemSheetsListPage() {
   };
 
   const filteredSheets = useMemo(() => {
+    let baseSheets: ProblemSheet[];
     if (filterMode === 'following') {
-      if (!userData?.followingSheetIds) return [];
-      const followingIds = new Set(userData.followingSheetIds);
-      return sheets.filter(sheet => followingIds.has(sheet.id));
+      if (!userData?.followingSheetIds) {
+        baseSheets = [];
+      } else {
+        const followingIds = new Set(userData.followingSheetIds);
+        baseSheets = sheets.filter(sheet => followingIds.has(sheet.id));
+      }
+    } else if (filterMode === 'my-sheets') {
+        if (!authUser) {
+            baseSheets = [];
+        } else {
+            baseSheets = sheets.filter(sheet => sheet.createdBy === authUser.uid);
+        }
+    } else {
+        baseSheets = sheets;
     }
-    if (filterMode === 'my-sheets') {
-        if (!authUser) return [];
-        return sheets.filter(sheet => sheet.createdBy === authUser.uid);
+    
+    if (!searchTerm.trim()) {
+        return baseSheets;
     }
-    return sheets;
-  }, [sheets, filterMode, userData, authUser]);
+
+    const lowercasedSearchTerm = searchTerm.toLowerCase().trim();
+
+    return baseSheets.filter(sheet => 
+        sheet.name.toLowerCase().includes(lowercasedSearchTerm) ||
+        (sheet.description || '').toLowerCase().includes(lowercasedSearchTerm) ||
+        sheet.creatorName.toLowerCase().includes(lowercasedSearchTerm)
+    );
+  }, [sheets, filterMode, userData, authUser, searchTerm]);
 
   return (
     <main className="flex-1 container py-8">
@@ -139,14 +160,23 @@ export default function ProblemSheetsListPage() {
           </Button>
       </div>
 
-      <div className="flex justify-between items-center mb-8">
-          <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)} className="w-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+          <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)} className="w-full md:w-auto">
               <TabsList>
                   <TabsTrigger value="all">All Sheets</TabsTrigger>
                   <TabsTrigger value="my-sheets" disabled={!authUser}>My Sheets</TabsTrigger>
                   <TabsTrigger value="following" disabled={!authUser}>Following</TabsTrigger>
               </TabsList>
           </Tabs>
+          <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+                placeholder="Search sheets by name, creator..."
+                className="w-full pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
       </div>
 
       {loading ? (
@@ -252,14 +282,18 @@ export default function ProblemSheetsListPage() {
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">
-                  {filterMode === 'all' && 'No Problem Sheets Yet'}
-                  {filterMode === 'my-sheets' && 'You haven\'t created any sheets'}
-                  {filterMode === 'following' && 'No Followed Sheets'}
+                  {searchTerm ? 'No Sheets Found' : 
+                   filterMode === 'all' ? 'No Problem Sheets Yet' :
+                   filterMode === 'my-sheets' ? 'You haven\'t created any sheets' :
+                   'No Followed Sheets'
+                  }
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                  {filterMode === 'all' && 'Get started by creating a new sheet.'}
-                  {filterMode === 'my-sheets' && 'Create a sheet to see it here.'}
-                  {filterMode === 'following' && 'Follow sheets to see them here.'}
+                   {searchTerm ? 'Try a different search term.' :
+                   filterMode === 'all' ? 'Get started by creating a new sheet.' :
+                   filterMode === 'my-sheets' ? 'Create a sheet to see it here.' :
+                   'Follow sheets to see them here.'
+                  }
               </p>
           </div>
       )}
