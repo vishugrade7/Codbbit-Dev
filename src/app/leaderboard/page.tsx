@@ -295,7 +295,7 @@ export default function Leaderboard() {
         </div>
       )}
       
-      <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
+      <div className="mb-16 flex flex-col md:flex-row justify-center items-center gap-4">
           <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-auto">
               <TabsList>
                   <TabsTrigger value="Global">Global</TabsTrigger>
