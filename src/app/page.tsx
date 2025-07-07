@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 const FloatingCard = ({ positionClass, children }: { positionClass: string, children: React.ReactNode }) => (
     <div className={cn("absolute", positionClass)} style={{ transformStyle: 'preserve-3d' }}>
         <div className="animate-counter-revolve">
-            <Card className="p-3 rounded-lg shadow-xl bg-background/60 backdrop-blur-xl border-border/20 text-foreground">
+            <Card className="p-3 rounded-lg shadow-xl bg-background/80 backdrop-blur-xl border-border/30 text-foreground">
                 {children}
             </Card>
         </div>
@@ -50,9 +50,9 @@ export default function Home() {
             </div>
             
             {/* Revolving cards around the text */}
-            <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d' }}>
-                {/* Re-arranged and new cards */}
-                <FloatingCard positionClass="top-0 -left-16 w-48">
+            <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
+                {/* Card 1: Top-Left */}
+                <FloatingCard positionClass="top-12 -left-20 w-48">
                     <div className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-sky-500 dark:text-sky-400"/>
                         <h4 className="font-semibold">SOQL Query</h4>
@@ -60,7 +60,8 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">SELECT Name FROM Account</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="top-16 left-1/2 -translate-x-1/2 w-56">
+                {/* Card 2: Top */}
+                <FloatingCard positionClass="top-0 left-1/2 -translate-x-1/2 w-56">
                     <div className="flex items-center gap-2">
                          <BookOpen className="h-5 w-5 text-green-500 dark:text-green-400"/>
                         <h4 className="font-semibold">Interactive Courses</h4>
@@ -68,14 +69,16 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">Learn by doing</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="top-0 -right-16 w-40">
+                {/* Card 3: Top-Right */}
+                <FloatingCard positionClass="top-12 -right-20 w-40">
                     <div className="flex items-center gap-2">
                         <FileCode className="h-5 w-5 text-rose-500 dark:text-rose-400"/>
                         <h4 className="font-semibold">Apex Class</h4>
                     </div>
                 </FloatingCard>
                 
-                <FloatingCard positionClass="top-1/2 -right-40 -translate-y-1/2 w-56">
+                {/* Card 4: Right */}
+                <FloatingCard positionClass="top-1/2 -right-44 -translate-y-1/2 w-56">
                     <div className="flex items-center gap-2">
                         <Layers className="h-5 w-5 text-indigo-500 dark:text-indigo-400"/>
                         <h4 className="font-semibold">LWC Component</h4>
@@ -83,7 +86,8 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">&lt;lightning-card title="Hello"/&gt;</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="bottom-0 -right-16 w-48">
+                {/* Card 5: Bottom-Right */}
+                <FloatingCard positionClass="bottom-12 -right-20 w-48">
                      <div className="flex items-center gap-2">
                         <Bug className="h-5 w-5 text-red-500 dark:text-red-400"/>
                         <h4 className="font-semibold">Bug Squashing</h4>
@@ -91,7 +95,8 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">Test your code rigorously</p>
                 </FloatingCard>
 
-                 <FloatingCard positionClass="bottom-16 left-1/2 -translate-x-1/2 w-52">
+                {/* Card 6: Bottom */}
+                 <FloatingCard positionClass="bottom-0 left-1/2 -translate-x-1/2 w-52">
                     <div className="flex items-center gap-2">
                         <PartyPopper className="h-5 w-5 text-fuchsia-500 dark:text-fuchsia-400"/>
                         <h4 className="font-semibold">Celebrate Wins</h4>
@@ -99,7 +104,8 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">Earn badges and points</p>
                 </FloatingCard>
                 
-                <FloatingCard positionClass="bottom-0 -left-16 w-44">
+                {/* Card 7: Bottom-Left */}
+                <FloatingCard positionClass="bottom-12 -left-20 w-44">
                     <div className="flex items-center gap-2">
                         <Trophy className="h-5 w-5 text-amber-500 dark:text-amber-400"/>
                         <h4 className="font-semibold">Climb Ranks</h4>
@@ -107,7 +113,8 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">Compete globally</p>
                 </FloatingCard>
                 
-                <FloatingCard positionClass="top-1/2 -left-40 -translate-y-1/2 w-48">
+                {/* Card 8: Left */}
+                <FloatingCard positionClass="top-1/2 -left-44 -translate-y-1/2 w-48">
                     <div className="flex items-center gap-2">
                         <Code className="h-5 w-5 text-teal-500 dark:text-teal-400"/>
                         <h4 className="font-semibold">Code Analysis</h4>
