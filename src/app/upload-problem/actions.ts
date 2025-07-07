@@ -330,6 +330,46 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
     }
 }
 
+export async function deleteProblemFromFirestore(problemId: string, categoryName: string) {
+    if (!problemId || !categoryName) {
+        return { success: false, error: 'Problem ID and Category are required.' };
+    }
+
+    const apexDocRef = doc(db, 'problems', 'Apex');
+
+    try {
+        const docSnap = await getDoc(apexDocRef);
+        if (!docSnap.exists()) {
+            throw new Error("Critical: Apex problems document not found in Firestore.");
+        }
+
+        const currentData = docSnap.data();
+        const categories = currentData.Category || {};
+
+        if (!categories[categoryName] || !categories[categoryName].Questions) {
+            throw new Error(`Category '${categoryName}' not found or has no questions.`);
+        }
+
+        const problemIndex = categories[categoryName].Questions.findIndex((p: Problem) => p.id === problemId);
+
+        if (problemIndex === -1) {
+            throw new Error(`Problem with ID ${problemId} not found in category '${categoryName}'.`);
+        }
+
+        // Remove the problem from the array
+        categories[categoryName].Questions.splice(problemIndex, 1);
+
+        // Update the document
+        await updateDoc(apexDocRef, { Category: categories });
+
+        return { success: true, message: 'Problem deleted successfully!' };
+    } catch (error) {
+        console.error("Error deleting problem:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
 export async function addCategory(categoryName: string, imageUrl: string) {
     if (!categoryName || categoryName.trim().length === 0) {
         return { success: false, error: 'Category name cannot be empty.' };

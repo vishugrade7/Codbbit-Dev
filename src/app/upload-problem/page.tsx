@@ -20,7 +20,7 @@ import Image from "next/image";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore } from "./actions";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -410,6 +410,8 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+    const [problemToDelete, setProblemToDelete] = useState<ProblemWithCategory | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchProblems = useCallback(async () => {
         setLoading(true);
@@ -434,6 +436,20 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     useEffect(() => {
         fetchProblems();
     }, [fetchProblems]);
+
+    const handleDeleteConfirm = async () => {
+        if (!problemToDelete) return;
+        setIsDeleting(true);
+        const result = await deleteProblemFromFirestore(problemToDelete.id, problemToDelete.categoryName);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            fetchProblems();
+        } else {
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: result.error });
+        }
+        setIsDeleting(false);
+        setProblemToDelete(null);
+    };
 
     const handleBulkUploadClick = () => {
         fileInputRef.current?.click();
@@ -557,6 +573,24 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
                 <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
+                <AlertDialog open={!!problemToDelete} onOpenChange={(open) => !open && setProblemToDelete(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the problem
+                                "{problemToDelete?.title}".
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting}>
+                                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
                 <div className="flex flex-col md:flex-row gap-4 mt-4 border-t pt-6">
                     <div className="relative flex-1">
@@ -607,9 +641,23 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
                                                 </UiBadge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" onClick={() => onEdit(problem)}>
-                                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <GripVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => onEdit(problem)}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            <span>Edit</span>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => setProblemToDelete(problem)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            <span>Delete</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
                                     ))}
