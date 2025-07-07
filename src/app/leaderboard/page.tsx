@@ -344,17 +344,17 @@ export default function Leaderboard() {
         {topThree.length >= 3 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 items-end mb-16">
                 {/* Rank 2 */}
-                <div className="order-2 md:order-1 pt-10">
+                <div className="order-2 md:order-1 pt-8">
                   <Link href={`/profile/${topThree[1].username}`}>
-                    <Card className="text-center p-6 bg-card/70 border-2 border-slate-300/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300 relative">
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-300 p-2 rounded-full border-4 border-background">
-                            <Trophy className="h-6 w-6 text-slate-600" />
+                    <Card className="text-center p-4 bg-card/70 border-2 border-slate-300/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300 relative">
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-300 p-1.5 rounded-full border-4 border-background">
+                            <Trophy className="h-5 w-5 text-slate-600" />
                         </div>
-                        <Avatar className="w-24 h-24 mx-auto mt-4 border-4 border-slate-300">
+                        <Avatar className="w-20 h-20 mx-auto mt-2 border-2 border-slate-300">
                             <AvatarImage src={topThree[1].avatarUrl} alt={topThree[1].name} />
                             <AvatarFallback>{topThree[1].name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <h3 className="text-xl font-bold mt-4">{topThree[1].name}</h3>
+                        <h3 className="text-lg font-bold mt-2">{topThree[1].name}</h3>
                         <p className="text-sm text-muted-foreground">@{topThree[1].username}</p>
                         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                             {topThree[1].company && (
@@ -369,8 +369,8 @@ export default function Leaderboard() {
                                 <div className="flex items-center gap-1"><Globe className="h-3 w-3" /><span>{topThree[1].country}</span></div>
                             )}
                         </div>
-                        <div className="mt-4">
-                            <p className="text-3xl font-bold">{topThree[1].points.toLocaleString()}</p>
+                        <div className="mt-2">
+                            <p className="text-2xl font-bold">{topThree[1].points.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground uppercase">Points</p>
                         </div>
                     </Card>
@@ -380,15 +380,15 @@ export default function Leaderboard() {
                 {/* Rank 1 */}
                 <div className="order-1 md:order-2">
                   <Link href={`/profile/${topThree[0].username}`}>
-                    <Card className="text-center p-6 relative border-2 border-yellow-400 bg-card shadow-2xl transform md:scale-110 hover:-translate-y-2 transition-transform duration-300">
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-400 p-3 rounded-full border-4 border-background">
-                            <Trophy className="h-8 w-8 text-white" />
+                    <Card className="text-center p-4 relative border-2 border-yellow-400 bg-card shadow-2xl transform md:scale-110 hover:-translate-y-2 transition-transform duration-300">
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-yellow-400 p-2 rounded-full border-4 border-background">
+                            <Trophy className="h-6 w-6 text-white" />
                         </div>
-                        <Avatar className="w-28 h-28 mx-auto mt-8 border-4 border-yellow-400">
+                        <Avatar className="w-24 h-24 mx-auto mt-4 border-4 border-yellow-400">
                             <AvatarImage src={topThree[0].avatarUrl} alt={topThree[0].name} />
                             <AvatarFallback>{topThree[0].name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <h3 className="text-2xl font-bold mt-4">{topThree[0].name}</h3>
+                        <h3 className="text-xl font-bold mt-2">{topThree[0].name}</h3>
                         <p className="text-sm text-muted-foreground">@{topThree[0].username}</p>
                          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                             {topThree[0].company && (
@@ -403,8 +403,8 @@ export default function Leaderboard() {
                                 <div className="flex items-center gap-1"><Globe className="h-3 w-3" /><span>{topThree[0].country}</span></div>
                             )}
                         </div>
-                        <div className="mt-4">
-                            <p className="text-4xl font-bold">{topThree[0].points.toLocaleString()}</p>
+                        <div className="mt-2">
+                            <p className="text-3xl font-bold">{topThree[0].points.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground uppercase">Points</p>
                         </div>
                     </Card>
@@ -412,17 +412,17 @@ export default function Leaderboard() {
                 </div>
 
                 {/* Rank 3 */}
-                <div className="order-3 pt-10">
+                <div className="order-3 pt-8">
                    <Link href={`/profile/${topThree[2].username}`}>
-                    <Card className="text-center p-6 bg-card/70 border-2 border-orange-400/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300 relative">
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-orange-400 p-2 rounded-full border-4 border-background">
-                            <Trophy className="h-6 w-6 text-orange-800" />
+                    <Card className="text-center p-4 bg-card/70 border-2 border-orange-400/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300 relative">
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-orange-400 p-1.5 rounded-full border-4 border-background">
+                            <Trophy className="h-5 w-5 text-orange-800" />
                         </div>
-                        <Avatar className="w-24 h-24 mx-auto mt-4 border-4 border-orange-400">
+                        <Avatar className="w-20 h-20 mx-auto mt-2 border-2 border-orange-400">
                             <AvatarImage src={topThree[2].avatarUrl} alt={topThree[2].name} />
                             <AvatarFallback>{topThree[2].name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <h3 className="text-xl font-bold mt-4">{topThree[2].name}</h3>
+                        <h3 className="text-lg font-bold mt-2">{topThree[2].name}</h3>
                         <p className="text-sm text-muted-foreground">@{topThree[2].username}</p>
                          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                             {topThree[2].company && (
@@ -437,8 +437,8 @@ export default function Leaderboard() {
                                 <div className="flex items-center gap-1"><Globe className="h-3 w-3" /><span>{topThree[2].country}</span></div>
                             )}
                         </div>
-                        <div className="mt-4">
-                            <p className="text-3xl font-bold">{topThree[2].points.toLocaleString()}</p>
+                        <div className="mt-2">
+                            <p className="text-2xl font-bold">{topThree[2].points.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground uppercase">Points</p>
                         </div>
                     </Card>
