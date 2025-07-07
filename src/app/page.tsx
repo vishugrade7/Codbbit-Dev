@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Rocket, BarChart, Database, Code, Trophy, ArrowRight, Layers, FileCode, BookOpen } from "lucide-react";
+import { Rocket, BarChart, Database, Code, Trophy, ArrowRight, Layers, FileCode, BookOpen, PartyPopper, Bug } from "lucide-react";
 import Testimonials from "@/components/testimonials";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +51,8 @@ export default function Home() {
             
             {/* Revolving cards around the text */}
             <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d' }}>
-                <FloatingCard positionClass="top-0 -left-20 w-48">
+                {/* Re-arranged and new cards */}
+                <FloatingCard positionClass="top-0 -left-16 w-48">
                     <div className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-sky-500 dark:text-sky-400"/>
                         <h4 className="font-semibold">SOQL Query</h4>
@@ -59,7 +60,22 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">SELECT Name FROM Account</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="bottom-0 -right-20 w-56">
+                <FloatingCard positionClass="top-16 left-1/2 -translate-x-1/2 w-56">
+                    <div className="flex items-center gap-2">
+                         <BookOpen className="h-5 w-5 text-green-500 dark:text-green-400"/>
+                        <h4 className="font-semibold">Interactive Courses</h4>
+                    </div>
+                    <p className="text-xs mt-1 text-muted-foreground">Learn by doing</p>
+                </FloatingCard>
+
+                <FloatingCard positionClass="top-0 -right-16 w-40">
+                    <div className="flex items-center gap-2">
+                        <FileCode className="h-5 w-5 text-rose-500 dark:text-rose-400"/>
+                        <h4 className="font-semibold">Apex Class</h4>
+                    </div>
+                </FloatingCard>
+                
+                <FloatingCard positionClass="top-1/2 -right-40 -translate-y-1/2 w-56">
                     <div className="flex items-center gap-2">
                         <Layers className="h-5 w-5 text-indigo-500 dark:text-indigo-400"/>
                         <h4 className="font-semibold">LWC Component</h4>
@@ -67,43 +83,35 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">&lt;lightning-card title="Hello"/&gt;</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="top-10 -right-32 w-40">
-                    <div className="flex items-center gap-2">
-                        <FileCode className="h-5 w-5 text-rose-500 dark:text-rose-400"/>
-                        <h4 className="font-semibold">Apex Class</h4>
+                <FloatingCard positionClass="bottom-0 -right-16 w-48">
+                     <div className="flex items-center gap-2">
+                        <Bug className="h-5 w-5 text-red-500 dark:text-red-400"/>
+                        <h4 className="font-semibold">Bug Squashing</h4>
                     </div>
+                    <p className="text-xs mt-1 text-muted-foreground">Test your code rigorously</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="bottom-4 -left-36 w-32">
+                 <FloatingCard positionClass="bottom-16 left-1/2 -translate-x-1/2 w-52">
+                    <div className="flex items-center gap-2">
+                        <PartyPopper className="h-5 w-5 text-fuchsia-500 dark:text-fuchsia-400"/>
+                        <h4 className="font-semibold">Celebrate Wins</h4>
+                    </div>
+                    <p className="text-xs mt-1 text-muted-foreground">Earn badges and points</p>
+                </FloatingCard>
+                
+                <FloatingCard positionClass="bottom-0 -left-16 w-44">
                     <div className="flex items-center gap-2">
                         <Trophy className="h-5 w-5 text-amber-500 dark:text-amber-400"/>
-                        <h4 className="font-semibold">+10 Points</h4>
+                        <h4 className="font-semibold">Climb Ranks</h4>
                     </div>
+                    <p className="text-xs mt-1 text-muted-foreground">Compete globally</p>
                 </FloatingCard>
-
-                <FloatingCard positionClass="bottom-16 -right-52 w-52">
-                    <div className="flex items-center gap-2">
-                        <Database className="h-5 w-5 text-purple-500 dark:text-purple-400"/>
-                        <h4 className="font-semibold">Data Security</h4>
-                    </div>
-                    <p className="text-xs mt-1 text-muted-foreground">Secure data with Shield</p>
-                </FloatingCard>
-
-                <FloatingCard positionClass="top-1/3 -left-52 w-48">
+                
+                <FloatingCard positionClass="top-1/2 -left-40 -translate-y-1/2 w-48">
                     <div className="flex items-center gap-2">
                         <Code className="h-5 w-5 text-teal-500 dark:text-teal-400"/>
                         <h4 className="font-semibold">Code Analysis</h4>
                     </div>
-                </FloatingCard>
-
-                <FloatingCard positionClass="top-16 left-1/2 -translate-x-1/2 w-56">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-full bg-green-500/20">
-                            <BookOpen className="h-5 w-5 text-green-500 dark:text-green-400"/>
-                        </div>
-                        <h4 className="font-semibold">Interactive Courses</h4>
-                    </div>
-                    <p className="text-xs mt-1 text-muted-foreground">Learn by doing</p>
                 </FloatingCard>
             </div>
           </div>
