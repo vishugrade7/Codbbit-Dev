@@ -7,6 +7,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import type { User as AppUser } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { clearCache } from '@/lib/cache';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -26,8 +27,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPro, setIsPro] = useState(false);
   const { toast } = useToast();
+
+  const isPro = useMemo(() => {
+    if (!userData) return false;
+    const isAdmin = userData.isAdmin || false;
+    const status = userData.razorpaySubscriptionStatus;
+    const endDate = userData.subscriptionEndDate?.toDate();
+    const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
+    return isAdmin || hasActiveSub;
+  }, [userData]);
 
   useEffect(() => {
     if (!auth) {
@@ -39,9 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(firebaseUser);
       if (!firebaseUser) {
         setUserData(null);
-        setIsPro(false);
         setLoading(false);
         sessionStorage.removeItem('appSessionId'); // Clear session on logout
+        clearCache('apexProblemsData'); // Clear problems cache on logout
       }
     });
 
@@ -49,9 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    let unsubscribeSnapshot = () => {};
     if (user && db) {
+      setLoading(true);
       const userDocRef = doc(db, 'users', user.uid);
-      const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+      unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
         const localSessionId = sessionStorage.getItem('appSessionId');
         const isLoggingIn = sessionStorage.getItem('isLoggingIn') === 'true';
 
@@ -77,28 +88,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           setUserData(currentData);
 
-          const isAdmin = currentData.isAdmin || false;
-          const status = currentData.razorpaySubscriptionStatus;
-          const endDate = currentData.subscriptionEndDate?.toDate();
-
-          const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
-          
-          setIsPro(isAdmin || hasActiveSub);
-
         } else {
           setUserData(null);
-          setIsPro(false);
         }
         setLoading(false);
       }, (error) => {
         console.error("Error fetching user data:", error);
         setUserData(null);
-        setIsPro(false);
         setLoading(false);
       });
-
-      return () => unsubscribeSnapshot();
+    } else {
+        setLoading(false);
     }
+    return () => unsubscribeSnapshot();
   }, [user, toast]);
 
   const value = useMemo(() => ({ user, userData, loading, isPro }), [user, userData, loading, isPro]);
