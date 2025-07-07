@@ -19,6 +19,7 @@ import { Loader2, FileUp, X, Instagram } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MAX_FILES = 3;
 const MAX_FILE_SIZE_MB = 5;
@@ -299,16 +300,25 @@ export default function ContactPage() {
           </CardContent>
         </Card>
       </div>
-      <Link
-        href="https://instagram.com/codbbit"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-8 right-8 z-50 h-16 w-16 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
-        aria-label="Connect on Instagram"
-      >
-        <Instagram className="h-8 w-8" />
-        <span className="sr-only">Quick Connect on Instagram</span>
-      </Link>
+      <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Link
+                    href="https://instagram.com/codbbit"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fixed bottom-8 right-8 z-50 h-16 w-16 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
+                    aria-label="Connect on Instagram"
+                >
+                    <Instagram className="h-8 w-8" />
+                    <span className="sr-only">Quick Connect on Instagram</span>
+                </Link>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="mr-2">
+                <p>Get instant help/support on Instagram</p>
+            </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </main>
   );
 }
