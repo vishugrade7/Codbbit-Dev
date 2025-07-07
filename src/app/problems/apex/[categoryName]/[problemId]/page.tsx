@@ -597,8 +597,8 @@ export default function ProblemWorkspacePage() {
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
-                                        "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-accent",
-                                        p.id === problemId && "bg-accent"
+                                        "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-muted",
+                                        p.id === problemId && "bg-primary/10 text-primary"
                                     )}
                                 >
                                     <span className="truncate pr-4">{p.title}</span>
