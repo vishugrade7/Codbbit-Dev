@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ const FloatingCard = ({ className, children, delay }: { className?: string, chil
 export default function Home() {
   return (
     <>
-      <section className="relative w-full overflow-hidden bg-background">
+      <section className="relative w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 animate-gradient-bg" style={{backgroundSize: '200% 200%'}}/>
         <div className="absolute inset-0 opacity-10 dark:opacity-5 [background-image:radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/80 via-transparent to-transparent"/>
         
