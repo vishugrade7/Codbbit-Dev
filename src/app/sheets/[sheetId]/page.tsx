@@ -98,7 +98,7 @@ export default function SheetDisplayPage() {
         });
 
         return () => unsubscribe();
-    }, [sheetId, authUser]);
+    }, [sheetId, authUser, toast]);
 
     const { solvedCount, progressPercentage } = useMemo(() => {
         if (!authUser || !userData || !problems || problems.length === 0) {
