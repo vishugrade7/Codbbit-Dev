@@ -129,6 +129,23 @@ export default function SheetDisplayPage() {
         return Array.from(categorySet);
     }, [problems]);
     
+    const categoryCompletionStatus = useMemo(() => {
+        if (!authUser || !userData?.solvedProblems || problems.length === 0) {
+            return {};
+        }
+
+        const completionStatus: { [categoryName: string]: boolean } = {};
+        const solvedProblemIds = new Set(Object.keys(userData.solvedProblems));
+
+        uniqueCategories.forEach(category => {
+            const problemsInCategory = problems.filter(p => p.categoryName === category);
+            const allSolved = problemsInCategory.length > 0 && problemsInCategory.every(p => solvedProblemIds.has(p.id));
+            completionStatus[category] = allSolved;
+        });
+
+        return completionStatus;
+    }, [authUser, userData, problems, uniqueCategories]);
+    
     const difficultyStats = useMemo(() => {
         if (!problems || problems.length === 0) {
             return { Easy: 0, Medium: 0, Hard: 0, total: 0 };
@@ -292,16 +309,20 @@ export default function SheetDisplayPage() {
                                             >
                                                 All Topics
                                             </Badge>
-                                            {uniqueCategories.map(category => (
-                                                <Badge
-                                                    key={category}
-                                                    variant={categoryFilter === category ? 'default' : 'secondary'}
-                                                    onClick={() => setCategoryFilter(category)}
-                                                    className="cursor-pointer"
-                                                >
-                                                    {category}
-                                                </Badge>
-                                            ))}
+                                            {uniqueCategories.map(category => {
+                                                const isCompleted = categoryCompletionStatus[category];
+                                                return (
+                                                    <Badge
+                                                        key={category}
+                                                        variant={categoryFilter === category ? 'default' : 'secondary'}
+                                                        onClick={() => setCategoryFilter(category)}
+                                                        className="cursor-pointer flex items-center gap-1.5"
+                                                    >
+                                                        <span>{category}</span>
+                                                        {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
+                                                    </Badge>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
