@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useParams } from "next/navigation";
@@ -412,12 +412,19 @@ export default function UserProfilePage() {
                       <div className="space-y-2">
                           {recentlySolvedProblems.map(problem => (
                               <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                  <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                      <div>
+                                  <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                      <div className="flex-1">
                                           <p className="font-medium">{problem.title}</p>
-                                          <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</p>
+                                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                              <span>Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</span>
+                                              <span className="text-muted-foreground/50">•</span>
+                                              <Badge variant="secondary">{problem.categoryName}</Badge>
+                                          </div>
                                       </div>
-                                      <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
+                                      <div className="text-right shrink-0">
+                                          <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
+                                          <p className="text-sm font-semibold text-primary mt-1">+{problem.points} pts</p>
+                                      </div>
                                   </div>
                               </Link>
                           ))}
