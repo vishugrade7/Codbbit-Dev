@@ -9,10 +9,9 @@ import Testimonials from "@/components/testimonials";
 import { cn } from "@/lib/utils";
 
 
-const FloatingCard = ({ className, children, delay }: { className?: string, children: React.ReactNode, delay?: string }) => (
+const FloatingCard = ({ className, children }: { className?: string, children: React.ReactNode }) => (
     <Card 
-        className={cn("absolute p-3 rounded-lg shadow-xl backdrop-blur-sm bg-black/20 border-white/10 animate-float text-white", className)} 
-        style={{ animationDelay: delay, animationDuration: '8s' }}
+        className={cn("absolute p-3 rounded-lg shadow-xl backdrop-blur-sm bg-black/20 border-white/10 text-white animate-counter-revolve", className)}
     >
         {children}
     </Card>
@@ -23,9 +22,9 @@ export default function Home() {
     <>
       <section className="relative w-full overflow-hidden">
         <div className="container relative z-10 px-4 md:px-6 py-24 md:py-32 lg:py-40">
-          <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-4xl mx-auto h-[300px]">
             {/* Text in the center */}
-            <div className="relative z-10 space-y-4 text-center max-w-3xl mx-auto">
+            <div className="relative z-10 space-y-4 text-center max-w-3xl mx-auto flex flex-col items-center justify-center h-full">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 Master Salesforce Development
               </h1>
@@ -48,36 +47,38 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Floating cards around the text */}
-            <FloatingCard className="hidden md:block top-0 -left-16 w-48" delay="0s">
-                <div className="flex items-center gap-2">
-                    <Database className="h-5 w-5 text-sky-300"/>
-                    <h4 className="font-semibold text-white">SOQL Query</h4>
-                </div>
-                <p className="text-xs mt-1 text-sky-200/80">SELECT Name FROM Account</p>
-            </FloatingCard>
+            {/* Revolving cards around the text */}
+            <div className="absolute inset-0 animate-revolve hidden md:block">
+                <FloatingCard className="top-0 -left-16 w-48">
+                    <div className="flex items-center gap-2">
+                        <Database className="h-5 w-5 text-sky-300"/>
+                        <h4 className="font-semibold text-white">SOQL Query</h4>
+                    </div>
+                    <p className="text-xs mt-1 text-sky-200/80">SELECT Name FROM Account</p>
+                </FloatingCard>
 
-            <FloatingCard className="hidden md:block bottom-0 -right-16 w-56" delay="0.5s">
-                <div className="flex items-center gap-2">
-                    <Layers className="h-5 w-5 text-indigo-300"/>
-                    <h4 className="font-semibold text-white">LWC Component</h4>
-                </div>
-                <p className="text-xs mt-1 text-indigo-200/80">&lt;lightning-card title="Hello"/&gt;</p>
-            </FloatingCard>
+                <FloatingCard className="bottom-0 -right-16 w-56">
+                    <div className="flex items-center gap-2">
+                        <Layers className="h-5 w-5 text-indigo-300"/>
+                        <h4 className="font-semibold text-white">LWC Component</h4>
+                    </div>
+                    <p className="text-xs mt-1 text-indigo-200/80">&lt;lightning-card title="Hello"/&gt;</p>
+                </FloatingCard>
 
-            <FloatingCard className="hidden md:block top-10 -right-24 w-40" delay="1s">
-                <div className="flex items-center gap-2">
-                    <FileCode className="h-5 w-5 text-rose-300"/>
-                    <h4 className="font-semibold text-white">Apex Class</h4>
-                </div>
-            </FloatingCard>
+                <FloatingCard className="top-10 -right-24 w-40">
+                    <div className="flex items-center gap-2">
+                        <FileCode className="h-5 w-5 text-rose-300"/>
+                        <h4 className="font-semibold text-white">Apex Class</h4>
+                    </div>
+                </FloatingCard>
 
-            <FloatingCard className="hidden md:block bottom-10 -left-24 w-32" delay="1.5s">
-                <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-amber-300"/>
-                    <h4 className="font-semibold text-white">+10 Points</h4>
-                </div>
-            </FloatingCard>
+                <FloatingCard className="bottom-10 -left-24 w-32">
+                    <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-amber-300"/>
+                        <h4 className="font-semibold text-white">+10 Points</h4>
+                    </div>
+                </FloatingCard>
+            </div>
           </div>
         </div>
       </section>
