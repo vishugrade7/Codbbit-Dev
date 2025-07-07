@@ -101,13 +101,18 @@ export async function updateUserProfilePicture(userId: string, dataUrl: string) 
     await file.save(buffer, {
       metadata: {
         contentType: contentType,
-        cacheControl: 'public, max-age=31536000', // Cache for 1 year
+        // Set a short cache time for the object itself; the browser cache is what we're busting with the query param.
+        cacheControl: 'public, max-age=60',
       },
     });
 
     // Make the file public to get a predictable URL
     await file.makePublic();
-    const downloadURL = file.publicUrl();
+    let downloadURL = file.publicUrl();
+
+    // Add a cache-busting query parameter to the URL.
+    // This ensures the browser fetches the new image instead of using a cached version.
+    downloadURL = `${downloadURL}?updated=${Date.now()}`;
 
     // Now update firestore with the new URL
     const userDocRef = doc(db, "users", userId);
