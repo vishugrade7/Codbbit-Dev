@@ -155,17 +155,17 @@ export default function Settings() {
               <CardDescription>Manage your account settings.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-               <div className="flex items-center justify-between">
-                 <div className="flex flex-col">
+               <div className="flex items-center justify-between gap-4">
+                 <div className="flex flex-col flex-1 min-w-0">
                     <Label>Salesforce Connection</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {userData?.sfdcAuth?.connected 
-                        ? "Your Salesforce org is connected."
+                        ? `Connected to: ${userData.sfdcAuth.instanceUrl}`
                         : "Connect your Salesforce org to run code."
                       }
                     </p>
                  </div>
-                  <Button variant="outline" onClick={handleConnect} disabled={isConnecting}>
+                  <Button variant="outline" onClick={handleConnect} disabled={isConnecting} className="shrink-0">
                      {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                      {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
                   </Button>
