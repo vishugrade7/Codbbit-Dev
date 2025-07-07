@@ -212,8 +212,8 @@ export default function Leaderboard() {
           <div className="lg:col-span-1">
              <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
               <CardContent className="p-6 flex flex-col flex-grow">
-                  <div className="flex justify-between items-start">
-                      <Link href={`/profile/${currentUserEntry.username}`} className="flex items-center gap-4 group">
+                  <div className="flex justify-between items-start flex-grow">
+                      <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
                           <Avatar className="h-12 w-12 border-2 border-primary">
                               <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
                               <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
@@ -221,6 +221,16 @@ export default function Leaderboard() {
                           <div>
                               <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
                               <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                               {currentUserEntry.company && (
+                                <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                                    {currentUserEntry.companyLogoUrl ? (
+                                        <Image src={currentUserEntry.companyLogoUrl} alt={`${currentUserEntry.company} logo`} width={14} height={14} className="rounded-sm object-contain"/>
+                                    ) : (
+                                        <Building className="h-3.5 w-3.5" />
+                                    )}
+                                    <span>{currentUserEntry.company}</span>
+                                </div>
+                              )}
                           </div>
                       </Link>
                       <div className="text-right">
@@ -231,6 +241,13 @@ export default function Leaderboard() {
                           <p className="text-sm text-muted-foreground">Global Rank</p>
                       </div>
                   </div>
+                   {currentUserEntry.rank > 1 && leaderboardData.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-primary/20 text-center">
+                          <p className="text-sm text-muted-foreground">
+                              You are <span className="font-bold text-foreground">{(leaderboardData[0].points - currentUserEntry.points).toLocaleString()}</span> points away from rank 1!
+                          </p>
+                      </div>
+                  )}
               </CardContent>
             </Card>
           </div>
