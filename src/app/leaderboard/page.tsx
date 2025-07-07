@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -331,7 +330,10 @@ export default function Leaderboard() {
           {filterType === "Country" && (
               <Select
                   value={filterValue ?? ''}
-                  onValueChange={(value) => setFilterValue(value)}
+                  onValueChange={(value) => {
+                    setFilterValue(value);
+                    setCurrentPage(1);
+                  }}
                   disabled={countryOptions.length === 0}
               >
                   <SelectTrigger className="w-full md:w-[220px]">
@@ -348,7 +350,10 @@ export default function Leaderboard() {
           {filterType === "Company" && (
               <Select
                   value={filterValue ?? ''}
-                  onValueChange={(value) => setFilterValue(value)}
+                  onValueChange={(value) => {
+                    setFilterValue(value);
+                    setCurrentPage(1);
+                  }}
                   disabled={companyOptions.length === 0}
               >
                   <SelectTrigger className="w-full md:w-[220px]">
@@ -537,4 +542,5 @@ export default function Leaderboard() {
   );
 }
 
+    
     
