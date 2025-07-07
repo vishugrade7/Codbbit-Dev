@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getCache, setCache } from "@/lib/cache";
+import Image from "next/image";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Code } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { ApexProblemsData } from "@/types";
 
@@ -54,6 +55,7 @@ type CategoryInfo = {
   problemCount: number;
   difficulties: { Easy: number; Medium: number; Hard: number; };
   solvedCount: number;
+  imageUrl?: string;
 };
 
 export default function ApexProblemsView() {
@@ -82,7 +84,7 @@ export default function ApexProblemsView() {
                         { Easy: 0, Medium: 0, Hard: 0 }
                     );
 
-                    return { name, problemCount, difficulties, solvedCount };
+                    return { name, problemCount, difficulties, solvedCount, imageUrl: categoryData.imageUrl };
                 })
                 .filter(cat => cat.problemCount > 0)
                 .sort((a, b) => a.name.localeCompare(b.name));
@@ -142,8 +144,19 @@ export default function ApexProblemsView() {
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
                   <Card className={cn("overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full flex flex-col", theme.card)}>
                     <CardHeader>
-                      <CardTitle className={cn("group-hover:underline", theme.title)}>{category.name}</CardTitle>
-                      <CardDescription className={cn("opacity-80", theme.title)}>{category.problemCount} Problems</CardDescription>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className={cn("group-hover:underline", theme.title)}>{category.name}</CardTitle>
+                          <CardDescription className={cn("opacity-80", theme.title)}>{category.problemCount} Problems</CardDescription>
+                        </div>
+                        <div className="relative h-12 w-12 bg-black/5 dark:bg-white/10 p-2 rounded-lg flex-shrink-0">
+                          {category.imageUrl ? (
+                              <Image src={category.imageUrl} alt={category.name} fill className="object-contain" />
+                          ) : (
+                              <Code className={cn("h-full w-full opacity-50", theme.title)} />
+                          )}
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent className="flex flex-col flex-grow justify-end">
                       {user && (
