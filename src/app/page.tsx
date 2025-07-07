@@ -62,7 +62,7 @@ export default function Home() {
               {/* Background */}
               <div className="absolute inset-0">
                 <Image
-                  src="https://firebasestorage.googleapis.com/v0/b/showcase-canvas-rx61p.firebasestorage.app/o/cards%2Floop.png?alt=media&token=67c068c3-57e5-4ca8-a698-7ac895eebcde"
+                  src="https://placehold.co/1200x600.png"
                   alt="Codbbit Platform Screenshot"
                   fill
                   className="object-cover rounded-xl"
@@ -75,7 +75,7 @@ export default function Home() {
               {/* Foreground Chat */}
               <div className="absolute -bottom-[5%] -left-[10%] w-[45%] rounded-lg shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
-                  src="https://firebasestorage.googleapis.com/v0/b/showcase-canvas-rx61p.firebasestorage.app/o/cards%2Frest.png?alt=media&token=2300655a-d354-4b79-8660-0de21d2a82a4"
+                  src="https://placehold.co/600x400.png"
                   alt="Codbbit AI chat"
                   width={600}
                   height={400}
@@ -87,7 +87,7 @@ export default function Home() {
               {/* Foreground Mobile */}
               <div className="absolute top-[10%] -right-[5%] w-[30%] rounded-xl shadow-2xl ring-1 ring-border overflow-hidden transform-gpu transition-transform hover:scale-105">
                 <Image
-                  src="https://firebasestorage.googleapis.com/v0/b/showcase-canvas-rx61p.firebasestorage.app/o/cards%2Fmobile.png?alt=media&token=1c15d481-8079-4d1c-b5f7-873b889345e6"
+                  src="https://placehold.co/400x800.png"
                   alt="Codbbit mobile preview"
                   width={400}
                   height={800}
