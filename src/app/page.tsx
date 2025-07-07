@@ -22,83 +22,64 @@ export default function Home() {
     <>
       <section className="relative w-full overflow-hidden">
         <div className="container relative z-10 px-4 md:px-6 py-24 md:py-32 lg:py-40">
-            <div className="max-w-3xl mx-auto space-y-4 text-center">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                  Master Salesforce Development
-                </h1>
-                <p className="text-lg text-muted-foreground md:text-xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                  Build, test, and deploy Salesforce solutions faster with our comprehensive platform for SOQL queries, Apex code, and Lightning Web Components.
-                </p>
+          <div className="relative max-w-4xl mx-auto">
+            {/* Text in the center */}
+            <div className="relative z-10 space-y-4 text-center">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                Master Salesforce Development
+              </h1>
+              <p className="text-lg text-muted-foreground md:text-xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                Build, test, and deploy Salesforce solutions faster with our comprehensive platform for SOQL queries, Apex code, and Lightning Web Components.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                  <Button asChild size="lg">
+                    <Link href="/apex-problems">
+                      <Rocket className="mr-2 h-5 w-5" />
+                      Get Started
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline">
+                    <Link href="/leaderboard">
+                      <BarChart className="mr-2 h-5 w-5" />
+                      View Leaderboard
+                    </Link>
+                  </Button>
+              </div>
             </div>
-            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                <Button asChild size="lg">
-                  <Link href="/apex-problems">
-                    <Rocket className="mr-2 h-5 w-5" />
-                    Get Started
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/leaderboard">
-                    <BarChart className="mr-2 h-5 w-5" />
-                    View Leaderboard
-                  </Link>
-                </Button>
-            </div>
+            
+            {/* Floating cards around the text */}
+            <FloatingCard className="top-0 -left-16 w-48" delay="0s">
+                <div className="flex items-center gap-2">
+                    <Database className="h-5 w-5 text-sky-300"/>
+                    <h4 className="font-semibold text-white">SOQL Query</h4>
+                </div>
+                <p className="text-xs mt-1 text-sky-200/80">SELECT Name FROM Account</p>
+            </FloatingCard>
 
-            <div className="relative mt-20 max-w-5xl mx-auto h-[400px]">
-                {/* Central Element */}
-                <Card className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl p-4 shadow-2xl bg-black/30 backdrop-blur-md border-white/10 animate-fade-in-up" style={{animationDelay: '0.5s'}}>
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="h-3 w-3 rounded-full bg-red-500"></span>
-                        <span className="h-3 w-3 rounded-full bg-yellow-500"></span>
-                        <span className="h-3 w-3 rounded-full bg-green-500"></span>
-                    </div>
-                    <pre className="text-sm text-green-300 font-code overflow-x-auto">
-                        <code>
-                            <span className="text-purple-400">@isTest</span><br/>
-                            <span className="text-blue-400">private class</span> <span className="text-teal-300">AccountTriggerTest</span> &#123;<br/>
-                            {'  '}<span className="text-purple-400">@isTest</span><br/>
-                            {'  '}<span className="text-blue-400">static void</span> <span className="text-yellow-300">testAccountUpdate</span>() &#123;<br/>
-                            {'    '}<span className="text-gray-400">// Your test logic here...</span><br/>
-                            {'  '}&#125;<br/>
-                            &#125;
-                        </code>
-                    </pre>
-                </Card>
+            <FloatingCard className="bottom-0 -right-16 w-56" delay="0.5s">
+                <div className="flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-indigo-300"/>
+                    <h4 className="font-semibold text-white">LWC Component</h4>
+                </div>
+                <p className="text-xs mt-1 text-indigo-200/80">&lt;lightning-card title="Hello"/&gt;</p>
+            </FloatingCard>
 
-                {/* Floating Elements */}
-                <FloatingCard className="top-10 left-5 w-48" delay="0s">
-                    <div className="flex items-center gap-2">
-                        <Database className="h-5 w-5 text-sky-300"/>
-                        <h4 className="font-semibold text-white">SOQL Query</h4>
-                    </div>
-                    <p className="text-xs mt-1 text-sky-200/80">SELECT Name FROM Account</p>
-                </FloatingCard>
+            <FloatingCard className="top-10 -right-24 w-40" delay="1s">
+                <div className="flex items-center gap-2">
+                    <FileCode className="h-5 w-5 text-rose-300"/>
+                    <h4 className="font-semibold text-white">Apex Class</h4>
+                </div>
+            </FloatingCard>
 
-                 <FloatingCard className="bottom-5 right-0 w-56" delay="0.5s">
-                    <div className="flex items-center gap-2">
-                        <Layers className="h-5 w-5 text-indigo-300"/>
-                        <h4 className="font-semibold text-white">LWC Component</h4>
-                    </div>
-                    <p className="text-xs mt-1 text-indigo-200/80">&lt;lightning-card title="Hello"/&gt;</p>
-                </FloatingCard>
-
-                <FloatingCard className="top-0 right-10 w-40" delay="1s">
-                    <div className="flex items-center gap-2">
-                        <FileCode className="h-5 w-5 text-rose-300"/>
-                        <h4 className="font-semibold text-white">Apex Class</h4>
-                    </div>
-                </FloatingCard>
-
-                <FloatingCard className="bottom-16 left-0 w-32" delay="1.5s">
-                    <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-amber-300"/>
-                        <h4 className="font-semibold text-white">+10 Points</h4>
-                    </div>
-                </FloatingCard>
-            </div>
+            <FloatingCard className="bottom-10 -left-24 w-32" delay="1.5s">
+                <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-amber-300"/>
+                    <h4 className="font-semibold text-white">+10 Points</h4>
+                </div>
+            </FloatingCard>
+          </div>
         </div>
-    </section>
+      </section>
 
       <section className="w-full py-12 md:py-24 lg:py-32 bg-card/50">
         <div className="container px-4 md:px-6">
