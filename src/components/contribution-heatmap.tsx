@@ -99,23 +99,29 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
                 }
                 return 'color-empty';
             }}
-            transformDayElement={(element, value, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger asChild>{element}</TooltipTrigger>
-                {value && value.date && value.count > 0 && (
-                  <TooltipContent>
-                    <p>
-                      <strong>{value.count} {value.count === 1 ? 'submission' : 'submissions'}</strong> on {value.date.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        timeZone: 'UTC', // Display the UTC date
-                      })}
-                    </p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            )}
+            transformDayElement={(element, value, index) => {
+                if (!value || value.count < 1) {
+                    // Just return the element for days with no submissions to avoid an empty tooltip
+                    return React.cloneElement(element, { key: index });
+                }
+                return (
+                    <Tooltip key={index}>
+                        <TooltipTrigger asChild>{element}</TooltipTrigger>
+                        <TooltipContent>
+                            <p>
+                                <strong>{value.count} {value.count === 1 ? 'submission' : 'submissions'}</strong>
+                                {' on '}
+                                {value.date.toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    timeZone: 'UTC',
+                                })}
+                            </p>
+                        </TooltipContent>
+                    </Tooltip>
+                );
+            }}
             showWeekdayLabels={true}
           />
         </div>
