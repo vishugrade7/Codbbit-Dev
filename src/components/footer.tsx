@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="grid gap-2 text-sm">
             <h3 className="font-semibold">Company</h3>
             <Link href="/about" className="text-muted-foreground hover:text-foreground">About</Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link>
+            <Link href="/contact" className="text-muted-foreground hover:text-foreground">Support & Feedback</Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
             <Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link>
           </div>
