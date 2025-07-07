@@ -54,7 +54,7 @@ export default function Sidebar() {
 
   return (
     <TooltipProvider>
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-20 flex-col items-center border-r bg-background/80 backdrop-blur-sm py-4 md:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-20 flex-col items-center border-r bg-background/70 backdrop-blur-lg py-4 md:flex">
         <Link href="/" className="mb-4">
           <Image src="/favicon.ico" alt="Codbbit logo" width={32} height={32} />
         </Link>

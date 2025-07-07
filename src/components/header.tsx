@@ -85,7 +85,7 @@ export default function Header() {
   const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
 
   return (
-    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
+    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/70 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50", user && "md:hidden")}>
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
            {/* Mobile Menu Trigger */}
