@@ -1,10 +1,9 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Rocket, BarChart, Database, Code, Trophy, ArrowRight, Layers, FileCode } from "lucide-react";
+import { Rocket, BarChart, Database, Code, Trophy, ArrowRight, Layers, FileCode, BookOpen } from "lucide-react";
 import Testimonials from "@/components/testimonials";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +78,35 @@ export default function Home() {
                         <Trophy className="h-5 w-5 text-amber-300"/>
                         <h4 className="font-semibold text-white">+10 Points</h4>
                     </div>
+                </FloatingCard>
+
+                <FloatingCard positionClass="bottom-20 -right-40 w-52 h-auto">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-full bg-purple-500/30">
+                            <Database className="h-5 w-5 text-purple-300"/>
+                        </div>
+                        <h4 className="font-semibold text-white">Data Security</h4>
+                    </div>
+                    <p className="text-xs mt-1 text-purple-200/80">Secure data with Shield</p>
+                </FloatingCard>
+
+                <FloatingCard positionClass="top-1/3 -left-40 w-48 h-auto">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-full bg-teal-500/30">
+                            <Code className="h-5 w-5 text-teal-300"/>
+                        </div>
+                        <h4 className="font-semibold text-white">Code Analysis</h4>
+                    </div>
+                </FloatingCard>
+
+                <FloatingCard positionClass="top-20 left-1/2 -translate-x-1/2 w-56 h-auto">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-full bg-green-500/30">
+                            <BookOpen className="h-5 w-5 text-green-300"/>
+                        </div>
+                        <h4 className="font-semibold text-white">Interactive Courses</h4>
+                    </div>
+                    <p className="text-xs mt-1 text-green-200/80">Learn by doing</p>
                 </FloatingCard>
             </div>
           </div>
