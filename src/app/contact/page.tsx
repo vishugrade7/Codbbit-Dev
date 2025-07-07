@@ -14,20 +14,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileUp, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useSearchParams } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const formSchema = z.object({
   type: z.enum(['Support', 'Feedback']),
+  supportType: z.string().optional(),
+  feedbackType: z.string().optional(),
+  feedbackPage: z.string().optional(),
   subject: z.string().min(1, 'Subject is required.'),
   message: z.string().min(10, 'Message must be at least 10 characters long.'),
+  attachment: z.any().optional(),
 });
 
 export default function ContactPage() {
   const { toast } = useToast();
-  const [formType, setFormType] = useState<'Support' | 'Feedback'>('Support');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,34 +41,39 @@ export default function ContactPage() {
       type: 'Support',
       subject: '',
       message: '',
+      supportType: 'General Question',
+      feedbackType: 'General Feedback',
+      feedbackPage: 'Other',
     },
   });
 
+  const formType = form.watch('type');
   const searchParams = useSearchParams();
   
   useEffect(() => {
     const typeFromQuery = searchParams.get('type');
     if (typeFromQuery === 'bug') {
-      const newType = 'Support';
-      setFormType(newType);
-      form.setValue('type', newType);
+      form.setValue('type', 'Support');
+      form.setValue('supportType', 'Bug Report');
     } else if (typeFromQuery === 'feature') {
-      const newType = 'Feedback';
-      setFormType(newType);
-      form.setValue('type', newType);
+      form.setValue('type', 'Feedback');
+      form.setValue('feedbackType', 'Feature Request');
     }
   }, [searchParams, form]);
 
 
   const handleSwitchChange = (checked: boolean) => {
     const newType = checked ? 'Feedback' : 'Support';
-    setFormType(newType);
     form.setValue('type', newType);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const result = await submitContactForm(values);
+    const { attachment, ...dataToSend } = values;
+    const result = await submitContactForm({
+        ...dataToSend,
+        hasAttachment: !!attachmentName
+    });
 
     if (result.success) {
       toast({
@@ -70,7 +81,7 @@ export default function ContactPage() {
         description: result.message,
       });
       form.reset();
-      setFormType('Support');
+      setAttachmentName(null);
     } else {
       toast({
         variant: 'destructive',
@@ -112,6 +123,81 @@ export default function ContactPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                {formType === 'Support' && (
+                  <FormField
+                    control={form.control}
+                    name="supportType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Support Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                           <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a support category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Bug Report">Bug Report</SelectItem>
+                            <SelectItem value="Account Issue">Account Issue</SelectItem>
+                            <SelectItem value="Payment Issue">Payment Issue</SelectItem>
+                            <SelectItem value="General Question">General Question</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                {formType === 'Feedback' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="feedbackType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Feedback Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Feature Request">Feature Request</SelectItem>
+                              <SelectItem value="UI/UX Suggestion">UI/UX Suggestion</SelectItem>
+                              <SelectItem value="General Feedback">General Feedback</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="feedbackPage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Related Page</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                             <FormControl>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Homepage">Homepage</SelectItem>
+                              <SelectItem value="Problems">Problems</SelectItem>
+                              <SelectItem value="Courses">Courses</SelectItem>
+                              <SelectItem value="Profile">Profile</SelectItem>
+                              <SelectItem value="Settings">Settings</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+                
                 <FormField
                   control={form.control}
                   name="subject"
@@ -134,6 +220,49 @@ export default function ContactPage() {
                       <FormControl>
                         <Textarea placeholder="Please provide as much detail as possible..." {...field} rows={8} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="attachment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Attachment (Optional)</FormLabel>
+                      {attachmentName ? (
+                        <div className="flex items-center justify-between p-2 text-sm border rounded-md bg-muted">
+                            <span>{attachmentName}</span>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                    form.setValue("attachment", null);
+                                    setAttachmentName(null);
+                                }}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                      ) : (
+                        <FormControl>
+                            <div className="relative">
+                               <FileUp className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="file"
+                                    className="pl-9 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                                    onChange={(e) => {
+                                        field.onChange(e.target.files?.[0] || null);
+                                        setAttachmentName(e.target.files?.[0]?.name || null);
+                                    }}
+                                    ref={field.ref}
+                                    name={field.name}
+                                />
+                            </div>
+                        </FormControl>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
