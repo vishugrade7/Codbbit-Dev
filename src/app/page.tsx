@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ export default function Home() {
             </div>
             
             {/* Floating cards around the text */}
-            <FloatingCard className="top-0 -left-16 w-48" delay="0s">
+            <FloatingCard className="hidden md:block top-0 -left-16 w-48" delay="0s">
                 <div className="flex items-center gap-2">
                     <Database className="h-5 w-5 text-sky-300"/>
                     <h4 className="font-semibold text-white">SOQL Query</h4>
@@ -56,7 +57,7 @@ export default function Home() {
                 <p className="text-xs mt-1 text-sky-200/80">SELECT Name FROM Account</p>
             </FloatingCard>
 
-            <FloatingCard className="bottom-0 -right-16 w-56" delay="0.5s">
+            <FloatingCard className="hidden md:block bottom-0 -right-16 w-56" delay="0.5s">
                 <div className="flex items-center gap-2">
                     <Layers className="h-5 w-5 text-indigo-300"/>
                     <h4 className="font-semibold text-white">LWC Component</h4>
@@ -64,14 +65,14 @@ export default function Home() {
                 <p className="text-xs mt-1 text-indigo-200/80">&lt;lightning-card title="Hello"/&gt;</p>
             </FloatingCard>
 
-            <FloatingCard className="top-10 -right-24 w-40" delay="1s">
+            <FloatingCard className="hidden md:block top-10 -right-24 w-40" delay="1s">
                 <div className="flex items-center gap-2">
                     <FileCode className="h-5 w-5 text-rose-300"/>
                     <h4 className="font-semibold text-white">Apex Class</h4>
                 </div>
             </FloatingCard>
 
-            <FloatingCard className="bottom-10 -left-24 w-32" delay="1.5s">
+            <FloatingCard className="hidden md:block bottom-10 -left-24 w-32" delay="1.5s">
                 <div className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-amber-300"/>
                     <h4 className="font-semibold text-white">+10 Points</h4>
