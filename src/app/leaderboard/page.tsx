@@ -346,10 +346,8 @@ export default function Leaderboard() {
                 {/* Rank 2 */}
                 <div className="order-2 md:order-1 pt-8">
                   <Link href={`/profile/${topThree[1].username}`}>
-                    <Card className="text-center p-4 bg-card/70 border-2 border-slate-300/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300 relative">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-300 p-1.5 rounded-full border-4 border-background">
-                            <Trophy className="h-5 w-5 text-slate-600" />
-                        </div>
+                    <Card className="text-center p-4 bg-card/70 border-2 border-slate-300/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300">
+                        <div className="text-5xl">🥈</div>
                         <Avatar className="w-20 h-20 mx-auto mt-2 border-2 border-slate-300">
                             <AvatarImage src={topThree[1].avatarUrl} alt={topThree[1].name} />
                             <AvatarFallback>{topThree[1].name.charAt(0)}</AvatarFallback>
@@ -381,10 +379,8 @@ export default function Leaderboard() {
                 <div className="order-1 md:order-2">
                   <Link href={`/profile/${topThree[0].username}`}>
                     <Card className="text-center p-4 relative border-2 border-yellow-400 bg-card shadow-2xl transform md:scale-110 hover:-translate-y-2 transition-transform duration-300">
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-yellow-400 p-2 rounded-full border-4 border-background">
-                            <Trophy className="h-6 w-6 text-white" />
-                        </div>
-                        <Avatar className="w-24 h-24 mx-auto mt-4 border-4 border-yellow-400">
+                        <div className="text-6xl">🥇</div>
+                        <Avatar className="w-24 h-24 mx-auto mt-2 border-4 border-yellow-400">
                             <AvatarImage src={topThree[0].avatarUrl} alt={topThree[0].name} />
                             <AvatarFallback>{topThree[0].name.charAt(0)}</AvatarFallback>
                         </Avatar>
@@ -414,10 +410,8 @@ export default function Leaderboard() {
                 {/* Rank 3 */}
                 <div className="order-3 pt-8">
                    <Link href={`/profile/${topThree[2].username}`}>
-                    <Card className="text-center p-4 bg-card/70 border-2 border-orange-400/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300 relative">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-orange-400 p-1.5 rounded-full border-4 border-background">
-                            <Trophy className="h-5 w-5 text-orange-800" />
-                        </div>
+                    <Card className="text-center p-4 bg-card/70 border-2 border-orange-400/50 shadow-lg transform hover:-translate-y-2 transition-transform duration-300">
+                        <div className="text-5xl">🥉</div>
                         <Avatar className="w-20 h-20 mx-auto mt-2 border-2 border-orange-400">
                             <AvatarImage src={topThree[2].avatarUrl} alt={topThree[2].name} />
                             <AvatarFallback>{topThree[2].name.charAt(0)}</AvatarFallback>
