@@ -11,7 +11,7 @@ const contactFormSchema = z.object({
   feedbackPage: z.string().optional(),
   subject: z.string().min(1, 'Subject is required.'),
   message: z.string().min(10, 'Message must be at least 10 characters long.'),
-  hasAttachment: z.boolean().optional(),
+  attachmentCount: z.number().optional(),
 });
 
 const resend = process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.includes('REPLACE_WITH') 
@@ -36,7 +36,7 @@ export async function submitContactForm(data: z.infer<typeof contactFormSchema>)
     return { success: true, message: `${validation.data.type} request submitted successfully!` };
   }
   
-  const { type, subject, message, supportType, feedbackType, feedbackPage, hasAttachment } = validation.data;
+  const { type, subject, message, supportType, feedbackType, feedbackPage, attachmentCount } = validation.data;
   const emailSubject = `[Codbbit ${type}] - ${subject}`;
 
   let emailBody = `
@@ -54,8 +54,8 @@ export async function submitContactForm(data: z.infer<typeof contactFormSchema>)
     if (feedbackType) emailBody += `<li><strong>Feedback Type:</strong> ${feedbackType}</li>`;
     if (feedbackPage) emailBody += `<li><strong>On Page:</strong> ${feedbackPage}</li>`;
   }
-  if (hasAttachment) {
-    emailBody += `<li><strong>Attachment:</strong> User indicated an attachment was included (not processed by this form).</li>`;
+  if (attachmentCount && attachmentCount > 0) {
+    emailBody += `<li><strong>Attachments:</strong> User indicated ${attachmentCount} attachment(s) were included (not processed by this form).</li>`;
   }
   emailBody += `</ul>
     <hr>

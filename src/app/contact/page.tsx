@@ -10,7 +10,7 @@ import { submitContactForm } from "./actions";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -19,7 +19,12 @@ import { Label } from "@/components/ui/label";
 import { useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const MAX_FILES = 3;
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
+// Use z.any() for files and perform validation within the component,
+// as File object handling can be inconsistent with Zod across environments.
 const formSchema = z.object({
   type: z.enum(['Support', 'Feedback']),
   supportType: z.string().optional(),
@@ -27,13 +32,24 @@ const formSchema = z.object({
   feedbackPage: z.string().optional(),
   subject: z.string().min(1, 'Subject is required.'),
   message: z.string().min(10, 'Message must be at least 10 characters long.'),
-  attachment: z.any().optional(),
+  attachments: z.array(z.any()).optional(),
+}).refine((data) => {
+    if (!data.attachments) return true;
+    return data.attachments.length <= MAX_FILES;
+}, {
+    message: `You can upload a maximum of ${MAX_FILES} files.`,
+    path: ['attachments'],
+}).refine((data) => {
+    if (!data.attachments) return true;
+    return data.attachments.every((file) => file.size <= MAX_FILE_SIZE_BYTES);
+}, {
+    message: `Each file must be under ${MAX_FILE_SIZE_MB}MB.`,
+    path: ['attachments'],
 });
 
 export default function ContactPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attachmentName, setAttachmentName] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,10 +60,12 @@ export default function ContactPage() {
       supportType: 'General Question',
       feedbackType: 'General Feedback',
       feedbackPage: 'Other',
+      attachments: [],
     },
   });
 
   const formType = form.watch('type');
+  const attachments = form.watch('attachments');
   const searchParams = useSearchParams();
   
   useEffect(() => {
@@ -69,10 +87,10 @@ export default function ContactPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const { attachment, ...dataToSend } = values;
+    const { attachments, ...dataToSend } = values;
     const result = await submitContactForm({
         ...dataToSend,
-        hasAttachment: !!attachmentName
+        attachmentCount: attachments?.length || 0,
     });
 
     if (result.success) {
@@ -81,7 +99,6 @@ export default function ContactPage() {
         description: result.message,
       });
       form.reset();
-      setAttachmentName(null);
     } else {
       toast({
         variant: 'destructive',
@@ -226,44 +243,49 @@ export default function ContactPage() {
                 />
                  <FormField
                   control={form.control}
-                  name="attachment"
+                  name="attachments"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Attachment (Optional)</FormLabel>
-                      {attachmentName ? (
-                        <div className="flex items-center justify-between p-2 text-sm border rounded-md bg-muted">
-                            <span>{attachmentName}</span>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                    form.setValue("attachment", null);
-                                    setAttachmentName(null);
-                                }}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                      ) : (
+                        <FormLabel>Attachments (Optional)</FormLabel>
                         <FormControl>
                             <div className="relative">
-                               <FileUp className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <FileUp className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="file"
+                                    multiple
                                     className="pl-9 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                                     onChange={(e) => {
-                                        field.onChange(e.target.files?.[0] || null);
-                                        setAttachmentName(e.target.files?.[0]?.name || null);
+                                        const files = e.target.files ? Array.from(e.target.files) : [];
+                                        form.setValue("attachments", files, { shouldValidate: true });
                                     }}
-                                    ref={field.ref}
-                                    name={field.name}
                                 />
                             </div>
                         </FormControl>
-                      )}
-                      <FormMessage />
+                        <FormDescription>
+                            You can upload up to {MAX_FILES} files, {MAX_FILE_SIZE_MB}MB each.
+                        </FormDescription>
+                        <FormMessage />
+                        {attachments && attachments.length > 0 && (
+                            <div className="space-y-2 pt-2">
+                                {attachments.map((file, index) => (
+                                <div key={index} className="flex items-center justify-between p-2 text-sm border rounded-md bg-muted">
+                                    <span className="truncate pr-2">{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 flex-shrink-0"
+                                        onClick={() => {
+                                            const newAttachments = attachments.filter((_, i) => i !== index);
+                                            form.setValue("attachments", newAttachments, { shouldValidate: true });
+                                        }}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                ))}
+                            </div>
+                        )}
                     </FormItem>
                   )}
                 />
