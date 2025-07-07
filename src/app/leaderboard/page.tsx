@@ -9,6 +9,7 @@ import { db } from "@/lib/firebase";
 import type { LeaderboardUser, Problem, ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { getCache, setCache } from "@/lib/cache";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,6 +29,8 @@ const getMedal = (rank: number) => {
   return rank;
 }
 
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
+
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,15 +48,27 @@ export default function Leaderboard() {
   useEffect(() => {
     const fetchAllProblems = async () => {
         if (!db) return;
+
+        const processData = (data: ApexProblemsData) => {
+            const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+            );
+            setAllProblems(problems);
+        };
+        
+        const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+        if (cachedData) {
+            processData(cachedData);
+            return;
+        }
+
         try {
             const apexDocRef = doc(db, "problems", "Apex");
             const problemsSnap = await getDoc(apexDocRef);
             if (problemsSnap.exists()) {
                 const data = problemsSnap.data().Category as ApexProblemsData;
-                const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
-                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                );
-                setAllProblems(problems);
+                setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                processData(data);
             }
         } catch (error) {
             console.error("Error fetching all problems for suggestion:", error);

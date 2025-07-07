@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import type { Problem, ApexProblemsData } from "@/types";
 import { cn } from "@/lib/utils";
+import { getCache, setCache } from "@/lib/cache";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 export default function CategoryProblemsPage() {
   const params = useParams();
@@ -40,16 +43,29 @@ export default function CategoryProblemsPage() {
 
     const fetchProblems = async () => {
       setLoading(true);
+
+      const processData = (data: ApexProblemsData) => {
+          const categoryData = data[categoryName];
+          if (categoryData && categoryData.Questions) {
+            setProblems(categoryData.Questions.sort((a,b) => a.title.localeCompare(b.title)));
+          }
+      };
+
+      const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+      if (cachedData) {
+          processData(cachedData);
+          setLoading(false);
+          return;
+      }
+      
       try {
         const apexDocRef = doc(db, "problems", "Apex");
         const docSnap = await getDoc(apexDocRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data().Category as ApexProblemsData;
-          const categoryData = data[categoryName];
-          if (categoryData && categoryData.Questions) {
-            setProblems(categoryData.Questions.sort((a,b) => a.title.localeCompare(b.title)));
-          }
+          setCache(APEX_PROBLEMS_CACHE_KEY, data);
+          processData(data);
         }
       } catch (error) {
         console.error("Error fetching problems:", error);

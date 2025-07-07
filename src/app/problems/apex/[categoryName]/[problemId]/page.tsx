@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData } from "@/types";
@@ -13,6 +13,7 @@ import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 import Image from "next/image";
+import { getCache, setCache } from "@/lib/cache";
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -128,6 +129,7 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
   );
 };
 
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -181,12 +183,10 @@ export default function ProblemWorkspacePage() {
         if (!categoryName || !problemId) return;
 
         setLoading(true);
-        const apexDocRef = doc(db, "problems", "Apex");
 
-        const unsubscribe = onSnapshot(apexDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data() as { Category: ApexProblemsData };
-                const categoryData = data.Category?.[categoryName];
+        const fetchProblems = async () => {
+            const processData = (data: ApexProblemsData) => {
+                const categoryData = data[categoryName];
                 
                 if (categoryData && categoryData.Questions) {
                     const allQuestions = categoryData.Questions;
@@ -207,17 +207,34 @@ export default function ProblemWorkspacePage() {
                     setProblem(null);
                     setAllProblems([]);
                 }
-            } else {
-                setProblem(null);
-                setAllProblems([]);
+            };
+            
+            const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            if (cachedData) {
+                processData(cachedData);
+                setLoading(false);
+                return;
             }
-            setLoading(false);
-        }, (error) => {
-            console.error(`Error fetching problems for ${categoryName}:`, error);
-            setLoading(false);
-        });
 
-        return () => unsubscribe();
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data().Category as ApexProblemsData;
+                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    processData(data);
+                } else {
+                    setProblem(null);
+                    setAllProblems([]);
+                }
+            } catch (error) {
+                console.error(`Error fetching problems for ${categoryName}:`, error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProblems();
     }, [categoryName, problemId, isPro, router]);
     
     useEffect(() => {
