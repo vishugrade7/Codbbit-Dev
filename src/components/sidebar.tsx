@@ -4,16 +4,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud } from 'lucide-react';
+import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
+import { useTheme } from 'next-themes';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -37,6 +38,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userData } = useAuth();
+  const { setTheme } = useTheme();
   
   const handleLogout = async () => {
     if (!auth) return;
@@ -129,6 +131,21 @@ export default function Sidebar() {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Sun className="h-4 w-4 mr-2 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute left-2 h-4 w-4 mr-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span>Theme</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setTheme('light')}>Light</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme('dark')}>Dark</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme('system')}>System</DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
