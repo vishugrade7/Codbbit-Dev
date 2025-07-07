@@ -86,7 +86,102 @@ export default function Header() {
   return (
     <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
+           {/* Mobile Menu Trigger */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <div className="grid gap-6 py-6">
+                  <Link href="/" className="flex items-center gap-2 mb-4">
+                    <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
+                    <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
+                  </Link>
+                  {user && (
+                    <>
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                             <div className="relative flex items-center gap-4 text-left p-2 rounded-lg hover:bg-muted">
+                                <Avatar className="h-12 w-12 cursor-pointer">
+                                    <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                                    <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                    {user.email}
+                                    </p>
+                                </div>
+                            </div>
+                          </DropdownMenuTrigger>
+                           <DropdownMenuContent className="w-56" align="end" forceMount>
+                            <DropdownMenuItem onClick={() => router.push('/profile')}>
+                              <UserIcon className="mr-2 h-4 w-4" />
+                              <span>Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/settings')}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                            </DropdownMenuItem>
+                            {!isPro && (
+                                <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                                    <Rocket className="mr-2 h-4 w-4" />
+                                    <span>Upgrade</span>
+                                </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      <Separator />
+                    </>
+                  )}
+                  <nav className="grid gap-4">
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                          "text-lg font-medium transition-colors hover:text-foreground/80",
+                          pathname === link.href ? "text-foreground" : "text-foreground/60"
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                    {isAuthorizedAdmin && user && adminNavLinks.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className={cn(
+                            "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
+                            pathname === link.href ? "text-foreground" : "text-foreground/60"
+                            )}
+                        >
+                            <link.icon className="h-5 w-5" />
+                            {link.label}
+                        </Link>
+                    ))}
+                  </nav>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    {user ? (
+                      <Button variant="secondary" onClick={handleLogout} className="w-full">
+                         <LogOut className="mr-2 h-4 w-4" /> Logout
+                      </Button>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                         <Button variant="ghost" asChild><Link href="/login">Login</Link></Button>
+                         <Button asChild><Link href="/signup">Sign Up</Link></Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
           <Link href="/" className="flex items-center gap-2">
             <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
             <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
@@ -134,101 +229,12 @@ export default function Header() {
                 <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
             </div>
           ) : user ? (
-            <>
-              {/* This desktop view is now handled by the sidebar */}
-              <div className="hidden md:flex items-center gap-4">
-                {/* Kept empty for spacing consistency if needed, but sidebar takes over */}
-              </div>
-
-              {/* Mobile view with Sheet */}
-              <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2">
                  <div className="flex items-center gap-1.5 font-semibold">
                     <Flame className="h-5 w-5 text-orange-500" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Menu className="h-6 w-6" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right">
-                    <div className="grid gap-6 py-6">
-                      <Link href="/" className="flex items-center gap-2 mb-4">
-                        <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
-                        <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
-                      </Link>
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                             <div className="relative flex items-center gap-4 text-left p-2 rounded-lg hover:bg-muted">
-                                <Avatar className="h-12 w-12 cursor-pointer">
-                                    <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                                    <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col">
-                                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                                    <p className="text-xs leading-none text-muted-foreground">
-                                    {user.email}
-                                    </p>
-                                </div>
-                            </div>
-                          </DropdownMenuTrigger>
-                           <DropdownMenuContent className="w-56" align="end" forceMount>
-                            <DropdownMenuItem onClick={() => router.push('/profile')}>
-                              <UserIcon className="mr-2 h-4 w-4" />
-                              <span>Profile</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push('/settings')}>
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
-                            {!isPro && (
-                                <DropdownMenuItem onClick={() => router.push('/pricing')}>
-                                    <Rocket className="mr-2 h-4 w-4" />
-                                    <span>Upgrade</span>
-                                </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      <Separator />
-                      <nav className="grid gap-4">
-                        {navLinks.map((link) => (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            className={cn(
-                              "text-lg font-medium transition-colors hover:text-foreground/80",
-                              pathname === link.href ? "text-foreground" : "text-foreground/60"
-                            )}
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
-                        {isAuthorizedAdmin && adminNavLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={cn(
-                                "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
-                                pathname === link.href ? "text-foreground" : "text-foreground/60"
-                                )}
-                            >
-                                <link.icon className="h-5 w-5" />
-                                {link.label}
-                            </Link>
-                        ))}
-                      </nav>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <Button variant="secondary" onClick={handleLogout} className="w-full">
-                           <LogOut className="mr-2 h-4 w-4" /> Logout
-                        </Button>
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </>
+            </div>
           ) : (
             <>
               {/* Desktop Logged-out Buttons */}
@@ -241,42 +247,11 @@ export default function Header() {
                 </Button>
               </div>
 
-              {/* Mobile Sheet (triggered by Menu icon) */}
+              {/* Mobile login button */}
               <div className="md:hidden">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Menu className="h-6 w-6" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right">
-                    <div className="grid gap-6 py-6">
-                      <Link href="/" className="flex items-center gap-2 mb-4">
-                        <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
-                        <span className="text-lg font-bold font-headline">Codbbit</span>
-                      </Link>
-                      <nav className="grid gap-4">
-                        {navLinks.map((link) => (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            className={cn(
-                              "text-lg font-medium transition-colors hover:text-foreground/80",
-                              pathname === link.href ? "text-foreground" : "text-foreground/60"
-                            )}
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
-                      </nav>
-                      <div className="flex flex-col gap-4 mt-4">
-                         <Button variant="ghost" asChild><Link href="/login">Login</Link></Button>
-                         <Button asChild><Link href="/signup">Sign Up</Link></Button>
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
+                <Button asChild size="sm">
+                  <Link href="/login">Login</Link>
+                </Button>
               </div>
             </>
           )}
