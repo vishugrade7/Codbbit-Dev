@@ -97,7 +97,7 @@ export default function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
+              <SheetContent side="left" className="bg-background/80 backdrop-blur-sm">
                 <div className="grid gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                     <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
@@ -105,38 +105,34 @@ export default function Header() {
                   </Link>
                   {user && (
                     <>
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                             <div className="relative flex items-center gap-4 text-left p-2 rounded-lg hover:bg-muted">
-                                <Avatar className="h-12 w-12 cursor-pointer">
-                                    <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                                    <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col">
-                                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                                    <p className="text-xs leading-none text-muted-foreground">
-                                    {user.email}
-                                    </p>
-                                </div>
+                       <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-4 text-left p-2">
+                            <Avatar className="h-12 w-12">
+                                <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                                <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                                <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                {user.email}
+                                </p>
                             </div>
-                          </DropdownMenuTrigger>
-                           <DropdownMenuContent className="w-56" align="end" forceMount>
-                            <DropdownMenuItem onClick={() => { router.push('/profile'); setIsMobileMenuOpen(false); }}>
-                              <UserIcon className="mr-2 h-4 w-4" />
-                              <span>Profile</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { router.push('/settings'); setIsMobileMenuOpen(false); }}>
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
+                        </div>
+                        <div className="grid gap-1 text-sm font-medium">
+                            <Link href={`/profile/${userData?.username}`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                              <UserIcon className="h-4 w-4" /> Profile
+                            </Link>
+                            <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                                <Settings className="h-4 w-4" /> Settings
+                            </Link>
                             {!isPro && (
-                                <DropdownMenuItem onClick={() => { router.push('/pricing'); setIsMobileMenuOpen(false); }}>
-                                    <Rocket className="mr-2 h-4 w-4" />
+                                <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-primary bg-primary/10 transition-all hover:bg-primary/20">
+                                    <Rocket className="h-4 w-4" />
                                     <span>Upgrade</span>
-                                </DropdownMenuItem>
+                                </Link>
                             )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        </div>
+                      </div>
                       <Separator />
                     </>
                   )}
