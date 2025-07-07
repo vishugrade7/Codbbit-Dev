@@ -52,7 +52,7 @@ export default function Home() {
             {/* Revolving cards around the text */}
             <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
                 {/* Card 1: Top-Left */}
-                <FloatingCard positionClass="top-12 -left-20 w-48">
+                <FloatingCard positionClass="top-8 -left-32 w-48">
                     <div className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-sky-500 dark:text-sky-400"/>
                         <h4 className="font-semibold">SOQL Query</h4>
@@ -70,7 +70,7 @@ export default function Home() {
                 </FloatingCard>
 
                 {/* Card 3: Top-Right */}
-                <FloatingCard positionClass="top-12 -right-20 w-40">
+                <FloatingCard positionClass="top-8 -right-32 w-40">
                     <div className="flex items-center gap-2">
                         <FileCode className="h-5 w-5 text-rose-500 dark:text-rose-400"/>
                         <h4 className="font-semibold">Apex Class</h4>
@@ -78,7 +78,7 @@ export default function Home() {
                 </FloatingCard>
                 
                 {/* Card 4: Right */}
-                <FloatingCard positionClass="top-1/2 -right-44 -translate-y-1/2 w-56">
+                <FloatingCard positionClass="top-1/2 -right-60 -translate-y-1/2 w-56">
                     <div className="flex items-center gap-2">
                         <Layers className="h-5 w-5 text-indigo-500 dark:text-indigo-400"/>
                         <h4 className="font-semibold">LWC Component</h4>
@@ -87,7 +87,7 @@ export default function Home() {
                 </FloatingCard>
 
                 {/* Card 5: Bottom-Right */}
-                <FloatingCard positionClass="bottom-12 -right-20 w-48">
+                <FloatingCard positionClass="bottom-8 -right-32 w-48">
                      <div className="flex items-center gap-2">
                         <Bug className="h-5 w-5 text-red-500 dark:text-red-400"/>
                         <h4 className="font-semibold">Bug Squashing</h4>
@@ -105,7 +105,7 @@ export default function Home() {
                 </FloatingCard>
                 
                 {/* Card 7: Bottom-Left */}
-                <FloatingCard positionClass="bottom-12 -left-20 w-44">
+                <FloatingCard positionClass="bottom-8 -left-32 w-44">
                     <div className="flex items-center gap-2">
                         <Trophy className="h-5 w-5 text-amber-500 dark:text-amber-400"/>
                         <h4 className="font-semibold">Climb Ranks</h4>
@@ -114,7 +114,7 @@ export default function Home() {
                 </FloatingCard>
                 
                 {/* Card 8: Left */}
-                <FloatingCard positionClass="top-1/2 -left-44 -translate-y-1/2 w-48">
+                <FloatingCard positionClass="top-1/2 -left-60 -translate-y-1/2 w-48">
                     <div className="flex items-center gap-2">
                         <Code className="h-5 w-5 text-teal-500 dark:text-teal-400"/>
                         <h4 className="font-semibold">Code Analysis</h4>
