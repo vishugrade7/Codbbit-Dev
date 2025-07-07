@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud, Sun, Moon } from 'lucide-react';
+import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud, Sun, Moon, Bug, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -109,6 +109,40 @@ export default function Sidebar() {
         </nav>
         
         <div className="mt-auto flex flex-col items-center gap-4">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="rounded-lg"
+              >
+                <Link href="/contact?type=bug">
+                  <Bug className="h-5 w-5" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Report a Bug</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="rounded-lg"
+              >
+                <Link href="/contact?type=feature">
+                  <Lightbulb className="h-5 w-5" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Request a Feature</p>
+            </TooltipContent>
+          </Tooltip>
           <Separator className="w-2/3" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

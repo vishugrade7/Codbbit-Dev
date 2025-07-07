@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { useSearchParams } from "next/navigation";
 
 const formSchema = z.object({
   type: z.enum(['Support', 'Feedback']),
@@ -35,6 +37,22 @@ export default function ContactPage() {
       message: '',
     },
   });
+
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const typeFromQuery = searchParams.get('type');
+    if (typeFromQuery === 'bug') {
+      const newType = 'Support';
+      setFormType(newType);
+      form.setValue('type', newType);
+    } else if (typeFromQuery === 'feature') {
+      const newType = 'Feedback';
+      setFormType(newType);
+      form.setValue('type', newType);
+    }
+  }, [searchParams, form]);
+
 
   const handleSwitchChange = (checked: boolean) => {
     const newType = checked ? 'Feedback' : 'Support';
