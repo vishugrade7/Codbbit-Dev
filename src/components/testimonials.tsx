@@ -56,11 +56,11 @@ const testimonials = [
 
 const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] }) => {
   return (
-    <Card className="w-[380px] shrink-0 bg-background shadow-md">
-      <CardContent className="p-6 flex flex-col h-full">
+    <Card className="w-[350px] shrink-0 bg-background shadow-md">
+      <CardContent className="p-4 flex flex-col h-full">
         <div className="relative mb-4 flex-grow">
-          <span className="absolute -top-2 left-0 text-7xl font-serif text-muted opacity-20 select-none">“</span>
-          <p className="pt-8 text-lg text-foreground font-medium">{testimonial.quote}</p>
+          <span className="absolute top-0 left-0 text-6xl font-serif text-muted opacity-20 select-none">“</span>
+          <p className="pt-6 text-base text-foreground font-medium">{testimonial.quote}</p>
         </div>
         <div className="flex mb-4">
           {Array.from({ length: 5 }).map((_, i) => (
