@@ -9,6 +9,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getCache, setCache } from "@/lib/cache";
 import Image from "next/image";
+import { Pie, PieChart, Cell } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Code } from "lucide-react";
@@ -140,6 +142,12 @@ export default function ApexProblemsView() {
             {categories.map((category, index) => {
               const theme = cardColorThemes[index % cardColorThemes.length];
               const progressPercentage = category.problemCount > 0 ? (category.solvedCount / category.problemCount) * 100 : 0;
+              const chartData = [
+                { name: 'Easy', value: category.difficulties.Easy, fill: 'hsl(142.1 76.2% 41%)' },
+                { name: 'Medium', value: category.difficulties.Medium, fill: 'hsl(var(--primary))' },
+                { name: 'Hard', value: category.difficulties.Hard, fill: 'hsl(var(--destructive))' },
+              ].filter(d => d.value > 0);
+
               return (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
                   <Card className={cn("overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full flex flex-col", theme.card)}>
@@ -158,39 +166,47 @@ export default function ApexProblemsView() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="flex flex-col flex-grow justify-end">
-                      {user && (
-                         <div className="mb-4">
-                            <div className="flex justify-between items-center text-xs mb-1">
-                                <span className={cn("font-medium", theme.title)}>Progress</span>
-                                <span className={cn("font-semibold opacity-80", theme.title)}>{category.solvedCount} / {category.problemCount}</span>
+                    <CardContent className="flex flex-col flex-grow justify-end pt-4">
+                        {user && (
+                            <div className="mb-4">
+                                <div className="flex justify-between items-center text-xs mb-1">
+                                    <span className={cn("font-medium", theme.title)}>Progress</span>
+                                    <span className={cn("font-semibold opacity-80", theme.title)}>{category.solvedCount} / {category.problemCount}</span>
+                                </div>
+                                <Progress value={progressPercentage} className={cn("h-2", theme.progressBg)} indicatorClassName={theme.progressFg} />
                             </div>
-                            <Progress value={progressPercentage} className={cn("h-2", theme.progressBg)} indicatorClassName={theme.progressFg} />
-                         </div>
-                      )}
-                      <div className="space-y-3 text-sm">
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span className="text-green-500">Easy</span>
-                                <span className={cn("font-semibold", theme.title)}>{category.difficulties.Easy}</span>
+                        )}
+
+                        {category.problemCount > 0 ? (
+                            <>
+                                <div className="flex-grow flex items-center justify-center -my-4">
+                                    <ChartContainer
+                                        config={{}} // No config needed as we are not using tooltips/legends from it
+                                        className="mx-auto aspect-square h-full max-h-[120px]"
+                                    >
+                                        <PieChart>
+                                            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={50} strokeWidth={2} stroke={`hsl(var(--card))`}>
+                                                {chartData.map((entry) => (
+                                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ChartContainer>
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs mt-4">
+                                    {chartData.map((entry) => (
+                                    <div key={entry.name} className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.fill }} />
+                                        <span className={cn("font-medium", theme.title)}>{entry.name} ({entry.value})</span>
+                                    </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-grow flex items-center justify-center text-muted-foreground text-sm">
+                                No problems in this category yet.
                             </div>
-                            <Progress value={category.problemCount > 0 ? (category.difficulties.Easy / category.problemCount) * 100 : 0} className={cn("h-1.5", theme.progressBg)} indicatorClassName="bg-green-500" />
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span className="text-primary">Medium</span>
-                                <span className={cn("font-semibold", theme.title)}>{category.difficulties.Medium}</span>
-                            </div>
-                            <Progress value={category.problemCount > 0 ? (category.difficulties.Medium / category.problemCount) * 100 : 0} className={cn("h-1.5", theme.progressBg)} indicatorClassName="bg-primary" />
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span className="text-destructive">Hard</span>
-                                <span className={cn("font-semibold", theme.title)}>{category.difficulties.Hard}</span>
-                            </div>
-                            <Progress value={category.problemCount > 0 ? (category.difficulties.Hard / category.problemCount) * 100 : 0} className={cn("h-1.5", theme.progressBg)} indicatorClassName="bg-destructive" />
-                        </div>
-                      </div>
+                        )}
                     </CardContent>
                   </Card>
                 </Link>
