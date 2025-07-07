@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud, Sun, Moon, Bug, Lightbulb } from 'lucide-react';
+import { Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud, Sun, Moon, Bug, Lightbulb, LifeBuoy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -134,13 +134,13 @@ export default function Sidebar() {
                 size="icon"
                 className="rounded-lg group"
               >
-                <Link href="/contact?type=feature">
-                  <Lightbulb className="h-5 w-5 group-hover:animate-icon-pulse" />
+                <Link href="/contact">
+                  <LifeBuoy className="h-5 w-5 group-hover:animate-icon-pulse" />
                 </Link>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              <p>Request a Feature</p>
+              <p>Support</p>
             </TooltipContent>
           </Tooltip>
           <Separator className="w-2/3" />
