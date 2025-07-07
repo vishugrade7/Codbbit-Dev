@@ -111,6 +111,15 @@ export default {
           'from': { opacity: '0', transform: 'translateY(10px)' },
           'to': { opacity: '1', transform: 'translateY(0)' },
         },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-15px)' },
+        },
+        'gradient-bg': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -118,6 +127,8 @@ export default {
         'points-animation': 'points-animation 2s ease-in-out forwards',
         'marquee': 'marquee 60s linear infinite',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+        'float': 'float 5s ease-in-out infinite',
+        'gradient-bg': 'gradient-bg 10s ease infinite',
       },
     },
   },
