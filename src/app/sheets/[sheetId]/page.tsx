@@ -10,7 +10,7 @@ import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { toggleSheetFollow } from '../actions';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from '@/components/ui/progress';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 
@@ -41,6 +42,7 @@ export default function SheetDisplayPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
+    const [categoryFilter, setCategoryFilter] = useState("All");
 
     useEffect(() => {
         if (!sheetId || !db) return;
@@ -98,6 +100,15 @@ export default function SheetDisplayPage() {
         return () => unsubscribe();
     }, [sheetId, toast, authUser]);
 
+    const { solvedCount, progressPercentage } = useMemo(() => {
+        if (!authUser || !userData || !problems || problems.length === 0) {
+            return { solvedCount: 0, progressPercentage: 0 };
+        }
+        const count = problems.filter(p => userData.solvedProblems?.[p.id]).length;
+        const percentage = (count / problems.length) * 100;
+        return { solvedCount: count, progressPercentage: percentage };
+    }, [authUser, userData, problems]);
+
     const filteredProblems = useMemo(() => {
         return problems
           .filter((p) => {
@@ -108,8 +119,9 @@ export default function SheetDisplayPage() {
             return true;
           })
           .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
+          .filter((p) => categoryFilter === "All" || p.categoryName === categoryFilter)
           .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [problems, searchTerm, difficultyFilter, statusFilter, userData]);
+    }, [problems, searchTerm, difficultyFilter, statusFilter, categoryFilter, userData]);
 
     const uniqueCategories = useMemo(() => {
         if (!problems || problems.length === 0) return [];
@@ -222,9 +234,6 @@ export default function SheetDisplayPage() {
                     <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                         <div className="flex-1">
                             <div className="flex items-start gap-4">
-                                <div className="p-3 bg-primary/10 rounded-lg mt-1">
-                                    <FileText className="h-6 w-6 text-primary" />
-                                </div>
                                 <div>
                                     <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
                                     <CardDescription className="flex items-center gap-2 mt-2">
@@ -259,13 +268,27 @@ export default function SheetDisplayPage() {
                     </div>
                     {(uniqueCategories.length > 0 || problems.length > 0) && (
                         <div className="border-t pt-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="md:col-span-2">
+                             <div className="md:col-span-2">
                                 {uniqueCategories.length > 0 && (
                                     <div>
                                         <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
                                         <div className="flex flex-wrap gap-2">
+                                            <Badge
+                                                variant={categoryFilter === 'All' ? 'default' : 'secondary'}
+                                                onClick={() => setCategoryFilter('All')}
+                                                className="cursor-pointer"
+                                            >
+                                                All Topics
+                                            </Badge>
                                             {uniqueCategories.map(category => (
-                                                <Badge key={category} variant="secondary">{category}</Badge>
+                                                <Badge
+                                                    key={category}
+                                                    variant={categoryFilter === category ? 'default' : 'secondary'}
+                                                    onClick={() => setCategoryFilter(category)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {category}
+                                                </Badge>
                                             ))}
                                         </div>
                                     </div>
@@ -273,29 +296,36 @@ export default function SheetDisplayPage() {
                             </div>
                             <div className="md:col-span-1">
                                 {problems.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-16 text-muted-foreground">Easy</span>
-                                                <div className="flex-1 bg-muted rounded-full h-2">
-                                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">PROGRESS</h4>
+                                            <Progress value={progressPercentage} className="h-2" />
+                                            <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-16 text-muted-foreground">Easy</span>
+                                                    <div className="flex-1 bg-muted rounded-full h-2">
+                                                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                                    </div>
+                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
                                                 </div>
-                                                <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-16 text-muted-foreground">Medium</span>
-                                                <div className="flex-1 bg-muted rounded-full h-2">
-                                                    <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-16 text-muted-foreground">Medium</span>
+                                                    <div className="flex-1 bg-muted rounded-full h-2">
+                                                        <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                                    </div>
+                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
                                                 </div>
-                                                <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-16 text-muted-foreground">Hard</span>
-                                                <div className="flex-1 bg-muted rounded-full h-2">
-                                                    <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-16 text-muted-foreground">Hard</span>
+                                                    <div className="flex-1 bg-muted rounded-full h-2">
+                                                        <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                                    </div>
+                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
                                                 </div>
-                                                <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
                                             </div>
                                         </div>
                                     </div>
