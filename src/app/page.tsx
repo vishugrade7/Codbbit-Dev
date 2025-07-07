@@ -51,7 +51,7 @@ export default function Home() {
             
             {/* Revolving cards around the text */}
             <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d' }}>
-                <FloatingCard positionClass="top-0 -left-16 w-48">
+                <FloatingCard positionClass="top-0 -left-20 w-48">
                     <div className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-sky-500 dark:text-sky-400"/>
                         <h4 className="font-semibold">SOQL Query</h4>
@@ -59,7 +59,7 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">SELECT Name FROM Account</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="bottom-0 -right-16 w-56">
+                <FloatingCard positionClass="bottom-0 -right-20 w-56">
                     <div className="flex items-center gap-2">
                         <Layers className="h-5 w-5 text-indigo-500 dark:text-indigo-400"/>
                         <h4 className="font-semibold">LWC Component</h4>
@@ -67,21 +67,21 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">&lt;lightning-card title="Hello"/&gt;</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="top-10 -right-24 w-40">
+                <FloatingCard positionClass="top-10 -right-32 w-40">
                     <div className="flex items-center gap-2">
                         <FileCode className="h-5 w-5 text-rose-500 dark:text-rose-400"/>
                         <h4 className="font-semibold">Apex Class</h4>
                     </div>
                 </FloatingCard>
 
-                <FloatingCard positionClass="bottom-10 -left-24 w-32">
+                <FloatingCard positionClass="bottom-4 -left-36 w-32">
                     <div className="flex items-center gap-2">
                         <Trophy className="h-5 w-5 text-amber-500 dark:text-amber-400"/>
                         <h4 className="font-semibold">+10 Points</h4>
                     </div>
                 </FloatingCard>
 
-                <FloatingCard positionClass="bottom-20 -right-40 w-52">
+                <FloatingCard positionClass="bottom-16 -right-52 w-52">
                     <div className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-purple-500 dark:text-purple-400"/>
                         <h4 className="font-semibold">Data Security</h4>
@@ -89,14 +89,14 @@ export default function Home() {
                     <p className="text-xs mt-1 text-muted-foreground">Secure data with Shield</p>
                 </FloatingCard>
 
-                <FloatingCard positionClass="top-1/3 -left-40 w-48">
+                <FloatingCard positionClass="top-1/3 -left-52 w-48">
                     <div className="flex items-center gap-2">
                         <Code className="h-5 w-5 text-teal-500 dark:text-teal-400"/>
                         <h4 className="font-semibold">Code Analysis</h4>
                     </div>
                 </FloatingCard>
 
-                <FloatingCard positionClass="top-20 left-1/2 -translate-x-1/2 w-56">
+                <FloatingCard positionClass="top-16 left-1/2 -translate-x-1/2 w-56">
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 rounded-full bg-green-500/20">
                             <BookOpen className="h-5 w-5 text-green-500 dark:text-green-400"/>
