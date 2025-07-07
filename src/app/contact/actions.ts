@@ -66,7 +66,7 @@ export async function submitContactForm(data: z.infer<typeof contactFormSchema>)
   try {
     await resend.emails.send({
       from: 'Codbbit Platform <onboarding@resend.dev>',
-      to: ["support@codbbit.com", "codbbit@gmail.com"],
+      to: ["gradevishu@gmail.com"],
       subject: emailSubject,
       html: emailBody,
     });
