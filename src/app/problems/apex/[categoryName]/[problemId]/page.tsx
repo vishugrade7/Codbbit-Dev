@@ -25,6 +25,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
@@ -159,6 +166,7 @@ export default function ProblemWorkspacePage() {
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
     const resultsPanelRef = useRef<ImperativePanelHandle>(null);
     const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
+    const [fontSize, setFontSize] = useState<number>(14);
 
     const [isClient, setIsClient] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
@@ -448,6 +456,17 @@ export default function ProblemWorkspacePage() {
                                     <TooltipContent><p>Reset Code</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
+                            <Select value={String(fontSize)} onValueChange={(value) => setFontSize(Number(value))}>
+                                <SelectTrigger className="w-[85px] h-8 text-xs">
+                                    <SelectValue placeholder="Font Size" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="12">12px</SelectItem>
+                                    <SelectItem value="14">14px</SelectItem>
+                                    <SelectItem value="16">16px</SelectItem>
+                                    <SelectItem value="18">18px</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -475,7 +494,7 @@ export default function ProblemWorkspacePage() {
                             onChange={(newValue) => setCode(newValue || "")}
                             theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
                             options={{
-                                fontSize: 14,
+                                fontSize: fontSize,
                                 minimap: { enabled: false },
                                 scrollBeyondLastLine: false,
                                 padding: {
