@@ -17,39 +17,6 @@ import { Loader2, Code } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { ApexProblemsData } from "@/types";
 
-const cardColorThemes = [
-    { // Blue
-        card: "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-900",
-        progressBg: "bg-blue-200 dark:bg-blue-800/30",
-        progressFg: "bg-blue-500",
-        title: "text-blue-900 dark:text-blue-200"
-    },
-    { // Orange
-        card: "bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-900",
-        progressBg: "bg-orange-200 dark:bg-orange-800/30",
-        progressFg: "bg-orange-500",
-        title: "text-orange-900 dark:text-orange-200"
-    },
-    { // Green
-        card: "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-900",
-        progressBg: "bg-green-200 dark:bg-green-800/30",
-        progressFg: "bg-green-500",
-        title: "text-green-900 dark:text-green-200"
-    },
-    { // Purple
-        card: "bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-900",
-        progressBg: "bg-purple-200 dark:bg-purple-800/30",
-        progressFg: "bg-purple-500",
-        title: "text-purple-900 dark:text-purple-200"
-    },
-    { // Teal
-        card: "bg-teal-100 dark:bg-teal-900/30 border-teal-200 dark:border-teal-900",
-        progressBg: "bg-teal-200 dark:bg-teal-800/30",
-        progressFg: "bg-teal-500",
-        title: "text-teal-900 dark:text-teal-200"
-    }
-];
-
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 type CategoryInfo = {
@@ -139,8 +106,7 @@ export default function ApexProblemsView() {
           </div>
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => {
-              const theme = cardColorThemes[index % cardColorThemes.length];
+            {categories.map((category) => {
               const progressPercentage = category.problemCount > 0 ? (category.solvedCount / category.problemCount) * 100 : 0;
               const chartData = [
                 { name: 'Easy', value: category.difficulties.Easy, fill: 'hsl(142.1 76.2% 41%)' },
@@ -150,18 +116,18 @@ export default function ApexProblemsView() {
 
               return (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className={cn("overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full flex flex-col", theme.card)}>
+                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full flex flex-col bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-900 group-hover:bg-blue-200 dark:group-hover:bg-blue-800/40">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className={cn("group-hover:underline", theme.title)}>{category.name}</CardTitle>
-                          <CardDescription className={cn("opacity-80", theme.title)}>{category.problemCount} Problems</CardDescription>
+                          <CardTitle className="group-hover:underline text-blue-900 dark:text-blue-200">{category.name}</CardTitle>
+                          <CardDescription className="opacity-80 text-blue-900 dark:text-blue-200">{category.problemCount} Problems</CardDescription>
                         </div>
                         <div className="relative h-12 w-12 bg-black/5 dark:bg-white/10 p-2 rounded-lg flex-shrink-0">
                           {category.imageUrl ? (
                               <Image src={category.imageUrl} alt={category.name} fill className="object-contain" />
                           ) : (
-                              <Code className={cn("h-full w-full opacity-50", theme.title)} />
+                              <Code className="h-full w-full opacity-50 text-blue-900 dark:text-blue-200" />
                           )}
                         </div>
                       </div>
@@ -170,10 +136,10 @@ export default function ApexProblemsView() {
                         {user && (
                             <div className="mb-4">
                                 <div className="flex justify-between items-center text-xs mb-1">
-                                    <span className={cn("font-medium", theme.title)}>Progress</span>
-                                    <span className={cn("font-semibold opacity-80", theme.title)}>{category.solvedCount} / {category.problemCount}</span>
+                                    <span className="font-medium text-blue-900 dark:text-blue-200">Progress</span>
+                                    <span className="font-semibold opacity-80 text-blue-900 dark:text-blue-200">{category.solvedCount} / {category.problemCount}</span>
                                 </div>
-                                <Progress value={progressPercentage} className={cn("h-2", theme.progressBg)} indicatorClassName={theme.progressFg} />
+                                <Progress value={progressPercentage} className="h-2 bg-blue-200 dark:bg-blue-800/30" indicatorClassName="bg-blue-500" />
                             </div>
                         )}
 
@@ -197,7 +163,7 @@ export default function ApexProblemsView() {
                                     {chartData.map((entry) => (
                                     <div key={entry.name} className="flex items-center gap-1.5">
                                         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.fill }} />
-                                        <span className={cn("font-medium", theme.title)}>{entry.name} ({entry.value})</span>
+                                        <span className="font-medium text-blue-900 dark:text-blue-200">{entry.name} ({entry.value})</span>
                                     </div>
                                     ))}
                                 </div>
