@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -166,6 +166,10 @@ export default function ProblemWorkspacePage() {
 
     useEffect(() => {
         setIsClient(true);
+        // Collapse panel on initial mount
+        if (resultsPanelRef.current) {
+            resultsPanelRef.current.collapse();
+        }
     }, []);
 
     const toggleFullScreen = () => {
@@ -183,12 +187,11 @@ export default function ProblemWorkspacePage() {
     const toggleResultsPanel = () => {
         const panel = resultsPanelRef.current;
         if (panel) {
-            if (isResultsCollapsed) {
-                panel.resize(50);
+            if (panel.isCollapsed()) {
+                panel.expand();
             } else {
                 panel.collapse();
             }
-            setIsResultsCollapsed(!isResultsCollapsed);
         }
     };
 
@@ -299,9 +302,8 @@ export default function ProblemWorkspacePage() {
 
         // Auto-expand results panel
         const panel = resultsPanelRef.current;
-        if (panel && isResultsCollapsed) {
-            panel.resize(50);
-            setIsResultsCollapsed(false);
+        if (panel && panel.isCollapsed()) {
+            panel.expand();
         }
 
         const response = await submitApexSolution(user.uid, problem, code);
@@ -430,7 +432,7 @@ export default function ProblemWorkspacePage() {
 
     const EditorAndResults = () => (
         <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={100}>
+            <ResizablePanel defaultSize={60} minSize={20}>
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-2 border-b">
                         <div className="flex items-center gap-2 font-semibold">
@@ -490,17 +492,17 @@ export default function ProblemWorkspacePage() {
             <ResizablePanel
                 ref={resultsPanelRef}
                 collapsible
-                collapsedSize={48}
-                defaultSize={48}
-                minSize={48}
+                collapsedSize={8}
+                defaultSize={40}
+                minSize={8}
                 onCollapse={() => setIsResultsCollapsed(true)}
                 onExpand={() => setIsResultsCollapsed(false)}
             >
                 <div className="flex flex-col h-full">
-                     <div className="p-2 border-b flex items-center justify-between">
+                     <div className="p-2 border-b flex items-center justify-between h-[48px] flex-shrink-0">
                         <h3 className="font-semibold text-sm">Test Results</h3>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleResultsPanel}>
-                           <ChevronDown className={cn("h-5 w-5 transition-transform", !isResultsCollapsed && "rotate-180")} />
+                           {isResultsCollapsed ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                         </Button>
                     </div>
                     <div className="flex-1 p-4 overflow-auto">
@@ -616,7 +618,7 @@ export default function ProblemWorkspacePage() {
             </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto h-full">
             <div className="md:hidden h-full">
                 <Tabs defaultValue="problem" className="flex flex-col h-full">
                     <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none border-b">
