@@ -39,6 +39,9 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 75% 55%;
     --chart-5: 340 85% 55%;
+
+    --body-bg-image: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%);
+    --body-bg-color: transparent;
   }
  
   .dark {
@@ -75,6 +78,9 @@
     --chart-3: 30 80% 60%;
     --chart-4: 280 75% 60%;
     --chart-5: 340 85% 60%;
+
+    --body-bg-image: radial-gradient(ellipse 80% 50% at 50% 120%, hsl(12 80% 50% / 0.3), transparent);
+    --body-bg-color: hsl(var(--background));
   }
 }
  
@@ -84,7 +90,9 @@
   }
   body {
     @apply text-foreground;
-    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%);
+    background-color: var(--body-bg-color);
+    background-image: var(--body-bg-image);
+    background-repeat: no-repeat;
     min-height: 100vh;
     font-family: var(--font-inter);
   }

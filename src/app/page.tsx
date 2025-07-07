@@ -21,9 +21,6 @@ export default function Home() {
   return (
     <>
       <section className="relative w-full overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 animate-gradient-bg" style={{backgroundSize: '200% 200%'}}/>
-        <div className="absolute inset-0 opacity-10 dark:opacity-5 [background-image:radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/80 via-transparent to-transparent"/>
-        
         <div className="container relative z-10 px-4 md:px-6 py-24 md:py-32 lg:py-40">
             <div className="max-w-3xl mx-auto space-y-4 text-center">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
