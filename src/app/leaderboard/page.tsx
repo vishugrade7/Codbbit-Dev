@@ -15,8 +15,10 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star, ChevronsUpDown, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -46,6 +48,11 @@ export default function Leaderboard() {
 
   const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
   const [suggestedProblem, setSuggestedProblem] = useState<ProblemWithCategory | null>(null);
+  
+  const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [companyPopoverOpen, setCompanyPopoverOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
   
   // Fetch all problems for suggestion
   useEffect(() => {
@@ -137,9 +144,25 @@ export default function Leaderboard() {
     return Array.from(companies).sort();
   }, [leaderboardData]);
   
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch) return countryOptions;
+    return countryOptions.filter(country =>
+      country.toLowerCase().includes(countrySearch.toLowerCase())
+    );
+  }, [countryOptions, countrySearch]);
+
+  const filteredCompanies = useMemo(() => {
+    if (!companySearch) return companyOptions;
+    return companyOptions.filter(company =>
+      company.toLowerCase().includes(companySearch.toLowerCase())
+    );
+  }, [companyOptions, companySearch]);
+
   const handleFilterTypeChange = (value: "Global" | "Country" | "Company") => {
     setFilterType(value);
     setCurrentPage(1);
+    setCountrySearch('');
+    setCompanySearch('');
     if (value === 'Country') {
       setFilterValue(countryOptions[0] || null);
     } else if (value === 'Company') {
@@ -302,39 +325,73 @@ export default function Leaderboard() {
                   <TabsTrigger value="Company">By Company</TabsTrigger>
               </TabsList>
           </Tabs>
-
-          {filterType === "Country" && (
-              <Select
-                  value={filterValue ?? ''}
-                  onValueChange={handleFilterValueChange}
-                  disabled={countryOptions.length === 0}
-              >
-                  <SelectTrigger className="w-full md:w-[220px]">
-                      <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      {countryOptions.map(country => (
-                          <SelectItem key={country} value={country}>{country}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
+          
+           {filterType === "Country" && (
+              <Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full md:w-[220px] justify-between">
+                    {filterValue || "Select a country..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[220px] p-0">
+                  <div className="p-2">
+                    <Input placeholder="Search country..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} />
+                  </div>
+                  <ScrollArea className="h-[200px]">
+                    {filteredCountries.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No country found.</p>}
+                    {filteredCountries.map(country => (
+                      <Button
+                        key={country}
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          handleFilterValueChange(country);
+                          setCountryPopoverOpen(false);
+                          setCountrySearch('');
+                        }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", filterValue === country ? "opacity-100" : "opacity-0")} />
+                        {country}
+                      </Button>
+                    ))}
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
           )}
 
           {filterType === "Company" && (
-              <Select
-                  value={filterValue ?? ''}
-                  onValueChange={handleFilterValueChange}
-                  disabled={companyOptions.length === 0}
-              >
-                  <SelectTrigger className="w-full md:w-[220px]">
-                      <SelectValue placeholder="Select a company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      {companyOptions.map(company => (
-                          <SelectItem key={company} value={company}>{company}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
+            <Popover open={companyPopoverOpen} onOpenChange={setCompanyPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-full md:w-[220px] justify-between">
+                  {filterValue || "Select a company..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[220px] p-0">
+                <div className="p-2">
+                  <Input placeholder="Search company..." value={companySearch} onChange={(e) => setCompanySearch(e.target.value)} />
+                </div>
+                <ScrollArea className="h-[200px]">
+                  {filteredCompanies.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No company found.</p>}
+                  {filteredCompanies.map(company => (
+                    <Button
+                      key={company}
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        handleFilterValueChange(company);
+                        setCompanyPopoverOpen(false);
+                        setCompanySearch('');
+                      }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", filterValue === company ? "opacity-100" : "opacity-0")} />
+                      {company}
+                    </Button>
+                  ))}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
           )}
       </div>
 
