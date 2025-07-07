@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,6 +41,7 @@ function CreateProblemSheetClient() {
 
     const [selectedProblemIds, setSelectedProblemIds] = useState<Set<string>>(new Set());
     const [sheetName, setSheetName] = useState("");
+    const [sheetDescription, setSheetDescription] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     
     useEffect(() => {
@@ -69,6 +71,7 @@ function CreateProblemSheetClient() {
                             return;
                         }
                         setSheetName(sheetData.name);
+                        setSheetDescription(sheetData.description || "");
                         setSelectedProblemIds(new Set(sheetData.problemIds));
                     } else {
                         toast({ variant: 'destructive', title: 'Sheet not found' });
@@ -161,6 +164,7 @@ function CreateProblemSheetClient() {
                  const sheetDocRef = doc(db, 'problem-sheets', sheetId);
                  await updateDoc(sheetDocRef, {
                     name: sheetName,
+                    description: sheetDescription,
                     problemIds: problemIds,
                  });
                  toast({ title: "Sheet updated successfully!" });
@@ -169,6 +173,7 @@ function CreateProblemSheetClient() {
                 const sheetsCollection = collection(db, 'problem-sheets');
                 const newSheetDoc = await addDoc(sheetsCollection, {
                     name: sheetName,
+                    description: sheetDescription,
                     problemIds: problemIds,
                     createdBy: authUser.uid,
                     creatorName: userData.name,
@@ -294,6 +299,12 @@ function CreateProblemSheetClient() {
                                 placeholder="Enter sheet name..."
                                 value={sheetName}
                                 onChange={(e) => setSheetName(e.target.value)}
+                            />
+                            <Textarea
+                                placeholder="Enter a short description..."
+                                value={sheetDescription}
+                                onChange={(e) => setSheetDescription(e.target.value)}
+                                className="h-24"
                             />
                             <p className="text-sm font-medium text-muted-foreground">
                                 Selected Problems ({selectedProblems.length})

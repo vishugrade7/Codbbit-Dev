@@ -149,6 +149,7 @@ export type ApexProblemsData = {
 export type ProblemSheet = {
   id: string;
   name: string;
+  description?: string;
   createdBy: string; // User UID
   creatorName: string;
   creatorAvatarUrl: string;

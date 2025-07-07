@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, Users, Pencil, Bookmark, FileText } from "lucide-react";
+import { Loader2, PlusCircle, Users, Pencil, Bookmark, FileText, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
@@ -19,16 +19,6 @@ import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { toggleSheetFollow } from "../sheets/actions";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-
-
-const cardColorClasses = [
-  "bg-blue-100/50 dark:bg-blue-900/30 hover:border-blue-500/50",
-  "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
-  "bg-cyan-100/50 dark:bg-cyan-900/30 hover:border-cyan-500/50",
-  "bg-indigo-100/50 dark:bg-indigo-900/30 hover:border-indigo-500/50",
-  "bg-teal-100/50 dark:bg-teal-900/30 hover:border-teal-500/50",
-];
 
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
@@ -98,15 +88,6 @@ export default function ProblemSheetsListPage() {
     return sheets;
   }, [sheets, filterMode, userData, authUser]);
 
-  const getRelativeDate = (date: any) => {
-    if (!date) return 'Just now';
-    try {
-      return formatDistanceToNow(date.toDate(), { addSuffix: true });
-    } catch (e) {
-      return 'Just now';
-    }
-  };
-
   return (
     <main className="flex-1 container py-8">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
@@ -140,10 +121,9 @@ export default function ProblemSheetsListPage() {
         </div>
       ) : filteredSheets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSheets.map((sheet, index) => {
+          {filteredSheets.map((sheet) => {
             const isCreator = authUser?.uid === sheet.createdBy;
             const followersCount = sheet.followers?.length || 0;
-            const colorClass = cardColorClasses[index % cardColorClasses.length];
             const totalProblems = sheet.problemIds.length;
             const solvedCount = authUser && userData ? sheet.problemIds.filter(id => userData.solvedProblems?.[id]).length : 0;
             const progressPercentage = totalProblems > 0 ? (solvedCount / totalProblems) * 100 : 0;
@@ -151,90 +131,81 @@ export default function ProblemSheetsListPage() {
             const isTogglingThisFollow = isTogglingFollow === sheet.id;
 
             return (
-              <div key={sheet.id} className="relative group">
-                {isCreator && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8 z-10 bg-card/80 hover:bg-card"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/problem-sheets/create?id=${sheet.id}`);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit Sheet</span>
-                  </Button>
-                )}
-                {!isCreator && authUser && (
-                  <div className="absolute top-3 right-3 z-10">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 bg-card/80 hover:bg-card"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleFollow(sheet.id);
-                            }}
-                            disabled={isTogglingThisFollow}
-                           >
-                            {isTogglingThisFollow ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bookmark className={cn("h-4 w-4", isFollowed && "fill-current")}/>}
-                           </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{isFollowed ? "Unfollow" : "Follow"}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+              <Card key={sheet.id} className="flex flex-col h-full overflow-hidden bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 border">
+                  {isCreator && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-10 right-3 h-8 w-8 z-10 bg-card/80 hover:bg-card"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(`/problem-sheets/create?id=${sheet.id}`);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit Sheet</span>
+                    </Button>
+                  )}
+                  {/* Top progress bar */}
+                  {authUser && (
+                      <div className="h-[30px] px-3 bg-orange-100 dark:bg-orange-900/30 relative flex items-center">
+                          <div 
+                              className="h-1.5 bg-orange-400 rounded-full transition-all duration-500"
+                              style={{ width: `${progressPercentage}%` }}
+                          />
+                          <span className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold text-orange-900 dark:text-orange-200">
+                              {Math.round(progressPercentage)}%
+                          </span>
+                      </div>
+                  )}
+
+                  <div className="p-4 flex-grow flex flex-col">
+                      <div className="flex justify-between items-start">
+                          <Link href={`/sheets/${sheet.id}`} className="block flex-1 pr-4">
+                              <CardTitle className="text-base font-bold hover:underline">{sheet.name}</CardTitle>
+                          </Link>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+                              <Users className="h-4 w-4" />
+                              <span>{followersCount.toLocaleString()} Followers</span>
+                          </div>
+                      </div>
+
+                      {sheet.description && (
+                          <Link href={`/sheets/${sheet.id}`} className="block mt-2">
+                              <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                                  {sheet.description}
+                              </CardDescription>
+                          </Link>
+                      )}
+
+                      <div className="mt-auto pt-4 flex justify-between items-center">
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <ClipboardList className="h-4 w-4" />
+                              <span>{sheet.problemIds.length} questions</span>
+                          </div>
+
+                          {!isCreator && authUser && (
+                              <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                      e.preventDefault();
+                                      handleFollow(sheet.id);
+                                  }}
+                                  disabled={isTogglingThisFollow}
+                                  className={cn(
+                                      "w-[110px]",
+                                      isFollowed
+                                          ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                          : "bg-orange-500 text-white hover:bg-orange-600"
+                                  )}
+                              >
+                                  {isTogglingThisFollow ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bookmark className="h-4 w-4"/>}
+                                  <span>{isFollowed ? "Following" : "Follow"}</span>
+                              </Button>
+                          )}
+                      </div>
                   </div>
-                )}
-                  <Card className={cn(
-                      "flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent backdrop-blur-sm h-full",
-                      colorClass
-                  )}>
-                    <Link href={`/sheets/${sheet.id}`} className="block flex-grow">
-                      <CardHeader>
-                          <CardTitle className="pr-10">{sheet.name}</CardTitle>
-                          <CardDescription>
-                            {sheet.problemIds.length} {sheet.problemIds.length === 1 ? "Problem" : "Problems"}
-                          </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-grow flex flex-col justify-end">
-                        {authUser && totalProblems > 0 && (
-                            <div className="mb-4">
-                                <Progress value={progressPercentage} className="h-2" />
-                                <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {totalProblems} solved</p>
-                            </div>
-                        )}
-                        <div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                    <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <span>
-                                    By {sheet.creatorName}
-                                </span>
-                            </div>
-                        </div>
-                      </CardContent>
-                    </Link>
-                     <CardFooter className="flex-col items-stretch gap-3 !pt-4">
-                        <div className="flex justify-between w-full items-center text-xs text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                               <Users className="h-4 w-4" />
-                               <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
-                            </div>
-                            <span>
-                              {getRelativeDate(sheet.createdAt)}
-                            </span>
-                        </div>
-                      </CardFooter>
-                  </Card>
-              </div>
+              </Card>
             );
           })}
         </div>
