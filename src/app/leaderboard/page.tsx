@@ -10,6 +10,7 @@ import type { LeaderboardUser, Problem, ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { getCache, setCache } from "@/lib/cache";
+import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,14 +19,16 @@ import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star } from "lu
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
 const getMedalColor = (rank: number) => {
-  if (rank === 1) return 'border-yellow-400 bg-yellow-400/10 hover:bg-yellow-400/20';
-  if (rank === 2) return 'border-slate-400 bg-slate-400/10 hover:bg-slate-400/20';
-  if (rank === 3) return 'border-orange-500 bg-orange-500/10 hover:bg-orange-500/20';
-  return 'border-border';
+  if (rank === 1) return 'bg-yellow-400/10 hover:bg-yellow-400/20';
+  if (rank === 2) return 'bg-slate-400/10 hover:bg-slate-400/20';
+  if (rank === 3) return 'bg-orange-500/10 hover:bg-orange-500/20';
+  return '';
 };
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -36,6 +39,7 @@ export default function Leaderboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const { user: authUser, userData } = useAuth();
+  const router = useRouter();
 
   const [filterType, setFilterType] = useState<"Global" | "Country" | "Company">("Global");
   const [filterValue, setFilterValue] = useState<string | null>(null);
@@ -317,49 +321,57 @@ export default function Leaderboard() {
           )}
       </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {paginatedData.map((user) => (
-            <Link key={user.id} href={`/profile/${user.username}`} className="block">
-              <Card className={cn("hover:-translate-y-1 transition-transform duration-300 h-full", getMedalColor(user.rank))}>
-                <CardContent className="p-4 flex flex-col text-center items-center">
-                    <div className="relative mb-2">
-                        <Avatar className="h-16 w-16 border-2 border-background shadow-md">
-                            <AvatarImage src={user.avatarUrl} alt={user.name} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-0.5">
-                            <div className={cn("h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs", getMedalColor(user.rank))}>
-                                {user.rank}
-                            </div>
-                        </div>
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px] text-center">Rank</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Country</TableHead>
+                <TableHead className="text-right">Points</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map((user) => (
+                <TableRow
+                  key={user.id}
+                  className={cn("cursor-pointer", getMedalColor(user.rank))}
+                  onClick={() => router.push(`/profile/${user.username}`)}
+                >
+                  <TableCell className="text-center">
+                    <span className="font-bold text-lg">{user.rank}</span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">@{user.username}</p>
+                      </div>
                     </div>
-                  
-                    <h3 className="font-semibold text-sm truncate">{user.name}</h3>
-                    <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
-                    
-                    <div className="my-3 w-full">
-                       <p className="text-xl font-bold font-mono">{user.points.toLocaleString()}</p>
-                       <p className="text-xs text-muted-foreground uppercase">Points</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                        {user.company && (
-                            <div className="flex items-center gap-1.5">
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {user.company && (
+                          <>
                             {user.companyLogoUrl ? (
-                                <Image src={user.companyLogoUrl} alt={user.company} width={14} height={14} className="rounded-sm object-contain"/>
-                            ) : ( <Building className="h-3.5 w-3.5" /> )}
-                            <span className="truncate">{user.company}</span>
-                            </div>
-                        )}
-                         {user.country && user.company && (<span className="text-muted-foreground/50">|</span>)}
-                        {user.country && (
-                            <div className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /><span>{user.country}</span></div>
-                        )}
+                                <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="rounded-sm object-contain"/>
+                            ) : ( <Building className="h-4 w-4" /> )}
+                            <span>{user.company}</span>
+                          </>
+                      )}
                     </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                  </TableCell>
+                  <TableCell>{user.country === 'N/A' ? '' : user.country}</TableCell>
+                  <TableCell className="text-right font-bold text-lg font-mono">{user.points.toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
 
       {totalPages > 1 && (
