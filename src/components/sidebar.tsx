@@ -67,9 +67,12 @@ export default function Sidebar() {
               <TooltipTrigger asChild>
                 <Button
                   asChild
-                  variant={pathname === item.href ? 'secondary' : 'ghost'}
+                  variant="ghost"
                   size="icon"
-                  className="rounded-lg"
+                  className={cn(
+                    "rounded-lg",
+                    pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/20"
+                  )}
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
@@ -86,9 +89,12 @@ export default function Sidebar() {
               <TooltipTrigger asChild>
                 <Button
                   asChild
-                  variant={pathname === item.href ? 'secondary' : 'ghost'}
+                  variant="ghost"
                   size="icon"
-                  className="rounded-lg"
+                  className={cn(
+                    "rounded-lg",
+                    pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/20"
+                  )}
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
