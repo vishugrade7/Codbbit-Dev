@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { collection, query, orderBy, getDocs, doc, getDoc, limit } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, getDoc, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { LeaderboardUser, Problem, ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +14,7 @@ import { getCache, setCache } from "@/lib/cache";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +81,7 @@ export default function Leaderboard() {
   useEffect(() => {
     if (allProblems.length > 0 && userData?.solvedProblems) {
         const solvedIds = new Set(Object.keys(userData.solvedProblems));
-        const unsolvedProblems = allProblems.filter(p => !solvedIds.has(p.id));
+        const unsolvedProblems = allProblems.filter(p => !p.isPremium && !solvedIds.has(p.id));
 
         if (unsolvedProblems.length > 0) {
             const randomIndex = Math.floor(Math.random() * unsolvedProblems.length);
@@ -92,37 +92,36 @@ export default function Leaderboard() {
     }
   }, [allProblems, userData]);
 
+  // Real-time listener for leaderboard data
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      setLoading(true);
-      try {
-        const usersRef = collection(db, "users");
-        // Fetch only the top 100 users for performance
-        const q = query(usersRef, orderBy("points", "desc"), limit(100));
-        const querySnapshot = await getDocs(q);
+    if (!db) return;
+    setLoading(true);
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, orderBy("points", "desc"), limit(100));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const users: LeaderboardUser[] = querySnapshot.docs.map((doc, index) => {
-          const data = doc.data();
-          return {
-            rank: index + 1, // This is the global rank
-            id: doc.id,
-            name: data.name || 'N/A',
-            username: data.username || `user${doc.id.substring(0,5)}`,
-            avatarUrl: data.avatarUrl || '',
-            points: data.points || 0,
-            country: data.country || 'N/A',
-            company: data.company || '',
-            companyLogoUrl: data.companyLogoUrl || ''
-          };
+            const data = doc.data();
+            return {
+                rank: index + 1,
+                id: doc.id,
+                name: data.name || 'N/A',
+                username: data.username || `user${doc.id.substring(0,5)}`,
+                avatarUrl: data.avatarUrl || '',
+                points: data.points || 0,
+                country: data.country || 'N/A',
+                company: data.company || '',
+                companyLogoUrl: data.companyLogoUrl || ''
+            };
         });
         setLeaderboardData(users);
-      } catch (error) {
-        console.error("Error fetching leaderboard data:", error);
-      } finally {
         setLoading(false);
-      }
-    };
+    }, (error) => {
+        console.error("Error fetching real-time leaderboard data:", error);
+        setLoading(false);
+    });
 
-    fetchLeaderboard();
+    return () => unsubscribe();
   }, []);
 
   const countryOptions = useMemo(() => {
@@ -134,18 +133,19 @@ export default function Leaderboard() {
     const companies = new Set(leaderboardData.map(u => u.company).filter(Boolean));
     return Array.from(companies).sort();
   }, [leaderboardData]);
-
-  useEffect(() => {
+  
+  const handleFilterTypeChange = (value: "Global" | "Country" | "Company") => {
+    setFilterType(value);
     setCurrentPage(1);
-    if (filterType === 'Country') {
+    if (value === 'Country') {
       setFilterValue(countryOptions[0] || null);
-    } else if (filterType === 'Company') {
+    } else if (value === 'Company') {
       setFilterValue(companyOptions[0] || null);
     } else {
       setFilterValue(null);
     }
-  }, [filterType, countryOptions, companyOptions]);
-  
+  };
+
   const filteredData = useMemo(() => {
     let data = leaderboardData;
     if (filterType === "Country" && filterValue) {
@@ -318,8 +318,8 @@ export default function Leaderboard() {
         </div>
       )}
       
-      <div className="mb-16 flex flex-col md:flex-row justify-center items-center gap-4">
-          <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-auto">
+      <div className="mb-12 flex flex-col md:flex-row justify-center items-center gap-4">
+          <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
               <TabsList>
                   <TabsTrigger value="Global">Global</TabsTrigger>
                   <TabsTrigger value="Country">By Country</TabsTrigger>
@@ -542,5 +542,4 @@ export default function Leaderboard() {
   );
 }
 
-    
     
