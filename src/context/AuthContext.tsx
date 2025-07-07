@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -101,8 +101,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, toast]);
 
+  const value = useMemo(() => ({ user, userData, loading, isPro }), [user, userData, loading, isPro]);
+
   return (
-    <AuthContext.Provider value={{ user, userData, loading, isPro }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
