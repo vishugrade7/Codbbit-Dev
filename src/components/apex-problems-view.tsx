@@ -168,19 +168,28 @@ export default function ApexProblemsView() {
                             <Progress value={progressPercentage} className={cn("h-2", theme.progressBg)} indicatorClassName={theme.progressFg} />
                          </div>
                       )}
-                      <div className="space-y-2 text-sm">
-                          <div className="flex justify-between items-center">
-                              <span className="text-green-600 dark:text-green-400 font-medium">Easy</span>
-                              <span className={cn("font-semibold", theme.title)}>{category.difficulties.Easy}</span>
-                          </div>
-                           <div className="flex justify-between items-center">
-                              <span className="text-primary font-medium">Medium</span>
-                              <span className={cn("font-semibold", theme.title)}>{category.difficulties.Medium}</span>
-                          </div>
-                           <div className="flex justify-between items-center">
-                              <span className="text-destructive font-medium">Hard</span>
-                              <span className={cn("font-semibold", theme.title)}>{category.difficulties.Hard}</span>
-                          </div>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                <span className="text-green-500">Easy</span>
+                                <span className={cn("font-semibold", theme.title)}>{category.difficulties.Easy}</span>
+                            </div>
+                            <Progress value={category.problemCount > 0 ? (category.difficulties.Easy / category.problemCount) * 100 : 0} className={cn("h-1.5", theme.progressBg)} indicatorClassName="bg-green-500" />
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                <span className="text-primary">Medium</span>
+                                <span className={cn("font-semibold", theme.title)}>{category.difficulties.Medium}</span>
+                            </div>
+                            <Progress value={category.problemCount > 0 ? (category.difficulties.Medium / category.problemCount) * 100 : 0} className={cn("h-1.5", theme.progressBg)} indicatorClassName="bg-primary" />
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                <span className="text-destructive">Hard</span>
+                                <span className={cn("font-semibold", theme.title)}>{category.difficulties.Hard}</span>
+                            </div>
+                            <Progress value={category.problemCount > 0 ? (category.difficulties.Hard / category.problemCount) * 100 : 0} className={cn("h-1.5", theme.progressBg)} indicatorClassName="bg-destructive" />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
