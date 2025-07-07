@@ -109,8 +109,6 @@ export default function Home() {
 
             {/* Card 3: Competitive Learning */}
             <div className="relative flex flex-col justify-between p-8 min-h-[18rem] group bg-card overflow-hidden">
-              <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/20 via-card to-card" />
-              
               <div className="relative z-10">
                   <Trophy className="h-8 w-8 text-primary transition-colors duration-500" />
               </div>
