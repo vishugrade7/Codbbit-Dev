@@ -13,11 +13,12 @@ import { cn } from "@/lib/utils";
 import { Loader2, BookOpen, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isPro } = useAuth();
+  const { isPro, userData } = useAuth();
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -28,12 +29,10 @@ export default function Courses() {
       setLoading(true);
       try {
         const coursesRef = collection(db, "courses");
-        // Removed orderBy to avoid needing a composite index, sorting will be done on the client.
         const q = query(coursesRef, where("isPublished", "==", true));
         const querySnapshot = await getDocs(q);
         const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
         
-        // Sort client-side to ensure newest courses appear first.
         coursesData.sort((a, b) => {
           const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
           const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
@@ -68,9 +67,20 @@ export default function Courses() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {courses.map((course) => {
             const isLocked = course.isPremium && !isPro;
+
+            const totalLessons = course.modules.reduce((acc, mod) => acc + mod.lessons.length, 0);
+            const allLessonIds = new Set(course.modules.flatMap(m => m.lessons.map(l => l.id)));
+            const completedInCourse = userData?.completedLessons 
+                ? Object.keys(userData.completedLessons).filter(id => allLessonIds.has(id)).length 
+                : 0;
+            const progressPercentage = totalLessons > 0 ? (completedInCourse / totalLessons) * 100 : 0;
+
             return (
             <Link key={course.id} href={`/courses/${course.id}`} className="block group">
               <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30 h-full flex flex-col">
+                 {userData && totalLessons > 0 && (
+                    <Progress value={progressPercentage} className="h-1 rounded-none" />
+                )}
                 <CardContent className="p-0 flex flex-col flex-grow">
                   <div className="aspect-video relative">
                      {isLocked && (
@@ -94,6 +104,17 @@ export default function Courses() {
                       <h3 className="font-semibold leading-snug group-hover:text-primary transition-colors text-sm">
                           {course.title || 'Untitled Course'}
                       </h3>
+                      {userData && totalLessons > 0 ? (
+                            <div className="mt-auto pt-2">
+                                <p className="text-xs text-muted-foreground text-right">{completedInCourse} / {totalLessons} lessons</p>
+                            </div>
+                        ) : !userData && totalLessons > 0 ? (
+                            <div className="mt-auto pt-2">
+                                <p className="text-muted-foreground text-xs">
+                                    <Link href="/login" className="underline text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>Log in</Link> to track progress.
+                                </p>
+                            </div>
+                        ) : null}
                   </div>
                 </CardContent>
               </Card>
