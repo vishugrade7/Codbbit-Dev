@@ -9,12 +9,14 @@ import Testimonials from "@/components/testimonials";
 import { cn } from "@/lib/utils";
 
 
-const FloatingCard = ({ className, children }: { className?: string, children: React.ReactNode }) => (
-    <Card 
-        className={cn("absolute p-3 rounded-lg shadow-xl backdrop-blur-sm bg-black/20 border-white/10 text-white animate-counter-revolve", className)}
-    >
-        {children}
-    </Card>
+const FloatingCard = ({ positionClass, children }: { positionClass: string, children: React.ReactNode }) => (
+    <div className={cn("absolute", positionClass)}>
+        <div className="animate-counter-revolve h-full w-full">
+            <Card className="p-3 rounded-lg shadow-xl backdrop-blur-lg bg-black/30 border-white/10 text-white h-full">
+                {children}
+            </Card>
+        </div>
+    </div>
 );
 
 export default function Home() {
@@ -49,7 +51,7 @@ export default function Home() {
             
             {/* Revolving cards around the text */}
             <div className="absolute inset-0 animate-revolve hidden md:block">
-                <FloatingCard className="top-0 -left-16 w-48">
+                <FloatingCard positionClass="top-0 -left-16 w-48 h-auto">
                     <div className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-sky-300"/>
                         <h4 className="font-semibold text-white">SOQL Query</h4>
@@ -57,7 +59,7 @@ export default function Home() {
                     <p className="text-xs mt-1 text-sky-200/80">SELECT Name FROM Account</p>
                 </FloatingCard>
 
-                <FloatingCard className="bottom-0 -right-16 w-56">
+                <FloatingCard positionClass="bottom-0 -right-16 w-56 h-auto">
                     <div className="flex items-center gap-2">
                         <Layers className="h-5 w-5 text-indigo-300"/>
                         <h4 className="font-semibold text-white">LWC Component</h4>
@@ -65,14 +67,14 @@ export default function Home() {
                     <p className="text-xs mt-1 text-indigo-200/80">&lt;lightning-card title="Hello"/&gt;</p>
                 </FloatingCard>
 
-                <FloatingCard className="top-10 -right-24 w-40">
+                <FloatingCard positionClass="top-10 -right-24 w-40 h-auto">
                     <div className="flex items-center gap-2">
                         <FileCode className="h-5 w-5 text-rose-300"/>
                         <h4 className="font-semibold text-white">Apex Class</h4>
                     </div>
                 </FloatingCard>
 
-                <FloatingCard className="bottom-10 -left-24 w-32">
+                <FloatingCard positionClass="bottom-10 -left-24 w-32 h-auto">
                     <div className="flex items-center gap-2">
                         <Trophy className="h-5 w-5 text-amber-300"/>
                         <h4 className="font-semibold text-white">+10 Points</h4>
