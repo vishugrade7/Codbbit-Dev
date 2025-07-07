@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,6 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    sessionStorage.setItem('isLoggingIn', 'true');
 
     if (!auth) {
         toast({
@@ -63,13 +62,27 @@ export default function LoginPage() {
             description: "Firebase is not configured. Please check your environment variables.",
         });
         setIsLoading(false);
-        sessionStorage.removeItem('isLoggingIn');
         return;
     }
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
+      
+      if (!user.emailVerified) {
+          await sendEmailVerification(user);
+          await auth.signOut();
+          toast({
+              variant: "destructive",
+              title: "Email Not Verified",
+              description: "Please check your inbox to verify your email. A new verification link has been sent.",
+              duration: 9000,
+          });
+          setIsLoading(false);
+          return;
+      }
+
+      sessionStorage.setItem('isLoggingIn', 'true');
 
       // Force a new session to be created to log out other devices.
       const newSessionId = crypto.randomUUID();
@@ -88,7 +101,6 @@ export default function LoginPage() {
         title: "Login failed",
         description: "Invalid email or password. Please try again.",
       });
-      sessionStorage.removeItem('isLoggingIn'); // Remove flag on failure
     } finally {
       setIsLoading(false);
     }

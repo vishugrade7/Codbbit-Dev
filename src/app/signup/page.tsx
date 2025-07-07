@@ -8,7 +8,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { countries } from "@/lib/countries";
@@ -171,7 +171,6 @@ export default function SignupPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    sessionStorage.setItem('isLoggingIn', 'true');
 
     if (!auth || !db) {
         toast({
@@ -180,7 +179,6 @@ export default function SignupPage() {
             description: "Firebase is not configured. Please check your environment variables.",
         });
         setIsLoading(false);
-        sessionStorage.removeItem('isLoggingIn');
         return;
     }
 
@@ -191,9 +189,6 @@ export default function SignupPage() {
       const companyLogoUrl = companyLogo || '';
       const userInitials = values.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
       const avatarUrl = `https://placehold.co/128x128.png?text=${userInitials}`;
-
-      const sessionId = crypto.randomUUID();
-      sessionStorage.setItem('appSessionId', sessionId);
 
       await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
@@ -220,14 +215,16 @@ export default function SignupPage() {
           maxStreak: 0,
           lastSolvedDate: "",
           starredProblems: [],
-          activeSessionId: sessionId,
       });
+      
+      await sendEmailVerification(user);
 
       toast({
-        title: "Account created",
-        description: "You have successfully created an account.",
+        title: "Verification Email Sent",
+        description: "Please check your inbox and verify your email to log in.",
+        duration: 9000,
       });
-      router.push("/");
+      router.push("/login");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -236,7 +233,6 @@ export default function SignupPage() {
             ? 'This email is already associated with an account.'
             : 'An unexpected error occurred. Please try again.',
       });
-      sessionStorage.removeItem('isLoggingIn'); // Remove flag on failure
     } finally {
         setIsLoading(false);
     }
