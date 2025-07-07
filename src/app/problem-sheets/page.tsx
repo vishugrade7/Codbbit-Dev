@@ -9,8 +9,8 @@ import type { ProblemSheet } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, FileText, ChevronRight, Users, Pencil } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, PlusCircle, FileText, ChevronRight, Users, Pencil, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { toggleSheetFollow } from "../sheets/actions";
 
 const cardColorClasses = [
   "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
@@ -34,7 +35,8 @@ export default function ProblemSheetsListPage() {
   const { user: authUser, userData } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const [filterMode, setFilterMode] = useState<'all' | 'my-sheets' | 'subscribed'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'my-sheets' | 'following'>('all');
+  const [isTogglingFollow, setIsTogglingFollow] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -59,11 +61,34 @@ export default function ProblemSheetsListPage() {
     fetchSheets();
   }, []);
 
+  const handleFollow = async (sheetId: string) => {
+    if (!authUser) {
+        toast({ variant: 'destructive', title: 'Please log in to follow sheets.' });
+        return;
+    }
+    setIsTogglingFollow(sheetId);
+    const isCurrentlyFollowing = userData?.followingSheetIds?.includes(sheetId) ?? false;
+    const result = await toggleSheetFollow(authUser.uid, sheetId, isCurrentlyFollowing);
+
+    if (result.success) {
+        toast({
+            title: result.message,
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'An error occurred',
+            description: result.error,
+        });
+    }
+    setIsTogglingFollow(null);
+  };
+
   const filteredSheets = useMemo(() => {
-    if (filterMode === 'subscribed') {
-      if (!userData?.subscribedSheetIds) return [];
-      const subscribedIds = new Set(userData.subscribedSheetIds);
-      return sheets.filter(sheet => subscribedIds.has(sheet.id));
+    if (filterMode === 'following') {
+      if (!userData?.followingSheetIds) return [];
+      const followingIds = new Set(userData.followingSheetIds);
+      return sheets.filter(sheet => followingIds.has(sheet.id));
     }
     if (filterMode === 'my-sheets') {
         if (!authUser) return [];
@@ -103,7 +128,7 @@ export default function ProblemSheetsListPage() {
               <TabsList>
                   <TabsTrigger value="all">All Sheets</TabsTrigger>
                   <TabsTrigger value="my-sheets" disabled={!authUser}>My Sheets</TabsTrigger>
-                  <TabsTrigger value="subscribed" disabled={!authUser}>Subscribed</TabsTrigger>
+                  <TabsTrigger value="following" disabled={!authUser}>Following</TabsTrigger>
               </TabsList>
           </Tabs>
       </div>
@@ -116,11 +141,13 @@ export default function ProblemSheetsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSheets.map((sheet, index) => {
             const isCreator = authUser?.uid === sheet.createdBy;
-            const subscribersCount = sheet.subscribers?.length || 0;
+            const followersCount = sheet.followers?.length || 0;
             const colorClass = cardColorClasses[index % cardColorClasses.length];
             const totalProblems = sheet.problemIds.length;
             const solvedCount = authUser && userData ? sheet.problemIds.filter(id => userData.solvedProblems?.[id]).length : 0;
             const progressPercentage = totalProblems > 0 ? (solvedCount / totalProblems) * 100 : 0;
+            const isFollowed = !!(authUser && userData?.followingSheetIds?.includes(sheet.id));
+            const isTogglingThisFollow = isTogglingFollow === sheet.id;
 
             return (
               <div key={sheet.id} className="relative group">
@@ -138,54 +165,58 @@ export default function ProblemSheetsListPage() {
                     <span className="sr-only">Edit Sheet</span>
                   </Button>
                 )}
-                <Link href={`/sheets/${sheet.id}`} className="block">
                   <Card className={cn(
-                      "flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent backdrop-blur-sm",
+                      "flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent backdrop-blur-sm h-full",
                       colorClass
                   )}>
-                    <CardHeader>
-                        <CardTitle className="flex items-start gap-3 pr-10">
-                          <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
-                          <span className="flex-1">{sheet.name}</span>
-                        </CardTitle>
-                        <CardDescription>
-                          {sheet.problemIds.length} {sheet.problemIds.length === 1 ? "Problem" : "Problems"}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col justify-end">
-                      {authUser && totalProblems > 0 && (
-                          <div className="mb-4">
-                              <Progress value={progressPercentage} className="h-2" />
-                              <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {totalProblems} solved</p>
-                          </div>
-                      )}
-                       <div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Avatar className="h-6 w-6">
-                                  <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                  <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <span>
-                                  By {sheet.creatorName}
-                              </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
-                              <Users className="h-4 w-4" />
-                              <span>{subscribersCount} {subscribersCount === 1 ? 'subscriber' : 'subscribers'}</span>
-                          </div>
-                       </div>
-                    </CardContent>
-                     <div className="p-4 pt-2 flex justify-between items-center text-xs text-muted-foreground">
-                          <span>
-                            {getRelativeDate(sheet.createdAt)}
-                          </span>
-                          <div className="flex items-center text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                              <span>View Sheet</span>
-                              <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                          </div>
-                      </div>
+                    <Link href={`/sheets/${sheet.id}`} className="block flex-grow">
+                      <CardHeader>
+                          <CardTitle className="flex items-start gap-3 pr-10">
+                            <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                            <span className="flex-1">{sheet.name}</span>
+                          </CardTitle>
+                          <CardDescription>
+                            {sheet.problemIds.length} {sheet.problemIds.length === 1 ? "Problem" : "Problems"}
+                          </CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow flex flex-col justify-end">
+                        {authUser && totalProblems > 0 && (
+                            <div className="mb-4">
+                                <Progress value={progressPercentage} className="h-2" />
+                                <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {totalProblems} solved</p>
+                            </div>
+                        )}
+                        <div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                    <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span>
+                                    By {sheet.creatorName}
+                                </span>
+                            </div>
+                        </div>
+                      </CardContent>
+                    </Link>
+                     <CardFooter className="flex-col items-stretch gap-3 !pt-4">
+                        <div className="flex justify-between w-full items-center text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                               <Users className="h-4 w-4" />
+                               <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
+                            </div>
+                            <span>
+                              {getRelativeDate(sheet.createdAt)}
+                            </span>
+                        </div>
+                        {authUser && !isCreator && (
+                          <Button onClick={() => handleFollow(sheet.id)} variant={isFollowed ? 'secondary' : 'default'} size="sm" className="w-full" disabled={isTogglingThisFollow}>
+                            {isTogglingThisFollow ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : (isFollowed ? <UserCheck className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/>)}
+                            {isFollowed ? 'Following' : 'Follow'}
+                          </Button>
+                        )}
+                      </CardFooter>
                   </Card>
-                </Link>
               </div>
             );
           })}
@@ -196,12 +227,12 @@ export default function ProblemSheetsListPage() {
               <h3 className="mt-4 text-lg font-semibold">
                   {filterMode === 'all' && 'No Problem Sheets Yet'}
                   {filterMode === 'my-sheets' && 'You haven\'t created any sheets'}
-                  {filterMode === 'subscribed' && 'No Subscribed Sheets'}
+                  {filterMode === 'following' && 'No Followed Sheets'}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                   {filterMode === 'all' && 'Get started by creating a new sheet.'}
                   {filterMode === 'my-sheets' && 'Create a sheet to see it here.'}
-                  {filterMode === 'subscribed' && 'Subscribe to sheets to see them here.'}
+                  {filterMode === 'following' && 'Follow sheets to see them here.'}
               </p>
           </div>
       )}

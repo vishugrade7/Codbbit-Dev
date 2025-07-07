@@ -51,7 +51,7 @@ export type User = {
   currentStreak?: number;
   maxStreak?: number;
   lastSolvedDate?: string; // YYYY-MM-DD
-  subscribedSheetIds?: string[];
+  followingSheetIds?: string[];
   completedLessons?: { [lessonId: string]: any }; // Firestore Timestamp
 
   // Razorpay Payment Fields
@@ -155,7 +155,7 @@ export type ProblemSheet = {
   createdAt: any; // Firestore Timestamp
   isPublic: boolean;
   problemIds: string[];
-  subscribers?: string[];
+  followers?: string[];
 };
 
 export type NavLink = {

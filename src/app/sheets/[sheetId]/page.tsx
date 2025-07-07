@@ -8,7 +8,7 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
-import { toggleSheetSubscription } from '../actions';
+import { toggleSheetFollow } from '../actions';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,9 +34,9 @@ export default function SheetDisplayPage() {
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
     const [problems, setProblems] = useState<ProblemDetailWithCategory[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isSubscribed, setIsSubscribed] = useState(false);
-    const [subscribersCount, setSubscribersCount] = useState(0);
-    const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isFollowed, setIsFollowed] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [isTogglingFollow, setIsTogglingFollow] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState("All");
@@ -60,12 +60,12 @@ export default function SheetDisplayPage() {
             const sheetData = { id: sheetSnap.id, ...sheetSnap.data() } as ProblemSheet;
             setSheet(sheetData);
 
-            const subscribers = sheetData.subscribers || [];
-            setSubscribersCount(subscribers.length);
+            const followers = sheetData.followers || [];
+            setFollowersCount(followers.length);
             if (authUser) {
-                setIsSubscribed(subscribers.includes(authUser.uid));
+                setIsFollowed(followers.includes(authUser.uid));
             } else {
-                setIsSubscribed(false);
+                setIsFollowed(false);
             }
             
             if (sheetData.problemIds && sheetData.problemIds.length > 0) {
@@ -142,20 +142,20 @@ export default function SheetDisplayPage() {
         toast({ title: 'Link copied to clipboard!' });
     };
 
-    const handleToggleSubscription = async () => {
+    const handleToggleFollow = async () => {
         if (!authUser) {
-            toast({ variant: 'destructive', title: 'Please log in to subscribe.' });
+            toast({ variant: 'destructive', title: 'Please log in to follow.' });
             return;
         }
-        if (isSubscribing || !db) return;
+        if (isTogglingFollow || !db) return;
     
-        setIsSubscribing(true);
+        setIsTogglingFollow(true);
     
-        const result = await toggleSheetSubscription(authUser.uid, sheetId, isSubscribed);
+        const result = await toggleSheetFollow(authUser.uid, sheetId, isFollowed);
 
         if (result.success) {
             toast({
-                title: isSubscribed ? 'Unsubscribed successfully' : 'Subscribed successfully',
+                title: result.message,
             });
         } else {
             toast({
@@ -164,7 +164,7 @@ export default function SheetDisplayPage() {
                 description: result.error,
             });
         }
-        setIsSubscribing(false);
+        setIsTogglingFollow(false);
     };
 
     const getDifficultyBadgeClass = (difficulty: string) => {
@@ -239,21 +239,21 @@ export default function SheetDisplayPage() {
                         </div>
                         <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0">
                             <div className="flex flex-row items-center gap-4">
-                                <Button onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
-                                    {isSubscribing ? (
+                                <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow}>
+                                    {isTogglingFollow ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : isSubscribed ? (
+                                    ) : isFollowed ? (
                                         <UserCheck className="mr-2 h-4 w-4" />
                                     ) : (
                                         <UserPlus className="mr-2 h-4 w-4" />
                                     )}
-                                    {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                                    {isFollowed ? 'Following' : 'Follow'}
                                 </Button>
                                 <Button onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
                             </div>
                             <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
                                 <Users className="h-4 w-4" />
-                                <span>{subscribersCount} {subscribersCount === 1 ? 'Subscriber' : 'Subscribers'}</span>
+                                <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
                             </div>
                         </div>
                     </div>
