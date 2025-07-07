@@ -23,12 +23,11 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/comp
 
 
 const cardColorClasses = [
+  "bg-blue-100/50 dark:bg-blue-900/30 hover:border-blue-500/50",
   "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
-  "bg-amber-100/50 dark:bg-amber-900/30 hover:border-amber-500/50",
-  "bg-emerald-100/50 dark:bg-emerald-900/30 hover:border-emerald-500/50",
-  "bg-violet-100/50 dark:bg-violet-900/30 hover:border-violet-500/50",
-  "bg-rose-100/50 dark:bg-rose-900/30 hover:border-rose-500/50",
-  "bg-fuchsia-100/50 dark:bg-fuchsia-900/30 hover:border-fuchsia-500/50",
+  "bg-cyan-100/50 dark:bg-cyan-900/30 hover:border-cyan-500/50",
+  "bg-indigo-100/50 dark:bg-indigo-900/30 hover:border-indigo-500/50",
+  "bg-teal-100/50 dark:bg-teal-900/30 hover:border-teal-500/50",
 ];
 
 export default function ProblemSheetsListPage() {
