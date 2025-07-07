@@ -1,4 +1,3 @@
-
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -112,12 +111,12 @@ export default {
           'to': { opacity: '1', transform: 'translateY(0)' },
         },
         'revolve': {
-            'from': { transform: 'rotate(0deg)' },
-            'to': { transform: 'rotate(360deg)' },
+            'from': { transform: 'rotateX(15deg) rotateY(0deg)' },
+            'to': { transform: 'rotateX(15deg) rotateY(360deg)' },
         },
         'counter-revolve': {
-            'from': { transform: 'rotate(0deg)' },
-            'to': { transform: 'rotate(-360deg)' },
+            'from': { transform: 'rotateY(0deg) rotateX(-15deg)' },
+            'to': { transform: 'rotateY(-360deg) rotateX(-15deg)' },
         },
         'gradient-bg': {
           '0%': { backgroundPosition: '0% 50%' },
