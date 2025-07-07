@@ -17,16 +17,16 @@ import { auth } from '@/lib/firebase';
 import { useTheme } from 'next-themes';
 
 const navItems = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/apex-problems', label: 'Practice', icon: Code },
-  { href: '/courses', label: 'Courses', icon: BookOpenCheck },
-  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-  { href: '/problem-sheets', label: 'Sheets', icon: ClipboardList },
-  { href: '/lwc-playground', label: 'Playground', icon: Play },
+  { href: '/', label: 'Home', icon: Home, animation: 'group-hover:animate-icon-bounce' },
+  { href: '/apex-problems', label: 'Practice', icon: Code, animation: 'group-hover:animate-icon-shake' },
+  { href: '/courses', label: 'Courses', icon: BookOpenCheck, animation: 'group-hover:animate-icon-flip' },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy, animation: 'group-hover:animate-icon-wiggle' },
+  { href: '/problem-sheets', label: 'Sheets', icon: ClipboardList, animation: 'group-hover:animate-icon-shake' },
+  { href: '/lwc-playground', label: 'Playground', icon: Play, animation: 'group-hover:animate-icon-pulse' },
 ];
 
 const adminNavItems = [
-  { href: '/upload-problem', label: 'Admin', icon: UploadCloud }
+  { href: '/upload-problem', label: 'Admin', icon: UploadCloud, animation: 'group-hover:animate-icon-bounce' }
 ];
 
 const getInitials = (name: string) => {
@@ -70,12 +70,12 @@ export default function Sidebar() {
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "rounded-lg",
+                    "rounded-lg group",
                     pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/20"
                   )}
                 >
                   <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className={cn("h-5 w-5", item.animation)} />
                   </Link>
                 </Button>
               </TooltipTrigger>
@@ -92,12 +92,12 @@ export default function Sidebar() {
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "rounded-lg",
+                    "rounded-lg group",
                     pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/20"
                   )}
                 >
                   <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className={cn("h-5 w-5", item.animation)} />
                   </Link>
                 </Button>
               </TooltipTrigger>
@@ -115,10 +115,10 @@ export default function Sidebar() {
                 asChild
                 variant="ghost"
                 size="icon"
-                className="rounded-lg"
+                className="rounded-lg group"
               >
                 <Link href="/contact?type=bug">
-                  <Bug className="h-5 w-5" />
+                  <Bug className="h-5 w-5 group-hover:animate-icon-shake" />
                 </Link>
               </Button>
             </TooltipTrigger>
@@ -132,10 +132,10 @@ export default function Sidebar() {
                 asChild
                 variant="ghost"
                 size="icon"
-                className="rounded-lg"
+                className="rounded-lg group"
               >
                 <Link href="/contact?type=feature">
-                  <Lightbulb className="h-5 w-5" />
+                  <Lightbulb className="h-5 w-5 group-hover:animate-icon-pulse" />
                 </Link>
               </Button>
             </TooltipTrigger>

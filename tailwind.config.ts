@@ -120,6 +120,30 @@ export default {
           '50%': { backgroundPosition: '100% 50%' },
           '100%': { backgroundPosition: '0% 50%' },
         },
+        'icon-wiggle': {
+          '0%': { transform: 'rotate(0)' },
+          '25%': { transform: 'rotate(-10deg)' },
+          '50%': { transform: 'rotate(10deg) scale(1.1)' },
+          '75%': { transform: 'rotate(-5deg)' },
+          '100%': { transform: 'rotate(0)' },
+        },
+        'icon-flip': {
+            '0%': { transform: 'perspective(200px) rotateY(0deg)' },
+            '50%': { transform: 'perspective(200px) rotateY(-25deg) scale(1.1)' },
+            '100%': { transform: 'perspective(200px) rotateY(0deg)' },
+        },
+        'icon-pulse': {
+            '50%': { transform: 'scale(1.2)' },
+        },
+        'icon-shake': {
+            '0%, 100%': { transform: 'translateX(0)' },
+            '25%': { transform: 'translateX(-2px) rotate(-2deg)' },
+            '75%': { transform: 'translateX(2px) rotate(2deg)' },
+        },
+        'icon-bounce': {
+            '0%, 100%': { transform: 'translateY(0)' },
+            '50%': { transform: 'translateY(-4px) scale(1.1)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -129,6 +153,11 @@ export default {
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
         'float': 'float 5s ease-in-out infinite',
         'gradient-bg': 'gradient-bg 10s ease infinite',
+        'icon-wiggle': 'icon-wiggle 0.6s ease-in-out',
+        'icon-flip': 'icon-flip 0.6s ease-in-out',
+        'icon-pulse': 'icon-pulse 0.5s ease-in-out',
+        'icon-shake': 'icon-shake 0.4s ease-in-out',
+        'icon-bounce': 'icon-bounce 0.5s ease-in-out',
       },
     },
   },
