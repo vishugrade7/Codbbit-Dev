@@ -214,7 +214,7 @@ export default function UserProfilePage() {
     <main className="flex-1 relative">
       <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
           {/* User Info Header */}
-          <Card className="bg-gradient-to-br from-card to-muted/30 p-6 -mx-6 -mt-8 mb-8 sm:rounded-xl shadow-lg">
+          <Card className="bg-gradient-to-br from-card to-muted/30 p-6 sm:rounded-xl shadow-lg">
             <div className="flex flex-col sm:flex-row items-center gap-6">
                  <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
                     <Avatar className="h-28 w-28 border-4 border-primary/50">
