@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -157,6 +157,8 @@ export default function ProblemWorkspacePage() {
 
     const [isFullScreen, setIsFullScreen] = useState(false);
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
+    const resultsPanelRef = useRef<ImperativePanelHandle>(null);
+    const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
 
     const [isClient, setIsClient] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
@@ -175,6 +177,18 @@ export default function ProblemWorkspacePage() {
                 panel.collapse();
             }
             setIsFullScreen(!isFullScreen);
+        }
+    };
+    
+    const toggleResultsPanel = () => {
+        const panel = resultsPanelRef.current;
+        if (panel) {
+            if (isResultsCollapsed) {
+                panel.resize(50);
+            } else {
+                panel.collapse();
+            }
+            setIsResultsCollapsed(!isResultsCollapsed);
         }
     };
 
@@ -282,6 +296,13 @@ export default function ProblemWorkspacePage() {
 
         setIsSubmitting(true);
         setResults("");
+
+        // Auto-expand results panel
+        const panel = resultsPanelRef.current;
+        if (panel && isResultsCollapsed) {
+            panel.resize(50);
+            setIsResultsCollapsed(false);
+        }
 
         const response = await submitApexSolution(user.uid, problem, code);
         
@@ -408,8 +429,8 @@ export default function ProblemWorkspacePage() {
     );
 
     const EditorAndResults = () => (
-        <div className="flex flex-col h-full">
-            <div className="flex flex-col flex-1 min-h-[10rem]">
+        <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={100}>
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-2 border-b">
                         <div className="flex items-center gap-2 font-semibold">
@@ -464,20 +485,34 @@ export default function ProblemWorkspacePage() {
                         />
                     </div>
                 </div>
-            </div>
-            <div className="flex flex-col flex-1 min-h-0 border-t">
-                <div className="p-2 border-b">
-                    <h3 className="font-semibold text-sm">Test Results</h3>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel
+                ref={resultsPanelRef}
+                collapsible
+                collapsedSize={48}
+                defaultSize={48}
+                minSize={48}
+                onCollapse={() => setIsResultsCollapsed(true)}
+                onExpand={() => setIsResultsCollapsed(false)}
+            >
+                <div className="flex flex-col h-full">
+                     <div className="p-2 border-b flex items-center justify-between">
+                        <h3 className="font-semibold text-sm">Test Results</h3>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleResultsPanel}>
+                           <ChevronDown className={cn("h-5 w-5 transition-transform", !isResultsCollapsed && "rotate-180")} />
+                        </Button>
+                    </div>
+                    <div className="flex-1 p-4 overflow-auto">
+                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                    </div>
                 </div>
-                <div className="flex-1 p-4 overflow-auto">
-                    <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
-                </div>
-            </div>
-        </div>
+            </ResizablePanel>
+        </ResizablePanelGroup>
     );
 
     return (
-    <div className="w-full flex flex-col bg-background text-foreground pt-16 md:pt-0">
+    <div className="w-full h-screen flex flex-col bg-background text-foreground pt-16 md:pt-0">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
         {showSuccess && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
