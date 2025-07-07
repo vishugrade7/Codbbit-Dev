@@ -266,11 +266,13 @@ export default function Leaderboard() {
                               </Badge>
                           </div>
                       </div>
-                      <Button asChild className="w-full mt-4 flex-shrink-0">
-                        <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
-                          Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
+                      <div className="flex justify-end mt-4 flex-shrink-0">
+                          <Button asChild size="sm">
+                            <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
+                              Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                          </Button>
+                      </div>
                   </CardContent>
                 </Card>
             ) : (
