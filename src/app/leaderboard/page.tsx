@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -126,7 +127,7 @@ export default function Leaderboard() {
   }, []);
 
   const countryOptions = useMemo(() => {
-    const countries = new Set(leaderboardData.map(u => u.country).filter(Boolean));
+    const countries = new Set(leaderboardData.map(u => u.country).filter(c => c && c !== 'N/A'));
     return Array.from(countries).sort();
   }, [leaderboardData]);
 
@@ -137,8 +138,14 @@ export default function Leaderboard() {
 
   useEffect(() => {
     setCurrentPage(1);
-    setFilterValue(null);
-  }, [filterType]);
+    if (filterType === 'Country') {
+      setFilterValue(countryOptions[0] || null);
+    } else if (filterType === 'Company') {
+      setFilterValue(companyOptions[0] || null);
+    } else {
+      setFilterValue(null);
+    }
+  }, [filterType, countryOptions, companyOptions]);
   
   const filteredData = useMemo(() => {
     let data = leaderboardData;
@@ -529,3 +536,5 @@ export default function Leaderboard() {
     </main>
   );
 }
+
+    
