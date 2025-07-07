@@ -183,12 +183,12 @@ export default function ProblemSheetsListPage() {
                   )}
                   {/* Top progress bar */}
                   {authUser && (
-                      <div className={cn("h-[30px] px-3 relative flex items-center", theme.progressBg)}>
+                       <div className={cn("h-[30px] relative flex items-center justify-center", theme.progressBg)}>
                           <div 
-                              className={cn("h-1.5 rounded-full transition-all duration-500", theme.progressFg)}
+                              className={cn("absolute top-0 left-0 h-full transition-all duration-500", theme.progressFg)}
                               style={{ width: `${progressPercentage}%` }}
                           />
-                          <span className={cn("absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold", theme.progressText)}>
+                          <span className={cn("relative text-xs font-bold", theme.progressText)}>
                               {Math.round(progressPercentage)}%
                           </span>
                       </div>

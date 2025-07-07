@@ -5,12 +5,45 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import type { CategoryInfo as ServerCategoryInfo } from "@/app/apex-problems/page";
+
+const cardColorThemes = [
+    { // Blue
+        card: "bg-blue-100 dark:bg-blue-900/30",
+        progressBg: "bg-blue-200 dark:bg-blue-800/30",
+        progressFg: "bg-blue-500",
+        progressText: "text-blue-900 dark:text-blue-200",
+    },
+    { // Orange
+        card: "bg-orange-100 dark:bg-orange-900/30",
+        progressBg: "bg-orange-200 dark:bg-orange-800/30",
+        progressFg: "bg-orange-500",
+        progressText: "text-orange-900 dark:text-orange-200",
+    },
+    { // Green
+        card: "bg-green-100 dark:bg-green-900/30",
+        progressBg: "bg-green-200 dark:bg-green-800/30",
+        progressFg: "bg-green-500",
+        progressText: "text-green-900 dark:text-green-200",
+    },
+    { // Purple
+        card: "bg-purple-100 dark:bg-purple-900/30",
+        progressBg: "bg-purple-200 dark:bg-purple-800/30",
+        progressFg: "bg-purple-500",
+        progressText: "text-purple-900 dark:text-purple-200",
+    },
+    { // Teal
+        card: "bg-teal-100 dark:bg-teal-900/30",
+        progressBg: "bg-teal-200 dark:bg-teal-800/30",
+        progressFg: "bg-teal-500",
+        progressText: "text-teal-900 dark:text-teal-200",
+    }
+];
 
 type CategoryInfo = ServerCategoryInfo & {
     solvedCount: number;
@@ -50,12 +83,23 @@ export default function ApexProblemsView({ initialCategories }: { initialCategor
           </div>
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((category) => (
+            {categories.map((category, index) => {
+              const theme = cardColorThemes[index % cardColorThemes.length];
+              const progressPercentage = category.problemCount > 0 ? (category.solvedCount / category.problemCount) * 100 : 0;
+              return (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30 h-full flex flex-col">
+                  <Card className={cn("overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border h-full flex flex-col", theme.card)}>
                     {userData && category.problemCount > 0 && (
-                      <Progress value={(category.solvedCount / category.problemCount) * 100} className="h-1 rounded-none" />
+                       <div className={cn("h-[30px] relative flex items-center justify-center", theme.progressBg)}>
+                          <div 
+                              className={cn("absolute top-0 left-0 h-full transition-all duration-500", theme.progressFg)}
+                              style={{ width: `${progressPercentage}%` }}
+                          />
+                          <span className={cn("relative text-xs font-bold", theme.progressText)}>
+                              {Math.round(progressPercentage)}%
+                          </span>
+                      </div>
                     )}
                     <CardContent className="p-0 flex flex-col flex-grow">
                       <div className="aspect-video relative">
@@ -90,7 +134,7 @@ export default function ApexProblemsView({ initialCategories }: { initialCategor
                   </Card>
                 </Link>
               )
-            ))}
+            )})}
           </div>
         ) : (
             <div className="text-center py-12">
