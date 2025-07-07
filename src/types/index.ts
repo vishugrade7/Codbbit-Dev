@@ -152,6 +152,7 @@ export type ProblemSheet = {
   description?: string;
   createdBy: string; // User UID
   creatorName: string;
+  creatorUsername?: string;
   creatorAvatarUrl: string;
   createdAt: any; // Firestore Timestamp
   isPublic: boolean;

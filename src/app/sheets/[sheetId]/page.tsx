@@ -243,7 +243,17 @@ export default function SheetDisplayPage() {
                                                 <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                         )}
-                                        <span>Created by {sheet.creatorName} {timeAgo}</span>
+                                        <span>
+                                            Created by{' '}
+                                            {sheet.creatorUsername ? (
+                                                <Link href={`/profile/${sheet.creatorUsername}`} className="font-semibold text-foreground hover:underline">
+                                                    {sheet.creatorName}
+                                                </Link>
+                                            ) : (
+                                                <span className="font-semibold text-foreground">{sheet.creatorName}</span>
+                                            )}{' '}
+                                            {timeAgo}
+                                        </span>
                                     </CardDescription>
                                 </div>
                             </div>
