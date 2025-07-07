@@ -4,7 +4,7 @@
 import CalendarHeatmap from 'react-calendar-heatmap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flame } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import 'react-calendar-heatmap/dist/styles.css';
 
@@ -23,6 +23,9 @@ const shiftDate = (date: Date, numDays: number): Date => {
 
 export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak = 0 }: HeatmapProps) {
   const [duration, setDuration] = useState('1y'); // '6m' or '1y'
+  const [tooltipContent, setTooltipContent] = useState('');
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
   
   const today = new Date();
   const endDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -50,6 +53,29 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
       return sum;
     }, 0);
   }, [activityData, startDate, endDate]);
+  
+  const handleMouseOver = (event: React.MouseEvent, value: any) => {
+    if (value && value.count > 0 && triggerRef.current) {
+        const rect = event.target as SVGRectElement;
+        const rectBounds = rect.getBoundingClientRect();
+        
+        const trigger = triggerRef.current;
+        trigger.style.position = 'fixed';
+        trigger.style.top = `${rectBounds.top}px`;
+        trigger.style.left = `${rectBounds.left}px`;
+        trigger.style.width = `${rectBounds.width}px`;
+        trigger.style.height = `${rectBounds.height}px`;
+
+        const content = `${value.count} ${value.count === 1 ? 'submission' : 'submissions'} on ${value.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}`;
+        setTooltipContent(content);
+        setIsTooltipOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsTooltipOpen(false);
+  };
+
 
   return (
     <div className="text-foreground">
@@ -79,52 +105,40 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
       </div>
 
       <TooltipProvider>
-        <div className="react-calendar-heatmap-container">
-          <CalendarHeatmap
-            startDate={startDate}
-            endDate={endDate}
-            values={activityData}
-            classForValue={(value) => {
-                if (!value || value.count === 0) {
-                    return 'color-empty';
-                }
-                let level = 0;
-                if (value.count > 0 && value.count <= 2) level = 1;
-                else if (value.count > 2 && value.count <= 5) level = 2;
-                else if (value.count > 5 && value.count <= 8) level = 3;
-                else if (value.count > 8) level = 4;
+        <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
+            <TooltipTrigger ref={triggerRef} asChild>
+                {/* This is a dummy trigger that we'll move around to position the tooltip */}
+                <div />
+            </TooltipTrigger>
+            <div className="react-calendar-heatmap-container">
+            <CalendarHeatmap
+                startDate={startDate}
+                endDate={endDate}
+                values={activityData}
+                classForValue={(value) => {
+                    if (!value || value.count === 0) {
+                        return 'color-empty';
+                    }
+                    let level = 0;
+                    if (value.count > 0 && value.count <= 2) level = 1;
+                    else if (value.count > 2 && value.count <= 5) level = 2;
+                    else if (value.count > 5 && value.count <= 8) level = 3;
+                    else if (value.count > 8) level = 4;
 
-                if (level > 0) {
-                    return `color-github-${level}`;
-                }
-                return 'color-empty';
-            }}
-            transformDayElement={(element, value, index) => {
-                if (!value || value.count < 1) {
-                    // Just return the element for days with no submissions to avoid an empty tooltip
-                    return React.cloneElement(element, { key: index });
-                }
-                return (
-                    <Tooltip key={index}>
-                        <TooltipTrigger asChild>{element}</TooltipTrigger>
-                        <TooltipContent>
-                            <p>
-                                <strong>{value.count} {value.count === 1 ? 'submission' : 'submissions'}</strong>
-                                {' on '}
-                                {value.date.toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    timeZone: 'UTC',
-                                })}
-                            </p>
-                        </TooltipContent>
-                    </Tooltip>
-                );
-            }}
-            showWeekdayLabels={true}
-          />
-        </div>
+                    if (level > 0) {
+                        return `color-github-${level}`;
+                    }
+                    return 'color-empty';
+                }}
+                onMouseOver={handleMouseOver}
+                onMouseLeave={handleMouseLeave}
+                showWeekdayLabels={true}
+            />
+            </div>
+            <TooltipContent>
+                <p>{tooltipContent}</p>
+            </TooltipContent>
+        </Tooltip>
       </TooltipProvider>
     </div>
   );
