@@ -94,8 +94,7 @@ export default function Leaderboard() {
         const unsolvedProblems = allProblems.filter(p => !p.isPremium && !solvedIds.has(p.id));
 
         if (unsolvedProblems.length > 0) {
-            const randomIndex = Math.floor(Math.random() * unsolvedProblems.length);
-            setSuggestedProblem(unsolvedProblems[randomIndex]);
+            setSuggestedProblem(unsolvedProblems[0]);
         } else {
             setSuggestedProblem(null);
         }
