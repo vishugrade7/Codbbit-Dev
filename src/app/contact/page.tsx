@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   type: z.enum(['Support', 'Feedback']),
@@ -80,13 +81,13 @@ export default function ContactPage() {
                     </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <FormLabel htmlFor="form-type-switch">Support</FormLabel>
+                    <Label htmlFor="form-type-switch">Support</Label>
                     <Switch
                         id="form-type-switch"
                         checked={formType === 'Feedback'}
                         onCheckedChange={handleSwitchChange}
                     />
-                    <FormLabel htmlFor="form-type-switch">Feedback</FormLabel>
+                    <Label htmlFor="form-type-switch">Feedback</Label>
                 </div>
             </div>
           </CardHeader>
