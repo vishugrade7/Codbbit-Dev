@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const FloatingCard = ({ positionClass, children }: { positionClass: string, children: React.ReactNode }) => (
     <div className={cn("absolute", positionClass)} style={{ transformStyle: 'preserve-3d' }}>
-        <div className="animate-counter-revolve">
+        <div className="animate-counter-revolve" style={{ transform: 'rotateX(-60deg)', transformStyle: 'preserve-3d' }}>
             <Card className="p-3 rounded-lg shadow-xl bg-background/80 backdrop-blur-xl border-border/30 text-foreground">
                 {children}
             </Card>
@@ -50,7 +50,7 @@ export default function Home() {
             </div>
             
             {/* Revolving cards around the text */}
-            <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
+            <div className="absolute inset-0 animate-revolve hidden md:block" style={{ transformStyle: 'preserve-3d' }}>
                 {/* Card 1: Top-Left */}
                 <FloatingCard positionClass="top-8 -left-32 w-48">
                     <div className="flex items-center gap-2">

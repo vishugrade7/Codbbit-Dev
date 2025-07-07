@@ -116,8 +116,8 @@ export default {
             'to': { transform: 'rotateX(60deg) rotateY(360deg)' },
         },
         'counter-revolve': {
-            'from': { transform: 'rotateY(0deg) rotateX(-60deg)' },
-            'to': { transform: 'rotateY(-360deg) rotateX(-60deg)' },
+            'from': { transform: 'rotateY(0deg)' },
+            'to': { transform: 'rotateY(-360deg)' },
         },
         'gradient-bg': {
           '0%': { backgroundPosition: '0% 50%' },
