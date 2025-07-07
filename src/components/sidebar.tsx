@@ -118,7 +118,7 @@ export default function Sidebar() {
                 className="rounded-lg group"
               >
                 <Link href="/contact?type=bug">
-                  <Bug className="h-5 w-5 group-hover:animate-icon-shake" />
+                  <Bug className="h-5 w-5 group-hover:animate-icon-shake hover:text-destructive" />
                 </Link>
               </Button>
             </TooltipTrigger>
