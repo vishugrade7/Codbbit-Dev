@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, FileText, ChevronRight, Users, Pencil, UserPlus, UserCheck } from "lucide-react";
+import { Loader2, PlusCircle, Users, Pencil, Bookmark, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
@@ -19,6 +19,8 @@ import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { toggleSheetFollow } from "../sheets/actions";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+
 
 const cardColorClasses = [
   "bg-sky-100/50 dark:bg-sky-900/30 hover:border-sky-500/50",
@@ -165,16 +167,38 @@ export default function ProblemSheetsListPage() {
                     <span className="sr-only">Edit Sheet</span>
                   </Button>
                 )}
+                {!isCreator && authUser && (
+                  <div className="absolute top-3 right-3 z-10">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 bg-card/80 hover:bg-card"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleFollow(sheet.id);
+                            }}
+                            disabled={isTogglingThisFollow}
+                           >
+                            {isTogglingThisFollow ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bookmark className={cn("h-4 w-4", isFollowed && "fill-current")}/>}
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{isFollowed ? "Unfollow" : "Follow"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                )}
                   <Card className={cn(
                       "flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent backdrop-blur-sm h-full",
                       colorClass
                   )}>
                     <Link href={`/sheets/${sheet.id}`} className="block flex-grow">
                       <CardHeader>
-                          <CardTitle className="flex items-start gap-3 pr-10">
-                            <FileText className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
-                            <span className="flex-1">{sheet.name}</span>
-                          </CardTitle>
+                          <CardTitle className="pr-10">{sheet.name}</CardTitle>
                           <CardDescription>
                             {sheet.problemIds.length} {sheet.problemIds.length === 1 ? "Problem" : "Problems"}
                           </CardDescription>
@@ -209,12 +233,6 @@ export default function ProblemSheetsListPage() {
                               {getRelativeDate(sheet.createdAt)}
                             </span>
                         </div>
-                        {authUser && !isCreator && (
-                          <Button onClick={() => handleFollow(sheet.id)} variant={isFollowed ? 'secondary' : 'default'} size="sm" className="w-full" disabled={isTogglingThisFollow}>
-                            {isTogglingThisFollow ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : (isFollowed ? <UserCheck className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/>)}
-                            {isFollowed ? 'Following' : 'Follow'}
-                          </Button>
-                        )}
                       </CardFooter>
                   </Card>
               </div>
