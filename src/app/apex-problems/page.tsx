@@ -1,5 +1,4 @@
 
-"use client";
 import type { Metadata } from 'next';
 import ApexProblemsView from "@/components/apex-problems-view";
 
