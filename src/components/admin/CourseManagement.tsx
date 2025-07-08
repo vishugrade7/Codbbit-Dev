@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, useFieldArray, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,7 +25,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -33,10 +33,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '../ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Label } from '../ui/label';
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -122,6 +123,90 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
         </Card>
     );
 }
+
+function TextareaWithToolbar({ field, ...props }: { field: any, [key: string]: any }) {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [isToolbarOpen, setIsToolbarOpen] = useState(false);
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const [selection, setSelection] = useState<{ start: number, end: number } | null>(null);
+
+    const handleSelect = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+        const textarea = event.currentTarget;
+        const hasSelection = textarea.selectionStart !== textarea.selectionEnd;
+        if (hasSelection) {
+            setSelection({ start: textarea.selectionStart, end: textarea.selectionEnd });
+            setIsToolbarOpen(true);
+        }
+    };
+    
+    const applyStyle = (prefix: string, suffix: string = prefix) => {
+        if (!selection) return;
+        const { start, end } = selection;
+        const currentValue = field.value || '';
+        const selectedText = currentValue.substring(start, end);
+        
+        const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
+        field.onChange(newValue);
+        setIsToolbarOpen(false); // Close toolbar after action
+
+        setTimeout(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
+    };
+
+    const handleLinkButtonClick = () => {
+        if (!selection) return;
+        setIsToolbarOpen(false);
+        setIsLinkDialogOpen(true);
+    }
+
+    const applyLink = () => {
+        if (!selection || !linkUrl) return;
+        const { start, end } = selection;
+        const currentValue = field.value || '';
+        const selectedText = currentValue.substring(start, end);
+        
+        const newValue = `${currentValue.substring(0, start)}[${selectedText}](${linkUrl})${currentValue.substring(end)}`;
+        field.onChange(newValue);
+        
+        setIsLinkDialogOpen(false);
+        setLinkUrl('');
+    }
+    
+    return (
+        <Popover open={isToolbarOpen} onOpenChange={setIsToolbarOpen}>
+            <PopoverTrigger asChild>
+                <Textarea ref={textareaRef} onSelect={handleSelect} onBlur={() => setIsToolbarOpen(false)} {...field} {...props} />
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-1 flex items-center gap-1">
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('**'); }}><Bold className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('*'); }}><Italic className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('~~'); }}><Strikethrough className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleLinkButtonClick(); }}><LinkIcon className="h-4 w-4" /></Button>
+            </PopoverContent>
+            
+            <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Link</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <Label htmlFor="link-url">URL</Label>
+                        <Input id="link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://example.com" />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={applyLink}>Add Link</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </Popover>
+    )
+}
+
 
 function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) => void }) {
   const blockTypes: { type: ContentBlock['type']; label: string; icon: React.ReactNode }[] = [
@@ -354,7 +439,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
     const block = useWatch({
         control,
         name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`
-    }) as ContentBlock;
+    });
 
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
@@ -366,7 +451,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
     const renderBlockEditor = () => {
         switch (block.type) {
             case 'text':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Enter lesson content here. Markdown is supported." className="min-h-[120px]" {...field}/></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="Enter lesson content here. Markdown is supported." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
             case 'code':
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1':
@@ -382,9 +467,9 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
             case 'divider':
                 return <hr className="my-4"/>
             case 'bulleted-list':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="* Item 1..." className="min-h-[120px]" {...field}/></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="* Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
             case 'numbered-list':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="1. Item 1..." className="min-h-[120px]" {...field}/></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="1. Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list':
                 return <TodoListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             case 'toggle-list':
@@ -800,3 +885,4 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
 }
 
 // #endregion
+
