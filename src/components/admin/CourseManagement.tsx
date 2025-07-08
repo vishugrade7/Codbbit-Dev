@@ -115,38 +115,12 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-// Simple content editor for now. Can be enhanced later.
-function ContentBlockEditor({ name }: { name: string }) {
+
+function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, lessonIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    // We assume a single text block for simplicity to fix the bug.
-    // The schema expects an array, so we target the first block.
-    const fieldName = `${name}.0.content`;
-
-    return (
-        <FormField
-            control={control}
-            name={fieldName as any}
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Lesson Content</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Enter lesson content here. Markdown is supported."
-                            className="min-h-[200px] font-mono"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-            )}
-        />
-    );
-}
-
-function LessonItem({ moduleIndex, lessonIndex }: { moduleIndex: number, lessonIndex: number }) {
-    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.id`) });
+    
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId }); 
     const style = { transform: CSS.Transform.toString(transform), transition };
 
     return (
@@ -169,8 +143,23 @@ function LessonItem({ moduleIndex, lessonIndex }: { moduleIndex: number, lessonI
                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
                                 <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson</FormLabel></FormItem>
                             )} />
-                            {/* Using the simple editor for now */}
-                            <ContentBlockEditor name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`} />
+                            <FormField
+                                control={control}
+                                name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`}
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Lesson Content (Markdown)</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Enter lesson content here. Markdown is supported."
+                                            className="min-h-[200px] font-mono"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
                             <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={() => removeLesson(lessonIndex)}>
                                 <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
                             </Button>
@@ -186,6 +175,7 @@ function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
     const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeModule } = useFieldArray({ name: `modules` });
     const { fields: lessonFields, append: appendLesson, move: moveLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
+    
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: getValues(`modules.${moduleIndex}.id`) });
     const style = { transform: CSS.Transform.toString(transform), transition };
 
@@ -196,7 +186,9 @@ function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
         if (over && active.id !== over.id) {
             const oldIndex = lessonFields.findIndex(l => l.id === active.id);
             const newIndex = lessonFields.findIndex(l => l.id === over.id);
-            moveLesson(oldIndex, newIndex);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                moveLesson(oldIndex, newIndex);
+            }
         }
     };
 
@@ -217,15 +209,15 @@ function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
                 <AccordionContent>
                     <CardContent>
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-                            <SortableContext items={lessonFields} strategy={verticalListSortingStrategy}>
+                            <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                                 <div className="space-y-4 pl-6 border-l-2">
                                     {lessonFields.map((lessonItem, lessonIndex) => (
-                                        <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} />
+                                        <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
                                     ))}
                                 </div>
                             </SortableContext>
                         </DndContext>
-                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, content: '' })}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
                         </Button>
                     </CardContent>
@@ -253,7 +245,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, content: '' }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         },
@@ -266,7 +258,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, content: '' }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         });
@@ -301,7 +293,9 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
         if (over && active.id !== over.id) {
             const oldIndex = moduleFields.findIndex(m => m.id === active.id);
             const newIndex = moduleFields.findIndex(m => m.id === over.id);
-            moveModule(oldIndex, newIndex);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                moveModule(oldIndex, newIndex);
+            }
         }
     };
 
@@ -348,7 +342,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </DndContext>
                 </Accordion>
 
-                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
+                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, content: '' }] })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Module
                 </Button>
 
