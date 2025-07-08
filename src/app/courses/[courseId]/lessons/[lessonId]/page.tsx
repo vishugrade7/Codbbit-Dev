@@ -24,6 +24,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getCache, setCache } from '@/lib/cache';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const getLessonIcon = (lesson: Lesson) => {
     return <BookOpen className="h-5 w-5" />;
@@ -65,18 +67,20 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                         {block.content.language?.toUpperCase() || 'CODE'}
                         </span>
                     </div>
-                    <div className="text-sm font-mono overflow-x-auto text-slate-100">
-                        <table className="w-full text-left">
-                        <tbody>
-                            {(block.content.code || '').split('\n').map((line, index) => (
-                            <tr key={index} className="leading-relaxed">
-                                <td className="w-10 pr-4 text-right select-none text-slate-500 sticky left-0 bg-slate-900">{index + 1}</td>
-                                <td className="whitespace-pre pr-4">{line || ' '}</td>
-                            </tr>
-                            ))}
-                        </tbody>
-                        </table>
-                    </div>
+                     <SyntaxHighlighter
+                        language={block.content.language === 'apex' ? 'java' : block.content.language}
+                        style={vscDarkPlus}
+                        showLineNumbers={true}
+                        customStyle={{ 
+                            margin: 0, 
+                            padding: '1rem', 
+                            backgroundColor: '#1E1E1E'
+                        }}
+                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', fontSize: '0.875rem' } }}
+                        lineNumberStyle={{ color: '#858585', fontSize: '0.875rem' }}
+                    >
+                        {String(block.content.code || '').trim()}
+                    </SyntaxHighlighter>
                 </div>
             );
            case 'heading1':
