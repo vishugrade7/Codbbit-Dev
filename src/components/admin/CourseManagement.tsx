@@ -201,49 +201,39 @@ function EditableBlock({ block, placeholder, className, as: Tag = 'div' }: {
 function CodeBlock({ block }: { block: ContentBlock }) {
     const { updateBlock } = useNotionEditor();
 
-    // Memoize the initial content to avoid re-calculating on every render
     const initialContent = useMemo(() => {
         if (typeof block.content === 'object' && block.content !== null && 'code' in block.content) {
             return block.content as { code: string; language: string };
         }
         return { code: String(block.content || ''), language: 'apex' };
-    }, [block.id]); // Recalculate only when the block itself changes
+    }, [block.content]);
 
     const [localCode, setLocalCode] = useState(initialContent.code);
     const [localLang, setLocalLang] = useState(initialContent.language);
-    const isFirstRender = useRef(true);
 
-    // Effect to sync changes from parent (e.g., loading a new course) to local state
     useEffect(() => {
-        // Skip the first render to avoid overwriting initial state
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
-
         const parentContent = (typeof block.content === 'object' && block.content !== null && 'code' in block.content)
             ? block.content as { code: string; language: string }
             : { code: String(block.content || ''), language: 'apex' };
             
-        // Only update local state if the parent's data is different, preventing overwrites while typing
         if (parentContent.code !== localCode) {
             setLocalCode(parentContent.code);
         }
         if (parentContent.language !== localLang) {
             setLocalLang(parentContent.language);
         }
-    }, [block.content]); // Dependency on block.content to catch external changes
+    }, [block.content, localCode, localLang]);
 
 
     const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newCode = e.target.value;
-        setLocalCode(newCode); // Update local state immediately for responsive UI
-        updateBlock(block.id, { code: newCode, language: localLang }); // Propagate change to parent form
+        setLocalCode(newCode);
+        updateBlock(block.id, { code: newCode, language: localLang });
     };
 
     const handleLanguageChange = (newLang: string) => {
         setLocalLang(newLang);
-        updateBlock(block.id, { code: localCode, language: newLang }); // Propagate change to parent form
+        updateBlock(block.id, { code: localCode, language: newLang });
     };
 
     return (
@@ -269,6 +259,7 @@ function CodeBlock({ block }: { block: ContentBlock }) {
         </div>
     );
 }
+
 
 // Renders the correct component based on block type
 function BlockRenderer({ block }: { block: ContentBlock }) {
@@ -491,8 +482,8 @@ function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
             const newIndex = lessonFields.findIndex(l => l.id === over.id);
             moveLesson(oldIndex, newIndex);
         }
-    };
-    
+    }
+
     return (
         <Card ref={setNodeRef} style={style}>
             <AccordionItem value={`module-${moduleIndex}`} className="border-none">
