@@ -11,7 +11,7 @@ export const problemExampleSchema = z.object({
   explanation: z.string().optional(),
 });
 
-export const problemFormSchema = z.object({
+const baseProblemObjectSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
@@ -26,17 +26,23 @@ export const problemFormSchema = z.object({
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
   isPremium: z.boolean().optional(),
-}).refine(data => {
+});
+
+const triggerRefinement = (data: z.infer<typeof baseProblemObjectSchema>) => {
     if (data.metadataType === 'Trigger') {
         return !!data.triggerSObject && data.triggerSObject.length > 0;
     }
     return true;
-}, {
+};
+
+const triggerRefinementOptions = {
     message: "Trigger SObject is required when Metadata Type is Trigger.",
     path: ["triggerSObject"],
-});
+};
 
-const bulkProblemSchema = problemFormSchema.omit({ id: true });
+export const problemFormSchema = baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions);
+
+const bulkProblemSchema = baseProblemObjectSchema.omit({ id: true }).refine(triggerRefinement, triggerRefinementOptions);
 export const bulkUploadSchema = z.array(bulkProblemSchema);
 // #endregion
 
