@@ -5,154 +5,25 @@
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Problem, Course, User, NavLink, Badge, ApexProblemsData, PricingSettings, Voucher } from '@/types';
-import { z } from "zod";
 import { adminStorage } from '@/lib/firebaseAdmin';
+import {
+  problemFormSchema,
+  bulkUploadSchema,
+  courseFormSchema,
+  navLinksSchema,
+  badgeFormSchema,
+  pricingFormSchema,
+  voucherFormSchema,
+} from '@/lib/admin-schemas';
+import { z } from 'zod';
 
 export type LogoType = 'logo_light' | 'logo_dark' | 'logo_pro_light' | 'logo_pro_dark' | 'favicon';
 
-
-// #region Problem Schemas
-const exampleSchema = z.object({
-  input: z.string().optional(),
-  output: z.string().min(1, "Output is required."),
-  explanation: z.string().optional(),
-});
-
-// Base schema for a problem, without refinement.
-const problemObjectSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(1, "Title is required."),
-  description: z.string().min(1, "Description is required."),
-  category: z.string().min(1, "Category is required."),
-  difficulty: z.enum(["Easy", "Medium", "Hard"]),
-  metadataType: z.enum(["Class", "Trigger"]),
-  triggerSObject: z.string().optional(),
-  sampleCode: z.string().min(1, "Sample code is required."),
-  testcases: z.string().min(1, "Test cases is required."),
-  examples: z.array(exampleSchema).min(1, "At least one example is required."),
-  hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
-  company: z.string().optional(),
-  companyLogoUrl: z.string().url().optional().or(z.literal('')),
-  isPremium: z.boolean().optional(),
-});
-
-// Schema for form validation, with refinement.
-const formSchema = problemObjectSchema.refine(data => {
-    if (data.metadataType === 'Trigger') {
-        return !!data.triggerSObject && data.triggerSObject.length > 0;
-    }
-    return true;
-}, {
-    message: "Trigger SObject is required when Metadata Type is Trigger.",
-    path: ["triggerSObject"],
-});
-
-const bulkProblemSchema = problemObjectSchema.omit({ id: true });
-const bulkUploadSchema = z.array(bulkProblemSchema);
-// #endregion
-
-// #region Course Schemas
-type ActionContentBlock = {
-    id: string;
-    type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive' | 'columns';
-    content: string;
-    language?: string | undefined;
-    caption?: string | undefined;
-    columnData?: { blocks: ActionContentBlock[] }[] | undefined;
-};
-
-const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object({
-    id: z.string(),
-    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns']),
-    content: z.string(),
-    language: z.string().optional(),
-    caption: z.string().optional(),
-    columnData: z.array(z.object({
-        blocks: z.array(z.lazy(() => contentBlockSchema))
-    })).optional()
-}).refine(data => {
-    if (data.type === 'columns') return true;
-    return !!data.content;
-}, {
-    message: "Content cannot be empty for this block type.",
-    path: ["content"],
-}));
-
-
-const lessonSchema = z.object({
-    id: z.string(),
-    title: z.string().min(1, 'Lesson title is required'),
-    isFree: z.boolean().optional(),
-    contentBlocks: z.array(contentBlockSchema),
-});
-
-const moduleSchema = z.object({
-    id: z.string(),
-    title: z.string().min(1, 'Module title is required'),
-    lessons: z.array(lessonSchema),
-});
-
-const courseSchema = z.object({
-    id: z.string().optional(),
-    title: z.string().min(1, 'Course title is required'),
-    description: z.string().min(1, 'Course description is required'),
-    category: z.string().min(1, 'Course category is required'),
-    thumbnailUrl: z.string().url('Must be a valid URL').min(1, 'Thumbnail URL is required'),
-    modules: z.array(moduleSchema).min(1, 'At least one module is required'),
-    isPublished: z.boolean(),
-    createdBy: z.string(),
-    isPremium: z.boolean().optional(),
-});
-// #endregion
 
 const setAdminStatusSchema = z.object({
     userId: z.string().min(1, "User ID is required."),
     status: z.boolean(),
 });
-
-// #region Badge Schemas
-const badgeSchema = z.object({
-    id: z.string().optional(),
-    name: z.string().min(1, "Badge name is required."),
-    description: z.string().min(1, "Description is required."),
-    type: z.enum(['STREAK', 'POINTS', 'TOTAL_SOLVED', 'CATEGORY_SOLVED', 'ACTIVE_DAYS']),
-    value: z.coerce.number().min(1, "Value must be at least 1."),
-    category: z.string().optional(),
-}).refine(data => {
-    if (data.type === 'CATEGORY_SOLVED') {
-        return !!data.category && data.category.length > 0;
-    }
-    return true;
-}, {
-    message: "Category is required for CATEGORY_SOLVED type badges.",
-    path: ["category"],
-});
-// #endregion
-
-// #region Pricing and Voucher Schemas
-const pricingSettingsSchema = z.object({
-    inr: z.object({
-        monthly: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
-        biannually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
-        annually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
-    }),
-    usd: z.object({
-        monthly: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
-        biannually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
-        annually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
-    }),
-});
-
-const voucherSchema = z.object({
-    id: z.string().optional(),
-    code: z.string().min(1, 'Code is required').toUpperCase(),
-    type: z.enum(['percentage', 'fixed']),
-    value: z.coerce.number().min(0, 'Value must be positive.'),
-    isActive: z.boolean(),
-    expiresAt: z.date().optional(),
-    oneTimeUse: z.boolean().optional(),
-});
-// #endregion
 
 
 export async function getAllUsers(): Promise<{ success: boolean; users: User[]; error?: string }> {
@@ -201,7 +72,7 @@ export async function setAdminStatus(userId: string, status: boolean) {
     }
 }
 
-export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>) {
+export async function upsertProblemToFirestore(data: z.infer<typeof problemFormSchema>) {
     const apexDocRef = doc(db, 'problems', 'Apex');
 
     try {
@@ -435,7 +306,7 @@ export async function addCategory(categoryName: string, imageUrl: string) {
     }
 }
 
-export async function upsertCourseToFirestore(data: z.infer<typeof courseSchema>) {
+export async function upsertCourseToFirestore(data: z.infer<typeof courseFormSchema>) {
     const coursesCollection = collection(db, 'courses');
 
     try {
@@ -499,15 +370,7 @@ export async function getNavigationSettings(): Promise<NavLink[]> {
 export async function updateNavigationSettings(links: NavLink[]) {
     if (!db) return { success: false, error: "Database not initialized." };
     
-    const linksSchema = z.array(z.object({
-        id: z.string(),
-        label: z.string().min(1, 'Label is required'),
-        href: z.string().min(1, 'Href is required').refine(val => val.startsWith('/'), { message: 'Href must start with /' }),
-        isEnabled: z.boolean(),
-        isProtected: z.boolean(),
-    }));
-
-    const validation = linksSchema.safeParse(links);
+    const validation = navLinksSchema.safeParse({ links });
     if (!validation.success) {
         return { success: false, error: validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
     }
@@ -554,8 +417,8 @@ export async function getBadges(): Promise<{ success: boolean; badges: Badge[]; 
     }
 }
 
-export async function upsertBadge(data: z.infer<typeof badgeSchema>) {
-    const validation = badgeSchema.safeParse(data);
+export async function upsertBadge(data: z.infer<typeof badgeFormSchema>) {
+    const validation = badgeFormSchema.safeParse(data);
     if (!validation.success) {
         return { success: false, error: validation.error.errors[0].message };
     }
@@ -780,8 +643,8 @@ export async function getPricingSettings(): Promise<PricingSettings | null> {
     return null;
 }
 
-export async function updatePricingSettings(data: z.infer<typeof pricingSettingsSchema>) {
-    const validation = pricingSettingsSchema.safeParse(data);
+export async function updatePricingSettings(data: z.infer<typeof pricingFormSchema>) {
+    const validation = pricingFormSchema.safeParse(data);
     if (!validation.success) {
         return { success: false, error: "Invalid data format." };
     }
@@ -805,8 +668,8 @@ export async function getVouchers(): Promise<Voucher[]> {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Voucher));
 }
 
-export async function upsertVoucher(data: z.infer<typeof voucherSchema>) {
-    const validation = voucherSchema.safeParse(data);
+export async function upsertVoucher(data: z.infer<typeof voucherFormSchema>) {
+    const validation = voucherFormSchema.safeParse(data);
     if (!validation.success) {
         return { success: false, error: validation.error.errors[0].message };
     }
