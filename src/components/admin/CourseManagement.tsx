@@ -124,7 +124,7 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-function TextareaWithToolbar({ field, ...props }: { field: any, [key: string]: any }) {
+function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onChange: (newValue: string) => void, [key: string]: any }) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -137,17 +137,19 @@ function TextareaWithToolbar({ field, ...props }: { field: any, [key: string]: a
         if (hasSelection) {
             setSelection({ start: textarea.selectionStart, end: textarea.selectionEnd });
             setIsToolbarOpen(true);
+        } else {
+            setIsToolbarOpen(false);
         }
     };
     
     const applyStyle = (prefix: string, suffix: string = prefix) => {
         if (!selection) return;
         const { start, end } = selection;
-        const currentValue = field.value || '';
+        const currentValue = value || '';
         const selectedText = currentValue.substring(start, end);
         
         const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
-        field.onChange(newValue);
+        onChange(newValue);
         setIsToolbarOpen(false); // Close toolbar after action
 
         setTimeout(() => {
@@ -165,20 +167,36 @@ function TextareaWithToolbar({ field, ...props }: { field: any, [key: string]: a
     const applyLink = () => {
         if (!selection || !linkUrl) return;
         const { start, end } = selection;
-        const currentValue = field.value || '';
+        const currentValue = value || '';
         const selectedText = currentValue.substring(start, end);
         
         const newValue = `${currentValue.substring(0, start)}[${selectedText}](${linkUrl})${currentValue.substring(end)}`;
-        field.onChange(newValue);
+        onChange(newValue);
         
         setIsLinkDialogOpen(false);
         setLinkUrl('');
+
+        setTimeout(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(start + 1, start + 1 + selectedText.length);
+        }, 0);
+    }
+
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        onChange(e.target.value);
     }
     
     return (
         <Popover open={isToolbarOpen} onOpenChange={setIsToolbarOpen}>
             <PopoverTrigger asChild>
-                <Textarea ref={textareaRef} onSelect={handleSelect} onBlur={() => setIsToolbarOpen(false)} {...field} {...props} />
+                <Textarea 
+                    ref={textareaRef} 
+                    onSelect={handleSelect} 
+                    onBlur={() => setIsToolbarOpen(false)} 
+                    value={value} 
+                    onChange={handleTextareaChange} 
+                    {...props} 
+                />
             </PopoverTrigger>
             <PopoverContent className="w-auto p-1 flex items-center gap-1">
                 <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('**'); }}><Bold className="h-4 w-4" /></Button>
@@ -375,7 +393,11 @@ function ToggleListBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex
                         render={({ field }) => (
                             <FormItem>
                                 <FormControl>
-                                    <Textarea placeholder="Toggle content... Markdown is supported." {...field} />
+                                    <TextareaWithToolbar
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Toggle content... Markdown is supported."
+                                    />
                                 </FormControl>
                             </FormItem>
                         )}
@@ -451,7 +473,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
     const renderBlockEditor = () => {
         switch (block.type) {
             case 'text':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="Enter lesson content here. Markdown is supported." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="Enter lesson content here. Markdown is supported." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
             case 'code':
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1':
@@ -461,15 +483,15 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
             case 'heading3':
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'quote':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><Textarea placeholder="Enter quote..." {...field} className="italic"/></div></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="Enter quote..." className="italic"/></div></FormControl><FormMessage/></FormItem>)}/>
             case 'callout':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><Textarea placeholder="Enter callout text..." value={field.value.text} onChange={(e) => field.onChange({...field.value, text: e.target.value})} /></div></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><TextareaWithToolbar placeholder="Enter callout text..." value={field.value.text} onChange={(newText: string) => field.onChange({...field.value, text: newText})} /></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider':
                 return <hr className="my-4"/>
             case 'bulleted-list':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="* Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="* Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
             case 'numbered-list':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="1. Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="1. Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list':
                 return <TodoListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             case 'toggle-list':
@@ -638,40 +660,42 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
 
     return (
         <Card ref={setNodeRef} style={style}>
-            <AccordionItem value={`module-${moduleIndex}`} className="border-none">
-                <CardHeader className="flex flex-row items-center gap-2">
-                    <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
-                    <AccordionTrigger className="w-full flex">
-                        <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
-                            <FormItem className="flex-1">
-                                <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    </AccordionTrigger>
-                </CardHeader>
-                <AccordionContent>
-                    <CardContent>
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-                            <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-4 pl-6 border-l-2">
-                                    {lessonFields.map((lessonItem, lessonIndex) => (
-                                        <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
-                                    ))}
-                                </div>
-                            </SortableContext>
-                        </DndContext>
-                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
-                        </Button>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button" variant="destructive" onClick={() => removeModule(moduleIndex)}>
-                            <Trash2 className="mr-2 h-4 w-4" />Remove Module
-                        </Button>
-                    </CardFooter>
-                </AccordionContent>
-            </AccordionItem>
+            <Accordion type="single" collapsible defaultValue={`module-${moduleIndex}`} className="w-full">
+                <AccordionItem value={`module-${moduleIndex}`} className="border-none">
+                    <CardHeader className="flex flex-row items-center gap-2">
+                        <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
+                        <AccordionTrigger className="w-full flex">
+                            <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </AccordionTrigger>
+                    </CardHeader>
+                    <AccordionContent>
+                        <CardContent>
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+                                <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                                    <div className="space-y-4 pl-6 border-l-2">
+                                        {lessonFields.map((lessonItem, lessonIndex) => (
+                                            <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                            <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
+                            </Button>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="button" variant="destructive" onClick={() => removeModule(moduleIndex)}>
+                                <Trash2 className="mr-2 h-4 w-4" />Remove Module
+                            </Button>
+                        </CardFooter>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </Card>
     );
 }
@@ -776,7 +800,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </CardContent>
                 </Card>
 
-                <Accordion type="multiple" defaultValue={[`module-0`]} className="w-full space-y-4">
+                <Accordion type="multiple" defaultValue={['module-0']} className="w-full space-y-4">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                         <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
@@ -883,6 +907,5 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
         </Dialog>
     );
 }
-
 // #endregion
 
