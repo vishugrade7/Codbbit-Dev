@@ -220,7 +220,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
             case 'audio':
                 return (
                     <div key={block.id} className="not-prose my-6">
-                        <audio controls src={block.content} className="w-full">
+                        <audio controls src={block.content}>
                             Your browser does not support the audio element.
                         </audio>
                     </div>
