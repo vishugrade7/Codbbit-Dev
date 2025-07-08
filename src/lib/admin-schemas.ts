@@ -12,7 +12,6 @@ export const problemExampleSchema = z.object({
 });
 
 const baseProblemObjectSchema = z.object({
-  id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
   category: z.string().min(1, "Category is required."),
@@ -40,10 +39,11 @@ const triggerRefinementOptions = {
     path: ["triggerSObject"],
 };
 
-export const problemFormSchema = baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions);
+export const problemFormSchema = baseProblemObjectSchema
+    .extend({ id: z.string().optional() })
+    .refine(triggerRefinement, triggerRefinementOptions);
 
-const bulkProblemSchema = baseProblemObjectSchema.omit({ id: true }).refine(triggerRefinement, triggerRefinementOptions);
-export const bulkUploadSchema = z.array(bulkProblemSchema);
+export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions));
 // #endregion
 
 // #region Course Schemas
@@ -56,6 +56,7 @@ const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object(
     codeDetector: z.boolean().optional(),
     codeType: z.string().optional(),
     fileName: z.string().optional(),
+    backgroundColor: z.string().optional(),
     columnData: z.array(z.object({
         blocks: z.array(z.lazy(() => contentBlockSchema))
     })).optional()

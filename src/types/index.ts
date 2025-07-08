@@ -122,6 +122,7 @@ export type ContentBlock = {
   codeDetector?: boolean;
   codeType?: string;
   fileName?: string;
+  backgroundColor?: string;
 };
 
 export type Lesson = {

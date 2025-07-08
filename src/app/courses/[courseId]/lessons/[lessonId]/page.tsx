@@ -47,8 +47,17 @@ const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; prob
   const { resolvedTheme } = useTheme();
 
   switch (block.type) {
-    case 'text':
-      return <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose dark:prose-invert max-w-none">{block.content}</ReactMarkdown>;
+    case 'text': {
+        const markdown = <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose dark:prose-invert max-w-none">{block.content}</ReactMarkdown>;
+        if (block.backgroundColor) {
+            return (
+                <div className={cn('p-4 rounded-lg', block.backgroundColor)}>
+                    {markdown}
+                </div>
+            );
+        }
+        return markdown;
+    }
     
     case 'image':
       return (

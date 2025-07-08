@@ -190,7 +190,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', isFree: true, contentBlocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] }] }],
+            modules: course?.modules || [{ id: crypto.randomUUID(), title: '', lessons: [{ id: crypto.randomUUID(), title: '', isFree: true, contentBlocks: [{id: crypto.randomUUID(), type: 'text', content: '' }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         },
@@ -486,9 +486,29 @@ function ContentBlockItem({ parentName, blockIndex, control, allProblems, loadin
     const getBlockContent = () => {
         switch (block.type) {
             case 'text':
-                return <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
-                    <FormItem><FormLabel>Text (Markdown supported)</FormLabel><FormControl><Textarea placeholder="Enter Markdown-enabled text..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>
-                )} />;
+                return (
+                    <div className="space-y-4">
+                        <FormField control={control} name={`${parentName}.${blockIndex}.content`} render={({ field }) => (
+                            <FormItem><FormLabel>Text (Markdown supported)</FormLabel><FormControl><Textarea placeholder="Enter Markdown-enabled text..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={control} name={`${parentName}.${blockIndex}.backgroundColor`} render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Background Color (Optional)</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Default" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="">Default</SelectItem>
+                                        <SelectItem value="bg-card">Card</SelectItem>
+                                        <SelectItem value="bg-muted">Muted</SelectItem>
+                                        <SelectItem value="bg-primary/10">Primary (Highlight)</SelectItem>
+                                        <SelectItem value="bg-destructive/10">Destructive (Warning)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
+                );
             case 'image':
                 return (
                     <div className="space-y-4">
