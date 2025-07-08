@@ -68,6 +68,11 @@ const contentBlockSchema = z.discriminatedUnion("type", [
         type: z.literal("toggle-list"),
         content: z.object({ title: z.string(), text: z.string() }),
     }),
+    z.object({
+        id: z.string(),
+        type: z.literal("problem"),
+        content: z.object({ problemId: z.string(), title: z.string(), categoryName: z.string() }),
+    }),
 ]);
 
 

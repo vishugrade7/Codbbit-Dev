@@ -12,19 +12,20 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 
 // Firebase and Actions
-import { collection, query, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import type { Course, Module, Lesson, ContentBlock } from "@/types";
+import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from "@/types";
 import { upsertCourseToFirestore } from "@/app/upload-problem/actions";
 import { courseFormSchema } from "@/lib/admin-schemas";
+import { getCache, setCache } from "@/lib/cache";
 
 // ShadCN UI Components
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -32,6 +33,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '../ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -132,6 +136,7 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'quote', label: 'Quote', icon: <MessageSquareQuote className="h-4 w-4" /> },
     { type: 'callout', label: 'Callout', icon: <AlertTriangle className="h-4 w-4" /> },
     { type: 'divider', label: 'Divider', icon: <Minus className="h-4 w-4" /> },
+    { type: 'problem', label: 'Problem', icon: <FileQuestion className="h-4 w-4" /> },
   ];
 
   return (
@@ -292,6 +297,52 @@ function ToggleListBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex
     );
 }
 
+function ProblemBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+    const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const blockContent = useWatch({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`
+    }) as { problemId: string, title: string, categoryName: string };
+    
+    const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+
+    const onProblemSelect = (problem: Problem & { categoryName: string }) => {
+        setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`, {
+            problemId: problem.id,
+            title: problem.title,
+            categoryName: problem.categoryName,
+        });
+        setIsSelectorOpen(false);
+    };
+
+    return (
+        <>
+            <div className="bg-muted p-4 rounded-md border">
+                {blockContent?.problemId ? (
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="font-semibold">{blockContent.title}</p>
+                            <p className="text-sm text-muted-foreground">{blockContent.categoryName}</p>
+                        </div>
+                        <Button type="button" variant="outline" onClick={() => setIsSelectorOpen(true)}>Change</Button>
+                    </div>
+                ) : (
+                    <Button type="button" variant="outline" className="w-full" onClick={() => setIsSelectorOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Select a Problem
+                    </Button>
+                )}
+            </div>
+            <ProblemSelectorDialog
+                isOpen={isSelectorOpen}
+                onOpenChange={setIsSelectorOpen}
+                onSelect={onProblemSelect}
+            />
+        </>
+    );
+}
+
+
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { moduleIndex: number, lessonIndex: number, blockIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
@@ -334,6 +385,8 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
                 return <TodoListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             case 'toggle-list':
                 return <ToggleListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
+            case 'problem':
+                return <ProblemBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             default:
                 const _exhaustiveCheck: never = block.type;
                 return null;
@@ -386,6 +439,9 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                 break;
             case 'toggle-list':
                 newBlock = { id: uuidv4(), type, content: { title: 'Toggle Title', text: '' } };
+                break;
+            case 'problem':
+                newBlock = { id: uuidv4(), type, content: { problemId: '', title: '', categoryName: '' } };
                 break;
             default:
                  newBlock = { id: uuidv4(), type, content: '' };
@@ -458,12 +514,12 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
     );
 }
 
-function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
-    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeModule } = useFieldArray({ name: `modules` });
     const { fields: lessonFields, append: appendLesson, move: moveLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
     
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: getValues(`modules.${moduleIndex}.id`) });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
 
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -619,11 +675,11 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </CardContent>
                 </Card>
 
-                <Accordion type="multiple" defaultValue={[`module-${moduleFields[0]?.id}`]} className="w-full space-y-4">
+                <Accordion type="multiple" defaultValue={[`module-0`]} className="w-full space-y-4">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                         <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
-                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} />
+                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} />
                             ))}
                         </SortableContext>
                     </DndContext>
@@ -644,3 +700,87 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
         </FormProvider>
     );
 }
+
+// #region Problem Selector Dialog
+type ProblemWithCategory = Problem & { categoryName: string };
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
+
+function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onSelect: (problem: ProblemWithCategory) => void }) {
+    const { toast } = useToast();
+    const [problems, setProblems] = useState<ProblemWithCategory[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const fetchProblems = async () => {
+            setLoading(true);
+            const processData = (data: ApexProblemsData) => {
+                const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                );
+                setProblems(allProblems.sort((a,b) => a.title.localeCompare(b.title)));
+            };
+
+            const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            if (cachedData) {
+                processData(cachedData);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(apexDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data().Category as ApexProblemsData;
+                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    processData(data);
+                }
+            } catch (error) {
+                console.error("Error fetching problems:", error);
+                toast({ variant: 'destructive', title: 'Failed to load problems' });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProblems();
+    }, [isOpen, toast]);
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Select a Problem</DialogTitle>
+                </DialogHeader>
+                <div className="flex-1 min-h-0">
+                    {loading ? (
+                        <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Category</TableHead>
+                                    <TableHead>Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {problems.map(p => (
+                                    <TableRow key={p.id}>
+                                        <TableCell>{p.title}</TableCell>
+                                        <TableCell>{p.categoryName}</TableCell>
+                                        <TableCell><Button size="sm" onClick={() => onSelect(p)}>Select</Button></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+// #endregion

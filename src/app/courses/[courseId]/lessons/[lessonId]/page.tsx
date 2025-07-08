@@ -8,10 +8,10 @@ import Link from 'next/link';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
-import type { Course, Module, Lesson, ContentBlock } from '@/types';
+import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -20,12 +20,27 @@ import remarkGfm from 'remark-gfm';
 import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { getCache, setCache } from '@/lib/cache';
 
 const getLessonIcon = (lesson: Lesson) => {
     return <BookOpen className="h-5 w-5" />;
 };
 
-const LessonContent = ({ contentBlocks }: { contentBlocks: ContentBlock[] }) => {
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
+type ProblemWithCategory = Problem & { categoryName: string };
+
+const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
+  const getDifficultyBadgeClass = (difficulty: string) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+      default: return 'bg-muted';
+    }
+  };
+
   return (
     <div className="prose dark:prose-invert max-w-none">
       {(contentBlocks || []).map(block => {
@@ -103,6 +118,36 @@ const LessonContent = ({ contentBlocks }: { contentBlocks: ContentBlock[] }) => 
                   </Accordion>
                 </div>
               );
+            case 'problem':
+                const problemDetails = allProblems.find(p => p.id === block.content.problemId);
+                return (
+                    <Card key={block.id} className="not-prose my-6">
+                        <CardHeader>
+                            <div className='flex justify-between items-start'>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <FileQuestion className="h-5 w-5 text-primary" />
+                                        <h3 className="text-lg font-semibold">Challenge</h3>
+                                    </div>
+                                    <CardTitle>{block.content.title}</CardTitle>
+                                    <CardDescription>{block.content.categoryName}</CardDescription>
+                                </div>
+                                {problemDetails && (
+                                    <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(problemDetails.difficulty))}>
+                                      {problemDetails.difficulty}
+                                    </Badge>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardFooter>
+                            <Button asChild>
+                                <Link href={`/problems/apex/${encodeURIComponent(block.content.categoryName)}/${block.content.problemId}`}>
+                                    Solve Problem
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                );
           default:
             return null;
         }
@@ -127,6 +172,7 @@ export default function LessonPage() {
     const [nextLesson, setNextLesson] = useState<{ lessonId: string } | null>(null);
     const [prevLesson, setPrevLesson] = useState<{ lessonId: string } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
     
     useEffect(() => {
         if (authLoading) return; // Wait for auth status to resolve
@@ -141,12 +187,12 @@ export default function LessonPage() {
         const fetchCourse = async () => {
             setLoading(true);
             try {
+                // Fetch course data
                 const courseDocRef = doc(db, 'courses', courseId);
-                const docSnap = await getDoc(courseDocRef);
+                const courseSnap = await getDoc(courseDocRef);
 
-                if (docSnap.exists()) {
-                    const courseData = { id: docSnap.id, ...docSnap.data() } as Course;
-                    
+                if (courseSnap.exists()) {
+                    const courseData = { id: courseSnap.id, ...courseSnap.data() } as Course;
                     setCourse(courseData);
 
                     const allLessons: ({ lesson: Lesson, moduleId: string })[] = (courseData.modules || []).flatMap(m => m.lessons.map(l => ({ lesson: l, moduleId: m.id })));
@@ -154,7 +200,6 @@ export default function LessonPage() {
 
                     if (currentLessonIndex !== -1) {
                         const { lesson, moduleId } = allLessons[currentLessonIndex];
-
                         const isLessonLocked = (courseData.isPremium && !isPro) || (!lesson.isFree && !isPro);
 
                         if(isLessonLocked) {
@@ -164,9 +209,31 @@ export default function LessonPage() {
 
                         setCurrentLesson(lesson);
                         setCurrentModuleId(moduleId);
-                        
                         setPrevLesson(currentLessonIndex > 0 ? { lessonId: allLessons[currentLessonIndex - 1].lesson.id } : null);
                         setNextLesson(currentLessonIndex < allLessons.length - 1 ? { lessonId: allLessons[currentLessonIndex + 1].lesson.id } : null);
+
+                        // If lesson has problem blocks, fetch all problems
+                        if (lesson.contentBlocks.some(b => b.type === 'problem')) {
+                            const processProblems = (data: ApexProblemsData) => {
+                                const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                                );
+                                setAllProblems(problems);
+                            };
+
+                            const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+                            if (cachedProblems) {
+                                processProblems(cachedProblems);
+                            } else {
+                                const apexDocRef = doc(db, "problems", "Apex");
+                                const apexSnap = await getDoc(apexDocRef);
+                                if (apexSnap.exists()) {
+                                    const data = apexSnap.data().Category as ApexProblemsData;
+                                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                                    processProblems(data);
+                                }
+                            }
+                        }
                     } else {
                         router.push(`/courses/${courseId}`);
                     }
@@ -284,7 +351,7 @@ export default function LessonPage() {
                         </div>
                         <ScrollArea className="flex-1">
                             <div className="p-6">
-                                <LessonContent contentBlocks={currentLesson.contentBlocks} />
+                                <LessonContent contentBlocks={currentLesson.contentBlocks} allProblems={allProblems}/>
                             </div>
                         </ScrollArea>
                         <div className="p-4 border-t flex justify-between">
