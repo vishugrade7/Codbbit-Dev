@@ -4,7 +4,7 @@
 
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, User, NavLink, Badge, ApexProblemsData } from '@/types';
+import type { Problem, Course, User, NavLink, Badge, ApexProblemsData, PricingSettings, Voucher } from '@/types';
 import { z } from "zod";
 import { adminStorage } from '@/lib/firebaseAdmin';
 
@@ -126,6 +126,31 @@ const badgeSchema = z.object({
 }, {
     message: "Category is required for CATEGORY_SOLVED type badges.",
     path: ["category"],
+});
+// #endregion
+
+// #region Pricing and Voucher Schemas
+const pricingSettingsSchema = z.object({
+    inr: z.object({
+        monthly: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        biannually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        annually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+    }),
+    usd: z.object({
+        monthly: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        biannually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        annually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+    }),
+});
+
+const voucherSchema = z.object({
+    id: z.string().optional(),
+    code: z.string().min(1, 'Code is required').toUpperCase(),
+    type: z.enum(['percentage', 'fixed']),
+    value: z.coerce.number().min(0, 'Value must be positive.'),
+    isActive: z.boolean(),
+    expiresAt: z.date().optional(),
+    oneTimeUse: z.boolean().optional(),
 });
 // #endregion
 
@@ -739,6 +764,85 @@ export async function uploadBrandingImage(logoType: LogoType, dataUrl: string) {
     } catch (error: any) {
         console.error("Error uploading branding image:", error);
         return { success: false, error: error.message || 'An unknown server error occurred.' };
+    }
+}
+// #endregion
+
+// #region Pricing and Voucher Management
+
+export async function getPricingSettings(): Promise<PricingSettings | null> {
+    if (!db) throw new Error("Database not initialized.");
+    const settingsDocRef = doc(db, 'settings', 'pricing');
+    const docSnap = await getDoc(settingsDocRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as PricingSettings;
+    }
+    return null;
+}
+
+export async function updatePricingSettings(data: z.infer<typeof pricingSettingsSchema>) {
+    const validation = pricingSettingsSchema.safeParse(data);
+    if (!validation.success) {
+        return { success: false, error: "Invalid data format." };
+    }
+    if (!db) return { success: false, error: "Database not initialized." };
+
+    try {
+        const settingsDocRef = doc(db, 'settings', 'pricing');
+        await setDoc(settingsDocRef, validation.data, { merge: true });
+        return { success: true, message: "Pricing settings updated successfully." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function getVouchers(): Promise<Voucher[]> {
+    if (!db) throw new Error("Database not initialized.");
+    const vouchersRef = collection(db, "vouchers");
+    const q = query(vouchersRef, orderBy("code"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Voucher));
+}
+
+export async function upsertVoucher(data: z.infer<typeof voucherSchema>) {
+    const validation = voucherSchema.safeParse(data);
+    if (!validation.success) {
+        return { success: false, error: validation.error.errors[0].message };
+    }
+    if (!db) return { success: false, error: "Database not initialized." };
+
+    const { id, ...voucherData } = validation.data;
+    
+    // Check for duplicate code on create
+    if (!id) {
+        const q = query(collection(db, 'vouchers'), where('code', '==', voucherData.code));
+        const existing = await getDocs(q);
+        if (!existing.empty) {
+            return { success: false, error: 'A voucher with this code already exists.' };
+        }
+    }
+    
+    try {
+        const docRef = id ? doc(db, 'vouchers', id) : doc(collection(db, 'vouchers'));
+        await setDoc(docRef, voucherData, { merge: true });
+        return { success: true, message: `Voucher ${id ? 'updated' : 'created'} successfully!` };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function deleteVoucher(voucherId: string) {
+    if (!voucherId) return { success: false, error: "Voucher ID is required." };
+    if (!db) return { success: false, error: "Database not initialized." };
+
+    try {
+        await deleteDoc(doc(db, 'vouchers', voucherId));
+        return { success: true, message: "Voucher deleted successfully." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
     }
 }
 

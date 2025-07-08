@@ -3,9 +3,11 @@
 
 import { razorpay } from '@/lib/razorpay';
 import shortid from 'shortid';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, runTransaction, arrayUnion, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import crypto from 'crypto';
+import { getPricingSettings } from '../upload-problem/actions';
+import { Voucher } from '@/types';
 
 export async function isRazorpayConfigured(): Promise<boolean> {
     return !!razorpay;
@@ -19,21 +21,73 @@ type CreateOrderResponse = {
     error?: string;
 };
 
-export async function createRazorpayOrder(amount: number, currency: 'INR' | 'USD'): Promise<CreateOrderResponse> {
+export async function createRazorpayOrder(
+    planId: 'monthly' | 'biannually' | 'annually',
+    currencyCode: 'INR' | 'USD',
+    userId: string,
+    voucherCode?: string
+): Promise<CreateOrderResponse> {
     if (!razorpay) {
         return { error: 'Payment processing is not configured on the server. Please contact the site administrator.' };
     }
     
-    const payment_capture = 1;
-    const amountInSubunits = amount * 100;
-    const options = {
-        amount: amountInSubunits,
-        currency,
-        receipt: shortid.generate(),
-        payment_capture,
-    };
-
     try {
+        const pricingSettings = await getPricingSettings();
+        if (!pricingSettings) {
+            throw new Error("Pricing information is not configured.");
+        }
+        
+        const prices = currencyCode === 'INR' ? pricingSettings.inr : pricingSettings.usd;
+        let amount = prices[planId].total;
+
+        // Voucher logic
+        if (voucherCode) {
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (!userDoc.exists()) throw new Error('User not found.');
+            const userData = userDoc.data();
+
+            const vouchersRef = collection(db, 'vouchers');
+            const q = query(vouchersRef, where('code', '==', voucherCode.toUpperCase()));
+            const voucherSnapshot = await getDocs(q);
+
+            if (voucherSnapshot.empty) {
+                return { error: 'Invalid voucher code.' };
+            }
+            const voucherDoc = voucherSnapshot.docs[0];
+            const voucher = { id: voucherDoc.id, ...voucherDoc.data() } as Voucher;
+
+            if (!voucher.isActive) return { error: 'This voucher is no longer active.' };
+            if (voucher.expiresAt && voucher.expiresAt.toDate() < new Date()) return { error: 'This voucher has expired.' };
+            if (voucher.oneTimeUse && userData.usedVouchers?.includes(voucher.id)) return { error: 'You have already used this voucher.' };
+            if (voucher.oneTimeUse && voucher.usedBy && voucher.usedBy.length > 0) return { error: 'This voucher has already been redeemed.' };
+            
+            if (voucher.type === 'fixed') {
+                amount = Math.max(0, amount - voucher.value);
+            } else if (voucher.type === 'percentage') {
+                amount = amount * (1 - voucher.value / 100);
+            }
+        }
+        
+        const amountInSubunits = Math.round(amount * 100);
+        if (amountInSubunits <= 0 && voucherCode) {
+             return { error: 'The final amount after discount is zero. Cannot create order.' };
+        }
+        if(amountInSubunits <=0) {
+            return { error: "Price cannot be zero. Contact administrator" };
+        }
+
+        const options = {
+            amount: amountInSubunits,
+            currency: currencyCode,
+            receipt: shortid.generate(),
+            payment_capture: 1,
+            notes: {
+                userId,
+                planId,
+                ...(voucherCode && { voucherCode })
+            }
+        };
+
         const response = await razorpay.orders.create(options);
         return {
             orderId: response.id,
@@ -61,7 +115,8 @@ export async function verifyAndSavePayment(
     userId: string,
     expectedAmount: number,
     expectedCurrency: string,
-    planId: 'monthly' | 'biannually' | 'annually'
+    planId: 'monthly' | 'biannually' | 'annually',
+    voucherCode?: string | null
 ): Promise<VerifyPaymentResponse> {
     if (!userId || !db) {
         return { success: false, error: 'User or database not found.' };
@@ -106,24 +161,46 @@ export async function verifyAndSavePayment(
             return { success: false, error: `Payment currency mismatch. Expected ${expectedCurrency}, got ${payment.currency}` };
         }
 
-        // Step 3: All checks passed, calculate subscription end date and update user in Firestore
-        const endDate = new Date();
-        if (planId === 'monthly') {
-            endDate.setMonth(endDate.getMonth() + 1);
-        } else if (planId === 'biannually') {
-            endDate.setMonth(endDate.getMonth() + 6);
-        } else if (planId === 'annually') {
-            endDate.setFullYear(endDate.getFullYear() + 1);
-        }
+        // Step 3: All checks passed, update user in Firestore using a transaction
+        await runTransaction(db, async (transaction) => {
+            const userDocRef = doc(db, 'users', userId);
+            
+            // Mark voucher as used if applicable
+            if (voucherCode) {
+                const vouchersRef = collection(db, 'vouchers');
+                const q = query(vouchersRef, where('code', '==', voucherCode.toUpperCase()));
+                const voucherSnapshot = await getDocs(q);
+                if (!voucherSnapshot.empty) {
+                    const voucherDoc = voucherSnapshot.docs[0];
+                    if (voucherDoc.data().oneTimeUse) {
+                        transaction.update(voucherDoc.ref, {
+                            usedBy: arrayUnion(userId)
+                        });
+                        transaction.update(userDocRef, {
+                            usedVouchers: arrayUnion(voucherDoc.id)
+                        });
+                    }
+                }
+            }
+            
+            const endDate = new Date();
+            if (planId === 'monthly') {
+                endDate.setMonth(endDate.getMonth() + 1);
+            } else if (planId === 'biannually') {
+                endDate.setMonth(endDate.getMonth() + 6);
+            } else if (planId === 'annually') {
+                endDate.setFullYear(endDate.getFullYear() + 1);
+            }
 
-        const userDocRef = doc(db, 'users', userId);
-        await updateDoc(userDocRef, {
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_order_id,
-            razorpaySubscriptionStatus: 'active',
-            subscriptionEndDate: endDate,
-            subscriptionPeriod: planId,
+            transaction.update(userDocRef, {
+                razorpayPaymentId: razorpay_payment_id,
+                razorpayOrderId: razorpay_order_id,
+                razorpaySubscriptionStatus: 'active',
+                subscriptionEndDate: endDate,
+                subscriptionPeriod: planId,
+            });
         });
+
         return { success: true };
 
     } catch (error: any) {

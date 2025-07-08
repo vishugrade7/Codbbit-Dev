@@ -9,18 +9,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
-import { doc, getDoc, collection, query, getDocs, orderBy, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, getDocs, orderBy, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink, Badge, ContentBlock, BrandingSettings, LogoType } from "@/types";
+import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink, Badge, ContentBlock, BrandingSettings, LogoType, PricingSettings, Voucher } from "@/types";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from "next/image";
+import { format } from "date-fns";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore, getBrandingSettings, uploadBrandingImage } from "./actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore, getBrandingSettings, uploadBrandingImage, getPricingSettings, updatePricingSettings, getVouchers, upsertVoucher, deleteVoucher as deleteVoucherAction } from "./actions";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building, Columns, DownloadCloud, Palette } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, GripVertical, FileVideo, FileText, BrainCircuit, Grip, UserCog, MenuIcon, Award, MousePointerClick, Code, Image as ImageIcon, Building, Columns, DownloadCloud, Palette, CreditCard } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -41,6 +42,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { FormDescription } from "@/components/ui/form";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon } from 'lucide-react';
+
 
 // #region Schemas
 const problemExampleSchema = z.object({
@@ -153,6 +158,29 @@ const badgeFormSchema = z.object({
     path: ["category"],
 });
 
+const pricingFormSchema = z.object({
+    inr: z.object({
+        monthly: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        biannually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        annually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+    }),
+    usd: z.object({
+        monthly: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        biannually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+        annually: z.object({ price: z.coerce.number(), total: z.coerce.number() }),
+    }),
+});
+
+const voucherFormSchema = z.object({
+    id: z.string().optional(),
+    code: z.string().min(1, 'Code is required').toUpperCase(),
+    type: z.enum(['percentage', 'fixed']),
+    value: z.coerce.number().min(0, 'Value must be positive.'),
+    isActive: z.boolean(),
+    expiresAt: z.date().optional(),
+    oneTimeUse: z.boolean().optional(),
+});
+
 // #endregion
 
 type FormMode = 'add' | 'edit';
@@ -204,7 +232,7 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management';
+    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management' | 'pricing-management';
     const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
     
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
@@ -261,6 +289,8 @@ function UploadProblemContent() {
                 return <BadgeManagementView />;
             case 'brand-management':
                 return <BrandManagementView />;
+            case 'pricing-management':
+                return <PricingManagementView />;
             default:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -375,6 +405,25 @@ function UploadProblemContent() {
                             <CardFooter>
                                <div className="text-sm text-primary font-semibold flex items-center gap-2">
                                    Manage Branding <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                               </div>
+                            </CardFooter>
+                        </Card>
+                        <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('pricing-management')}
+                        >
+                            <CardHeader>
+                                <CardTitle>Pricing & Vouchers</CardTitle>
+                                <CardDescription>Manage subscription prices and voucher codes.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                   <CreditCard className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                               <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                   Manage Pricing <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
                                </div>
                             </CardFooter>
                         </Card>
@@ -1555,6 +1604,334 @@ function BrandManagementView() {
         </Card>
     );
 }
+// #endregion
+
+// #region PricingManagementView
+
+function PricingManagementView() {
+    return (
+        <div className="space-y-8">
+            <PricingForm />
+            <VoucherManagement />
+        </div>
+    );
+}
+
+function PricingForm() {
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    
+    const form = useForm<z.infer<typeof pricingFormSchema>>({
+        resolver: zodResolver(pricingFormSchema),
+        defaultValues: {
+            inr: { monthly: { price: 0, total: 0 }, biannually: { price: 0, total: 0 }, annually: { price: 0, total: 0 } },
+            usd: { monthly: { price: 0, total: 0 }, biannually: { price: 0, total: 0 }, annually: { price: 0, total: 0 } },
+        }
+    });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            setLoading(true);
+            const settings = await getPricingSettings();
+            if (settings) {
+                form.reset(settings);
+            }
+            setLoading(false);
+        };
+        fetchSettings();
+    }, [form]);
+
+    const onSubmit = async (data: z.infer<typeof pricingFormSchema>) => {
+        setIsSaving(true);
+        const result = await updatePricingSettings(data);
+        if (result.success) {
+            toast({ title: 'Success', description: result.message });
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save settings.' });
+        }
+        setIsSaving(false);
+    };
+
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pricing Management</CardTitle>
+                    <CardDescription>Set the prices for your subscription plans in INR and USD.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                </CardContent>
+            </Card>
+        );
+    }
+    
+    const PriceInputGroup = ({ currency, plan }: { currency: 'inr' | 'usd', plan: 'monthly' | 'biannually' | 'annually' }) => (
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name={`${currency}.${plan}.price`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Price per Month</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name={`${currency}.${plan}.total`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Total Billed Amount</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+
+    return (
+        <Card>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardHeader>
+                        <CardTitle>Pricing Management</CardTitle>
+                        <CardDescription>Set the prices for your subscription plans in INR and USD.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-4 p-4 border rounded-lg">
+                            <h3 className="font-semibold text-lg">INR Pricing (₹)</h3>
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="monthly"><AccordionTrigger>Monthly</AccordionTrigger><AccordionContent className="pt-4"><PriceInputGroup currency="inr" plan="monthly" /></AccordionContent></AccordionItem>
+                                <AccordionItem value="biannually"><AccordionTrigger>6 Months</AccordionTrigger><AccordionContent className="pt-4"><PriceInputGroup currency="inr" plan="biannually" /></AccordionContent></AccordionItem>
+                                <AccordionItem value="annually"><AccordionTrigger>Yearly</AccordionTrigger><AccordionContent className="pt-4"><PriceInputGroup currency="inr" plan="annually" /></AccordionContent></AccordionItem>
+                            </Accordion>
+                        </div>
+                        <div className="space-y-4 p-4 border rounded-lg">
+                            <h3 className="font-semibold text-lg">USD Pricing ($)</h3>
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="monthly"><AccordionTrigger>Monthly</AccordionTrigger><AccordionContent className="pt-4"><PriceInputGroup currency="usd" plan="monthly" /></AccordionContent></AccordionItem>
+                                <AccordionItem value="biannually"><AccordionTrigger>6 Months</AccordionTrigger><AccordionContent className="pt-4"><PriceInputGroup currency="usd" plan="biannually" /></AccordionContent></AccordionItem>
+                                <AccordionItem value="annually"><AccordionTrigger>Yearly</AccordionTrigger><AccordionContent className="pt-4"><PriceInputGroup currency="usd" plan="annually" /></AccordionContent></AccordionItem>
+                            </Accordion>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Prices
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Form>
+        </Card>
+    );
+}
+
+function VoucherManagement() {
+    const { toast } = useToast();
+    const [vouchers, setVouchers] = useState<Voucher[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [currentVoucher, setCurrentVoucher] = useState<Voucher | null>(null);
+
+    const fetchVouchers = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await getVouchers();
+            setVouchers(data);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load vouchers.' });
+        }
+        setLoading(false);
+    }, [toast]);
+
+    useEffect(() => {
+        fetchVouchers();
+    }, [fetchVouchers]);
+
+    const handleAdd = () => {
+        setCurrentVoucher(null);
+        setDialogOpen(true);
+    };
+
+    const handleEdit = (voucher: Voucher) => {
+        setCurrentVoucher(voucher);
+        setDialogOpen(true);
+    };
+
+    const handleDelete = async (voucherId: string) => {
+        const result = await deleteVoucherAction(voucherId);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            fetchVouchers();
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+    };
+    
+    return (
+        <Card>
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Voucher Management</CardTitle>
+                    <CardDescription>Create and manage discount vouchers.</CardDescription>
+                </div>
+                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Voucher</Button>
+            </CardHeader>
+            <CardContent>
+                 {loading ? (
+                    <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                ) : (
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Code</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Value</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Expires</TableHead>
+                                    <TableHead>Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {vouchers.length === 0 ? (
+                                    <TableRow><TableCell colSpan={6} className="h-24 text-center">No vouchers found.</TableCell></TableRow>
+                                ) : (
+                                    vouchers.map(v => (
+                                        <TableRow key={v.id}>
+                                            <TableCell className="font-mono font-semibold">{v.code}</TableCell>
+                                            <TableCell>{v.type}</TableCell>
+                                            <TableCell>{v.type === 'fixed' ? `$${v.value}` : `${v.value}%`}</TableCell>
+                                            <TableCell><UiBadge variant={v.isActive ? 'default' : 'secondary'}>{v.isActive ? 'Active' : 'Inactive'}</UiBadge></TableCell>
+                                            <TableCell>{v.expiresAt ? format(v.expiresAt.toDate(), 'PPP') : 'Never'}</TableCell>
+                                            <TableCell className="space-x-2">
+                                                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEdit(v)}><Edit className="h-4 w-4" /></Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Delete Voucher "{v.code}"?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This action is permanent and cannot be undone.</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDelete(v.id)}>Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </CardContent>
+            <VoucherFormDialog isOpen={dialogOpen} onOpenChange={setDialogOpen} voucher={currentVoucher} onFormSubmit={fetchVouchers} />
+        </Card>
+    )
+}
+
+function VoucherFormDialog({ isOpen, onOpenChange, voucher, onFormSubmit }: { isOpen: boolean, onOpenChange: (open: boolean) => void, voucher: Voucher | null, onFormSubmit: () => void }) {
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    
+    const form = useForm<z.infer<typeof voucherFormSchema>>({
+        resolver: zodResolver(voucherFormSchema),
+    });
+
+    useEffect(() => {
+        if (isOpen) {
+            form.reset({
+                id: voucher?.id,
+                code: voucher?.code || '',
+                type: voucher?.type || 'percentage',
+                value: voucher?.value || 0,
+                isActive: voucher?.isActive ?? true,
+                expiresAt: voucher?.expiresAt?.toDate(),
+                oneTimeUse: voucher?.oneTimeUse ?? false
+            });
+        }
+    }, [isOpen, voucher, form]);
+
+    const onSubmit = async (data: z.infer<typeof voucherFormSchema>) => {
+        setIsSaving(true);
+        const result = await upsertVoucher(data);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            onFormSubmit();
+            onOpenChange(false);
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: typeof result.error === 'string' ? result.error : 'Validation failed.' });
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{voucher ? 'Edit' : 'Create'} Voucher</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                        <FormField control={form.control} name="code" render={({ field }) => (
+                            <FormItem><FormLabel>Voucher Code</FormLabel><FormControl><Input {...field} placeholder="e.g., SAVE20" /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <div className="grid grid-cols-2 gap-4">
+                             <FormField control={form.control} name="type" render={({ field }) => (
+                                <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                    <SelectItem value="percentage">Percentage</SelectItem>
+                                    <SelectItem value="fixed">Fixed Amount (USD)</SelectItem>
+                                </SelectContent></Select><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="value" render={({ field }) => (
+                                <FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                        <FormField control={form.control} name="expiresAt" render={({ field }) => (
+                            <FormItem className="flex flex-col"><FormLabel>Expiration Date</FormLabel><Popover>
+                                <PopoverTrigger asChild>
+                                    <FormControl><Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button></FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                </PopoverContent>
+                            </Popover><FormMessage /></FormItem>
+                        )}/>
+                        <div className="flex items-center space-x-4">
+                            <FormField control={form.control} name="isActive" render={({ field }) => (
+                                <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Active</FormLabel></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="oneTimeUse" render={({ field }) => (
+                                <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>One-Time Use</FormLabel></FormItem>
+                            )}/>
+                        </div>
+                        <DialogFooter>
+                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                             <Button type="submit" disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Save</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 // #endregion
 
 // #region ProblemForm

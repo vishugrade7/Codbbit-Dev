@@ -5,12 +5,17 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, IndianRupee, Ticket } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getPricingSettings } from "@/app/upload-problem/actions";
+import type { PricingSettings } from "@/types";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -37,6 +42,9 @@ export default function PricingPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isRazorpayReady, setIsRazorpayReady] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(true);
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(true);
+  const [voucherCode, setVoucherCode] = useState('');
 
   useEffect(() => {
     const checkConfig = async () => {
@@ -48,24 +56,32 @@ export default function PricingPage() {
     checkConfig();
   }, []);
 
-
-  const plans = useMemo(() => {
-    const priceData = {
-        inr: {
-            monthly: { price: 499, total: 499 },
-            biannually: { price: 415, total: 2490 },
-            annually: { price: 333, total: 3996 },
-        },
-        usd: {
-            monthly: { price: 12, total: 12 },
-            biannually: { price: 10, total: 60 },
-            annually: { price: 8, total: 96 },
+  useEffect(() => {
+    const fetchPricing = async () => {
+        setLoadingPricing(true);
+        try {
+            const settings = await getPricingSettings();
+            if (settings) {
+                setPricingSettings(settings);
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load pricing information. Please contact support.' });
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch pricing settings.' });
+        } finally {
+            setLoadingPricing(false);
         }
     };
+    fetchPricing();
+  }, [toast]);
 
+
+  const plans = useMemo(() => {
+    if (!pricingSettings) return null;
+
+    const prices = isIndianUser ? pricingSettings.inr : pricingSettings.usd;
     const currency = isIndianUser ? "₹" : "$";
     const currencyCode = isIndianUser ? "INR" : "USD";
-    const prices = isIndianUser ? priceData.inr : priceData.usd;
 
     return {
       monthly: {
@@ -102,10 +118,10 @@ export default function PricingPage() {
         currency: currency,
       }
     };
-  }, [isIndianUser]);
+  }, [isIndianUser, pricingSettings]);
 
-  const currentPlan = plans[billingCycle];
-  const freePlan = plans.free;
+  const currentPlan = plans ? plans[billingCycle] : null;
+  const freePlan = plans ? plans.free : null;
 
   const handleUpgrade = async () => {
     if (!user || !userData) {
@@ -115,6 +131,10 @@ export default function PricingPage() {
     }
     if (!isRazorpayReady) {
         toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment processing is not configured on the server. Please contact the site administrator.' });
+        return;
+    }
+     if (!currentPlan) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Pricing plan not loaded.' });
         return;
     }
     
@@ -127,7 +147,12 @@ export default function PricingPage() {
       return;
     }
 
-    const orderResponse = await createRazorpayOrder(currentPlan.total, currentPlan.currencyCode);
+    const orderResponse = await createRazorpayOrder(
+        currentPlan.id,
+        currentPlan.currencyCode,
+        user.uid,
+        voucherCode.trim()
+    );
 
     if (orderResponse.error || !orderResponse.orderId) {
         toast({ variant: 'destructive', title: 'Checkout Error', description: orderResponse.error || 'Could not create an order.' });
@@ -147,9 +172,10 @@ export default function PricingPage() {
             const verificationResult = await verifyAndSavePayment(
               response,
               user.uid,
-              currentPlan.total * 100, // Pass amount in subunits
+              orderResponse.amount,
               currentPlan.currencyCode,
-              currentPlan.id
+              currentPlan.id,
+              voucherCode.trim() || null
             );
             if (verificationResult.success) {
                 toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
@@ -185,6 +211,24 @@ export default function PricingPage() {
        setIsCheckingOut(false);
     }
   };
+
+
+  if (loadingPricing || loadingConfig) {
+    return (
+      <main className="flex-1 container py-12 flex justify-center items-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </main>
+    )
+  }
+  
+  if (!plans || !freePlan || !currentPlan) {
+    return (
+       <main className="flex-1 container py-12 text-center">
+        <h1 className="text-2xl font-bold text-destructive">Pricing Not Available</h1>
+        <p className="text-muted-foreground mt-2">We're sorry, but we couldn't load the pricing information. Please contact support.</p>
+      </main>
+    )
+  }
 
 
   return (
@@ -254,9 +298,18 @@ export default function PricingPage() {
               <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Advanced analytics & insights</li>
               <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Priority support</li>
             </ul>
+            <div className="px-1 pt-4">
+                <Label htmlFor="voucher" className="flex items-center gap-2 mb-2"><Ticket className="h-4 w-4" />Voucher Code</Label>
+                <Input 
+                    id="voucher" 
+                    placeholder="Enter code for a discount"
+                    value={voucherCode}
+                    onChange={(e) => setVoucherCode(e.target.value)}
+                />
+            </div>
           </CardContent>
           <CardFooter>
-            {!isRazorpayReady && !loadingConfig ? (
+            {!isRazorpayReady ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -272,9 +325,9 @@ export default function PricingPage() {
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig}>
-                {(isCheckingOut || loadingConfig) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {loadingConfig ? 'Initializing...' : 'Upgrade to Pro'}
+              <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut}>
+                {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Upgrade to Pro
               </Button>
             )}
           </CardFooter>

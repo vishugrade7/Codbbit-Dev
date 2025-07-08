@@ -22,6 +22,28 @@ export type BrandingSettings = {
   favicon?: string;
 };
 
+export type PriceData = {
+  monthly: { price: number; total: number };
+  biannually: { price: number; total: number };
+  annually: { price: number; total: number };
+};
+
+export type PricingSettings = {
+  inr: PriceData;
+  usd: PriceData;
+};
+
+export type Voucher = {
+  id: string;
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  isActive: boolean;
+  expiresAt?: any; // Firestore Timestamp
+  oneTimeUse?: boolean;
+  usedBy?: string[]; // Array of user UIDs who have used it
+};
+
 export type User = {
   id: string;
   uid: string;
@@ -70,6 +92,7 @@ export type User = {
   subscriptionEndDate?: any; // Firestore Timestamp
   subscriptionPeriod?: 'monthly' | 'biannually' | 'annually';
   activeSessionId?: string;
+  usedVouchers?: string[];
 };
 
 export type LeaderboardUser = {
