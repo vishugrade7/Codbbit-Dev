@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { v4 as uuidv4 } from 'uuid';
@@ -293,12 +293,20 @@ function ToggleListBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex
 }
 
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { moduleIndex: number, lessonIndex: number, blockIndex: number, rhfId: string }) {
-    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
-    const block = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`);
+    
+    const block = useWatch({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`
+    }) as ContentBlock;
 
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
+
+    if (!block) {
+        return null;
+    }
 
     const renderBlockEditor = () => {
         switch (block.type) {
@@ -327,6 +335,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
             case 'toggle-list':
                 return <ToggleListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             default:
+                const _exhaustiveCheck: never = block.type;
                 return null;
         }
     }
