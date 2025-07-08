@@ -49,8 +49,8 @@ export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRe
 // #region Course Schemas
 const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object({
     id: z.string(),
-    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns']),
-    content: z.string(),
+    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns', 'quote', 'divider', 'list', 'list-ordered', 'page-title', 'heading1', 'heading2', 'heading3', 'table', 'todo-list', 'callout', 'mcq-creator', 'button', 'apex-challenge', 'live-code-renderer']),
+    content: z.any(),
     language: z.string().optional(),
     caption: z.string().optional(),
     codeDetector: z.boolean().optional(),
@@ -59,13 +59,8 @@ const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object(
     backgroundColor: z.string().optional(),
     columnData: z.array(z.object({
         blocks: z.array(z.lazy(() => contentBlockSchema))
-    })).optional()
-}).refine(data => {
-    if (data.type === 'columns') return true;
-    return !!data.content;
-}, {
-    message: "Content cannot be empty for this block type.",
-    path: ["content"],
+    })).optional(),
+    numColumns: z.number().optional(),
 }));
 
 const lessonSchema = z.object({
