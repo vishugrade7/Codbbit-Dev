@@ -90,7 +90,7 @@ export default function Home() {
         {/* Main Content */}
         <div className="relative z-10 flex flex-col items-center text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-            Achieve <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">mastery</span>
+            Achieve <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">mastery</span>
             <br />
             through challenge
             </h1>
@@ -98,7 +98,7 @@ export default function Home() {
             Improve your development skills by training with your peers on code kata that continuously challenge and push your coding practice.
             </p>
             <div className="mt-8 flex justify-center gap-4">
-                <Button asChild size="lg" className="bg-gradient-to-r from-orange-500 to-red-500 text-primary-foreground hover:opacity-90 transition-opacity">
+                <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-blue-800 text-primary-foreground hover:opacity-90 transition-opacity">
                 <Link href="/apex-problems">
                     Get Started
                 </Link>
