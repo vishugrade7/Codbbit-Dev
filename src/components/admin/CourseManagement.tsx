@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { v4 as uuidv4 } from 'uuid';
 import {
   DndContext,
   closestCenter,
@@ -22,7 +22,9 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
+// Firebase and Actions
 import { collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +32,10 @@ import type { Course, Module, Lesson, ContentBlock } from "@/types";
 import { upsertCourseToFirestore } from "@/app/upload-problem/actions";
 import { courseFormSchema } from "@/lib/admin-schemas";
 import { cn } from '@/lib/utils';
+import Image from "next/image";
+
+
+// ShadCN UI Components
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -43,6 +49,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+// ----------------------------------------------------
+// Component 1: CourseList
+// ----------------------------------------------------
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
     const { toast } = useToast();
     const [courses, setCourses] = useState<Course[]>([]);
@@ -127,104 +136,34 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-// Helper for applying formatting
-const applyFormatting = (command: string, value: string | null = null) => {
-    document.execCommand(command, false, value);
-    const activeElement = document.activeElement;
-    if (activeElement && activeElement.isContentEditable) {
-        const event = new Event('input', { bubbles: true });
-        activeElement.dispatchEvent(event);
-    }
+
+// ----------------------------------------------------
+// Section: Notion-style Editor Components
+// ----------------------------------------------------
+
+// Editor Context to pass functions down to blocks
+const NotionEditorContext = React.createContext<{
+  updateBlock: (id: string, newContent: any) => void;
+  addBlock: (type: string, afterId: string) => void;
+  deleteBlock: (id: string) => void;
+} | null>(null);
+
+const useNotionEditor = () => {
+    const context = useContext(NotionEditorContext);
+    if (!context) throw new Error("useNotionEditor must be used within a NotionEditorProvider");
+    return context;
 };
 
-const getSelectionRange = (): Range | null => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-        return selection.getRangeAt(0);
-    }
-    return null;
-};
-
-const FloatingToolbar: React.FC<{
-    position: { x: number; y: number };
-    onComment: (selectedText: string, range: Range) => void;
-    onLink: (url: string, range: Range) => void;
-}> = ({ position, onComment, onLink }) => {
-    const colorOptions = ['#F87171', '#FBBF24', '#34D399', '#60A5FA', '#A78BFA', '#F472B6', '#9CA3AF'];
-    const backgroundOptions = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#4B5563'];
-
-    const [linkUrl, setLinkUrl] = useState('');
-    const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
-
-    const handleApplyLink = useCallback(() => {
-        const range = getSelectionRange();
-        if (linkUrl && range) {
-            onLink(linkUrl, range);
-            setLinkUrl('');
-            setIsLinkPopoverOpen(false);
-        }
-    }, [linkUrl, onLink]);
-
-    const handleCommentClick = useCallback(() => {
-        const range = getSelectionRange();
-        const selectedText = range?.toString();
-        if (selectedText && range) {
-            onComment(selectedText, range);
-        }
-    }, [onComment]);
-
-    const handleApplyColor = useCallback((type: 'foreColor' | 'backColor', color: string) => {
-        applyFormatting(type, color);
-    }, []);
-
-    return (
-        <div
-            className="absolute bg-card text-card-foreground p-1 rounded-md shadow-lg flex items-center space-x-1 z-50 border"
-            style={{ top: position.y, left: position.x }}
-            onMouseDown={(e) => e.preventDefault()}
-        >
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => applyFormatting('bold')}><Bold className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => applyFormatting('italic')}><Italic className="h-4 w-4" /></Button>
-            
-            <Popover open={isLinkPopoverOpen} onOpenChange={setIsLinkPopoverOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-60 p-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="link-url">URL</Label>
-                        <Input id="link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." />
-                        <Button onClick={handleApplyLink} size="sm" className="w-full">Apply</Button>
-                    </div>
-                </PopoverContent>
-            </Popover>
-            
-            <Popover>
-                <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Palette className="h-4 w-4" /></Button></PopoverTrigger>
-                <PopoverContent className="w-auto p-2">
-                    <div className="grid grid-cols-7 gap-1">
-                        {colorOptions.map(color => <div key={color} onClick={() => handleApplyColor('foreColor', color)} className="h-5 w-5 rounded-sm cursor-pointer" style={{ backgroundColor: color }} />)}
-                    </div>
-                </PopoverContent>
-            </Popover>
-
-            <Popover>
-                <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Droplet className="h-4 w-4" /></Button></PopoverTrigger>
-                <PopoverContent className="w-auto p-2">
-                     <div className="grid grid-cols-7 gap-1">
-                        {backgroundOptions.map(color => <div key={color} onClick={() => handleApplyColor('backColor', color)} className="h-5 w-5 rounded-sm cursor-pointer" style={{ backgroundColor: color }} />)}
-                    </div>
-                </PopoverContent>
-            </Popover>
-
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCommentClick}><MessageSquareText className="h-4 w-4" /></Button>
-        </div>
-    );
-};
-
-const EditableBlock = ({ block, updateBlock, addBlock, deleteBlock, placeholder, className, as: Tag = 'div' }: any) => {
+// The core editable div component
+function EditableBlock({ block, updateBlock, placeholder, className, as: Tag = 'div' }: {
+    block: ContentBlock,
+    updateBlock: (id: string, content: string) => void,
+    placeholder?: string,
+    className?: string,
+    as?: React.ElementType
+}) {
     const ref = useRef<HTMLDivElement>(null);
-    const { addBlock: contextAddBlock, deleteBlock: contextDeleteBlock } = useNotionEditor();
+    const { addBlock, deleteBlock } = useNotionEditor();
 
     const onInput = (e: React.FormEvent<HTMLDivElement>) => {
         updateBlock(block.id, e.currentTarget.innerHTML);
@@ -233,10 +172,10 @@ const EditableBlock = ({ block, updateBlock, addBlock, deleteBlock, placeholder,
     const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            contextAddBlock('text', block.id);
+            addBlock('text', block.id);
         } else if (e.key === 'Backspace' && ref.current?.innerHTML === '') {
             e.preventDefault();
-            contextDeleteBlock(block.id);
+            deleteBlock(block.id);
         }
     };
     
@@ -254,79 +193,56 @@ const EditableBlock = ({ block, updateBlock, addBlock, deleteBlock, placeholder,
             onInput={onInput}
             onKeyDown={onKeyDown}
             data-placeholder={placeholder}
-            className={cn("w-full outline-none focus:ring-2 focus:ring-primary/20 focus:rounded", className, "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none empty:before:block")}
+            className={cn("w-full outline-none focus:ring-1 focus:ring-primary/20 focus:rounded-sm", className, "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none")}
         />
     );
 };
 
-// --- Notion-style Editor Implementation ---
-const NotionEditorContext = React.createContext<{
-  updateBlock: (id: string, newContent: any) => void;
-  addBlock: (type: string, afterId: string) => void;
-  deleteBlock: (id: string) => void;
-  addComment: (selectedText: string, range: Range) => void;
-  addLink: (url: string, range: Range) => void;
-} | null>(null);
-
-const useNotionEditor = () => {
-    const context = useContext(NotionEditorContext);
-    if (!context) {
-        throw new Error("useNotionEditor must be used within a NotionEditorProvider");
-    }
-    return context;
-};
-
-const BlockRenderer = ({ block }: { block: ContentBlock }) => {
-    const { updateBlock, addBlock, deleteBlock } = useNotionEditor();
+// Renders the correct component based on block type
+function BlockRenderer({ block }: { block: ContentBlock }) {
+    const { updateBlock } = useNotionEditor();
 
     switch (block.type) {
         case 'text':
-            return <EditableBlock block={block} updateBlock={updateBlock} addBlock={addBlock} deleteBlock={deleteBlock} placeholder="Type '/' for commands" className="text-base py-1" />;
+            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Type '/' for commands" className="text-base py-1" />;
         case 'heading1':
+            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 1" className="text-3xl font-bold my-2 py-1" as="h1" />;
         case 'heading2':
+            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 2" className="text-2xl font-semibold my-2 py-1" as="h2" />;
         case 'heading3':
-            const Tag = block.type === 'heading1' ? 'h1' : block.type === 'heading2' ? 'h2' : 'h3';
-            const sizeClass = block.type === 'heading1' ? 'text-3xl font-bold' : block.type === 'heading2' ? 'text-2xl font-semibold' : 'text-xl font-medium';
-            return <EditableBlock block={block} updateBlock={updateBlock} addBlock={addBlock} deleteBlock={deleteBlock} placeholder={block.type.replace('heading', 'Heading ')} className={cn("my-2 py-1", sizeClass)} as={Tag} />;
+            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 3" className="text-xl font-medium my-2 py-1" as="h3" />;
+        case 'code':
+            return (
+                <Textarea 
+                    value={typeof block.content === 'string' ? block.content : ''}
+                    onChange={e => updateBlock(block.id, e.target.value)}
+                    placeholder="Enter code..."
+                    className="font-mono bg-muted text-sm h-40"
+                />
+            );
+         case 'image':
+            return (
+                 <div className="my-2 space-y-2">
+                     <Input 
+                         value={typeof block.content === 'string' ? block.content : ''}
+                         onChange={e => updateBlock(block.id, e.target.value)}
+                         placeholder="Image URL"
+                     />
+                     {block.content && typeof block.content === 'string' && (
+                        <Image src={block.content} alt="Lesson content" width={500} height={300} className="rounded-md border object-contain mx-auto" />
+                     )}
+                 </div>
+             );
         default:
-            return <div className="text-muted-foreground text-sm">Unsupported Block: {block.type}</div>;
+            return <div className="text-muted-foreground text-xs py-1">Unsupported block: {block.type}</div>;
     }
 };
 
-const NotionEditor = ({ name }: { name: string }) => {
+// The main editor canvas
+function NotionEditor({ name }: { name: string }) {
     const { control, getValues, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { fields, append, remove, move } = useFieldArray({ control, name: name as any });
+    const { fields, append, remove } = useFieldArray({ control, name: name as any });
 
-    const editorContainerRef = useRef<HTMLDivElement>(null);
-    const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
-    const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 });
-
-    const handleMouseUp = useCallback(() => {
-        const selection = window.getSelection();
-        if (!selection || !editorContainerRef.current) {
-            setShowFloatingToolbar(false);
-            return;
-        }
-
-        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-        if (range && !range.collapsed && editorContainerRef.current.contains(range.commonAncestorContainer)) {
-            const rect = range.getBoundingClientRect();
-            setToolbarPosition({
-                x: rect.left + window.scrollX + (rect.width / 2) - 150,
-                y: rect.top + window.scrollY - 50,
-            });
-            setShowFloatingToolbar(true);
-        } else {
-            setShowFloatingToolbar(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        document.addEventListener('mouseup', handleMouseUp);
-        return () => document.removeEventListener('mouseup', handleMouseUp);
-    }, [handleMouseUp]);
-    
     const editorContext = useMemo(() => ({
         updateBlock: (id: string, newContent: any) => {
             const blockIndex = fields.findIndex(f => f.id === id);
@@ -351,38 +267,141 @@ const NotionEditor = ({ name }: { name: string }) => {
         },
         deleteBlock: (id: string) => {
             const blockIndex = fields.findIndex(f => f.id === id);
-            if (blockIndex !== -1) remove(blockIndex);
+            if (blockIndex > 0) remove(blockIndex); // Prevent deleting the very first block
         },
-        addComment: (selectedText: string, range: Range) => {
-            alert(`Comment on "${selectedText}" - (Logic to save comment goes here)`);
-        },
-        addLink: (url: string, range: Range) => {
-            const selection = window.getSelection();
-            if(selection) {
-                selection.removeAllRanges();
-                selection.addRange(range);
-                applyFormatting('createLink', url);
-            }
-        }
-    }), [fields, append, remove, move, getValues, setValue, name]);
+    }), [fields, append, remove, getValues, setValue, name]);
 
     return (
         <NotionEditorContext.Provider value={editorContext}>
-            <div className="notion-editor-container p-4 border rounded-md bg-background" ref={editorContainerRef}>
+            <div className="notion-editor space-y-1">
                 {fields.map((field) => (
-                    <BlockRenderer key={field.id} block={field as ContentBlock} />
+                    <div key={field.id} className="group relative flex items-start gap-2">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center pt-1">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6"><PlusCircle className="h-4 w-4" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-48 p-1">
+                                    <div className="text-xs text-muted-foreground p-2">Add Block Below</div>
+                                    <Button variant="ghost" className="w-full justify-start" onClick={() => editorContext.addBlock('text', field.id)}>Text</Button>
+                                    <Button variant="ghost" className="w-full justify-start" onClick={() => editorContext.addBlock('heading1', field.id)}>Heading 1</Button>
+                                    <Button variant="ghost" className="w-full justify-start" onClick={() => editorContext.addBlock('heading2', field.id)}>Heading 2</Button>
+                                    <Button variant="ghost" className="w-full justify-start" onClick={() => editorContext.addBlock('image', field.id)}>Image</Button>
+                                    <Button variant="ghost" className="w-full justify-start" onClick={() => editorContext.addBlock('code', field.id)}>Code</Button>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <div className="flex-1">
+                            <BlockRenderer block={field as ContentBlock} />
+                        </div>
+                    </div>
                 ))}
-                 {showFloatingToolbar && (
-                    <FloatingToolbar
-                        position={toolbarPosition}
-                        onComment={editorContext.addComment}
-                        onLink={editorContext.addLink}
-                    />
-                )}
             </div>
         </NotionEditorContext.Provider>
     );
 };
+
+
+// ----------------------------------------------------
+// Section: Form Components
+// ----------------------------------------------------
+
+function LessonItem({ moduleIndex, lessonIndex }: { moduleIndex: number, lessonIndex: number }) {
+    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
+    const { fields: blockFields } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({id: getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.id`)});
+    const style = { transform: CSS.Transform.toString(transform), transition };
+    
+    return (
+        <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
+            <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value={`lesson-${lessonIndex}`} className="border-b-0">
+                    <div className="flex items-center px-4 py-2">
+                        <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
+                        <AccordionTrigger className="flex-1 hover:no-underline">
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl><Input placeholder={`Lesson ${lessonIndex + 1}: Title`} {...field} className="font-medium border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </AccordionTrigger>
+                    </div>
+                    <AccordionContent className="p-4 border-t">
+                        <div className="space-y-4">
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
+                                <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson</FormLabel></FormItem>
+                            )} />
+                            <NotionEditor name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`} />
+                            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => removeLesson(lessonIndex)}>
+                                <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
+                            </Button>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        </div>
+    );
+}
+
+function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
+    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { remove: removeModule } = useFieldArray({ name: `modules` });
+    const { fields: lessonFields, append: appendLesson, move: moveLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({id: getValues(`modules.${moduleIndex}.id`)});
+    const style = { transform: CSS.Transform.toString(transform), transition };
+    
+    const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+
+    const handleLessonDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = lessonFields.findIndex(l => l.id === active.id);
+            const newIndex = lessonFields.findIndex(l => l.id === over.id);
+            moveLesson(oldIndex, newIndex);
+        }
+    };
+    
+    return (
+        <Card ref={setNodeRef} style={style}>
+            <AccordionItem value={`module-${moduleIndex}`} className="border-none">
+                <CardHeader className="flex flex-row items-center gap-2">
+                    <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
+                    <AccordionTrigger className="w-full flex">
+                        <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
+                           <FormItem className="flex-1">
+                               <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
+                               <FormMessage />
+                           </FormItem>
+                       )} />
+                    </AccordionTrigger>
+                </CardHeader>
+                <AccordionContent>
+                    <CardContent>
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+                            <SortableContext items={lessonFields} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-4 pl-6 border-l-2">
+                                    {lessonFields.map((lessonItem, lessonIndex) => (
+                                       <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} />
+                                    ))}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
+                        </Button>
+                    </CardContent>
+                    <CardFooter>
+                        <Button type="button" variant="destructive" onClick={() => removeModule(moduleIndex)}>
+                            <Trash2 className="mr-2 h-4 w-4" />Remove Module
+                        </Button>
+                    </CardFooter>
+                </AccordionContent>
+            </AccordionItem>
+        </Card>
+    );
+}
 
 export function CourseForm({ course, onBack }: { course: Course | null, onBack: () => void }) {
     const { toast } = useToast();
@@ -402,7 +421,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             isPremium: course?.isPremium || false,
         },
     });
-    
+
     async function onSubmit(values: z.infer<typeof courseFormSchema>) {
         setIsSubmitting(true);
         const result = await upsertCourseToFirestore({ ...values });
@@ -424,12 +443,8 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
         });
     }
 
-    const { fields: moduleFields, append: appendModule, remove: removeModule, move: moveModule } = useFieldArray({ control: form.control, name: "modules" });
-    
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-    );
+    const { fields: moduleFields, append: appendModule, move: moveModule } = useFieldArray({ control: form.control, name: "modules" });
+    const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
     const handleModuleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -473,22 +488,22 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </CardContent>
                 </Card>
                 
-                 <Accordion type="multiple" defaultValue={[`module-0`]} className="w-full space-y-4">
+                <Accordion type="multiple" defaultValue={[`module-0`]} className="w-full space-y-4">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                         <SortableContext items={moduleFields} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
-                                <ModuleItem key={moduleItem.id} moduleItem={moduleItem} moduleIndex={moduleIndex} removeModule={removeModule} />
+                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} />
                             ))}
                         </SortableContext>
                     </DndContext>
                 </Accordion>
 
-                 <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
+                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
                      <PlusCircle className="mr-2 h-4 w-4" /> Add Module
-                 </Button>
+                </Button>
 
                 <div className="flex justify-end gap-4">
-                     <Button type="button" variant="outline" onClick={onBack}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={onBack}>Cancel</Button>
                     <Button type="submit" size="lg" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {formMode === 'add' ? 'Create Course' : 'Save Changes'}
@@ -496,103 +511,5 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                 </div>
             </form>
         </FormProvider>
-    )
+    );
 }
-
-const ModuleItem = ({ moduleItem, moduleIndex, removeModule }: { moduleItem: any, moduleIndex: number, removeModule: (index: number) => void }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({id: moduleItem.id});
-    const style = { transform: CSS.Transform.toString(transform), transition };
-    const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
-
-     const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-    );
-
-    const handleLessonDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (over && active.id !== over.id) {
-            const oldIndex = lessonFields.findIndex(l => l.id === active.id);
-            const newIndex = lessonFields.findIndex(l => l.id === over.id);
-            moveLesson(oldIndex, newIndex);
-        }
-    }
-
-    return (
-        <Card ref={setNodeRef} style={style}>
-            <AccordionItem value={`module-${moduleIndex}`}>
-                <CardHeader className="flex flex-row items-center gap-2">
-                     <button type="button" {...attributes} {...listeners} className="cursor-grab p-1">
-                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                    </button>
-                     <AccordionTrigger className="w-full flex">
-                        <FormField control={useFormContext().control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
-                           <FormItem className="flex-1">
-                               <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
-                               <FormMessage />
-                           </FormItem>
-                       )} />
-                     </AccordionTrigger>
-                </CardHeader>
-                <AccordionContent>
-                    <CardContent>
-                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-                            <SortableContext items={lessonFields} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-4 pl-6 border-l-2">
-                                    {lessonFields.map((lessonItem, lessonIndex) => (
-                                       <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonItem={lessonItem} lessonIndex={lessonIndex} removeLesson={removeLesson} />
-                                    ))}
-                                </div>
-                            </SortableContext>
-                        </DndContext>
-                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
-                        </Button>
-                    </CardContent>
-                     <CardFooter>
-                        <Button type="button" variant="destructive" onClick={() => removeModule(moduleIndex)}>
-                            <Trash2 className="mr-2 h-4 w-4" />Remove Module
-                        </Button>
-                    </CardFooter>
-                </AccordionContent>
-            </AccordionItem>
-        </Card>
-    );
-};
-
-const LessonItem = ({ moduleIndex, lessonItem, lessonIndex, removeLesson }: { moduleIndex: number, lessonItem: any, lessonIndex: number, removeLesson: (index: number) => void }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({id: lessonItem.id});
-    const style = { transform: CSS.Transform.toString(transform), transition };
-    const control = useFormContext().control;
-
-    return (
-         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
-            <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value={`lesson-${lessonIndex}`} className="border-b-0">
-                    <div className="flex items-center px-4 py-2">
-                        <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
-                        <AccordionTrigger className="flex-1 hover:no-underline">
-                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
-                                <FormItem className="flex-1">
-                                    <FormControl><Input placeholder={`Lesson ${lessonIndex + 1}: Title`} {...field} className="font-medium border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        </AccordionTrigger>
-                    </div>
-                    <AccordionContent className="p-4 border-t">
-                         <div className="space-y-4">
-                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
-                                <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson (Overrides course premium setting)</FormLabel></FormItem>
-                            )} />
-                             <NotionEditor name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`} />
-                            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => removeLesson(lessonIndex)}>
-                                <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
-                            </Button>
-                         </div>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-        </div>
-    );
-};
