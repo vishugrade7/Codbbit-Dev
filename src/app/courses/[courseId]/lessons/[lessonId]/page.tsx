@@ -56,7 +56,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
             );
           case 'code':
             return (
-                <div key={block.id} className="not-prose my-6 rounded-lg shadow-lg overflow-hidden border bg-slate-900 border-slate-700">
+                <div key={block.id} className="not-prose my-6 w-fit max-w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700">
                     <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
                         <div className="flex gap-1.5">
                         <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -76,8 +76,8 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                             padding: '1rem', 
                             backgroundColor: '#1E1E1E'
                         }}
-                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', fontSize: '0.875rem' } }}
-                        lineNumberStyle={{ color: '#858585', fontSize: '0.875rem' }}
+                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', fontSize: '0.95rem' } }}
+                        lineNumberStyle={{ color: '#858585', fontSize: '0.95rem' }}
                     >
                         {String(block.content.code || '').trim()}
                     </SyntaxHighlighter>
