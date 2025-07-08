@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import MonacoEditor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 
 // Firebase and Actions
 import { collection, query, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
@@ -260,6 +262,7 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
 }
 
 function CodeBlockEditor({ field }: { field: any }) {
+    const { resolvedTheme } = useTheme();
     const [localContent, setLocalContent] = useState(
         typeof field.value === 'object' && field.value !== null
             ? field.value
@@ -275,8 +278,8 @@ function CodeBlockEditor({ field }: { field: any }) {
         }
     }, [field.value, localContent]);
     
-    const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const newCode = e.target.value;
+    const handleCodeChange = (newValue: string | undefined) => {
+        const newCode = newValue || '';
         const newContent = { ...localContent, code: newCode };
         setLocalContent(newContent);
         field.onChange(newContent);
@@ -288,6 +291,14 @@ function CodeBlockEditor({ field }: { field: any }) {
         setLocalContent(newContent);
         field.onChange(newContent);
     };
+    
+    const getMonacoLanguage = (lang: string) => {
+        switch(lang) {
+            case 'apex': return 'java';
+            case 'soql': return 'sql';
+            default: return lang;
+        }
+    }
 
     return (
         <div className="bg-muted rounded-md border">
@@ -306,12 +317,16 @@ function CodeBlockEditor({ field }: { field: any }) {
                     </select>
                 </div>
             </div>
-            <Textarea
-                value={localContent.code}
-                onChange={handleCodeChange}
-                placeholder="Enter code..."
-                className="font-mono bg-muted text-sm h-40 rounded-t-none border-0"
-            />
+            <div className="h-64 w-full">
+                <MonacoEditor
+                    height="100%"
+                    language={getMonacoLanguage(localContent.language || 'apex')}
+                    value={localContent.code}
+                    onChange={handleCodeChange}
+                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                    options={{ fontSize: 13, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                />
+            </div>
         </div>
     );
 }
