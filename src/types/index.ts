@@ -119,6 +119,9 @@ export type ContentBlock = {
   language?: string;
   caption?: string;
   columnData?: { blocks: ContentBlock[] }[];
+  codeDetector?: boolean;
+  codeType?: string;
+  fileName?: string;
 };
 
 export type Lesson = {

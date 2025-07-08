@@ -503,6 +503,39 @@ function ContentBlockItem({ parentName, blockIndex, control, allProblems, loadin
             case 'code':
                 return (
                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={control} name={`${parentName}.${blockIndex}.fileName`} render={({ field }) => (
+                                <FormItem><FormLabel>File Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., MyApexClass.cls" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={control} name={`${parentName}.${blockIndex}.codeType`} render={({ field }) => (
+                                <FormItem><FormLabel>Code Type (Optional)</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="Class">Class</SelectItem>
+                                            <SelectItem value="Trigger">Trigger</SelectItem>
+                                            <SelectItem value="Component">Component</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                <FormMessage /></FormItem>
+                            )} />
+                        </div>
+                        <FormField control={control} name={`${parentName}.${blockIndex}.codeDetector`} render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                    <FormLabel>Enable Code Detector</FormLabel>
+                                    <FormDescription>
+                                        Attempt to automatically detect code type.
+                                    </FormDescription>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )} />
                         <FormField control={control} name={`${parentName}.${blockIndex}.language`} render={({ field }) => (
                             <FormItem><FormLabel>Language</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
@@ -602,4 +635,3 @@ function ContentBlockItem({ parentName, blockIndex, control, allProblems, loadin
         </div>
     );
 }
-

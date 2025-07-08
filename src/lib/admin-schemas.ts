@@ -53,6 +53,9 @@ const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object(
     content: z.string(),
     language: z.string().optional(),
     caption: z.string().optional(),
+    codeDetector: z.boolean().optional(),
+    codeType: z.string().optional(),
+    fileName: z.string().optional(),
     columnData: z.array(z.object({
         blocks: z.array(z.lazy(() => contentBlockSchema))
     })).optional()
