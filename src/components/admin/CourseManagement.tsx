@@ -254,7 +254,7 @@ function CodeBlock({ block }: { block: ContentBlock }) {
                 value={localCode}
                 onChange={handleCodeChange}
                 placeholder="Enter code..."
-                className="font-mono bg-transparent border-none text-sm h-40 focus-visible:ring-0"
+                className="font-mono bg-muted text-sm h-40"
             />
         </div>
     );
@@ -634,5 +634,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
         </FormProvider>
     );
 }
+
+    
 
     
