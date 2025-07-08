@@ -74,9 +74,10 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                         customStyle={{ 
                             margin: 0, 
                             padding: '1rem', 
-                            backgroundColor: '#1E1E1E'
+                            backgroundColor: '#1E1E1E',
+                            fontSize: '0.95rem'
                         }}
-                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', fontSize: '0.95rem' } }}
+                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)' } }}
                         lineNumberStyle={{ color: '#858585', fontSize: '0.95rem' }}
                     >
                         {String(block.content.code || '').trim()}
@@ -155,23 +156,25 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                 const problemDetails = allProblems.find(p => p.id === block.content.problemId);
                 return (
                     <Card key={block.id} className="not-prose my-6">
-                        <CardHeader>
-                            <div className='flex justify-between items-start'>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FileQuestion className="h-5 w-5 text-primary" />
-                                        <h3 className="text-lg font-semibold">Challenge</h3>
-                                    </div>
-                                    <CardTitle>{block.content.title}</CardTitle>
-                                    <CardDescription>{block.content.categoryName}</CardDescription>
+                        <CardHeader className="pb-4">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                                    <FileQuestion className="h-4 w-4" />
+                                    <span>Challenge</span>
                                 </div>
                                 {problemDetails && (
                                     <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(problemDetails.difficulty))}>
-                                      {problemDetails.difficulty}
+                                        {problemDetails.difficulty}
                                     </Badge>
                                 )}
                             </div>
                         </CardHeader>
+                        <CardContent className="pt-0 pb-4">
+                             <h4 className="text-xl font-bold">{block.content.title}</h4>
+                             {block.content.metadataType && (
+                                <p className="text-sm text-muted-foreground mt-1">{block.content.metadataType}</p>
+                             )}
+                        </CardContent>
                         <CardFooter>
                             <Button asChild>
                                 <Link href={`/problems/apex/${encodeURIComponent(block.content.categoryName)}/${block.content.problemId}`}>
@@ -219,7 +222,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                 );
             case 'audio':
                 return (
-                    <div key={block.id} className="not-prose my-6">
+                    <div key={block.id} className="not-prose my-6 w-fit">
                         <audio controls src={block.content}>
                             Your browser does not support the audio element.
                         </audio>

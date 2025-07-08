@@ -428,7 +428,7 @@ function ProblemBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: n
     const blockContent = useWatch({
         control,
         name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`
-    }) as { problemId: string, title: string, categoryName: string };
+    }) as { problemId:string; title:string; categoryName:string; metadataType?:string; };
     
     const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
@@ -437,6 +437,7 @@ function ProblemBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: n
             problemId: problem.id,
             title: problem.title,
             categoryName: problem.categoryName,
+            metadataType: problem.metadataType,
         });
         setIsSelectorOpen(false);
     };
@@ -923,4 +924,3 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-
