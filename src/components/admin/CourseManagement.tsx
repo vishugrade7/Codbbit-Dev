@@ -135,13 +135,15 @@ function CodeBlockEditor({ field }: { field: any }) {
     const [localContent, setLocalContent] = useState(
         typeof field.value === 'object' && field.value !== null
             ? field.value
-            : { code: '', language: 'apex' }
+            : { code: field.value || '', language: 'apex' } // Fallback for old string data
     );
 
     useEffect(() => {
-        // Sync with form state if it changes externally
-         if (typeof field.value === 'object' && field.value !== null && (field.value.code !== localContent.code || field.value.language !== localContent.language)) {
+        const valueIsObject = typeof field.value === 'object' && field.value !== null;
+        if (valueIsObject && (field.value.code !== localContent.code || field.value.language !== localContent.language)) {
             setLocalContent(field.value);
+        } else if (!valueIsObject && field.value !== localContent.code) {
+             setLocalContent({ code: field.value, language: 'apex' });
         }
     }, [field.value, localContent]);
     
@@ -186,13 +188,19 @@ function CodeBlockEditor({ field }: { field: any }) {
     );
 }
 
-function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { moduleIndex: number, lessonIndex: number, blockIndex: number, rhfId: string }) {
     const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
     const block = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`);
 
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
+    const style = { transform: CSS.Transform.toString(transform), transition };
+
     return (
-        <div className="flex items-start gap-2">
+        <div ref={setNodeRef} style={style} className="flex items-start gap-2">
+            <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 mt-2 text-muted-foreground">
+                <GripVertical className="h-5 w-5" />
+            </button>
              <div className="flex-1 space-y-2">
                 {block.type === 'text' && (
                     <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
@@ -229,7 +237,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex }: { moduleInde
 function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, lessonIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
-    const { fields: blockFields, append: appendBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
+    const { fields: blockFields, append: appendBlock, move: moveBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
@@ -240,6 +248,20 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
             : { id: uuidv4(), type, content: '' };
         appendBlock(newBlock);
     };
+
+    const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+
+    const handleContentBlockDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = blockFields.findIndex(b => b.id === active.id);
+            const newIndex = blockFields.findIndex(b => b.id === over.id);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                moveBlock(oldIndex, newIndex);
+            }
+        }
+    };
+
 
     return (
         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
@@ -262,11 +284,15 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                 <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson</FormLabel></FormItem>
                             )} />
                             
-                            <div className="space-y-4">
-                                {blockFields.map((blockItem, blockIndex) => (
-                                    <ContentBlockItem key={blockItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />
-                                ))}
-                            </div>
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleContentBlockDragEnd}>
+                                <SortableContext items={blockFields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                                    <div className="space-y-4">
+                                        {blockFields.map((blockItem, blockIndex) => (
+                                            <ContentBlockItem key={blockItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} rhfId={blockItem.id} />
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
                             
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -287,7 +313,6 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
         </div>
     );
 }
-
 
 function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
     const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
@@ -450,9 +475,9 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </CardContent>
                 </Card>
 
-                <Accordion type="multiple" defaultValue={[`module-0`]} className="w-full space-y-4">
+                <Accordion type="multiple" defaultValue={[`module-${moduleFields[0]?.id}`]} className="w-full space-y-4">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
-                        <SortableContext items={moduleFields} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
                                 <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} />
                             ))}
