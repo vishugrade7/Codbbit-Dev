@@ -34,7 +34,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { FormDescription } from "@/components/ui/form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
-import { NotionEditor } from "./NotionEditor";
 import { Textarea } from "../ui/textarea";
 
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -317,7 +316,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </CardHeader>
                     <CardContent>
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                             <Accordion type="multiple" className="w-full" defaultValue={['module-0']}>
+                            <Accordion type="multiple" className="w-full" defaultValue={['module-0']}>
                                 <SortableContext items={moduleFields} strategy={verticalListSortingStrategy}>
                                     {moduleFields.map((moduleItem, moduleIndex) => (
                                         <SortableModuleItem key={moduleItem.id} moduleItem={moduleItem} moduleIndex={moduleIndex}>
@@ -329,7 +328,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                                         </SortableModuleItem>
                                     ))}
                                 </SortableContext>
-                            </Accordion>
+                             </Accordion>
                         </DndContext>
                         <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{id: uuidv4(), type: 'text', content: '' }] }] })} className="mt-4"><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
                     </CardContent>
@@ -356,32 +355,278 @@ function LessonList({ moduleIndex, control }: { moduleIndex: number, control: an
     return (
         <div className="space-y-3 pl-6 border-l-2 border-dashed">
             {fields.map((lessonItem, lessonIndex) => (
-                <div key={lessonItem.id} className="p-4 border rounded-md bg-background/50 relative">
-                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive" onClick={() => remove(lessonIndex)}><Trash2 className="h-4 w-4" /></Button>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
-                            <FormItem><FormLabel>Lesson Title</FormLabel><FormControl><Input placeholder={`Lesson ${lessonIndex + 1}`} {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm h-full mt-auto">
-                                <div className="space-y-0.5">
-                                    <FormLabel>Free Lesson</FormLabel>
-                                </div>
-                                <FormControl>
-                                    <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                </FormControl>
-                            </FormItem>
-                         )} />
-                    </div>
-                     <div className="mt-4">
-                        <NotionEditor name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`} />
-                     </div>
-                </div>
+                <Accordion key={lessonItem.id} type="single" collapsible className="w-full border rounded-md bg-background/50">
+                    <AccordionItem value={`lesson-${lessonIndex}`} className="border-b-0">
+                         <AccordionTrigger className="px-4 hover:no-underline">
+                            <div className="flex items-center gap-3 flex-1">
+                                <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                        <FormControl><Input placeholder={`Lesson ${lessonIndex + 1}`} {...field} className="font-semibold" /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => {e.stopPropagation(); remove(lessonIndex)}}><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                         </AccordionTrigger>
+                         <AccordionContent className="p-4 border-t">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm h-full mt-auto">
+                                        <div className="space-y-0.5">
+                                            <FormLabel>Free Lesson</FormLabel>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                 )} />
+                            </div>
+                             <div className="mt-4">
+                                <NotionEditor name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks`} />
+                             </div>
+                         </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             ))}
              <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
         </div>
     );
 }
+
+// --- Editor Context and Main Component ---
+const NotionEditorContext = React.createContext<{
+    updateBlock: (id: string, newContent: any) => void;
+    addBlock: (type: string, afterId: string) => void;
+    deleteBlock: (id: string) => void;
+    addComment: (selectedText: string, range: Range) => void;
+    addLink: (url: string, range: Range) => void;
+}>({
+    updateBlock: () => {},
+    addBlock: () => {},
+    deleteBlock: () => {},
+    addComment: () => {},
+    addLink: () => {},
+});
+
+function NotionEditor({ name }: { name: string }) {
+    const { control, getValues, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { fields, append, remove, move } = useFieldArray({ control, name: name as any });
+
+    const editorContext = useMemo(() => ({
+        updateBlock: (id: string, newContent: any) => {
+            const blockIndex = fields.findIndex(f => (f as any).id === id);
+            if (blockIndex !== -1) {
+                const currentValues = getValues(name as any);
+                const updatedBlocks = [...currentValues];
+                updatedBlocks[blockIndex] = { ...updatedBlocks[blockIndex], content: newContent };
+                setValue(name as any, updatedBlocks, { shouldDirty: true });
+            }
+        },
+        addBlock: (type: string, afterId: string) => {
+            const blockIndex = fields.findIndex(f => (f as any).id === afterId);
+            const newBlock: ContentBlockType = { id: uuidv4(), type: type as any, content: '' };
+            // Initialize content based on type
+            if (type.startsWith('heading')) newBlock.content = '';
+            else if (type === 'table') newBlock.content = { rows: [['', ''], ['', '']], cols: 2, data: [['', ''], ['', '']] } as any;
+            else if (type === 'code') newBlock.content = { code: '', language: 'javascript' };
+            else if (type === 'image') newBlock.content = 'https://placehold.co/600x400.png';
+            else if (type === 'todo-list') newBlock.content = { items: [{ id: uuidv4(), text: 'New todo', checked: false }] } as any;
+            else if (type.startsWith('columns-')) {
+                const numColumns = parseInt(type.split('-')[1], 10);
+                (newBlock.content as any) = { columnBlocks: Array(numColumns).fill(0).map(() => ({ id: uuidv4(), type: 'text', content: '' })) };
+                (newBlock as any).numColumns = numColumns;
+            }
+
+            if (blockIndex !== -1) {
+                const currentValues = getValues(name as any);
+                const updatedBlocks = [
+                    ...currentValues.slice(0, blockIndex + 1),
+                    newBlock,
+                    ...currentValues.slice(blockIndex + 1)
+                ];
+                setValue(name as any, updatedBlocks, { shouldFocus: true });
+            } else {
+                append(newBlock, { shouldFocus: true });
+            }
+        },
+        deleteBlock: (id: string) => {
+            const blockIndex = fields.findIndex(f => (f as any).id === id);
+            if (blockIndex !== -1) {
+                remove(blockIndex);
+            }
+        },
+        addComment: (selectedText: string, range: Range) => {
+            alert(`Comment on "${selectedText}"`);
+        },
+        addLink: (url: string, range: Range) => {
+             const selection = window.getSelection();
+             if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand('createLink', false, url);
+             }
+        },
+    }), [fields, getValues, setValue, name, append, remove]);
+    
+    return (
+        <NotionEditorContext.Provider value={editorContext}>
+            <div className="notion-editor-container p-4 border rounded-md bg-background">
+                {fields.map((field, index) => (
+                    <BlockRenderer key={field.id} block={field as ContentBlockType} />
+                ))}
+                 <Button type="button" variant="ghost" size="sm" onClick={() => editorContext.addBlock('text', fields[fields.length - 1]?.id || '')}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Block
+                </Button>
+            </div>
+        </NotionEditorContext.Provider>
+    );
+}
+
+function BlockRenderer({ block }: { block: ContentBlockType }) {
+    const context = useContext(NotionEditorContext);
+
+    // Placeholder for components that are not yet fully implemented
+    const PlaceholderBlock = ({ type }: { type: string }) => (
+        <div className="my-2 p-4 border-dashed border-2 rounded-md text-muted-foreground bg-muted/50">
+            Block Type: <strong>{type}</strong> - Component not implemented yet.
+             <pre className="text-xs mt-2">{JSON.stringify(block.content, null, 2)}</pre>
+        </div>
+    );
+
+    switch (block.type) {
+        case 'text':
+        case 'heading1':
+        case 'heading2':
+        case 'heading3':
+        case 'quote':
+        case 'list':
+        case 'list-ordered':
+            return <EditableBlock block={block} />;
+        case 'code':
+            return <CodeBlock block={block} />;
+        case 'image':
+             return <ImageBlock block={block} />;
+        case 'divider':
+             return <hr className="my-4" />;
+        default:
+            return <PlaceholderBlock type={block.type} />;
+    }
+}
+
+// Reusable Editable Block
+function EditableBlock({ block }: { block: ContentBlockType }) {
+    const { updateBlock, addBlock, deleteBlock } = useContext(NotionEditorContext);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (ref.current && ref.current.innerHTML !== block.content) {
+            ref.current.innerHTML = block.content as string;
+        }
+    }, [block.content]);
+
+    const onInput = (e: React.FormEvent<HTMLDivElement>) => {
+        updateBlock(block.id, e.currentTarget.innerHTML);
+    };
+
+    const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            addBlock('text', block.id);
+        } else if (e.key === 'Backspace' && ref.current?.innerHTML === '') {
+            e.preventDefault();
+            deleteBlock(block.id);
+        }
+    };
+    
+    const Tag = useMemo(() => {
+        switch (block.type) {
+            case 'heading1': return 'h1';
+            case 'heading2': return 'h2';
+            case 'heading3': return 'h3';
+            case 'quote': return 'blockquote';
+            case 'list': return 'li';
+            case 'list-ordered': return 'li';
+            default: return 'div';
+        }
+    }, [block.type]);
+
+    const placeholder = `Type '/' for commands...`;
+
+    return (
+        <Tag
+            ref={ref}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={onInput}
+            onKeyDown={onKeyDown}
+            data-placeholder={placeholder}
+            className={cn(
+                "w-full outline-none",
+                "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none empty:before:block",
+                 block.type === 'heading1' && 'text-3xl font-bold',
+                 block.type === 'heading2' && 'text-2xl font-semibold',
+                 block.type === 'heading3' && 'text-xl font-medium',
+                 block.type === 'quote' && 'pl-4 border-l-4 italic',
+            )}
+        />
+    );
+}
+
+function CodeBlock({ block }: { block: ContentBlockType }) {
+     const { updateBlock } = useContext(NotionEditorContext);
+     const content = block.content as { code: string; language: string };
+
+     const handleCodeChange = (newCode: string | undefined) => {
+        updateBlock(block.id, { ...content, code: newCode || '' });
+     };
+     
+     const handleLangChange = (newLang: string) => {
+        updateBlock(block.id, { ...content, language: newLang });
+     };
+
+    return (
+        <div className="my-2 p-2 border rounded-md bg-card">
+             <Select value={content.language} onValueChange={handleLangChange}>
+                <SelectTrigger className="w-[180px] h-8 mb-2">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                    <SelectItem value="html">HTML</SelectItem>
+                    <SelectItem value="css">CSS</SelectItem>
+                    <SelectItem value="apex">Apex</SelectItem>
+                </SelectContent>
+            </Select>
+            <div className="h-64 border rounded-md overflow-hidden">
+                <MonacoEditor
+                    height="100%"
+                    language={content.language}
+                    value={content.code}
+                    onChange={handleCodeChange}
+                    theme="vs-dark"
+                    options={{ minimap: { enabled: false }, fontSize: 14 }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function ImageBlock({ block }: { block: ContentBlockType }) {
+    const { updateBlock } = useContext(NotionEditorContext);
+    return (
+        <div className="my-2 p-2 border rounded-md">
+            <Input 
+                placeholder="Image URL" 
+                value={block.content as string}
+                onChange={(e) => updateBlock(block.id, e.target.value)}
+            />
+            {block.content && <img src={block.content as string} alt="lesson content" className="mt-2 rounded-md max-h-80" />}
+        </div>
+    );
+}
+
