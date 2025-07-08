@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import FeatureGrid from "@/components/feature-grid";
+import Testimonials from "@/components/testimonials";
 
 const TSIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -111,6 +112,9 @@ export default function Home() {
 
       {/* Feature Grid Section */}
       <FeatureGrid />
+
+      {/* Testimonials Section */}
+      <Testimonials />
     </main>
   );
 }
