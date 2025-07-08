@@ -54,16 +54,30 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
             );
           case 'code':
             return (
-              <div key={block.id} className="not-prose my-4">
-                  <div className="bg-muted rounded-md overflow-hidden">
-                    <div className="px-4 py-2 border-b bg-muted/50 text-xs text-muted-foreground font-semibold">
-                      {block.content.language?.toUpperCase() || 'Code'}
+                <div key={block.id} className="not-prose my-6 rounded-lg shadow-lg overflow-hidden border bg-slate-900 border-slate-700">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
+                        <div className="flex gap-1.5">
+                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                        <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <span className="text-xs text-slate-400 font-medium">
+                        {block.content.language?.toUpperCase() || 'CODE'}
+                        </span>
                     </div>
-                    <pre className="p-4 text-sm overflow-x-auto">
-                        <code>{block.content.code}</code>
-                    </pre>
-                  </div>
-              </div>
+                    <div className="text-sm font-mono overflow-x-auto text-slate-100">
+                        <table className="w-full text-left">
+                        <tbody>
+                            {(block.content.code || '').split('\n').map((line, index) => (
+                            <tr key={index} className="leading-relaxed">
+                                <td className="w-10 pr-4 text-right select-none text-slate-500 sticky left-0 bg-slate-900">{index + 1}</td>
+                                <td className="whitespace-pre pr-4">{line || ' '}</td>
+                            </tr>
+                            ))}
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
             );
            case 'heading1':
                 return <h1 key={block.id} className="text-4xl font-bold mt-8 mb-4 border-b pb-2">{block.content}</h1>;
@@ -72,12 +86,24 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
             case 'heading3':
                 return <h3 key={block.id} className="text-2xl font-semibold mt-6 mb-3">{block.content}</h3>;
             case 'quote':
-                return <blockquote key={block.id} className="mt-6 border-l-4 pl-4 italic text-muted-foreground">{block.content}</blockquote>;
+                return (
+                    <blockquote key={block.id} className="not-prose mt-6 border-l-4 border-primary bg-muted/50 p-4 rounded-r-lg">
+                        <div className="prose prose-sm dark:prose-invert text-muted-foreground italic">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {block.content}
+                            </ReactMarkdown>
+                        </div>
+                    </blockquote>
+                );
             case 'callout':
                 return (
                     <div key={block.id} className="not-prose my-6 flex items-start gap-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
                         <div className="text-2xl pt-1">{block.content.icon}</div>
-                        <div className="prose dark:prose-invert max-w-none text-primary/90">{block.content.text}</div>
+                        <div className="prose dark:prose-invert max-w-none text-primary/90">
+                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {block.content.text}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 );
             case 'divider':
@@ -93,7 +119,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
               return (
                 <div key={block.id} className="not-prose my-6 space-y-2">
                   {(block.content as {text: string, checked: boolean}[]).map((item, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 rounded-md bg-muted">
+                    <div key={index} className="flex items-center gap-3 p-3 rounded-md border bg-background hover:bg-muted/50 transition-colors">
                       <Checkbox id={`task-${block.id}-${index}`} checked={item.checked} disabled />
                       <label htmlFor={`task-${block.id}-${index}`} className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : ''}`}>
                         {item.text}
@@ -105,15 +131,17 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
             case 'toggle-list':
               return (
                 <div key={block.id} className="not-prose my-6">
-                  <Accordion type="single" collapsible className="w-full bg-muted rounded-md border">
-                      <AccordionItem value="item-1" className="border-b-0">
-                          <AccordionTrigger className="px-4 font-semibold hover:no-underline">
+                  <Accordion type="single" collapsible className="w-full bg-transparent">
+                      <AccordionItem value="item-1" className="border rounded-md shadow-sm overflow-hidden">
+                          <AccordionTrigger className="px-4 font-semibold hover:no-underline bg-muted/50 hover:bg-muted/80">
                              {block.content.title}
                           </AccordionTrigger>
-                          <AccordionContent className="p-4 pt-0 prose dark:prose-invert max-w-none">
-                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <AccordionContent className="p-4 pt-4 bg-background border-t">
+                               <div className="prose dark:prose-invert max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                   {block.content.text}
-                              </ReactMarkdown>
+                                </ReactMarkdown>
+                               </div>
                           </AccordionContent>
                       </AccordionItem>
                   </Accordion>
