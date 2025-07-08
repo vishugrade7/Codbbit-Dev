@@ -48,6 +48,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FloatingToolbar } from './FloatingToolbar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 // ----------------------------------------------------
 // Component 1: CourseList
@@ -143,6 +145,8 @@ const NotionEditorContext = React.createContext<{
   updateBlock: (id: string, newContent: any) => void;
   addBlock: (type: string, afterId: string) => void;
   deleteBlock: (id: string) => void;
+  addComment: (selectedText: string, range: Range) => void;
+  addLink: (url: string, range: Range) => void;
 } | null>(null);
 
 const useNotionEditor = () => {
@@ -152,15 +156,14 @@ const useNotionEditor = () => {
 };
 
 // The core editable div component
-function EditableBlock({ block, updateBlock, placeholder, className, as: Tag = 'div' }: {
+function EditableBlock({ block, placeholder, className, as: Tag = 'div' }: {
     block: ContentBlock,
-    updateBlock: (id: string, content: string) => void,
     placeholder?: string,
     className?: string,
     as?: React.ElementType
 }) {
     const ref = useRef<HTMLDivElement>(null);
-    const { addBlock, deleteBlock } = useNotionEditor();
+    const { updateBlock, addBlock, deleteBlock } = useNotionEditor();
 
     const onInput = (e: React.FormEvent<HTMLDivElement>) => {
         updateBlock(block.id, e.currentTarget.innerHTML);
@@ -195,37 +198,93 @@ function EditableBlock({ block, updateBlock, placeholder, className, as: Tag = '
     );
 };
 
+function CodeBlock({ block }: { block: ContentBlock }) {
+    const { updateBlock } = useNotionEditor();
+
+    // Memoize the initial content to avoid re-calculating on every render
+    const initialContent = useMemo(() => {
+        if (typeof block.content === 'object' && block.content !== null && 'code' in block.content) {
+            return block.content as { code: string; language: string };
+        }
+        return { code: String(block.content || ''), language: 'apex' };
+    }, [block.id]); // Recalculate only when the block itself changes
+
+    const [localCode, setLocalCode] = useState(initialContent.code);
+    const [localLang, setLocalLang] = useState(initialContent.language);
+    const isFirstRender = useRef(true);
+
+    // Effect to sync changes from parent (e.g., loading a new course) to local state
+    useEffect(() => {
+        // Skip the first render to avoid overwriting initial state
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const parentContent = (typeof block.content === 'object' && block.content !== null && 'code' in block.content)
+            ? block.content as { code: string; language: string }
+            : { code: String(block.content || ''), language: 'apex' };
+            
+        // Only update local state if the parent's data is different, preventing overwrites while typing
+        if (parentContent.code !== localCode) {
+            setLocalCode(parentContent.code);
+        }
+        if (parentContent.language !== localLang) {
+            setLocalLang(parentContent.language);
+        }
+    }, [block.content]); // Dependency on block.content to catch external changes
+
+
+    const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newCode = e.target.value;
+        setLocalCode(newCode); // Update local state immediately for responsive UI
+        updateBlock(block.id, { code: newCode, language: localLang }); // Propagate change to parent form
+    };
+
+    const handleLanguageChange = (newLang: string) => {
+        setLocalLang(newLang);
+        updateBlock(block.id, { code: localCode, language: newLang }); // Propagate change to parent form
+    };
+
+    return (
+        <div className="relative my-4 bg-muted/30 rounded-lg overflow-hidden border">
+            <div className="flex justify-end items-center bg-muted/50 p-2 text-sm text-muted-foreground">
+                <Select value={localLang} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="w-[120px] h-8 text-xs bg-background">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {['javascript', 'python', 'html', 'css', 'sql', 'json', 'java', 'typescript', 'php', 'ruby', 'go', 'csharp', 'cpp', 'markdown', 'bash', 'plaintext'].map(lang => (
+                            <SelectItem key={lang} value={lang}>{lang.charAt(0).toUpperCase() + lang.slice(1)}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <Textarea
+                value={localCode}
+                onChange={handleCodeChange}
+                placeholder="Enter code..."
+                className="font-mono bg-transparent border-none text-sm h-40 focus-visible:ring-0"
+            />
+        </div>
+    );
+}
+
 // Renders the correct component based on block type
 function BlockRenderer({ block }: { block: ContentBlock }) {
     const { updateBlock } = useNotionEditor();
 
     switch (block.type) {
         case 'text':
-            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Type '/' for commands" className="text-base py-1" />;
+            return <EditableBlock block={block} placeholder="Type '/' for commands" className="text-base py-1" />;
         case 'heading1':
-            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 1" className="text-3xl font-bold my-2 py-1" as="h1" />;
+            return <EditableBlock block={block} placeholder="Heading 1" className="text-3xl font-bold my-2 py-1" as="h1" />;
         case 'heading2':
-            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 2" className="text-2xl font-semibold my-2 py-1" as="h2" />;
+            return <EditableBlock block={block} placeholder="Heading 2" className="text-2xl font-semibold my-2 py-1" as="h2" />;
         case 'heading3':
-            return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 3" className="text-xl font-medium my-2 py-1" as="h3" />;
-        case 'code': {
-            const codeContent = (typeof block.content === 'object' && block.content !== null && 'code' in block.content)
-                ? block.content as { code: string; language: string }
-                : { code: String(block.content || ''), language: 'apex' }; // Fallback to convert old string data
-
-            const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                updateBlock(block.id, { ...codeContent, code: e.target.value });
-            };
-
-            return (
-                <Textarea 
-                    value={codeContent.code}
-                    onChange={handleCodeChange}
-                    placeholder="Enter code..."
-                    className="font-mono bg-muted text-sm h-40"
-                />
-            );
-        }
+            return <EditableBlock block={block} placeholder="Heading 3" className="text-xl font-medium my-2 py-1" as="h3" />;
+        case 'code':
+            return <CodeBlock block={block} />;
          case 'image':
             return (
                  <div className="my-2 space-y-2">
@@ -248,6 +307,45 @@ function BlockRenderer({ block }: { block: ContentBlock }) {
 function NotionEditor({ name }: { name: string }) {
     const { control, getValues, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { fields, append, remove } = useFieldArray({ control, name: name as any });
+
+    const editorContainerRef = useRef<HTMLDivElement>(null);
+    const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
+    const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 });
+    const [selectedText, setSelectedText] = useState('');
+    const [activeRange, setActiveRange] = useState<Range | null>(null);
+
+    const handleMouseUp = useCallback(() => {
+        const selection = window.getSelection();
+        if (!selection || !editorContainerRef.current) {
+            setShowFloatingToolbar(false);
+            return;
+        }
+
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+        if (range && !range.collapsed && editorContainerRef.current.contains(range.commonAncestorContainer)) {
+            const rect = range.getBoundingClientRect();
+            setToolbarPosition({
+                x: rect.left + window.scrollX + (rect.width / 2),
+                y: rect.top + window.scrollY - 10,
+            });
+            setSelectedText(selection.toString());
+            setActiveRange(range.cloneRange());
+            setShowFloatingToolbar(true);
+        } else {
+            setShowFloatingToolbar(false);
+            setSelectedText('');
+            setActiveRange(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        document.addEventListener('mouseup', handleMouseUp, true);
+        return () => {
+            document.removeEventListener('mouseup', handleMouseUp, true);
+        };
+    }, [handleMouseUp]);
+
 
     const editorContext = useMemo(() => ({
         updateBlock: (id: string, newContent: any) => {
@@ -278,11 +376,36 @@ function NotionEditor({ name }: { name: string }) {
             const blockIndex = fields.findIndex(f => f.id === id);
             if (blockIndex > 0) remove(blockIndex); // Prevent deleting the very first block
         },
+        addComment: (selectedText: string, range: Range) => {
+            alert(`Comment on "${selectedText}" - (Logic to save comment and highlight text goes here)`);
+        },
+        addLink: (url: string, range: Range) => {
+            const selection = window.getSelection();
+            if(selection && range) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand('createLink', false, url);
+                const activeElement = document.activeElement;
+                 if (activeElement && 'dispatchEvent' in activeElement) {
+                    const event = new Event('input', { bubbles: true });
+                    (activeElement as HTMLElement).dispatchEvent(event);
+                }
+            }
+        }
     }), [fields, append, remove, getValues, setValue, name]);
 
     return (
         <NotionEditorContext.Provider value={editorContext}>
-            <div className="notion-editor space-y-1">
+            <div className="notion-editor space-y-1" ref={editorContainerRef}>
+                {showFloatingToolbar && selectedText && activeRange && (
+                    <FloatingToolbar
+                        position={toolbarPosition}
+                        onComment={() => editorContext.addComment(selectedText, activeRange)}
+                        onLink={(url) => editorContext.addLink(url, activeRange)}
+                        selectedText={selectedText}
+                        editorRef={editorContainerRef}
+                    />
+                )}
                 {fields.map((field) => (
                     <div key={field.id} className="group relative flex items-start gap-2">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center pt-1">
@@ -395,7 +518,7 @@ function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
                                 </div>
                             </SortableContext>
                         </DndContext>
-                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
                         </Button>
                     </CardContent>
@@ -505,7 +628,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </DndContext>
                 </Accordion>
 
-                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
+                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] }] })}>
                      <PlusCircle className="mr-2 h-4 w-4" /> Add Module
                 </Button>
 
@@ -520,3 +643,5 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
         </FormProvider>
     );
 }
+
+    
