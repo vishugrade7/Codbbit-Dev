@@ -21,8 +21,10 @@ import { useTheme } from "next-themes";
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
+import { getCache, setCache } from '@/lib/cache';
 
 type ProblemWithCategory = Problem & { categoryName: string };
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 const getLessonIcon = (lesson: Lesson) => {
     // For simplicity, we'll use the icon of the first content block.
@@ -172,18 +174,28 @@ export default function LessonPage() {
     useEffect(() => {
         const fetchAllProblems = async () => {
             if (!db) return;
-            try {
-                const apexDocRef = doc(db, "problems", "Apex");
-                const problemsSnap = await getDoc(apexDocRef);
-                if (problemsSnap.exists()) {
-                    const data = problemsSnap.data().Category as ApexProblemsData;
-                    const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
-                        (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                    );
-                    setProblemMap(new Map(problems.map(p => [p.id, p])));
+            const processProblems = (data: ApexProblemsData) => {
+                const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                );
+                setProblemMap(new Map(problems.map(p => [p.id, p])));
+            };
+
+            const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            if (cachedProblems) {
+                processProblems(cachedProblems);
+            } else {
+                try {
+                    const apexDocRef = doc(db, "problems", "Apex");
+                    const problemsSnap = await getDoc(apexDocRef);
+                    if (problemsSnap.exists()) {
+                        const data = problemsSnap.data().Category as ApexProblemsData;
+                        setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                        processProblems(data);
+                    }
+                } catch (error) {
+                    console.error("Error fetching all problems:", error);
                 }
-            } catch (error) {
-                console.error("Error fetching all problems:", error);
             }
         };
         fetchAllProblems();

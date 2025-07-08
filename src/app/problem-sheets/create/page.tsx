@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Problem, ApexProblemsData, ProblemSheet } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { getCache, setCache } from "@/lib/cache";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 
 type ProblemWithCategory = Problem & { categoryName: string };
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 function CreateProblemSheetClient() {
     const { toast } = useToast();
@@ -49,14 +51,24 @@ function CreateProblemSheetClient() {
             setLoading(true);
             try {
                 // Fetch all problems
-                const apexDocRef = doc(db, "problems", "Apex");
-                const problemsSnap = await getDoc(apexDocRef);
-                if (problemsSnap.exists()) {
-                    const data = problemsSnap.data().Category as ApexProblemsData;
+                const processProblems = (data: ApexProblemsData) => {
                     const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                         (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                     );
                     setAllProblems(problems);
+                };
+
+                const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+                if (cachedProblems) {
+                    processProblems(cachedProblems);
+                } else {
+                    const apexDocRef = doc(db, "problems", "Apex");
+                    const problemsSnap = await getDoc(apexDocRef);
+                    if (problemsSnap.exists()) {
+                        const data = problemsSnap.data().Category as ApexProblemsData;
+                        setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                        processProblems(data);
+                    }
                 }
 
                 // If in edit mode, fetch sheet data
