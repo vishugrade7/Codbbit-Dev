@@ -56,6 +56,18 @@ const contentBlockSchema = z.discriminatedUnion("type", [
     z.object({ id: z.string(), type: z.literal("quote"), content: z.string() }),
     z.object({ id: z.string(), type: z.literal("callout"), content: z.object({ text: z.string(), icon: z.string() }) }),
     z.object({ id: z.string(), type: z.literal("divider"), content: z.literal("").default("") }),
+    z.object({ id: z.string(), type: z.literal("bulleted-list"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("numbered-list"), content: z.string() }),
+    z.object({
+        id: z.string(),
+        type: z.literal("todo-list"),
+        content: z.array(z.object({ id: z.string(), text: z.string(), checked: z.boolean() })),
+    }),
+    z.object({
+        id: z.string(),
+        type: z.literal("toggle-list"),
+        content: z.object({ title: z.string(), text: z.string() }),
+    }),
 ]);
 
 

@@ -24,13 +24,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3 } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '../ui/checkbox';
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -123,6 +124,10 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'heading1', label: 'Heading 1', icon: <Heading1 className="h-4 w-4" /> },
     { type: 'heading2', label: 'Heading 2', icon: <Heading2 className="h-4 w-4" /> },
     { type: 'heading3', label: 'Heading 3', icon: <Heading3 className="h-4 w-4" /> },
+    { type: 'bulleted-list', label: 'Bulleted list', icon: <List className="h-4 w-4" /> },
+    { type: 'numbered-list', label: 'Numbered list', icon: <ListOrdered className="h-4 w-4" /> },
+    { type: 'todo-list', label: 'To-do list', icon: <CheckSquare className="h-4 w-4" /> },
+    { type: 'toggle-list', label: 'Toggle list', icon: <ChevronRight className="h-4 w-4" /> },
     { type: 'code', label: 'Code', icon: <Code2Icon className="h-4 w-4" /> },
     { type: 'quote', label: 'Quote', icon: <MessageSquareQuote className="h-4 w-4" /> },
     { type: 'callout', label: 'Callout', icon: <AlertTriangle className="h-4 w-4" /> },
@@ -199,6 +204,94 @@ function CodeBlockEditor({ field }: { field: any }) {
     );
 }
 
+function TodoListBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`,
+    });
+
+    const addTodo = () => {
+        append({ id: uuidv4(), text: '', checked: false });
+    };
+
+    return (
+        <div className="bg-muted p-4 rounded-md border space-y-2">
+            {fields.map((item, todoIndex) => (
+                <div key={item.id} className="flex items-center gap-2">
+                    <FormField
+                        control={control}
+                        name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${todoIndex}.checked`}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={control}
+                        name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${todoIndex}.text`}
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormControl>
+                                    <Input placeholder="To-do item" {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => remove(todoIndex)}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={addTodo}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+        </div>
+    );
+}
+
+function ToggleListBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    return (
+        <Accordion type="single" collapsible className="w-full bg-muted rounded-md border">
+            <AccordionItem value="item-1" className="border-b-0">
+                <AccordionTrigger className="px-4 hover:no-underline">
+                    <FormField
+                        control={control}
+                        name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.title`}
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormControl>
+                                    <Input placeholder="Toggle Title" {...field} className="font-medium border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                </AccordionTrigger>
+                <AccordionContent className="p-4 pt-0">
+                     <FormField
+                        control={control}
+                        name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.text`}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormControl>
+                                    <Textarea placeholder="Toggle content... Markdown is supported." {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+    );
+}
+
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { moduleIndex: number, lessonIndex: number, blockIndex: number, rhfId: string }) {
     const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
@@ -225,6 +318,14 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><Textarea placeholder="Enter callout text..." value={field.value.text} onChange={(e) => field.onChange({...field.value, text: e.target.value})} /></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider':
                 return <hr className="my-4"/>
+            case 'bulleted-list':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="* Item 1..." className="min-h-[120px]" {...field}/></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="1. Item 1..." className="min-h-[120px]" {...field}/></FormControl><FormMessage/></FormItem>)}/>
+            case 'todo-list':
+                return <TodoListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
+            case 'toggle-list':
+                return <ToggleListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             default:
                 return null;
         }
@@ -265,6 +366,18 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
             case 'divider':
                  newBlock = { id: uuidv4(), type, content: '' };
                  break;
+            case 'bulleted-list':
+                newBlock = { id: uuidv4(), type, content: '* ' };
+                break;
+            case 'numbered-list':
+                newBlock = { id: uuidv4(), type, content: '1. ' };
+                break;
+            case 'todo-list':
+                newBlock = { id: uuidv4(), type, content: [{ id: uuidv4(), text: 'New to-do', checked: false }] };
+                break;
+            case 'toggle-list':
+                newBlock = { id: uuidv4(), type, content: { title: 'Toggle Title', text: '' } };
+                break;
             default:
                  newBlock = { id: uuidv4(), type, content: '' };
         }

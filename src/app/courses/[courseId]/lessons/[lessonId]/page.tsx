@@ -11,7 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const getLessonIcon = (lesson: Lesson) => {
     return <BookOpen className="h-5 w-5" />;
@@ -65,6 +66,43 @@ const LessonContent = ({ contentBlocks }: { contentBlocks: ContentBlock[] }) => 
                 );
             case 'divider':
                 return <hr key={block.id} className="my-8" />;
+            case 'bulleted-list':
+            case 'numbered-list':
+              return (
+                <ReactMarkdown key={block.id} remarkPlugins={[remarkGfm]}>
+                  {block.content}
+                </ReactMarkdown>
+              );
+            case 'todo-list':
+              return (
+                <div key={block.id} className="not-prose my-6 space-y-2">
+                  {(block.content as {text: string, checked: boolean}[]).map((item, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 rounded-md bg-muted">
+                      <Checkbox id={`task-${block.id}-${index}`} checked={item.checked} disabled />
+                      <label htmlFor={`task-${block.id}-${index}`} className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : ''}`}>
+                        {item.text}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              );
+            case 'toggle-list':
+              return (
+                <div key={block.id} className="not-prose my-6">
+                  <Accordion type="single" collapsible className="w-full bg-muted rounded-md border">
+                      <AccordionItem value="item-1" className="border-b-0">
+                          <AccordionTrigger className="px-4 font-semibold hover:no-underline">
+                             {block.content.title}
+                          </AccordionTrigger>
+                          <AccordionContent className="p-4 pt-0 prose dark:prose-invert max-w-none">
+                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {block.content.text}
+                              </ReactMarkdown>
+                          </AccordionContent>
+                      </AccordionItem>
+                  </Accordion>
+                </div>
+              );
           default:
             return null;
         }
