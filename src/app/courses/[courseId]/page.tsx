@@ -12,23 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, MousePointerClick, Code, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, BookOpen, Lock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
-// Helper function to determine the icon based on the first content block
-const getLessonIcon = (lesson: Lesson) => {
-    const firstBlockType = lesson.contentBlocks?.[0]?.type;
-    switch (firstBlockType) {
-        case 'video': return <PlayCircle className="h-5 w-5 text-primary" />;
-        case 'problem': return <BrainCircuit className="h-5 w-5 text-primary" />;
-        case 'interactive': return <MousePointerClick className="h-5 w-5 text-primary" />;
-        case 'image': return <ImageIcon className="h-5 w-5 text-primary" />;
-        case 'code': return <Code className="h-5 w-5 text-primary" />;
-        case 'text':
-        default:
-            return <BookOpen className="h-5 w-5 text-primary" />;
-    }
+// Simplified icon helper
+const getLessonIcon = () => {
+    return <BookOpen className="h-5 w-5 text-primary" />;
 }
 
 export default function CourseDetailPage() {
@@ -177,7 +167,7 @@ export default function CourseDetailPage() {
                                                                 )}
                                                             >
                                                                 <div className="flex items-center gap-3">
-                                                                    {getLessonIcon(lesson)}
+                                                                    {getLessonIcon()}
                                                                     <span className="font-medium group-hover:text-primary">{lesson.title}</span>
                                                                 </div>
                                                                 {isLessonLocked && <Lock className="h-4 w-4 text-muted-foreground" />}

@@ -112,17 +112,11 @@ export type Contribution = {
   count: number;
 };
 
+// Simplified ContentBlock to match the stable editor
 export type ContentBlock = {
   id: string;
-  type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive' | 'columns';
-  content: string;
-  language?: string;
-  caption?: string;
-  columnData?: { blocks: ContentBlock[] }[];
-  codeDetector?: boolean;
-  codeType?: string;
-  fileName?: string;
-  backgroundColor?: string;
+  type: 'text'; // For now, only text is supported
+  content: string; // The content is a simple string, supports markdown
 };
 
 export type Lesson = {

@@ -10,154 +10,30 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, Problem, ApexProblemsData, ContentBlock } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, FileText, BookOpen, Lock, BrainCircuit, ArrowRight, MousePointerClick, Code, Image as ImageIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import MonacoEditor from "@monaco-editor/react";
-import { useTheme } from "next-themes";
-import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
-import { getCache, setCache } from '@/lib/cache';
-
-type ProblemWithCategory = Problem & { categoryName: string };
-const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 const getLessonIcon = (lesson: Lesson) => {
-    // For simplicity, we'll use the icon of the first content block.
-    // A more sophisticated approach could be to have a predefined icon for the lesson.
-    const firstBlockType = lesson.contentBlocks?.[0]?.type;
-    switch (firstBlockType) {
-        case 'video': return <PlayCircle className="h-5 w-5" />;
-        case 'problem': return <BrainCircuit className="h-5 w-5" />;
-        case 'interactive': return <MousePointerClick className="h-5 w-5" />;
-        case 'image': return <ImageIcon className="h-5 w-5" />;
-        case 'code': return <Code className="h-5 w-5" />;
-        case 'text':
-        default:
-            return <BookOpen className="h-5 w-5" />;
-    }
-}
-
-// Block renderer component
-const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; problemMap: Map<string, ProblemWithCategory> }) => {
-  const { resolvedTheme } = useTheme();
-
-  switch (block.type) {
-    case 'text': {
-        const markdown = <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose dark:prose-invert max-w-none">{block.content}</ReactMarkdown>;
-        if (block.backgroundColor) {
-            return (
-                <div className={cn('p-4 rounded-lg', block.backgroundColor)}>
-                    {markdown}
-                </div>
-            );
-        }
-        return markdown;
-    }
-    
-    case 'image':
-      return (
-        <div className="my-4">
-          <Image src={block.content} alt={block.caption || 'Lesson image'} width={800} height={450} className="object-contain rounded-lg border mx-auto" onContextMenu={(e) => e.preventDefault()} />
-          {block.caption && <p className="text-center text-sm text-muted-foreground mt-2">{block.caption}</p>}
-        </div>
-      );
-
-    case 'code':
-      const editorHeight = `${(block.content.split('\n').length * 21) + 32}px`;
-      return (
-        <div className="my-4 rounded-lg border overflow-hidden bg-card">
-            <div className="px-4 py-2 bg-muted/50 border-b">
-                <span className="text-sm font-semibold uppercase text-muted-foreground">{block.language || 'Code'}</span>
-            </div>
-            <MonacoEditor
-                height={editorHeight}
-                language={block.language || 'apex'}
-                value={block.content}
-                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                options={{
-                    readOnly: true,
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    padding: { top: 16, bottom: 16 },
-                    fontFamily: 'var(--font-source-code-pro)',
-                    automaticLayout: true,
-                }}
-            />
-        </div>
-      );
-
-    case 'video': {
-        let videoUrl = block.content;
-        if (block.content.includes('youtube.com/watch?v=')) {
-            const videoId = block.content.split('v=')[1]?.split('&')[0];
-            videoUrl = `https://www.youtube.com/embed/${videoId}`;
-        } else if (block.content.includes('youtu.be/')) {
-             const videoId = block.content.split('/').pop()?.split('?')[0];
-             videoUrl = `https://www.youtube.com/embed/${videoId}`;
-        } else if (block.content.includes('box.com/s/')) {
-            const baseUrl = block.content.replace('/s/', '/embed/s/');
-            try {
-              const url = new URL(baseUrl);
-              url.searchParams.set('theme', 'dark');
-              url.searchParams.set('show_parent_path', '0');
-              videoUrl = url.toString();
-            } catch (e) {
-              videoUrl = baseUrl; // Fallback if URL parsing fails
-            }
-        }
-         return (
-            <div className="aspect-video my-4">
-                <iframe onContextMenu={(e) => e.preventDefault()} className="w-full h-full rounded-lg" src={videoUrl} title="Lesson Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-            </div>
-        );
-    }
-
-    case 'problem': {
-        const problem = problemMap.get(block.content);
-        if (!problem) {
-            return <p>Error: Problem with ID "{block.content}" not found.</p>;
-        }
-        return (
-            <div className="text-center p-8 border rounded-lg bg-card my-4">
-                <BrainCircuit className="h-12 w-12 mx-auto text-primary mb-4" />
-                <h3 className="text-xl font-bold mb-2">Practice Problem: {problem.title}</h3>
-                <p className="text-muted-foreground mb-6">This lesson includes a practice problem to test your knowledge.</p>
-                <Button asChild>
-                    <Link href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`}>
-                        Go to Problem
-                    </Link>
-                </Button>
-            </div>
-        );
-    }
-      
-    case 'interactive':
-      return (
-        <iframe
-            srcDoc={block.content}
-            title="Interactive Content"
-            className="w-full h-[80vh] border rounded-lg bg-white my-4"
-            sandbox="allow-scripts allow-same-origin"
-        />
-      );
-      
-    default:
-      return null;
-  }
+    // Simplified since we only have 'text' blocks for now
+    return <BookOpen className="h-5 w-5" />;
 };
 
-const LessonContent = ({ lesson, problemMap }: { lesson: Lesson; problemMap: Map<string, ProblemWithCategory> }) => {
+// Simplified renderer for just text blocks
+const LessonContent = ({ lesson }: { lesson: Lesson }) => {
+    const firstBlock = lesson.contentBlocks?.[0];
+    const markdownContent = firstBlock?.content || "";
+
     return (
-        <div className="space-y-6">
-            {lesson.contentBlocks?.map(block => (
-                <ContentBlockRenderer key={block.id} block={block} problemMap={problemMap} />
-            ))}
+        <div className="prose dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {markdownContent}
+            </ReactMarkdown>
         </div>
     );
 };
@@ -177,39 +53,8 @@ export default function LessonPage() {
     const [currentModuleId, setCurrentModuleId] = useState<string | null>(null);
     const [nextLesson, setNextLesson] = useState<{ lessonId: string } | null>(null);
     const [prevLesson, setPrevLesson] = useState<{ lessonId: string } | null>(null);
-    const [problemMap, setProblemMap] = useState<Map<string, ProblemWithCategory>>(new Map());
     const [loading, setLoading] = useState(true);
     
-    useEffect(() => {
-        const fetchAllProblems = async () => {
-            if (!db) return;
-            const processProblems = (data: ApexProblemsData) => {
-                const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
-                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
-                );
-                setProblemMap(new Map(problems.map(p => [p.id, p])));
-            };
-
-            const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
-            if (cachedProblems) {
-                processProblems(cachedProblems);
-            } else {
-                try {
-                    const apexDocRef = doc(db, "problems", "Apex");
-                    const problemsSnap = await getDoc(apexDocRef);
-                    if (problemsSnap.exists()) {
-                        const data = problemsSnap.data().Category as ApexProblemsData;
-                        setCache(APEX_PROBLEMS_CACHE_KEY, data);
-                        processProblems(data);
-                    }
-                } catch (error) {
-                    console.error("Error fetching all problems:", error);
-                }
-            }
-        };
-        fetchAllProblems();
-    }, []);
-
     useEffect(() => {
         if (authLoading) return; // Wait for auth status to resolve
 
@@ -231,7 +76,7 @@ export default function LessonPage() {
                     
                     setCourse(courseData);
 
-                    const allLessons: ({ lesson: Lesson, moduleId: string })[] = courseData.modules.flatMap(m => m.lessons.map(l => ({ lesson: l, moduleId: m.id })));
+                    const allLessons: ({ lesson: Lesson, moduleId: string })[] = (courseData.modules || []).flatMap(m => m.lessons.map(l => ({ lesson: l, moduleId: m.id })));
                     const currentLessonIndex = allLessons.findIndex(item => item.lesson.id === lessonId);
 
                     if (currentLessonIndex !== -1) {
@@ -366,7 +211,7 @@ export default function LessonPage() {
                         </div>
                         <ScrollArea className="flex-1">
                             <div className="p-6">
-                                <LessonContent lesson={currentLesson} problemMap={problemMap} />
+                                <LessonContent lesson={currentLesson} />
                             </div>
                         </ScrollArea>
                         <div className="p-4 border-t flex justify-between">

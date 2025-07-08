@@ -2,7 +2,6 @@
 'use client';
 
 import { z } from "zod";
-import type { ContentBlock as ActionContentBlock } from "@/types";
 
 // #region Problem Schemas
 export const problemExampleSchema = z.object({
@@ -47,21 +46,12 @@ export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRe
 // #endregion
 
 // #region Course Schemas
-const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object({
+// Simplified contentBlockSchema for the stable editor
+const contentBlockSchema = z.object({
     id: z.string(),
-    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns', 'quote', 'divider', 'list', 'list-ordered', 'page-title', 'heading1', 'heading2', 'heading3', 'table', 'todo-list', 'callout', 'mcq-creator', 'button', 'apex-challenge', 'live-code-renderer']),
-    content: z.any(),
-    language: z.string().optional(),
-    caption: z.string().optional(),
-    codeDetector: z.boolean().optional(),
-    codeType: z.string().optional(),
-    fileName: z.string().optional(),
-    backgroundColor: z.string().optional(),
-    columnData: z.array(z.object({
-        blocks: z.array(z.lazy(() => contentBlockSchema))
-    })).optional(),
-    numColumns: z.number().optional(),
-}));
+    type: z.literal('text'), // For now, only text is supported by the simple editor
+    content: z.string(), // Content is just a string, can be empty
+});
 
 const lessonSchema = z.object({
     id: z.string(),
