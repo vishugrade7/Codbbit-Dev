@@ -13,24 +13,43 @@ import { auth } from "@/lib/firebase";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { NavLink } from "@/types";
 import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { getQuickTip } from "@/ai/flows/quick-tip-flow";
 import { Separator } from "@/components/ui/separator";
+import { useTheme } from "next-themes";
 
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userData, loading: authLoading, isPro } = useAuth();
+  const { user, userData, loading: authLoading, isPro, brandingSettings, loadingBranding } = useAuth();
   const { toast } = useToast();
+  const { theme } = useTheme();
   
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const [loadingNav, setLoadingNav] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const logoSrc = useMemo(() => {
+    if (!brandingSettings) return "/favicon.ico";
+    const isDark = theme === 'dark';
+    if (isPro) {
+        if (isDark) {
+            return brandingSettings.logo_pro_dark || brandingSettings.logo_pro_light || brandingSettings.logo_dark || brandingSettings.logo_light || '/favicon.ico';
+        }
+        return brandingSettings.logo_pro_light || brandingSettings.logo_light || '/favicon.ico';
+    }
+    
+    if (isDark) {
+        return brandingSettings.logo_dark || brandingSettings.logo_light || '/favicon.ico';
+    }
+    return brandingSettings.logo_light || '/favicon.ico';
+  }, [brandingSettings, isPro, theme]);
+
 
   useEffect(() => {
     const fetchNavLinks = async () => {
@@ -100,7 +119,11 @@ export default function Header() {
               <SheetContent side="left" className="bg-background/80 backdrop-blur-sm">
                 <div className="grid gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
+                    {loadingBranding ? (
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                    ) : (
+                      <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
+                    )}
                     <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
                   </Link>
                   {user && (
@@ -188,7 +211,11 @@ export default function Header() {
             </Sheet>
           </div>
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
+            {loadingBranding ? (
+              <Skeleton className="h-6 w-6 rounded-full" />
+            ) : (
+              <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
+            )}
             <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">

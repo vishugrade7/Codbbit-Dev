@@ -14,6 +14,14 @@ export type Achievement = {
   date: any; // Firestore Timestamp
 };
 
+export type BrandingSettings = {
+  logo_light?: string;
+  logo_dark?: string;
+  logo_pro_light?: string;
+  logo_pro_dark?: string;
+  favicon?: string;
+};
+
 export type User = {
   id: string;
   uid: string;

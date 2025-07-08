@@ -6,6 +6,10 @@ import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, qu
 import { db } from '@/lib/firebase';
 import type { Problem, Course, User, NavLink, Badge, ApexProblemsData } from '@/types';
 import { z } from "zod";
+import { adminStorage } from '@/lib/firebaseAdmin';
+
+export type LogoType = 'logo_light' | 'logo_dark' | 'logo_pro_light' | 'logo_pro_dark' | 'favicon';
+
 
 // #region Problem Schemas
 const exampleSchema = z.object({
@@ -678,4 +682,64 @@ export async function deleteCategory(categoryName: string) {
         return { success: false, error: errorMessage };
     }
 }
+// #endregion
+
+// #region Brand Management
+export async function getBrandingSettings() {
+    if (!db) {
+        return { success: false, error: "Database not initialized.", settings: null };
+    }
+
+    try {
+        const settingsDocRef = doc(db, 'settings', 'branding');
+        const docSnap = await getDoc(settingsDocRef);
+        if (docSnap.exists()) {
+            return { success: true, settings: docSnap.data() };
+        }
+        return { success: true, settings: null };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage, settings: null };
+    }
+}
+
+export async function uploadBrandingImage(logoType: LogoType, dataUrl: string) {
+    if (!dataUrl) {
+        return { success: false, error: 'No image data provided.' };
+    }
+
+    try {
+        const bucket = adminStorage.bucket('showcase-canvas-rx61p.firebasestorage.app');
+        const filePath = `branding/${logoType}`;
+        const file = bucket.file(filePath);
+
+        const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+            throw new Error('Invalid data URL format.');
+        }
+        const contentType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        await file.save(buffer, {
+            metadata: {
+                contentType: contentType,
+                cacheControl: 'public, max-age=60',
+            },
+        });
+
+        await file.makePublic();
+        let downloadURL = file.publicUrl();
+        downloadURL = `${downloadURL}?updated=${Date.now()}`;
+
+        const settingsDocRef = doc(db, 'settings', 'branding');
+        await setDoc(settingsDocRef, { [logoType]: downloadURL }, { merge: true });
+
+        return { success: true, url: downloadURL };
+    } catch (error: any) {
+        console.error("Error uploading branding image:", error);
+        return { success: false, error: error.message || 'An unknown server error occurred.' };
+    }
+}
+
 // #endregion

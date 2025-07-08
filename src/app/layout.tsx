@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/app-shell';
+import DynamicFavicon from '@/components/dynamic-favicon';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -44,6 +45,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
+            <DynamicFavicon />
             <AppShell>
               {children}
             </AppShell>

@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useMemo } fr
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import type { User as AppUser } from '@/types';
+import type { User as AppUser, BrandingSettings } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { clearCache } from '@/lib/cache';
 
@@ -14,6 +14,8 @@ interface AuthContextType {
   userData: AppUser | null;
   loading: boolean;
   isPro: boolean;
+  brandingSettings: BrandingSettings | null;
+  loadingBranding: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +23,8 @@ const AuthContext = createContext<AuthContextType>({
   userData: null,
   loading: true,
   isPro: false,
+  brandingSettings: null,
+  loadingBranding: true,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -28,6 +32,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
+  const [loadingBranding, setLoadingBranding] = useState(true);
 
   const isPro = useMemo(() => {
     if (!userData) return false;
@@ -55,6 +62,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!db) {
+        setLoadingBranding(false);
+        return;
+    }
+    const brandingDocRef = doc(db, 'settings', 'branding');
+    const unsubscribeBranding = onSnapshot(brandingDocRef, (doc) => {
+        if (doc.exists()) {
+            setBrandingSettings(doc.data() as BrandingSettings);
+        } else {
+            setBrandingSettings(null);
+        }
+        setLoadingBranding(false);
+    }, (error) => {
+        console.error("Error fetching branding settings:", error);
+        setLoadingBranding(false);
+    });
+    
+    return () => unsubscribeBranding();
   }, []);
 
   useEffect(() => {
@@ -103,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribeSnapshot();
   }, [user, toast]);
 
-  const value = useMemo(() => ({ user, userData, loading, isPro }), [user, userData, loading, isPro]);
+  const value = useMemo(() => ({ user, userData, loading, isPro, brandingSettings, loadingBranding }), [user, userData, loading, isPro, brandingSettings, loadingBranding]);
 
   return (
     <AuthContext.Provider value={value}>

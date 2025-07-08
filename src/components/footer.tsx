@@ -1,15 +1,34 @@
 
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useTheme } from "next-themes";
+import { useAuth } from "@/context/AuthContext";
+import { useMemo } from "react";
+import { Skeleton } from "./ui/skeleton";
 
 export default function Footer() {
+  const { theme } = useTheme();
+  const { brandingSettings, loadingBranding } = useAuth();
+
+  const logoSrc = useMemo(() => {
+    if (!brandingSettings) return "/favicon.ico";
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return (isDark ? brandingSettings.logo_dark : brandingSettings.logo_light) || '/favicon.ico';
+  }, [brandingSettings, theme]);
+
   return (
     <footer className="w-full py-12 border-t bg-card/50">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/favicon.ico" alt="Codbbit logo" width={24} height={24} />
+              {loadingBranding ? (
+                <Skeleton className="h-6 w-6 rounded-full" />
+              ) : (
+                <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
+              )}
               <span className="text-lg font-bold font-headline">Codbbit</span>
             </Link>
             <p className="text-sm text-muted-foreground">

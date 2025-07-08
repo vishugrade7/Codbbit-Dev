@@ -15,6 +15,8 @@ import { Separator } from './ui/separator';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { useTheme } from 'next-themes';
+import { useMemo } from 'react';
+import { Skeleton } from './ui/skeleton';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, animation: 'group-hover:animate-icon-bounce' },
@@ -37,8 +39,24 @@ const getInitials = (name: string) => {
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userData } = useAuth();
-  const { setTheme } = useTheme();
+  const { user, userData, isPro, brandingSettings, loadingBranding } = useAuth();
+  const { theme, setTheme } = useTheme();
+
+  const logoSrc = useMemo(() => {
+    if (!brandingSettings) return "/favicon.ico";
+    const isDark = theme === 'dark';
+    if (isPro) {
+        if (isDark) {
+            return brandingSettings.logo_pro_dark || brandingSettings.logo_pro_light || brandingSettings.logo_dark || brandingSettings.logo_light || '/favicon.ico';
+        }
+        return brandingSettings.logo_pro_light || brandingSettings.logo_light || '/favicon.ico';
+    }
+    
+    if (isDark) {
+        return brandingSettings.logo_dark || brandingSettings.logo_light || '/favicon.ico';
+    }
+    return brandingSettings.logo_light || '/favicon.ico';
+  }, [brandingSettings, isPro, theme]);
   
   const handleLogout = async () => {
     if (!auth) return;
@@ -56,7 +74,11 @@ export default function Sidebar() {
     <TooltipProvider>
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-20 flex-col items-center border-r bg-background/70 backdrop-blur-lg py-4 md:flex">
         <Link href="/" className="mb-4">
-          <Image src="/favicon.ico" alt="Codbbit logo" width={32} height={32} />
+          {loadingBranding ? (
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          ) : (
+            <Image src={logoSrc} alt="Codbbit logo" width={32} height={32} />
+          )}
         </Link>
         
         <Separator className="w-2/3" />
