@@ -136,12 +136,9 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-
 // ----------------------------------------------------
 // Section: Notion-style Editor Components
 // ----------------------------------------------------
-
-// Editor Context to pass functions down to blocks
 const NotionEditorContext = React.createContext<{
   updateBlock: (id: string, newContent: any) => void;
   addBlock: (type: string, afterId: string) => void;
@@ -181,7 +178,7 @@ function EditableBlock({ block, updateBlock, placeholder, className, as: Tag = '
     
     useEffect(() => {
         if (ref.current && ref.current.innerHTML !== block.content) {
-            ref.current.innerHTML = block.content;
+            ref.current.innerHTML = block.content as string;
         }
     }, [block.content]);
 
@@ -211,15 +208,24 @@ function BlockRenderer({ block }: { block: ContentBlock }) {
             return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 2" className="text-2xl font-semibold my-2 py-1" as="h2" />;
         case 'heading3':
             return <EditableBlock block={block} updateBlock={updateBlock} placeholder="Heading 3" className="text-xl font-medium my-2 py-1" as="h3" />;
-        case 'code':
+        case 'code': {
+            const codeContent = (typeof block.content === 'object' && block.content !== null && 'code' in block.content)
+                ? block.content as { code: string; language: string }
+                : { code: String(block.content || ''), language: 'apex' }; // Fallback to convert old string data
+
+            const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                updateBlock(block.id, { ...codeContent, code: e.target.value });
+            };
+
             return (
                 <Textarea 
-                    value={typeof block.content === 'string' ? block.content : ''}
-                    onChange={e => updateBlock(block.id, e.target.value)}
+                    value={codeContent.code}
+                    onChange={handleCodeChange}
                     placeholder="Enter code..."
                     className="font-mono bg-muted text-sm h-40"
                 />
             );
+        }
          case 'image':
             return (
                  <div className="my-2 space-y-2">
@@ -256,6 +262,9 @@ function NotionEditor({ name }: { name: string }) {
         addBlock: (type: string, afterId: string) => {
             const index = fields.findIndex(f => f.id === afterId);
             const newBlock: ContentBlock = { id: uuidv4(), type: type, content: '' };
+            if (type === 'code') {
+                newBlock.content = { code: '', language: 'apex' };
+            }
             if (index !== -1) {
                  const currentBlocks = getValues(name as any);
                  const newBlocks = [...currentBlocks];
@@ -301,7 +310,6 @@ function NotionEditor({ name }: { name: string }) {
     );
 };
 
-
 // ----------------------------------------------------
 // Section: Form Components
 // ----------------------------------------------------
@@ -309,7 +317,6 @@ function NotionEditor({ name }: { name: string }) {
 function LessonItem({ moduleIndex, lessonIndex }: { moduleIndex: number, lessonIndex: number }) {
     const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
-    const { fields: blockFields } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({id: getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.id`)});
     const style = { transform: CSS.Transform.toString(transform), transition };
     
