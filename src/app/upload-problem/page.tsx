@@ -2529,7 +2529,7 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
                 <div className="flex justify-end">
                     <Button type="submit" size="lg" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {formMode === 'add' ? 'Create Course' : 'Save Changes'}
+                        {formMode === 'add' ? 'Create Course' : 'save'}
                     </Button>
                 </div>
             </form>
