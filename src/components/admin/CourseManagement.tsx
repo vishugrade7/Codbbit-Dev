@@ -22,7 +22,6 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 import { collection, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -44,7 +43,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-// Re-added CourseList Component
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
     const { toast } = useToast();
     const [courses, setCourses] = useState<Course[]>([]);
@@ -226,6 +224,7 @@ const FloatingToolbar: React.FC<{
 
 const EditableBlock = ({ block, updateBlock, addBlock, deleteBlock, placeholder, className, as: Tag = 'div' }: any) => {
     const ref = useRef<HTMLDivElement>(null);
+    const { addBlock: contextAddBlock, deleteBlock: contextDeleteBlock } = useNotionEditor();
 
     const onInput = (e: React.FormEvent<HTMLDivElement>) => {
         updateBlock(block.id, e.currentTarget.innerHTML);
@@ -234,10 +233,10 @@ const EditableBlock = ({ block, updateBlock, addBlock, deleteBlock, placeholder,
     const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            addBlock('text', block.id);
+            contextAddBlock('text', block.id);
         } else if (e.key === 'Backspace' && ref.current?.innerHTML === '') {
             e.preventDefault();
-            deleteBlock(block.id);
+            contextDeleteBlock(block.id);
         }
     };
     
@@ -342,8 +341,10 @@ const NotionEditor = ({ name }: { name: string }) => {
             const index = fields.findIndex(f => f.id === afterId);
             const newBlock: ContentBlock = { id: uuidv4(), type: type, content: '' };
             if (index !== -1) {
-                append(newBlock, { shouldFocus: true });
-                move(fields.length, index + 1);
+                 const currentBlocks = getValues(name as any);
+                 const newBlocks = [...currentBlocks];
+                 newBlocks.splice(index + 1, 0, newBlock);
+                 setValue(name as any, newBlocks, { shouldFocus: true });
             } else {
                 append(newBlock, { shouldFocus: true });
             }
@@ -376,7 +377,6 @@ const NotionEditor = ({ name }: { name: string }) => {
                         position={toolbarPosition}
                         onComment={editorContext.addComment}
                         onLink={editorContext.addLink}
-                        selectedText={window.getSelection()?.toString() || ''}
                     />
                 )}
             </div>
@@ -397,7 +397,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: 'Start writing your lesson here...' }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         },
@@ -452,7 +452,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                             <FormItem><FormLabel>Course Title</FormLabel><FormControl><Input placeholder="e.g., Introduction to Apex" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="description" render={({ field }) => (
-                           <FormItem className="flex flex-col h-full"><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the course..." {...field} className="flex-grow" /></FormControl><FormMessage /></FormItem>
+                           <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the course..." {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <FormField control={form.control} name="category" render={({ field }) => (
@@ -516,7 +516,7 @@ const ModuleItem = ({ moduleItem, moduleIndex, removeModule }: { moduleItem: any
             const newIndex = lessonFields.findIndex(l => l.id === over.id);
             moveLesson(oldIndex, newIndex);
         }
-    };
+    }
 
     return (
         <Card ref={setNodeRef} style={style}>
