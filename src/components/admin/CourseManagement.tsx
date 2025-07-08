@@ -494,10 +494,13 @@ function ContentBlockItem({ parentName, blockIndex, control, allProblems, loadin
                         <FormField control={control} name={`${parentName}.${blockIndex}.backgroundColor`} render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Background Color (Optional)</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <Select
+                                    onValueChange={(value) => field.onChange(value === '--none--' ? '' : value)}
+                                    value={field.value || '--none--'}
+                                >
                                     <FormControl><SelectTrigger><SelectValue placeholder="Default" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        <SelectItem value="">Default</SelectItem>
+                                        <SelectItem value="--none--">Default</SelectItem>
                                         <SelectItem value="bg-card">Card</SelectItem>
                                         <SelectItem value="bg-muted">Muted</SelectItem>
                                         <SelectItem value="bg-primary/10">Primary (Highlight)</SelectItem>
