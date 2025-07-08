@@ -27,7 +27,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Separator, RadioGroup, RadioGroupItem } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -246,6 +246,8 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'image', label: 'Image', icon: <ImageIcon className="h-4 w-4" /> },
     { type: 'video', label: 'Video', icon: <VideoIcon className="h-4 w-4" /> },
     { type: 'audio', label: 'Audio', icon: <FileAudioIcon className="h-4 w-4" /> },
+    { type: 'table', label: 'Table', icon: <Table2 className="h-4 w-4" /> },
+    { type: 'mcq', label: 'MCQ (Single)', icon: <ListChecks className="h-4 w-4" /> },
   ];
 
   return (
@@ -469,6 +471,110 @@ function ProblemBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: n
     );
 }
 
+function TableBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+  const { control, getValues, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+  const headersPath = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.headers` as const;
+  const rowsPath = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.rows` as const;
+
+  const { fields: headerFields, append: appendHeader, remove: removeHeader } = useFieldArray({ control, name: headersPath });
+  const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({ control, name: rowsPath });
+
+  const addColumn = () => {
+    appendHeader(`Header ${headerFields.length + 1}`);
+    const currentRows = getValues(rowsPath) || [];
+    const newRows = currentRows.map(row => [...row, '']);
+    setValue(rowsPath, newRows);
+  };
+
+  const removeColumn = (index: number) => {
+    if (headerFields.length <= 1) return;
+    removeHeader(index);
+    const currentRows = getValues(rowsPath) || [];
+    const newRows = currentRows.map(row => {
+        const newRow = [...row];
+        newRow.splice(index, 1);
+        return newRow;
+    });
+    setValue(rowsPath, newRows);
+  };
+
+  return (
+    <div className="bg-muted p-4 rounded-md border space-y-2">
+      <div className="space-y-2">
+        {headerFields.map((field, index) => (
+          <div key={field.id} className="flex items-center gap-2">
+            <FormField control={control} name={`${headersPath}.${index}`} render={({ field }) => (
+                <FormItem className="flex-1"><FormControl><Input {...field} placeholder={`Header ${index + 1}`} /></FormControl></FormItem>
+            )} />
+            {headerFields.length > 1 && (
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeColumn(index)}><Trash2 className="h-4 w-4" /></Button>
+            )}
+          </div>
+        ))}
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={addColumn}><PlusCircle className="mr-2 h-4 w-4" /> Add Column</Button>
+      <Separator />
+      <div className="space-y-2">
+        {rowFields.map((rowField, rowIndex) => (
+          <div key={rowField.id} className="flex items-center gap-2">
+            {headerFields.map((_, colIndex) => (
+              <FormField key={`${rowField.id}-${colIndex}`} control={control} name={`${rowsPath}.${rowIndex}.${colIndex}`} render={({ field }) => (
+                <FormItem className="flex-1"><FormControl><Input {...field} placeholder={`Cell`}/></FormControl></FormItem>
+              )} />
+            ))}
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        ))}
+      </div>
+       <Button type="button" variant="outline" size="sm" onClick={() => appendRow(Array(headerFields.length).fill(''))}><PlusCircle className="mr-2 h-4 w-4" /> Add Row</Button>
+    </div>
+  )
+}
+
+function McqBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+  const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+  const optionsPath = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.options` as const;
+  const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({ control, name: optionsPath });
+
+  const addOption = () => appendOption({ id: uuidv4(), text: '' });
+  
+  return (
+    <div className="bg-muted p-4 rounded-md border space-y-4">
+      <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.question`} render={({ field }) => (
+          <FormItem><FormLabel>Question</FormLabel><FormControl><Textarea {...field} placeholder="What is the capital of France?" /></FormControl><FormMessage /></FormItem>
+      )} />
+      
+      <FormItem>
+        <FormLabel>Options</FormLabel>
+        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.correctAnswerIndex`} render={({ field }) => (
+          <RadioGroup onValueChange={(val) => field.onChange(parseInt(val, 10))} value={String(field.value)} className="space-y-2">
+            {optionFields.map((option, index) => (
+              <div key={option.id} className="flex items-center gap-2">
+                <FormControl>
+                  <RadioGroupItem value={String(index)} id={`${option.id}-radio`} />
+                </FormControl>
+                <FormField control={control} name={`${optionsPath}.${index}.text`} render={({ field: optionField }) => (
+                  <FormItem className="flex-1"><FormControl><Input {...optionField} placeholder={`Option ${index + 1}`} /></FormControl></FormItem>
+                )} />
+                {optionFields.length > 2 && (
+                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeOption(index)}><Trash2 className="h-4 w-4" /></Button>
+                )}
+              </div>
+            ))}
+          </RadioGroup>
+        )} />
+        <FormMessage />
+      </FormItem>
+
+      <Button type="button" variant="outline" size="sm" onClick={addOption}><PlusCircle className="mr-2 h-4 w-4" /> Add Option</Button>
+      
+      <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.explanation`} render={({ field }) => (
+          <FormItem><FormLabel>Explanation (Optional)</FormLabel><FormControl><Textarea {...field} placeholder="Provide an explanation for the correct answer." /></FormControl></FormItem>
+      )} />
+    </div>
+  )
+}
+
 
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { moduleIndex: number, lessonIndex: number, blockIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
@@ -533,6 +639,10 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
                  return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Video Block</FormLabel><FormControl><Input placeholder="Video URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
             case 'audio':
                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Audio Block</FormLabel><FormControl><Input placeholder="Audio URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
+            case 'table':
+                return <TableBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
+            case 'mcq':
+                return <McqBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             default:
                 const _exhaustiveCheck: never = block.type;
                 return null;
@@ -579,6 +689,12 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                 break;
             case 'problem':
                 newBlock = { id: uuidv4(), type, content: { problemId: '', title: '', categoryName: '' } };
+                break;
+            case 'table':
+                newBlock = { id: uuidv4(), type, content: { headers: ['Header 1'], rows: [['Cell 1']] } };
+                break;
+            case 'mcq':
+                newBlock = { id: uuidv4(), type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } };
                 break;
             default:
                  newBlock = { id: uuidv4(), type, content: '' };

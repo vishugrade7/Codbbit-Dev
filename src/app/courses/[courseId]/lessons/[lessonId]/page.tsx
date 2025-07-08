@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { getCache, setCache } from '@/lib/cache';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTheme } from 'next-themes';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const getLessonIcon = (lesson: Lesson) => {
     return <BookOpen className="h-5 w-5" />;
@@ -33,6 +36,61 @@ const getLessonIcon = (lesson: Lesson) => {
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 type ProblemWithCategory = Problem & { categoryName: string };
+
+const McqChallenge = ({ blockContent }: { blockContent: any }) => {
+    const [selectedOption, setSelectedOption] = useState<number | null>(null);
+    const [isAnswered, setIsAnswered] = useState(false);
+    const isCorrect = selectedOption === blockContent.correctAnswerIndex;
+
+    const handleCheckAnswer = () => {
+        if (selectedOption !== null) {
+            setIsAnswered(true);
+        }
+    };
+
+    return (
+        <Card className="not-prose my-6">
+            <CardHeader>
+                <CardTitle className="text-lg">{blockContent.question}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <RadioGroup
+                    value={selectedOption !== null ? String(selectedOption) : undefined}
+                    onValueChange={(val) => setSelectedOption(Number(val))}
+                    disabled={isAnswered}
+                    className="space-y-3"
+                >
+                    {blockContent.options.map((option: { text: string }, index: number) => (
+                        <div
+                            key={index}
+                            className={cn(
+                                "flex items-center space-x-3 p-3 rounded-md border transition-colors",
+                                isAnswered && index === blockContent.correctAnswerIndex && "bg-green-500/10 border-green-500/30",
+                                isAnswered && index !== blockContent.correctAnswerIndex && selectedOption === index && "bg-destructive/10 border-destructive/30"
+                            )}
+                        >
+                            <RadioGroupItem value={String(index)} id={`option-${blockContent.id}-${index}`} />
+                            <Label htmlFor={`option-${blockContent.id}-${index}`} className="flex-1 cursor-pointer">{option.text}</Label>
+                            {isAnswered && index === blockContent.correctAnswerIndex && <CheckCircle className="h-5 w-5 text-green-500" />}
+                            {isAnswered && index !== blockContent.correctAnswerIndex && selectedOption === index && <XCircle className="h-5 w-5 text-destructive" />}
+                        </div>
+                    ))}
+                </RadioGroup>
+            </CardContent>
+            <CardFooter className="flex-col items-start gap-4">
+                <Button onClick={handleCheckAnswer} disabled={selectedOption === null || isAnswered}>
+                    Check Answer
+                </Button>
+                {isAnswered && (
+                     <div className={cn("w-full p-4 rounded-md text-sm", isCorrect ? "bg-green-500/10 text-green-700 dark:text-green-300" : "bg-destructive/10 text-destructive dark:text-red-300")}>
+                        <p className="font-bold">{isCorrect ? "Correct!" : "Incorrect."}</p>
+                        {blockContent.explanation && <p className="mt-2">{blockContent.explanation}</p>}
+                    </div>
+                )}
+            </CardFooter>
+        </Card>
+    );
+};
 
 const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
   const getDifficultyBadgeClass = (difficulty: string) => {
@@ -43,6 +101,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
       default: return 'bg-muted';
     }
   };
+  const { theme } = useTheme();
 
   return (
     <div className="prose dark:prose-invert max-w-none">
@@ -69,13 +128,15 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                     </div>
                      <SyntaxHighlighter
                         language={block.content.language === 'apex' ? 'java' : block.content.language}
-                        style={vscDarkPlus}
+                        style={theme === 'dark' ? vscDarkPlus : vs}
                         showLineNumbers={true}
                         customStyle={{ 
                             margin: 0, 
                             padding: '1rem', 
-                            backgroundColor: '#1E1E1E',
-                            fontSize: '0.95rem'
+                            backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+                            fontSize: '0.95rem',
+                            whiteSpace: 'pre-wrap', 
+                            wordBreak: 'break-all'
                         }}
                         codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)' } }}
                         lineNumberStyle={{ color: '#858585', fontSize: '0.95rem' }}
@@ -228,6 +289,31 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                         </audio>
                     </div>
                 );
+             case 'table':
+                return (
+                    <div key={block.id} className="not-prose my-6 overflow-x-auto">
+                        <table className="w-full text-sm border-collapse">
+                            <thead>
+                            <tr className="bg-muted">
+                                {block.content.headers.map((header: string, index: number) => (
+                                <th key={index} className="p-3 font-semibold text-left border">{header}</th>
+                                ))}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {block.content.rows.map((row: string[], rowIndex: number) => (
+                                <tr key={rowIndex} className="border-b">
+                                {row.map((cell: string, cellIndex: number) => (
+                                    <td key={cellIndex} className="p-3 border">{cell}</td>
+                                ))}
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            case 'mcq':
+                return <McqChallenge key={block.id} blockContent={block.content} />;
           default:
             return null;
         }

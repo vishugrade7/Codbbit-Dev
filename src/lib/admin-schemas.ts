@@ -76,6 +76,19 @@ const contentBlockSchema = z.discriminatedUnion("type", [
     z.object({ id: z.string(), type: z.literal("image"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
     z.object({ id: z.string(), type: z.literal("video"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
     z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
+    z.object({ id: z.string(), type: z.literal("table"), content: z.object({
+        headers: z.array(z.string().min(1, "Header cannot be empty.")).min(1, "Table must have at least one header."),
+        rows: z.array(z.array(z.string()))
+    }) }),
+    z.object({ id: z.string(), type: z.literal("mcq"), content: z.object({
+        question: z.string().min(1, "Question is required."),
+        options: z.array(z.object({
+            id: z.string(),
+            text: z.string().min(1, "Option text cannot be empty.")
+        })).min(2, "MCQ must have at least two options."),
+        correctAnswerIndex: z.number().int().min(0, "A correct answer must be selected."),
+        explanation: z.string().optional()
+    }) }),
 ]);
 
 
