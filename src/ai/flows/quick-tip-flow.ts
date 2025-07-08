@@ -15,7 +15,18 @@ const QuickTipOutputSchema = z.object({
 export type QuickTipOutput = z.infer<typeof QuickTipOutputSchema>;
 
 export async function getQuickTip(): Promise<QuickTipOutput> {
-  return quickTipFlow();
+  // Check if any models are available before running the flow.
+  // This makes the AI feature optional.
+  if (ai.listModels().length === 0) {
+    return { tip: "AI features are disabled. Set GOOGLE_API_KEY to enable." };
+  }
+  
+  try {
+    return await quickTipFlow();
+  } catch (error) {
+    console.error("Error fetching quick tip:", error);
+    return { tip: "Could not fetch an AI-generated tip at this time." };
+  }
 }
 
 const prompt = ai.definePrompt({
