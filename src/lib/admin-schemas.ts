@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { z } from "zod";
@@ -46,11 +47,17 @@ export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRe
 // #endregion
 
 // #region Course Schemas
-const contentBlockSchema = z.object({
-    id: z.string(),
-    type: z.enum(['text', 'code']),
-    content: z.any(),
-});
+const contentBlockSchema = z.discriminatedUnion("type", [
+    z.object({ id: z.string(), type: z.literal("text"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("code"), content: z.object({ code: z.string(), language: z.string() }) }),
+    z.object({ id: z.string(), type: z.literal("heading1"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("heading2"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("heading3"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("quote"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("callout"), content: z.object({ text: z.string(), icon: z.string() }) }),
+    z.object({ id: z.string(), type: z.literal("divider"), content: z.literal("").default("") }),
+]);
+
 
 const lessonSchema = z.object({
     id: z.string(),

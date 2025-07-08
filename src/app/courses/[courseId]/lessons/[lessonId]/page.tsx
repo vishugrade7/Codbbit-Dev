@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -10,7 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,23 @@ const LessonContent = ({ contentBlocks }: { contentBlocks: ContentBlock[] }) => 
                   </div>
               </div>
             );
+           case 'heading1':
+                return <h1 key={block.id} className="text-4xl font-bold mt-8 mb-4 border-b pb-2">{block.content}</h1>;
+            case 'heading2':
+                return <h2 key={block.id} className="text-3xl font-semibold mt-8 mb-4 border-b pb-2">{block.content}</h2>;
+            case 'heading3':
+                return <h3 key={block.id} className="text-2xl font-semibold mt-6 mb-3">{block.content}</h3>;
+            case 'quote':
+                return <blockquote key={block.id} className="mt-6 border-l-4 pl-4 italic text-muted-foreground">{block.content}</blockquote>;
+            case 'callout':
+                return (
+                    <div key={block.id} className="not-prose my-6 flex items-start gap-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+                        <div className="text-2xl pt-1">{block.content.icon}</div>
+                        <div className="prose dark:prose-invert max-w-none text-primary/90">{block.content.text}</div>
+                    </div>
+                );
+            case 'divider':
+                return <hr key={block.id} className="my-8" />;
           default:
             return null;
         }

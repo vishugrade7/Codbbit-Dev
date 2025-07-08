@@ -114,8 +114,8 @@ export type Contribution = {
 
 export type ContentBlock = {
   id: string;
-  type: 'text' | 'code';
-  content: any; // string for text, { code: string, language: string } for code
+  type: 'text' | 'code' | 'heading1' | 'heading2' | 'heading3' | 'quote' | 'callout' | 'divider';
+  content: any; // string, {code, language}, {text, icon}, etc.
 };
 
 export type Lesson = {

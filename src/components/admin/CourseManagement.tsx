@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -23,7 +24,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -116,16 +117,26 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-function BlockTypePicker({ onSelect }: { onSelect: (type: 'text' | 'code') => void }) {
+function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) => void }) {
+  const blockTypes: { type: ContentBlock['type']; label: string; icon: React.ReactNode }[] = [
+    { type: 'text', label: 'Text', icon: <Type className="h-4 w-4" /> },
+    { type: 'heading1', label: 'Heading 1', icon: <Heading1 className="h-4 w-4" /> },
+    { type: 'heading2', label: 'Heading 2', icon: <Heading2 className="h-4 w-4" /> },
+    { type: 'heading3', label: 'Heading 3', icon: <Heading3 className="h-4 w-4" /> },
+    { type: 'code', label: 'Code', icon: <Code2Icon className="h-4 w-4" /> },
+    { type: 'quote', label: 'Quote', icon: <MessageSquareQuote className="h-4 w-4" /> },
+    { type: 'callout', label: 'Callout', icon: <AlertTriangle className="h-4 w-4" /> },
+    { type: 'divider', label: 'Divider', icon: <Minus className="h-4 w-4" /> },
+  ];
+
   return (
-    <PopoverContent className="w-48 p-2">
+    <PopoverContent className="w-56 p-2">
       <div className="grid gap-1">
-        <Button variant="ghost" className="justify-start" onClick={() => onSelect('text')}>
-          <TextIcon className="mr-2 h-4 w-4" /> Text
-        </Button>
-        <Button variant="ghost" className="justify-start" onClick={() => onSelect('code')}>
-          <Code2Icon className="mr-2 h-4 w-4" /> Code
-        </Button>
+        {blockTypes.map(({ type, label, icon }) => (
+           <Button key={type} variant="ghost" className="justify-start gap-2" onClick={() => onSelect(type)}>
+              {icon} {label}
+           </Button>
+        ))}
       </div>
     </PopoverContent>
   );
@@ -135,7 +146,7 @@ function CodeBlockEditor({ field }: { field: any }) {
     const [localContent, setLocalContent] = useState(
         typeof field.value === 'object' && field.value !== null
             ? field.value
-            : { code: field.value || '', language: 'apex' } // Fallback for old string data
+            : { code: field.value || '', language: 'apex' }
     );
 
     useEffect(() => {
@@ -196,36 +207,36 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
 
+    const renderBlockEditor = () => {
+        switch (block.type) {
+            case 'text':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Enter lesson content here. Markdown is supported." className="min-h-[120px]" {...field}/></FormControl><FormMessage/></FormItem>)}/>
+            case 'code':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'heading1':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'heading2':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'heading3':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><Textarea placeholder="Enter quote..." {...field} className="italic"/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'callout':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><Textarea placeholder="Enter callout text..." value={field.value.text} onChange={(e) => field.onChange({...field.value, text: e.target.value})} /></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'divider':
+                return <hr className="my-4"/>
+            default:
+                return null;
+        }
+    }
+
     return (
         <div ref={setNodeRef} style={style} className="flex items-start gap-2">
             <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 mt-2 text-muted-foreground">
                 <GripVertical className="h-5 w-5" />
             </button>
              <div className="flex-1 space-y-2">
-                {block.type === 'text' && (
-                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
-                         <FormItem>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Enter lesson content here. Markdown is supported."
-                                    className="min-h-[120px]"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                )}
-                 {block.type === 'code' && (
-                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
-                        <FormItem>
-                            <FormControl>
-                                <CodeBlockEditor field={field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                     )} />
-                )}
+                {renderBlockEditor()}
             </div>
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-2" onClick={() => removeBlock(blockIndex)}>
                 <Trash2 className="h-4 w-4" />
@@ -242,10 +253,21 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
 
-    const addContentBlock = (type: 'text' | 'code') => {
-        const newBlock = type === 'code'
-            ? { id: uuidv4(), type, content: { code: '', language: 'apex' } }
-            : { id: uuidv4(), type, content: '' };
+    const addContentBlock = (type: ContentBlock['type']) => {
+        let newBlock: ContentBlock;
+        switch (type) {
+            case 'code':
+                newBlock = { id: uuidv4(), type, content: { code: '', language: 'apex' } };
+                break;
+            case 'callout':
+                newBlock = { id: uuidv4(), type, content: { text: '', icon: '💡' } };
+                break;
+            case 'divider':
+                 newBlock = { id: uuidv4(), type, content: '' };
+                 break;
+            default:
+                 newBlock = { id: uuidv4(), type, content: '' };
+        }
         appendBlock(newBlock);
     };
 
