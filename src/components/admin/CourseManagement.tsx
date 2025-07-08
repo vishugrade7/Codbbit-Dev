@@ -25,7 +25,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +36,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -137,6 +138,9 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'callout', label: 'Callout', icon: <AlertTriangle className="h-4 w-4" /> },
     { type: 'divider', label: 'Divider', icon: <Minus className="h-4 w-4" /> },
     { type: 'problem', label: 'Problem', icon: <FileQuestion className="h-4 w-4" /> },
+    { type: 'image', label: 'Image', icon: <ImageIcon className="h-4 w-4" /> },
+    { type: 'video', label: 'Video', icon: <VideoIcon className="h-4 w-4" /> },
+    { type: 'audio', label: 'Audio', icon: <FileAudioIcon className="h-4 w-4" /> },
   ];
 
   return (
@@ -387,6 +391,25 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
                 return <ToggleListBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             case 'problem':
                 return <ProblemBlock moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
+            case 'image':
+                return (
+                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                        <FormItem className="space-y-2">
+                            <FormLabel className="text-xs text-muted-foreground">Image Block</FormLabel>
+                            <FormControl><Input placeholder="Image URL..." {...field} /></FormControl>
+                             {field.value && (
+                                <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
+                                    <Image src={field.value} alt="Image Preview" fill className="object-contain" />
+                                </div>
+                            )}
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                );
+            case 'video':
+                 return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Video Block</FormLabel><FormControl><Input placeholder="Video URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
+            case 'audio':
+                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Audio Block</FormLabel><FormControl><Input placeholder="Audio URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
             default:
                 const _exhaustiveCheck: never = block.type;
                 return null;
@@ -425,15 +448,6 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
             case 'callout':
                 newBlock = { id: uuidv4(), type, content: { text: '', icon: '💡' } };
                 break;
-            case 'divider':
-                 newBlock = { id: uuidv4(), type, content: '' };
-                 break;
-            case 'bulleted-list':
-                newBlock = { id: uuidv4(), type, content: '* ' };
-                break;
-            case 'numbered-list':
-                newBlock = { id: uuidv4(), type, content: '1. ' };
-                break;
             case 'todo-list':
                 newBlock = { id: uuidv4(), type, content: [{ id: uuidv4(), text: 'New to-do', checked: false }] };
                 break;
@@ -445,6 +459,8 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                 break;
             default:
                  newBlock = { id: uuidv4(), type, content: '' };
+                 if (type === 'bulleted-list') newBlock.content = '* ';
+                 if (type === 'numbered-list') newBlock.content = '1. ';
         }
         appendBlock(newBlock);
     };

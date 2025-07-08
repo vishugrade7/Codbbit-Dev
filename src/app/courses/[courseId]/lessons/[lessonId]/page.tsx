@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -147,6 +148,50 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                             </Button>
                         </CardFooter>
                     </Card>
+                );
+            case 'image':
+                return (
+                    <div key={block.id} className="not-prose relative w-full aspect-video my-6 rounded-lg overflow-hidden">
+                        <Image
+                            src={block.content}
+                            alt="Lesson image"
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
+                );
+            case 'video':
+                // Simple YouTube/Vimeo embed logic
+                const isYouTube = block.content.includes('youtube.com') || block.content.includes('youtu.be');
+                const isVimeo = block.content.includes('vimeo.com');
+                let videoSrc = block.content;
+
+                if (isYouTube) {
+                    const videoId = block.content.split('v=')[1]?.split('&')[0] || block.content.split('/').pop();
+                    videoSrc = `https://www.youtube.com/embed/${videoId}`;
+                } else if (isVimeo) {
+                    const videoId = block.content.split('/').pop();
+                    videoSrc = `https://player.vimeo.com/video/${videoId}`;
+                }
+
+                return (
+                    <div key={block.id} className="not-prose aspect-video my-6">
+                        <iframe
+                            className="w-full h-full rounded-lg"
+                            src={videoSrc}
+                            title="Video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                );
+            case 'audio':
+                return (
+                    <div key={block.id} className="not-prose my-6">
+                        <audio controls src={block.content} className="w-full">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
                 );
           default:
             return null;

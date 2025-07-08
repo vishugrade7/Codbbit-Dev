@@ -73,6 +73,9 @@ const contentBlockSchema = z.discriminatedUnion("type", [
         type: z.literal("problem"),
         content: z.object({ problemId: z.string(), title: z.string(), categoryName: z.string() }),
     }),
+    z.object({ id: z.string(), type: z.literal("image"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
+    z.object({ id: z.string(), type: z.literal("video"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
+    z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
 ]);
 
 

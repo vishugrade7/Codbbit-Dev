@@ -114,7 +114,7 @@ export type Contribution = {
 
 export type ContentBlock = {
   id: string;
-  type: 'text' | 'code' | 'heading1' | 'heading2' | 'heading3' | 'quote' | 'callout' | 'divider' | 'bulleted-list' | 'numbered-list' | 'todo-list' | 'toggle-list' | 'problem';
+  type: 'text' | 'code' | 'heading1' | 'heading2' | 'heading3' | 'quote' | 'callout' | 'divider' | 'bulleted-list' | 'numbered-list' | 'todo-list' | 'toggle-list' | 'problem' | 'image' | 'video' | 'audio';
   content: any; // string, {code, language}, {text, icon}, etc.
 };
 
