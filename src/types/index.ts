@@ -112,15 +112,14 @@ export type Contribution = {
   count: number;
 };
 
-// Simplified ContentBlock to match the stable editor
 export type ContentBlock = {
   id: string;
-  type: 'text'; // For now, only text is supported
-  content: string; // The content is a simple string, supports markdown
+  type: 'text' | 'code';
+  content: any; // string for text, { code: string, language: string } for code
 };
 
 export type Lesson = {
-  id: string;
+  id:string;
   title: string;
   isFree?: boolean;
   contentBlocks: ContentBlock[];

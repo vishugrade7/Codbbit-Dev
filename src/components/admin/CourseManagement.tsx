@@ -23,12 +23,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2 } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -115,13 +116,130 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
+function BlockTypePicker({ onSelect }: { onSelect: (type: 'text' | 'code') => void }) {
+  return (
+    <PopoverContent className="w-48 p-2">
+      <div className="grid gap-1">
+        <Button variant="ghost" className="justify-start" onClick={() => onSelect('text')}>
+          <TextIcon className="mr-2 h-4 w-4" /> Text
+        </Button>
+        <Button variant="ghost" className="justify-start" onClick={() => onSelect('code')}>
+          <Code2Icon className="mr-2 h-4 w-4" /> Code
+        </Button>
+      </div>
+    </PopoverContent>
+  );
+}
+
+function CodeBlockEditor({ field }: { field: any }) {
+    const [localContent, setLocalContent] = useState(
+        typeof field.value === 'object' && field.value !== null
+            ? field.value
+            : { code: '', language: 'apex' }
+    );
+
+    useEffect(() => {
+        // Sync with form state if it changes externally
+         if (typeof field.value === 'object' && field.value !== null && (field.value.code !== localContent.code || field.value.language !== localContent.language)) {
+            setLocalContent(field.value);
+        }
+    }, [field.value, localContent]);
+    
+    const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newCode = e.target.value;
+        const newContent = { ...localContent, code: newCode };
+        setLocalContent(newContent);
+        field.onChange(newContent);
+    };
+
+    const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newLanguage = e.target.value;
+        const newContent = { ...localContent, language: newLanguage };
+        setLocalContent(newContent);
+        field.onChange(newContent);
+    };
+
+    return (
+        <div className="bg-muted rounded-md border">
+             <div className="flex items-center justify-between px-3 py-1.5 border-b">
+                <p className="text-xs font-semibold text-muted-foreground">Code Block</p>
+                <div className="flex items-center gap-2">
+                    <Languages className="h-4 w-4 text-muted-foreground"/>
+                    <select
+                        value={localContent.language}
+                        onChange={handleLanguageChange}
+                        className="bg-transparent text-xs text-muted-foreground focus:outline-none"
+                    >
+                        {['apex', 'javascript', 'soql', 'html', 'css', 'json'].map(lang => (
+                            <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <Textarea
+                value={localContent.code}
+                onChange={handleCodeChange}
+                placeholder="Enter code..."
+                className="font-mono bg-muted text-sm h-40 rounded-t-none border-0"
+            />
+        </div>
+    );
+}
+
+function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { remove: removeBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
+    const block = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`);
+
+    return (
+        <div className="flex items-start gap-2">
+             <div className="flex-1 space-y-2">
+                {block.type === 'text' && (
+                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                         <FormItem>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="Enter lesson content here. Markdown is supported."
+                                    className="min-h-[120px]"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                )}
+                 {block.type === 'code' && (
+                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <CodeBlockEditor field={field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                     )} />
+                )}
+            </div>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-2" onClick={() => removeBlock(blockIndex)}>
+                <Trash2 className="h-4 w-4" />
+            </Button>
+        </div>
+    );
+}
 
 function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, lessonIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
+    const { fields: blockFields, append: appendBlock } = useFieldArray({ name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
     
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId }); 
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
+
+    const addContentBlock = (type: 'text' | 'code') => {
+        const newBlock = type === 'code'
+            ? { id: uuidv4(), type, content: { code: '', language: 'apex' } }
+            : { id: uuidv4(), type, content: '' };
+        appendBlock(newBlock);
+    };
 
     return (
         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
@@ -143,24 +261,23 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
                                 <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson</FormLabel></FormItem>
                             )} />
-                            <FormField
-                                control={control}
-                                name={`modules.${moduleIndex}.lessons.${lessonIndex}.content`}
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Lesson Content (Markdown)</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="Enter lesson content here. Markdown is supported."
-                                            className="min-h-[200px] font-mono"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                            <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={() => removeLesson(lessonIndex)}>
+                            
+                            <div className="space-y-4">
+                                {blockFields.map((blockItem, blockIndex) => (
+                                    <ContentBlockItem key={blockItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />
+                                ))}
+                            </div>
+                            
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button type="button" variant="outline" size="sm" className="mt-2">
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Add Content Block
+                                    </Button>
+                                </PopoverTrigger>
+                                <BlockTypePicker onSelect={addContentBlock} />
+                            </Popover>
+                            
+                            <Button type="button" variant="destructive" size="sm" className="mt-2 float-right" onClick={() => removeLesson(lessonIndex)}>
                                 <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
                             </Button>
                         </div>
@@ -170,6 +287,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
         </div>
     );
 }
+
 
 function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
     const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
@@ -217,7 +335,7 @@ function ModuleItem({ moduleIndex }: { moduleIndex: number }) {
                                 </div>
                             </SortableContext>
                         </DndContext>
-                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, content: '' })}>
+                        <Button type="button" variant="outline" size="sm" className="mt-4 ml-6" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
                         </Button>
                     </CardContent>
@@ -245,7 +363,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, content: '' }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'text', content: '' }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         },
@@ -258,7 +376,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, content: '' }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'text', content: '' }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         });
@@ -342,7 +460,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </DndContext>
                 </Accordion>
 
-                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, content: '' }] })}>
+                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Module
                 </Button>
 

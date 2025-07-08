@@ -46,24 +46,23 @@ export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRe
 // #endregion
 
 // #region Course Schemas
-// Simplified contentBlockSchema for the stable editor
 const contentBlockSchema = z.object({
     id: z.string(),
-    type: z.literal('text'), // For now, only text is supported by the simple editor
-    content: z.string(), // Content is just a string, can be empty
+    type: z.enum(['text', 'code']),
+    content: z.any(),
 });
 
 const lessonSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Lesson title is required'),
     isFree: z.boolean().optional(),
-    contentBlocks: z.array(contentBlockSchema),
+    contentBlocks: z.array(contentBlockSchema).min(1, "A lesson must have at least one content block."),
 });
 
 const moduleSchema = z.object({
     id: z.string(),
     title: z.string().min(1, 'Module title is required'),
-    lessons: z.array(lessonSchema),
+    lessons: z.array(lessonSchema).min(1, "A module must have at least one lesson."),
 });
 
 export const courseFormSchema = z.object({

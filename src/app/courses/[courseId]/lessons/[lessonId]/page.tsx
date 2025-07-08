@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
-import type { Course, Module, Lesson, Problem, ApexProblemsData, ContentBlock } from '@/types';
+import type { Course, Module, Lesson, ContentBlock } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -20,22 +20,39 @@ import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
 
 const getLessonIcon = (lesson: Lesson) => {
-    // Simplified since we only have 'text' blocks for now
     return <BookOpen className="h-5 w-5" />;
 };
 
-// Simplified renderer for just text blocks
-const LessonContent = ({ lesson }: { lesson: Lesson }) => {
-    const firstBlock = lesson.contentBlocks?.[0];
-    const markdownContent = firstBlock?.content || "";
-
-    return (
-        <div className="prose dark:prose-invert max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {markdownContent}
-            </ReactMarkdown>
-        </div>
-    );
+const LessonContent = ({ contentBlocks }: { contentBlocks: ContentBlock[] }) => {
+  return (
+    <div className="prose dark:prose-invert max-w-none">
+      {(contentBlocks || []).map(block => {
+        switch (block.type) {
+          case 'text':
+            return (
+              <ReactMarkdown key={block.id} remarkPlugins={[remarkGfm]}>
+                {block.content}
+              </ReactMarkdown>
+            );
+          case 'code':
+            return (
+              <div key={block.id} className="not-prose my-4">
+                  <div className="bg-muted rounded-md overflow-hidden">
+                    <div className="px-4 py-2 border-b bg-muted/50 text-xs text-muted-foreground font-semibold">
+                      {block.content.language?.toUpperCase() || 'Code'}
+                    </div>
+                    <pre className="p-4 text-sm overflow-x-auto">
+                        <code>{block.content.code}</code>
+                    </pre>
+                  </div>
+              </div>
+            );
+          default:
+            return null;
+        }
+      })}
+    </div>
+  );
 };
 
 
@@ -211,7 +228,7 @@ export default function LessonPage() {
                         </div>
                         <ScrollArea className="flex-1">
                             <div className="p-6">
-                                <LessonContent lesson={currentLesson} />
+                                <LessonContent contentBlocks={currentLesson.contentBlocks} />
                             </div>
                         </ScrollArea>
                         <div className="p-4 border-t flex justify-between">
