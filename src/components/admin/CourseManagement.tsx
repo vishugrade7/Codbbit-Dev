@@ -436,8 +436,8 @@ function CodeBlockEditor({ field }: { field: any }) {
     }
 
     return (
-        <div className="rounded-lg shadow-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 my-6">
-             <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800">
+        <div className="rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6">
+             <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
                 <div className="flex gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-red-500"></div>
                     <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
@@ -1021,10 +1021,12 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
     const { remove: removeBlock } = useFieldArray({ name: parentPath });
     
     const block = useWatch({ control, name: path as any });
-
-    if (!block) return null;
-
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
+
+    if (!block) {
+        return null;
+    }
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
