@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -371,7 +372,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                       customStyle={{ 
                           margin: 0, 
                           padding: '1.5rem', 
-                          backgroundColor: 'transparent',
+                          background: 'transparent',
                           fontSize: '1rem',
                       }}
                       codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }}
