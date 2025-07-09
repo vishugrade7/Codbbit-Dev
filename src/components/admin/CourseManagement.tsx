@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, useFieldArray, FormProvider, useFormContext, useWatch } from "react-hook-form";
@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -375,6 +375,7 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'mcq', label: 'MCQ (Single)', icon: <ListChecks className="h-4 w-4" /> },
     { type: 'breadcrumb', label: 'Breadcrumb', icon: <Milestone className="h-4 w-4" /> },
     { type: 'mermaid', label: 'Mermaid Diagram', icon: <GitFork className="h-4 w-4" /> },
+    { type: 'interactive-code', label: 'Interactive Code', icon: <FlaskConical className="h-4 w-4" /> },
     { type: 'two-column', label: 'Two Columns', icon: <BoxSelect className="h-4 w-4 rotate-90" /> },
     { type: 'three-column', label: 'Three Columns', icon: <BoxSelect className="h-4 w-4 rotate-90" /> },
   ];
@@ -827,6 +828,60 @@ function MermaidBlockEditor({ path }: { path: string }) {
     );
 }
 
+function InteractiveCodeBlockEditor({ path }: { path: string }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { resolvedTheme } = useTheme();
+
+    return (
+        <div className="bg-muted p-4 rounded-md border space-y-4">
+            <FormField
+                control={control}
+                name={`${path}.content.title`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Title (Optional)</FormLabel>
+                        <FormControl><Input placeholder="Assignment - Declaring a variable" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={control}
+                name={`${path}.content.description`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl><Textarea placeholder="Declare a boolean variable..." {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={control}
+                name={`${path}.content.defaultCode`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Default Code</FormLabel>
+                        <FormControl>
+                             <div className="h-48 w-full border rounded-md overflow-hidden">
+                                <MonacoEditor
+                                    height="100%"
+                                    language="java" // Apex is similar to Java for syntax highlighting
+                                    value={field.value}
+                                    onChange={(value) => field.onChange(value || "")}
+                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                    options={{ fontSize: 13, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                                />
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+}
+
 function ColumnLayoutEditor({ path, numColumns }: { path: string; numColumns: 2 | 3 }) {
     const columnKeys = Array.from({ length: numColumns }, (_, i) => `column${i + 1}`);
 
@@ -859,6 +914,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mcq': newBlock = { id, type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } }; break;
             case 'breadcrumb': newBlock = { id, type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] }; break;
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
+            case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
             default: newBlock = { id, type, content: (type === 'bulleted-list' ? '* ' : (type === 'numbered-list' ? '1. ' : '')) };
@@ -942,6 +998,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
             case 'mcq': return <McqBlockEditor path={path} />;
             case 'breadcrumb': return <BreadcrumbBlockEditor path={path} />;
             case 'mermaid': return <MermaidBlockEditor path={path} />;
+            case 'interactive-code': return <InteractiveCodeBlockEditor path={path} />;
             case 'two-column': return <ColumnLayoutEditor path={path} numColumns={2} />;
             case 'three-column': return <ColumnLayoutEditor path={path} numColumns={3} />;
             default: const _exhaustiveCheck: never = block.type; return null;
@@ -1333,4 +1390,3 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-

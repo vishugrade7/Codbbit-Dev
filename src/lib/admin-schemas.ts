@@ -137,6 +137,17 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminated
         backgroundColor: z.string().optional(),
         textColor: z.string().optional(),
     }),
+     z.object({
+        id: z.string(),
+        type: z.literal("interactive-code"),
+        content: z.object({
+            title: z.string().optional(),
+            description: z.string().min(1, 'Description is required.'),
+            defaultCode: z.string().min(1, 'Default code is required.'),
+        }),
+        backgroundColor: z.string().optional(),
+        textColor: z.string().optional(),
+    }),
 ]));
 
 

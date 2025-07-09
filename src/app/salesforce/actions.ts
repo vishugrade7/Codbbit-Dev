@@ -455,6 +455,64 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     }
 }
 
+export async function executeAnonymousApex(userId: string, code: string): Promise<{ success: boolean; result: string; logs: string; }> {
+    try {
+        const auth = await getSfdcConnection(userId);
+        const endpoint = `${auth.instanceUrl}/services/data/v59.0/tooling/executeAnonymous/`;
+        
+        const rawResponse = await fetch(endpoint, {
+            method: 'GET', // This endpoint actually uses GET despite what one might think
+            headers: {
+                'Authorization': `Bearer ${auth.accessToken}`,
+            },
+            // The body is passed as a query parameter
+            // This is a quirk of this specific endpoint
+        } as RequestInit & { next: { revalidate: number } });
+
+        const urlWithQuery = new URL(endpoint);
+        urlWithQuery.searchParams.append('anonymousBody', code);
+
+        const response = await fetch(urlWithQuery.toString(), {
+             method: 'GET',
+             headers: {
+                'Authorization': `Bearer ${auth.accessToken}`,
+            },
+        });
+
+        const responseBody = await response.json();
+        
+        const logHeader = `----------\nDEBUG LOG\n----------\n`;
+        const debugLog = responseBody.diagnostic?.[0]?.debugLog || "";
+
+        if (responseBody.success) {
+             return {
+                success: true,
+                result: 'Execution Successful',
+                logs: `${logHeader}${debugLog}`
+            };
+        } else if (!responseBody.compiled) {
+             return {
+                success: false,
+                result: `Compilation Error: ${responseBody.compileProblem}\nLine: ${responseBody.line}, Column: ${responseBody.column}`,
+                logs: `${logHeader}${debugLog}`
+            };
+        } else { // compiled but not success
+             return {
+                success: false,
+                result: `Runtime Error: ${responseBody.exceptionMessage}\n\nStack Trace:\n${responseBody.exceptionStackTrace}`,
+                logs: `${logHeader}${debugLog}`
+            };
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
+        return {
+            success: false,
+            result: `An unexpected error occurred: ${errorMessage}`,
+            logs: "No debug log available due to error."
+        };
+    }
+}
+
 async function deployLwcBundle(
     log: string[],
     auth: SfdcAuth,

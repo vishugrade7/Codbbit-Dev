@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -31,6 +31,11 @@ import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import mermaid from 'mermaid';
+import MonacoEditor from '@monaco-editor/react';
+import { executeAnonymousApex } from '@/app/salesforce/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 const getLessonIcon = (lesson: Lesson) => {
     return <BookOpen className="h-5 w-5" />;
@@ -137,6 +142,92 @@ const McqChallenge = ({ blockContent }: { blockContent: any }) => {
                         <p className="font-bold">{isCorrect ? "Correct!" : "Incorrect."}</p>
                         {blockContent.explanation && <p className="mt-2">{blockContent.explanation}</p>}
                     </div>
+                )}
+            </CardFooter>
+        </Card>
+    );
+};
+
+const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
+    const { resolvedTheme } = useTheme();
+    const { user, userData } = useAuth();
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const [code, setCode] = useState(blockContent.defaultCode || '');
+    const [isExecuting, setIsExecuting] = useState(false);
+    const [results, setResults] = useState<{ output: string, logs: string } | null>(null);
+
+    const handleExecute = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In' });
+            return;
+        }
+        if (!userData?.sfdcAuth?.connected) {
+            toast({ variant: 'destructive', title: 'Salesforce Not Connected', description: 'Please connect your Salesforce org in settings.' });
+            router.push('/settings');
+            return;
+        }
+
+        setIsExecuting(true);
+        setResults(null);
+        
+        const response = await executeAnonymousApex(user.uid, code);
+        
+        setResults({
+            output: response.result,
+            logs: response.logs
+        });
+        
+        toast({
+            title: response.success ? 'Execution Successful' : 'Execution Failed',
+            variant: response.success ? 'default' : 'destructive',
+        });
+        
+        setIsExecuting(false);
+    };
+
+    return (
+        <Card className="not-prose my-6">
+            <CardHeader className="bg-muted/30">
+                <div className="flex items-center gap-3">
+                    <FlaskConical className="h-6 w-6 text-primary" />
+                    <div>
+                        <CardTitle className="text-lg">{blockContent.title || 'Try It Yourself'}</CardTitle>
+                        {blockContent.description && <CardDescription className="mt-1">{blockContent.description}</CardDescription>}
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <div className="h-64 w-full">
+                    <MonacoEditor
+                        height="100%"
+                        language="java"
+                        value={code}
+                        onChange={(v) => setCode(v || '')}
+                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                        options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                    />
+                </div>
+            </CardContent>
+            <CardFooter className="flex-col items-start gap-4 p-4">
+                <Button onClick={handleExecute} disabled={isExecuting}>
+                    {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Execute
+                </Button>
+                {results && (
+                     <Tabs defaultValue="output" className="w-full">
+                        <TabsList>
+                            <TabsTrigger value="output">Output</TabsTrigger>
+                            <TabsTrigger value="logs">Logs</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="output" className="mt-4 p-4 bg-muted/50 rounded-md">
+                            <pre className="text-sm text-foreground whitespace-pre-wrap font-code">{results.output}</pre>
+                        </TabsContent>
+                        <TabsContent value="logs" className="mt-4 p-4 bg-muted/50 rounded-md">
+                             <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results.logs}</pre>
+                        </TabsContent>
+                    </Tabs>
                 )}
             </CardFooter>
         </Card>
@@ -380,6 +471,8 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
               );
           case 'mermaid':
                return <MermaidRenderer chart={block.content} />;
+          case 'interactive-code':
+                return <InteractiveCodeChallenge blockContent={block.content} />;
           case 'two-column':
               return (
                   <div className="not-prose my-6 grid grid-cols-1 md:grid-cols-2 gap-6">
