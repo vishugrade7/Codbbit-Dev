@@ -1,6 +1,6 @@
 
 import type {Metadata} from 'next';
-import { Inter, Source_Code_Pro } from 'next/font/google'
+import { Source_Code_Pro } from 'next/font/google'
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
@@ -8,13 +8,6 @@ import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/app-shell';
 import DynamicFavicon from '@/components/dynamic-favicon';
-
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-})
 
 const sourceCodePro = Source_Code_Pro({
   subsets: ['latin'],
@@ -39,7 +32,7 @@ export default function RootLayout({
        <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={cn(inter.variable, sourceCodePro.variable, "font-body text-foreground select-none no-print")}>
+      <body className={cn(sourceCodePro.variable, "font-body text-foreground select-none no-print")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

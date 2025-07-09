@@ -18,10 +18,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)"],
+        sans: ["Helvetica", "Arial", "sans-serif"],
         mono: ["var(--font-source-code-pro)"],
-        headline: ["var(--font-inter)"],
-        body: ["var(--font-inter)"],
+        headline: ["Helvetica", "Arial", "sans-serif"],
+        body: ["Helvetica", "Arial", "sans-serif"],
         code: ["var(--font-source-code-pro)"],
       },
       fontSize: {
