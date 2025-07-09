@@ -1,9 +1,8 @@
-
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Lightbulb, Bug, LifeBuoy } from "lucide-react";
+import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Bug, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,8 +16,6 @@ import { useEffect, useState, useMemo } from "react";
 import type { NavLink } from "@/types";
 import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { getQuickTip } from "@/ai/flows/quick-tip-flow";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 
@@ -27,7 +24,6 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userData, loading: authLoading, isPro, brandingSettings, loadingBranding } = useAuth();
-  const { toast } = useToast();
   const { theme } = useTheme();
   
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
@@ -61,31 +57,6 @@ export default function Header() {
     fetchNavLinks();
   }, []);
   
-  useEffect(() => {
-    const showTip = sessionStorage.getItem('showWelcomeTip');
-    if (showTip === 'true' && user) {
-        sessionStorage.removeItem('showWelcomeTip');
-        const fetchAndShowTip = async () => {
-            try {
-                const { tip } = await getQuickTip();
-                toast({
-                    title: (
-                        <div className="flex items-center gap-2">
-                            <Lightbulb className="h-5 w-5 text-yellow-400" />
-                            <span className="font-semibold">Quick Tip</span>
-                        </div>
-                    ),
-                    description: tip,
-                    duration: 9000,
-                });
-            } catch (error) {
-                console.error("Failed to fetch quick tip:", error);
-            }
-        };
-        fetchAndShowTip();
-    }
-  }, [user, toast]);
-
   const adminNavLinks = [
       { href: "/upload-problem", label: "Admin Page", icon: UploadCloud }
   ]
