@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import mermaid from 'mermaid';
 
 const getLessonIcon = (lesson: Lesson) => {
     return <BookOpen className="h-5 w-5" />;
@@ -36,6 +37,38 @@ const getLessonIcon = (lesson: Lesson) => {
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 type ProblemWithCategory = Problem & { categoryName: string };
+
+const MermaidRenderer = ({ chart }: { chart: string }) => {
+    const { theme } = useTheme();
+    const mermaidId = useMemo(() => `mermaid-${Math.random().toString(36).substr(2, 9)}`, [chart]);
+    
+    useEffect(() => {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+        });
+
+        const renderMermaid = async () => {
+             try {
+                // Ensure the element is in the DOM before rendering
+                const element = document.getElementById(mermaidId);
+                if (element) {
+                    const { svg } = await mermaid.render(mermaidId, chart);
+                    element.innerHTML = svg;
+                }
+            } catch (error) {
+                console.error('Mermaid render error:', error);
+            }
+        };
+
+        // Delay rendering slightly to ensure DOM is ready
+        const timer = setTimeout(renderMermaid, 100);
+        return () => clearTimeout(timer);
+
+    }, [chart, theme, mermaidId]);
+
+    return <div id={mermaidId} className="mermaid-container not-prose my-6 flex justify-center">{chart}</div>;
+};
 
 const McqChallenge = ({ blockContent }: { blockContent: any }) => {
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -133,7 +166,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                         customStyle={{ 
                             margin: 0, 
                             padding: '1rem', 
-                            backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+                            backgroundColor: 'transparent',
                             fontSize: '0.95rem',
                         }}
                         codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }}
@@ -230,8 +263,8 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                         </CardHeader>
                         <CardContent className="pt-0 pb-4">
                              <h4 className="text-xl font-bold">{block.content.title}</h4>
-                             {block.content.metadataType && (
-                                <p className="text-sm text-muted-foreground mt-1">{block.content.metadataType}</p>
+                             {problemDetails?.metadataType && (
+                                <p className="text-sm text-muted-foreground mt-1">{problemDetails.metadataType}</p>
                              )}
                         </CardContent>
                         <CardFooter>
@@ -312,6 +345,25 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                 );
             case 'mcq':
                 return <McqChallenge key={block.id} blockContent={block.content} />;
+            case 'breadcrumb':
+                return (
+                    <nav key={block.id} aria-label="Breadcrumb" className="not-prose my-6 p-3 bg-muted/50 rounded-md">
+                        <ol className="flex items-center space-x-2 text-sm">
+                            {(block.content as {id: string, text: string, href?: string}[]).map((item, index, arr) => (
+                                <li key={item.id} className="flex items-center space-x-2">
+                                    {item.href ? (
+                                        <Link href={item.href} className="text-primary hover:underline">{item.text}</Link>
+                                    ) : (
+                                        <span className="text-muted-foreground">{item.text}</span>
+                                    )}
+                                    {index < arr.length - 1 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                </li>
+                            ))}
+                        </ol>
+                    </nav>
+                );
+            case 'mermaid':
+                 return <MermaidRenderer key={block.id} chart={block.content} />;
           default:
             return null;
         }

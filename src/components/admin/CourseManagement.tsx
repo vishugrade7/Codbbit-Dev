@@ -27,7 +27,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -252,6 +252,8 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'audio', label: 'Audio', icon: <FileAudioIcon className="h-4 w-4" /> },
     { type: 'table', label: 'Table', icon: <Table2 className="h-4 w-4" /> },
     { type: 'mcq', label: 'MCQ (Single)', icon: <ListChecks className="h-4 w-4" /> },
+    { type: 'breadcrumb', label: 'Breadcrumb', icon: <Milestone className="h-4 w-4" /> },
+    { type: 'mermaid', label: 'Mermaid Diagram', icon: <GitFork className="h-4 w-4" /> },
   ];
 
   return (
@@ -577,6 +579,52 @@ function McqBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex:
   )
 }
 
+function BreadcrumbBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`,
+    });
+
+    const addItem = () => append({ id: uuidv4(), text: '', href: '' });
+
+    return (
+        <div className="bg-muted p-4 rounded-md border space-y-2">
+            {fields.map((item, index) => (
+                <div key={item.id} className="flex items-center gap-2 p-2 border rounded-md bg-background">
+                    <GripVertical className="h-5 w-5 text-muted-foreground"/>
+                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${index}.text`} render={({ field }) => (
+                        <FormItem className="flex-1"><FormControl><Input placeholder="Link Text" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${index}.href`} render={({ field }) => (
+                        <FormItem className="flex-1"><FormControl><Input placeholder="/optional/path" {...field} /></FormControl></FormItem>
+                    )} />
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4" /> Add Link</Button>
+        </div>
+    );
+}
+
+function MermaidBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    return (
+        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+            <FormItem>
+                <FormLabel>Mermaid Diagram Code</FormLabel>
+                <FormControl>
+                    <Textarea 
+                        placeholder={'graph TD;\n    A-->B;'} 
+                        {...field} 
+                        className="font-mono min-h-[200px]"
+                    />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+        )} />
+    );
+}
 
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { moduleIndex: number, lessonIndex: number, blockIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
@@ -645,6 +693,10 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, rhfId }: { mod
                 return <TableBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             case 'mcq':
                 return <McqBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
+            case 'breadcrumb':
+                return <BreadcrumbBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
+            case 'mermaid':
+                return <MermaidBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} />;
             default:
                 const _exhaustiveCheck: never = block.type;
                 return null;
@@ -697,6 +749,12 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                 break;
             case 'mcq':
                 newBlock = { id: uuidv4(), type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } };
+                break;
+            case 'breadcrumb':
+                newBlock = { id: uuidv4(), type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] };
+                break;
+            case 'mermaid':
+                newBlock = { id: uuidv4(), type, content: 'graph TD;\n    A-->B;' };
                 break;
             default:
                  newBlock = { id: uuidv4(), type, content: '' };
@@ -1043,12 +1101,3 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-
-
-
-
-
-
-
-
-
