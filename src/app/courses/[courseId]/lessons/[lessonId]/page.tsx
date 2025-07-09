@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -354,14 +353,14 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           );
         case 'code':
           return (
-              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6">
-                  <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
+              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 my-6">
+                  <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800">
                       <div className="flex gap-1.5">
                       <div className="h-3 w-3 rounded-full bg-red-500"></div>
                       <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                       <div className="h-3 w-3 rounded-full bg-green-500"></div>
                       </div>
-                      <span className="text-sm text-slate-400 font-semibold tracking-wider">
+                      <span className="text-sm text-slate-500 dark:text-slate-400 font-semibold tracking-wider">
                       {block.content.language?.toUpperCase() || 'CODE'}
                       </span>
                   </div>
@@ -846,5 +845,7 @@ export default function LessonPage() {
         </div>
     );
 }
+
+    
 
     
