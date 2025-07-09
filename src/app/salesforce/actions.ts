@@ -499,7 +499,7 @@ export async function executeSalesforceCode(
     
             const responseBody = await response.json();
             
-            const debugLog = response.headers.get('x-debug-log') || "";
+            const debugLog = response.headers.get('Sforce-Debug-Log') || response.headers.get('x-debug-log') || "";
             const logHeader = `----------\nDEBUG LOG\n----------\n`;
     
             if (responseBody.success) {
