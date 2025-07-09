@@ -13,6 +13,10 @@ import { CSS } from '@dnd-kit/utilities';
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import mermaid from 'mermaid';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+
 
 // Firebase and Actions
 import { collection, query, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
@@ -314,6 +318,38 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     )
 }
 
+const TextEditorWithPreview = ({ field, placeholder, className }: { field: any; placeholder?: string; className?: string }) => {
+    return (
+        <div className={cn("rounded-md border", className)}>
+            <ResizablePanelGroup direction="horizontal" className="min-h-[200px] max-w-full">
+                <ResizablePanel defaultSize={50} minSize={30}>
+                    <div className="h-full">
+                        <TextareaWithToolbar
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder={placeholder || "Enter lesson content here..."}
+                            className="h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2"
+                        />
+                    </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} minSize={30}>
+                    <div className="flex flex-col h-full">
+                        <p className="p-2.5 text-xs font-semibold text-muted-foreground border-b shrink-0">Live Preview</p>
+                        <div className="flex-1 p-4 overflow-auto bg-muted/10">
+                            <div className="prose dark:prose-invert max-w-none">
+                                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                                    {field.value || <span className="text-muted-foreground">Preview will appear here.</span>}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
+                    </div>
+                </ResizablePanel>
+            </ResizablePanelGroup>
+        </div>
+    );
+};
+
 
 function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) => void }) {
   const blockTypes: { type: ContentBlock['type']; label: string; icon: React.ReactNode }[] = [
@@ -504,11 +540,7 @@ function ToggleListBlock({ path }: { path: string }) {
                         render={({ field }) => (
                             <FormItem>
                                 <FormControl>
-                                    <TextareaWithToolbar
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        placeholder="Toggle content... Markdown is supported."
-                                    />
+                                    <TextEditorWithPreview field={field} placeholder="Toggle content..." />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -886,16 +918,16 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
 
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="Enter lesson content here. Markdown is supported." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading2': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading3': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="Enter quote..." className="italic"/></div></FormControl><FormMessage/></FormItem>)}/>
-            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><TextareaWithToolbar placeholder="Enter callout text..." value={field.value.text} onChange={(newText: string) => field.onChange({...field.value, text: newText})} /></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextEditorWithPreview field={field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextEditorWithPreview field={{value: field.value.text, onChange: (newText: string) => field.onChange({...field.value, text: newText})}} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider': return <hr className="my-4"/>
-            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="* Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="1. Item 1..." className="min-h-[120px]" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} placeholder="* Item 1..." /></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} placeholder="1. Item 1..." /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list': return <TodoListBlock path={path} />;
             case 'toggle-list': return <ToggleListBlock path={path} />;
             case 'problem': return <ProblemBlock path={path} />;
