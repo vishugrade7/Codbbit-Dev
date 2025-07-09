@@ -472,8 +472,9 @@ export async function executeAnonymousApex(userId: string, code: string): Promis
 
         const responseBody = await response.json();
         
+        // The debug log is returned in a response header.
+        const debugLog = response.headers.get('x-debug-log') || "";
         const logHeader = `----------\nDEBUG LOG\n----------\n`;
-        const debugLog = responseBody.diagnostic?.[0]?.debugLog || "";
 
         if (responseBody.success) {
             const userDebugLines = debugLog
@@ -481,6 +482,7 @@ export async function executeAnonymousApex(userId: string, code: string): Promis
                 .filter((line: string) => line.includes('|USER_DEBUG|'))
                 .map((line: string) => {
                     const parts = line.split('|');
+                    // Format is usually ...|USER_DEBUG|[line_number]|DEBUG|message
                     const debugIndex = parts.indexOf('DEBUG');
                     if (debugIndex !== -1 && parts.length > debugIndex + 1) {
                         return parts.slice(debugIndex + 1).join('|');
