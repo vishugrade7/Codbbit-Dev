@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -149,7 +149,6 @@ const McqChallenge = ({ blockContent }: { blockContent: any }) => {
 };
 
 const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
-    const { resolvedTheme } = useTheme();
     const { user, userData } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
@@ -188,49 +187,51 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
     };
 
     return (
-        <Card className="not-prose my-6">
-            <CardHeader className="bg-muted/30">
-                <div className="flex items-center gap-3">
-                    <FlaskConical className="h-6 w-6 text-primary" />
-                    <div>
-                        <CardTitle className="text-lg">{blockContent.title || 'Try It Yourself'}</CardTitle>
-                        {blockContent.description && <CardDescription className="mt-1">{blockContent.description}</CardDescription>}
+        <div className="not-prose my-6 rounded-lg shadow-lg border bg-slate-900 border-slate-700">
+             <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
+                <div className="flex items-center gap-4">
+                    <div className="flex gap-1.5">
+                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                        <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                    </div>
+                     <div>
+                        <p className="text-sm font-medium text-slate-200">{blockContent.title || 'Try It Yourself'}</p>
+                        {blockContent.description && <p className="text-xs text-slate-400">{blockContent.description}</p>}
                     </div>
                 </div>
-            </CardHeader>
-            <CardContent className="p-0">
-                <div className="h-64 w-full">
-                    <MonacoEditor
-                        height="100%"
-                        language="java"
-                        value={code}
-                        onChange={(v) => setCode(v || '')}
-                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                        options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
-                    />
-                </div>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-4 p-4">
-                <Button onClick={handleExecute} disabled={isExecuting}>
-                    {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                 <Button onClick={handleExecute} disabled={isExecuting} size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white">
+                    {isExecuting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                     Execute
                 </Button>
-                {results && (
-                     <Tabs defaultValue="output" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="output">Output</TabsTrigger>
-                            <TabsTrigger value="logs">Logs</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="output" className="mt-4 p-4 bg-muted/50 rounded-md">
-                            <pre className="text-sm text-foreground whitespace-pre-wrap font-code">{results.output}</pre>
-                        </TabsContent>
-                        <TabsContent value="logs" className="mt-4 p-4 bg-muted/50 rounded-md">
-                             <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-code">{results.logs}</pre>
-                        </TabsContent>
-                    </Tabs>
-                )}
-            </CardFooter>
-        </Card>
+            </div>
+            <div className="h-64 w-full">
+                <MonacoEditor
+                    height="100%"
+                    language="java"
+                    value={code}
+                    onChange={(v) => setCode(v || '')}
+                    theme="vs-dark"
+                    options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                />
+            </div>
+            {results && (
+                 <div className="border-t border-slate-700">
+                    <Tabs defaultValue="output" className="w-full">
+                    <TabsList className="w-full justify-start rounded-none bg-slate-800 px-4 border-b border-slate-700">
+                        <TabsTrigger value="output" className="text-slate-400 data-[state=active]:bg-slate-700 data-[state=active]:text-white text-xs px-3 py-1.5 h-auto">Output</TabsTrigger>
+                        <TabsTrigger value="logs" className="text-slate-400 data-[state=active]:bg-slate-700 data-[state=active]:text-white text-xs px-3 py-1.5 h-auto">Logs</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="output" className="mt-0 p-4 font-code text-sm text-slate-100 whitespace-pre-wrap max-h-48 overflow-y-auto bg-slate-900">
+                        {results.output}
+                    </TabsContent>
+                    <TabsContent value="logs" className="mt-0 p-4 font-code text-sm text-slate-400 whitespace-pre-wrap max-h-48 overflow-y-auto bg-slate-900">
+                        {results.logs}
+                    </TabsContent>
+                </Tabs>
+                 </div>
+            )}
+        </div>
     );
 };
 
