@@ -77,7 +77,7 @@ export default function PricingPage() {
 
 
   const plans = useMemo(() => {
-    if (!pricingSettings) return null;
+    if (!pricingSettings || !pricingSettings.inr || !pricingSettings.usd) return null;
 
     const prices = isIndianUser ? pricingSettings.inr : pricingSettings.usd;
     const currency = isIndianUser ? "₹" : "$";
