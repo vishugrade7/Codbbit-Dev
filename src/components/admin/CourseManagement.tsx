@@ -340,8 +340,9 @@ const TextEditorWithPreview = ({ field, placeholder, className }: { field: any; 
                         <div className="flex-1 p-4 overflow-auto bg-muted/10">
                             <div className="prose dark:prose-invert max-w-none">
                                 <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                                    {field.value || <span className="text-muted-foreground">Preview will appear here.</span>}
+                                    {field.value || ''}
                                 </ReactMarkdown>
+                                {!field.value && <span className="text-muted-foreground">Preview will appear here.</span>}
                             </div>
                         </div>
                     </div>
@@ -1014,8 +1015,8 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
     
     return (
         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
-            <div className="flex items-center p-3 gap-2">
-                <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 text-muted-foreground"><GripVertical className="h-5 w-5" /></button>
+            <div className="flex items-start p-3 gap-2">
+                <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 mt-1.5 text-muted-foreground"><GripVertical className="h-5 w-5" /></button>
                 <div className='flex-1'>
                     <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
                         <FormItem>
@@ -1029,11 +1030,11 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                 </Button>
             </div>
              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value={`lesson-${lessonIndex}`} className="border-b-0">
-                    <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline bg-muted/50 rounded-b-md">
-                        <span className='font-normal'>Lesson Content</span>
+                <AccordionItem value={`lesson-${lessonIndex}`} className="border-t">
+                    <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline font-normal bg-card">
+                        <span>Lesson Content</span>
                     </AccordionTrigger>
-                    <AccordionContent className="p-4">
+                    <AccordionContent className="p-4 bg-muted/50 rounded-b-md">
                         <div className="space-y-4">
                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
                                 <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson</FormLabel></FormItem>
@@ -1070,7 +1071,7 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
     
     return (
         <Card ref={setNodeRef} style={style}>
-            <CardHeader className="flex flex-row items-center gap-2 p-3">
+            <CardHeader className="flex flex-row items-center gap-2 p-3 bg-muted/50 rounded-t-lg">
                 <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
                 <div className="flex-1">
                     <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
@@ -1082,7 +1083,7 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
                 </div>
                  <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button type="button" variant="destructive" size="icon" className="h-8 w-8">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </AlertDialogTrigger>
@@ -1096,7 +1097,7 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={() => removeModule(moduleIndex)}>
-                                Delete
+                                Delete Module
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -1105,7 +1106,7 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
              <CardContent className="p-4 pt-0">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
                     <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-4 pl-6 border-l-2">
+                        <div className="space-y-4 pt-4 pl-6 border-l-2">
                             {lessonFields.map((lessonItem, lessonIndex) => (
                                 <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
                             ))}
@@ -1332,3 +1333,4 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
