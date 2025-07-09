@@ -498,6 +498,7 @@ export async function executeSalesforceCode(
                  method: 'GET',
                  headers: {
                     'Authorization': `Bearer ${auth.accessToken}`,
+                    'Sforce-Log-Options': 'logLevel=DEBUG'
                 },
             });
     
@@ -512,9 +513,9 @@ export async function executeSalesforceCode(
                     .filter((line: string) => line.includes('|USER_DEBUG|'))
                     .map((line: string) => {
                         const parts = line.split('|');
-                        const debugIndex = parts.indexOf('DEBUG');
-                        if (debugIndex !== -1 && parts.length > debugIndex + 1) {
-                            return parts.slice(debugIndex + 1).join('|');
+                        const userDebugIndex = parts.indexOf('USER_DEBUG');
+                        if (userDebugIndex !== -1 && parts.length > userDebugIndex + 2) {
+                            return parts.slice(userDebugIndex + 3).join('|');
                         }
                         return null;
                     })
