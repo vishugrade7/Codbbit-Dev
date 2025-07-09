@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -40,9 +40,16 @@ type ProblemWithCategory = Problem & { categoryName: string };
 
 const MermaidRenderer = ({ chart }: { chart: string }) => {
     const { theme } = useTheme();
-    const mermaidId = useMemo(() => `mermaid-${Math.random().toString(36).substr(2, 9)}`, [chart]);
+    const mermaidId = useMemo(() => `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`, [chart]);
     
+    const [isClient, setIsClient] = useState(false);
     useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isClient) return;
+
         mermaid.initialize({
             startOnLoad: false,
             theme: theme === 'dark' ? 'dark' : 'default',
@@ -50,7 +57,6 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
 
         const renderMermaid = async () => {
              try {
-                // Ensure the element is in the DOM before rendering
                 const element = document.getElementById(mermaidId);
                 if (element) {
                     const { svg } = await mermaid.render(mermaidId, chart);
@@ -58,16 +64,33 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
                 }
             } catch (error) {
                 console.error('Mermaid render error:', error);
+                 const element = document.getElementById(mermaidId);
+                 if (element) {
+                     element.innerHTML = `<div class="p-4 text-destructive bg-destructive/10 rounded-md text-xs font-mono whitespace-pre-wrap w-full"><p class="font-bold mb-2">Mermaid Render Error:</p>${(error as Error).message}</div>`
+                 }
             }
         };
 
-        // Delay rendering slightly to ensure DOM is ready
         const timer = setTimeout(renderMermaid, 100);
         return () => clearTimeout(timer);
 
-    }, [chart, theme, mermaidId]);
+    }, [chart, theme, mermaidId, isClient]);
+    
+    if (!isClient) {
+        return (
+            <div className="mermaid-container not-prose my-6 flex justify-center items-center h-48 bg-muted rounded-md">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+        );
+    }
 
-    return <div id={mermaidId} className="mermaid-container not-prose my-6 flex justify-center">{chart}</div>;
+    return (
+        <div id={mermaidId} className="mermaid-container not-prose my-6 flex justify-center">
+            <div className="flex justify-center items-center h-48">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+        </div>
+    );
 };
 
 const McqChallenge = ({ blockContent }: { blockContent: any }) => {
