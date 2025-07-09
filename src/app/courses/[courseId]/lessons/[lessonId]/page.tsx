@@ -354,14 +354,14 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           );
         case 'code':
           return (
-              <div className="not-prose w-fit max-w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700">
+              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6">
                   <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
                       <div className="flex gap-1.5">
                       <div className="h-3 w-3 rounded-full bg-red-500"></div>
                       <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                       <div className="h-3 w-3 rounded-full bg-green-500"></div>
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">
+                      <span className="text-sm text-slate-400 font-semibold tracking-wider">
                       {block.content.language?.toUpperCase() || 'CODE'}
                       </span>
                   </div>
@@ -371,12 +371,12 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                       showLineNumbers={true}
                       customStyle={{ 
                           margin: 0, 
-                          padding: '1rem', 
+                          padding: '1.5rem', 
                           backgroundColor: 'transparent',
-                          fontSize: '0.95rem',
+                          fontSize: '1rem',
                       }}
                       codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }}
-                      lineNumberStyle={{ color: '#858585', fontSize: '0.95rem' }}
+                      lineNumberStyle={{ color: '#858585', fontSize: '1rem' }}
                   >
                       {String(block.content.code || '').trim()}
                   </SyntaxHighlighter>
