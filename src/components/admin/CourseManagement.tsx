@@ -490,7 +490,8 @@ function TableBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleInde
   const addColumn = () => {
     appendHeader(`Header ${headerFields.length + 1}`);
     rowFields.forEach((row, index) => {
-        update(index, { ...row, values: [...row.values, ''] });
+        const newValues = row.values ? [...row.values, ''] : [''];
+        update(index, { ...row, values: newValues });
     });
   };
 
@@ -498,6 +499,7 @@ function TableBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleInde
     if (headerFields.length <= 1) return;
     removeHeader(index);
     rowFields.forEach((row, rowIndex) => {
+        if (!row.values) return;
         const newValues = [...row.values];
         newValues.splice(index, 1);
         update(rowIndex, { ...row, values: newValues });

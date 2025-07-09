@@ -40,7 +40,7 @@ type ProblemWithCategory = Problem & { categoryName: string };
 
 const MermaidRenderer = ({ chart }: { chart: string }) => {
     const { theme } = useTheme();
-    const mermaidId = useMemo(() => `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`, [chart]);
+    const mermaidId = useMemo(() => `mermaid-container-${Math.random().toString(36).substr(2, 9)}`, []);
     
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
@@ -59,7 +59,9 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
              try {
                 const element = document.getElementById(mermaidId);
                 if (element) {
-                    const { svg } = await mermaid.render(mermaidId, chart);
+                    // Use a unique ID for rendering that doesn't conflict with the container
+                    const renderId = `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`;
+                    const { svg } = await mermaid.render(renderId, chart);
                     element.innerHTML = svg;
                 }
             } catch (error) {
@@ -76,17 +78,9 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
 
     }, [chart, theme, mermaidId, isClient]);
     
-    if (!isClient) {
-        return (
-            <div className="mermaid-container not-prose my-6 flex justify-center items-center h-48 bg-muted rounded-md">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-        );
-    }
-
     return (
-        <div id={mermaidId} className="mermaid-container not-prose my-6 flex justify-center">
-            <div className="flex justify-center items-center h-48">
+        <div id={mermaidId} className="not-prose my-6 w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto">
+            <div className="flex justify-center items-center min-h-[200px] text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
         </div>
