@@ -459,7 +459,7 @@ export async function executeSalesforceCode(
     userId: string, 
     code: string, 
     executionType: 'anonymous' | 'class' | 'soql'
-): Promise<{ success: boolean; result: string; logs: string; }> {
+): Promise<{ success: boolean; result: any; logs: string; type: 'soql' | 'apex' }> {
     try {
         const auth = await getSfdcConnection(userId);
 
@@ -477,13 +477,17 @@ export async function executeSalesforceCode(
 
             if (!response.ok) {
                 const errorMessage = responseBody[0]?.message || 'SOQL query failed.';
-                return { success: false, result: errorMessage, logs: JSON.stringify(responseBody, null, 2) };
+                return { success: false, result: errorMessage, logs: JSON.stringify(responseBody, null, 2), type: 'soql' };
             }
             
             return { 
                 success: true, 
-                result: `Query returned ${responseBody.totalSize} record(s).\n\n${JSON.stringify(responseBody.records, null, 2)}`,
-                logs: JSON.stringify(responseBody, null, 2)
+                result: {
+                    totalSize: responseBody.totalSize,
+                    records: responseBody.records,
+                },
+                logs: JSON.stringify(responseBody, null, 2),
+                type: 'soql',
             };
         } else { // 'anonymous' or 'class'
             const endpoint = `${auth.instanceUrl}/services/data/v59.0/tooling/executeAnonymous/`;
@@ -525,18 +529,21 @@ export async function executeSalesforceCode(
                     success: true,
                     result: resultMessage,
                     logs: `${logHeader}${debugLog}`,
+                    type: 'apex',
                 };
             } else if (!responseBody.compiled) {
                  return {
                     success: false,
                     result: `Compilation Error: ${responseBody.compileProblem}\nLine: ${responseBody.line}, Column: ${responseBody.column}`,
-                    logs: `${logHeader}${debugLog}`
+                    logs: `${logHeader}${debugLog}`,
+                    type: 'apex'
                 };
             } else { // compiled but not success
                  return {
                     success: false,
                     result: `Runtime Error: ${responseBody.exceptionMessage}\n\nStack Trace:\n${responseBody.exceptionStackTrace}`,
-                    logs: `${logHeader}${debugLog}`
+                    logs: `${logHeader}${debugLog}`,
+                    type: 'apex'
                 };
             }
         }
@@ -545,7 +552,8 @@ export async function executeSalesforceCode(
         return {
             success: false,
             result: `An unexpected error occurred: ${errorMessage}`,
-            logs: "No debug log available due to error."
+            logs: "No debug log available due to error.",
+            type: executionType === 'soql' ? 'soql' : 'apex',
         };
     }
 }

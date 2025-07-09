@@ -35,6 +35,7 @@ import MonacoEditor from '@monaco-editor/react';
 import { executeSalesforceCode } from '@/app/salesforce/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 
 const getLessonIcon = (lesson: Lesson) => {
@@ -155,7 +156,12 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
 
     const [code, setCode] = useState(blockContent.defaultCode || '');
     const [isExecuting, setIsExecuting] = useState(false);
-    const [results, setResults] = useState<{ output: string, logs: string } | null>(null);
+    const [results, setResults] = useState<{
+        success: boolean;
+        result: any;
+        logs: string;
+        type: 'soql' | 'apex';
+    } | null>(null);
 
     const editorLanguage = useMemo(() => {
         switch (blockContent.executionType) {
@@ -183,10 +189,7 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         
         const response = await executeSalesforceCode(user.uid, code, blockContent.executionType || 'anonymous');
         
-        setResults({
-            output: response.result,
-            logs: response.logs
-        });
+        setResults(response);
         
         toast({
             title: response.success ? 'Execution Successful' : 'Execution Failed',
@@ -195,6 +198,50 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         
         setIsExecuting(false);
     };
+
+    const SoqlResultsTable = ({ data }: { data: { totalSize: number, records: any[] } }) => {
+        if (!data || data.totalSize === 0) {
+            return <p className="text-slate-100">Query returned 0 records.</p>;
+        }
+        const headers = data.records.length > 0 ? Object.keys(data.records[0]).filter(key => key !== 'attributes') : [];
+        return (
+            <div>
+                <p className="text-slate-100 mb-4">Query returned {data.totalSize} record(s).</p>
+                <div className="rounded-md border border-slate-700">
+                    <Table className="text-white">
+                        <TableHeader>
+                            <TableRow className="border-slate-700 hover:bg-slate-800">
+                                {headers.map(header => <TableHead key={header} className="text-slate-300">{header}</TableHead>)}
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.records.map((record, index) => (
+                                <TableRow key={index} className="border-slate-700 hover:bg-slate-800">
+                                    {headers.map(header => (
+                                        <TableCell key={header} className="font-code text-xs">
+                                            {record[header] === null ? 'null' : (typeof record[header] === 'object' ? JSON.stringify(record[header]) : String(record[header]))}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+        );
+    }
+    
+    const renderOutput = (response: typeof results) => {
+        if (!response) return null;
+        if (!response.success) {
+            return <pre className="font-code text-sm text-destructive whitespace-pre-wrap">{String(response.result)}</pre>;
+        }
+        if (response.type === 'soql') {
+            return <SoqlResultsTable data={response.result} />;
+        }
+        // apex
+        return <pre className="font-code text-sm text-slate-100 whitespace-pre-wrap">{response.result}</pre>;
+    }
 
     return (
         <div className="not-prose my-6 rounded-lg shadow-lg border bg-slate-900 border-slate-700">
@@ -232,10 +279,10 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
                         <TabsTrigger value="output" className="text-slate-400 data-[state=active]:bg-slate-700 data-[state=active]:text-white text-xs px-3 py-1.5 h-auto">Output</TabsTrigger>
                         <TabsTrigger value="logs" className="text-slate-400 data-[state=active]:bg-slate-700 data-[state=active]:text-white text-xs px-3 py-1.5 h-auto">Logs</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="output" className="mt-0 p-4 font-code text-sm text-slate-100 whitespace-pre-wrap max-h-48 overflow-y-auto bg-slate-900">
-                        {results.output}
+                    <TabsContent value="output" className="mt-0 p-4 max-h-64 overflow-auto bg-slate-900">
+                        {renderOutput(results)}
                     </TabsContent>
-                    <TabsContent value="logs" className="mt-0 p-4 font-code text-sm text-slate-400 whitespace-pre-wrap max-h-48 overflow-y-auto bg-slate-900">
+                    <TabsContent value="logs" className="mt-0 p-4 font-code text-sm text-slate-400 whitespace-pre-wrap max-h-64 overflow-y-auto bg-slate-900">
                         {results.logs}
                     </TabsContent>
                 </Tabs>
