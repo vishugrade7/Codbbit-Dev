@@ -860,7 +860,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
     
     return (
         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
-            <div className="flex items-center p-2">
+            <div className="flex items-center p-2 gap-2">
                 <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
                  <div className='flex-1'>
                     <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
@@ -918,60 +918,60 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
         <Card ref={setNodeRef} style={style}>
             <CardHeader className="flex flex-row items-center gap-2 p-3">
                 <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
-                <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+                <div className="flex-1">
+                    <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
+                        <FormItem>
+                            <FormControl><Input placeholder={`Module ${moduleIndex + 1}: Title`} {...field} className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive" size="icon" className="h-8 w-8">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this module and all of its lessons.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => removeModule(moduleIndex)}>
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardHeader>
-            <CardContent className="p-0">
-                <Accordion type="single" collapsible defaultValue="module-content" className="w-full">
-                    <AccordionItem value="module-content" className="border-none">
-                        <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline bg-muted/50 rounded-b-lg">
-                            Module Content
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4">
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-                                <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                                    <div className="space-y-4 pl-6 border-l-2">
-                                        {lessonFields.map((lessonItem, lessonIndex) => (
-                                            <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
-                                        ))}
-                                        <FormField control={control} name={`modules.${moduleIndex}.lessons`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
-                                    </div>
-                                </SortableContext>
-                            </DndContext>
-                            <div className="flex justify-between items-center mt-4 ml-6">
-                                <Button type="button" variant="outline" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
-                                </Button>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button type="button" variant="destructive">
-                                            <Trash2 className="mr-2 h-4 w-4" />Remove Module
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete this module and all of its lessons.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => removeModule(moduleIndex)}>
-                                                Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </CardContent>
+            <Accordion type="single" collapsible defaultValue="module-content" className="w-full">
+                <AccordionItem value="module-content" className="border-none">
+                    <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline bg-muted/50 rounded-b-lg">
+                        Module Content
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4">
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+                            <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-4 pl-6 border-l-2">
+                                    {lessonFields.map((lessonItem, lessonIndex) => (
+                                        <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
+                                    ))}
+                                    <FormField control={control} name={`modules.${moduleIndex}.lessons`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                        <div className="flex justify-between items-center mt-4 ml-6">
+                            <Button type="button" variant="outline" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
+                            </Button>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </Card>
     );
 }
@@ -1087,7 +1087,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     </DndContext>
                 </div>
 
-                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] }] })}>
+                <Button type="button" variant="outline" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [{ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Module
                 </Button>
 
