@@ -12,6 +12,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
+import mermaid from 'mermaid';
 
 // Firebase and Actions
 import { collection, query, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
@@ -43,6 +44,7 @@ import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from '../ui/separator';
 
 // Component 1: CourseList
@@ -607,19 +609,88 @@ function BreadcrumbBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { modul
     );
 }
 
+const LiveMermaidPreview = ({ chart }: { chart: string }) => {
+    const { theme } = useTheme();
+    const [svg, setSvg] = useState('');
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+        });
+    }, [theme]);
+
+    useEffect(() => {
+        if (!chart) {
+            setSvg('');
+            setError('');
+            return;
+        }
+
+        const renderMermaid = async () => {
+            try {
+                // Unique ID for each render to avoid conflicts
+                const id = `live-mermaid-${Math.random().toString(36).substr(2, 9)}`;
+                const { svg: renderedSvg } = await mermaid.render(id, chart);
+                setSvg(renderedSvg);
+                setError('');
+            } catch (e: any) {
+                setError(e.message);
+                setSvg('');
+            }
+        };
+
+        const timer = setTimeout(renderMermaid, 300);
+        return () => clearTimeout(timer);
+
+    }, [chart, theme]);
+
+
+    return (
+        <div className="w-full h-full flex items-center justify-center">
+            {error ? (
+                <div className="p-4 text-destructive bg-destructive/10 rounded-md text-xs font-mono whitespace-pre-wrap w-full">
+                    {error}
+                </div>
+            ) : (
+                <div dangerouslySetInnerHTML={{ __html: svg }} className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full" />
+            )}
+        </div>
+    );
+};
+
 function MermaidBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const mermaidCode = useWatch({
+        control,
+        name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`
+    }) as string;
+
     return (
         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
             <FormItem>
-                <FormLabel>Mermaid Diagram Code</FormLabel>
-                <FormControl>
-                    <Textarea 
-                        placeholder={'graph TD;\n    A-->B;'} 
-                        {...field} 
-                        className="font-mono min-h-[200px]"
-                    />
-                </FormControl>
+                <FormLabel>Mermaid Diagram</FormLabel>
+                <ResizablePanelGroup direction="horizontal" className="min-h-[300px] max-w-full rounded-lg border">
+                    <ResizablePanel defaultSize={50}>
+                        <FormControl className="h-full">
+                           <Textarea 
+                                placeholder={'graph TD;\n    A-->B;'} 
+                                {...field} 
+                                className="font-mono h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2"
+                            />
+                        </FormControl>
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={50}>
+                        <div className="flex flex-col h-full bg-muted/30">
+                             <p className="p-2.5 text-xs font-semibold text-muted-foreground border-b">Live Preview</p>
+                            <div className="flex-1 p-4 overflow-auto">
+                                <LiveMermaidPreview chart={mermaidCode} />
+                            </div>
+                        </div>
+                    </ResizablePanel>
+                </ResizablePanelGroup>
                 <FormMessage />
             </FormItem>
         )} />
