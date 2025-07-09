@@ -61,6 +61,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from '../ui/separator';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -378,14 +379,16 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
   ];
 
   return (
-    <PopoverContent className="w-56 p-2">
-      <div className="grid gap-1">
-        {blockTypes.map(({ type, label, icon }) => (
-           <Button key={type} variant="ghost" className="justify-start gap-2" onClick={() => onSelect(type)}>
-              {icon} {label}
-           </Button>
-        ))}
-      </div>
+    <PopoverContent className="w-64 p-0">
+        <ScrollArea className="h-[400px]">
+            <div className="p-2 grid gap-1">
+                {blockTypes.map(({ type, label, icon }) => (
+                <Button key={type} variant="ghost" className="justify-start gap-2" onClick={() => onSelect(type)}>
+                    {icon} {label}
+                </Button>
+                ))}
+            </div>
+      </ScrollArea>
     </PopoverContent>
   );
 }
