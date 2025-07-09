@@ -36,6 +36,7 @@ import { executeSalesforceCode } from '@/app/salesforce/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 
 
 const getLessonIcon = (lesson: Lesson) => {
@@ -150,18 +151,16 @@ const McqChallenge = ({ blockContent }: { blockContent: any }) => {
 };
 
 const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
-    const { user, userData } = useAuth();
+    const { user, userData, isPro } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
+    const { resolvedTheme } = useTheme();
 
     const [code, setCode] = useState(blockContent.defaultCode || '');
     const [isExecuting, setIsExecuting] = useState(false);
-    const [results, setResults] = useState<{
-        success: boolean;
-        result: any;
-        logs: string;
-        type: 'soql' | 'apex';
-    } | null>(null);
+    const [isSolved, setIsSolved] = useState(false);
+    const [executionSteps, setExecutionSteps] = useState<{ text: string; status: 'pending' | 'success' | 'error' | 'running' }[]>([]);
+    const [debugOutput, setDebugOutput] = useState<string | null>(null);
 
     const editorLanguage = useMemo(() => {
         switch (blockContent.executionType) {
@@ -172,6 +171,11 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
                 return 'java';
         }
     }, [blockContent.executionType]);
+
+    const handleCodeChange = (v: string | undefined) => {
+        setCode(v || '');
+        setIsSolved(false); // Reset solved status on code change
+    };
 
     const handleExecute = async () => {
         if (!user) {
@@ -185,38 +189,46 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         }
 
         setIsExecuting(true);
-        setResults(null);
-        
+        setDebugOutput(null);
+        setIsSolved(false);
+
+        const steps = [{ text: 'Compiling...', status: 'running' as const }];
+        setExecutionSteps(steps);
+
         const response = await executeSalesforceCode(user.uid, code, blockContent.executionType || 'anonymous');
         
-        setResults(response);
-        
-        toast({
-            title: response.success ? 'Execution Successful' : 'Execution Failed',
-            variant: response.success ? 'default' : 'destructive',
-        });
-        
+        if (response.success) {
+            steps[0] = { text: 'Compiled successfully', status: 'success' };
+            steps.push({ text: 'Execution finished', status: 'success' });
+            setExecutionSteps([...steps]);
+            setDebugOutput(response.result);
+            setIsSolved(true);
+        } else {
+            steps[0] = { text: 'Execution failed', status: 'error' };
+            setExecutionSteps([...steps]);
+            setDebugOutput(response.result);
+        }
         setIsExecuting(false);
     };
 
     const SoqlResultsTable = ({ data }: { data: { totalSize: number, records: any[] } }) => {
         if (!data || data.totalSize === 0) {
-            return <p className="text-slate-100">Query returned 0 records.</p>;
+            return <p>Query returned 0 records.</p>;
         }
         const headers = data.records.length > 0 ? Object.keys(data.records[0]).filter(key => key !== 'attributes') : [];
         return (
             <div>
-                <p className="text-slate-100 mb-4">Query returned {data.totalSize} record(s).</p>
-                <div className="rounded-md border border-slate-700">
-                    <Table className="text-white">
+                <p className="mb-4">Query returned {data.totalSize} record(s).</p>
+                <div className="rounded-md border bg-background max-h-64 overflow-auto">
+                    <Table>
                         <TableHeader>
-                            <TableRow className="border-slate-700 hover:bg-slate-800">
-                                {headers.map(header => <TableHead key={header} className="text-slate-300">{header}</TableHead>)}
+                            <TableRow>
+                                {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {data.records.map((record, index) => (
-                                <TableRow key={index} className="border-slate-700 hover:bg-slate-800">
+                                <TableRow key={index}>
                                     {headers.map(header => (
                                         <TableCell key={header} className="font-code text-xs">
                                             {record[header] === null ? 'null' : (typeof record[header] === 'object' ? JSON.stringify(record[header]) : String(record[header]))}
@@ -231,64 +243,69 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         );
     }
     
-    const renderOutput = (response: typeof results) => {
-        if (!response) return null;
-        if (!response.success) {
-            return <pre className="font-code text-sm text-destructive whitespace-pre-wrap">{String(response.result)}</pre>;
-        }
-        if (response.type === 'soql') {
-            return <SoqlResultsTable data={response.result} />;
-        }
-        // apex
-        return <pre className="font-code text-sm text-slate-100 whitespace-pre-wrap">{response.result}</pre>;
-    }
-
     return (
-        <div className="not-prose my-6 rounded-lg shadow-lg border bg-slate-900 border-slate-700">
-             <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-1.5">
-                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                        <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+         <Card className="not-prose my-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+                <FlaskConical className="h-6 w-6 text-primary" />
+                <CardTitle className="text-lg">Try It Yourself</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="p-4 rounded-md bg-background/50 border">
+                    <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-semibold">{blockContent.title || 'Assignment'}</h4>
+                        {isSolved && <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-500/30">Solved</Badge>}
                     </div>
-                     <div>
-                        <p className="text-sm font-medium text-slate-200">{blockContent.title || 'Try It Yourself'}</p>
-                        {blockContent.description && <p className="text-xs text-slate-400">{blockContent.description}</p>}
-                    </div>
+                    <Separator />
+                    <p className="text-muted-foreground pt-2 text-sm">{blockContent.description}</p>
                 </div>
-                 <Button onClick={handleExecute} disabled={isExecuting} size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white">
-                    {isExecuting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                    Execute
+                <div className="h-48 w-full border rounded-md overflow-hidden">
+                    <MonacoEditor
+                        height="100%"
+                        language={editorLanguage}
+                        value={code}
+                        onChange={handleCodeChange}
+                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                        options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                    />
+                </div>
+                <Button onClick={handleExecute} disabled={isExecuting}>
+                    {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isExecuting ? 'Executing...' : 'Execute'}
                 </Button>
-            </div>
-            <div className="h-64 w-full">
-                <MonacoEditor
-                    height="100%"
-                    language={editorLanguage}
-                    value={code}
-                    onChange={(v) => setCode(v || '')}
-                    theme="vs-dark"
-                    options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
-                />
-            </div>
-            {results && (
-                 <div className="border-t border-slate-700">
-                    <Tabs defaultValue="output" className="w-full">
-                    <TabsList className="w-full justify-start rounded-none bg-slate-800 px-4 border-b border-slate-700">
-                        <TabsTrigger value="output" className="text-slate-400 data-[state=active]:bg-slate-700 data-[state=active]:text-white text-xs px-3 py-1.5 h-auto">Output</TabsTrigger>
-                        <TabsTrigger value="logs" className="text-slate-400 data-[state=active]:bg-slate-700 data-[state=active]:text-white text-xs px-3 py-1.5 h-auto">Logs</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="output" className="mt-0 p-4 max-h-64 overflow-auto bg-slate-900">
-                        {renderOutput(results)}
-                    </TabsContent>
-                    <TabsContent value="logs" className="mt-0 p-4 font-code text-sm text-slate-400 whitespace-pre-wrap max-h-64 overflow-y-auto bg-slate-900">
-                        {results.logs}
-                    </TabsContent>
-                </Tabs>
-                 </div>
-            )}
-        </div>
+
+                {executionSteps.length > 0 && (
+                    <div className="space-y-2 text-sm pt-4">
+                        {executionSteps.map((step, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                {step.status === 'running' ? (
+                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                ) : step.status === 'error' ? (
+                                    <XCircle className="h-4 w-4 text-destructive" />
+                                ) : (
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                )}
+                                <span className={step.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}>{step.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {debugOutput && (
+                    <Card className="mt-4 bg-background/50">
+                        <CardHeader className="p-3 border-b">
+                            <CardTitle className="text-sm">Debug Logs</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3">
+                            {blockContent.executionType === 'soql' && typeof debugOutput === 'object' ? (
+                                <SoqlResultsTable data={debugOutput as any} />
+                            ) : (
+                               <pre className="text-xs font-code whitespace-pre-wrap">{debugOutput}</pre>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+            </CardContent>
+        </Card>
     );
 };
 
@@ -805,3 +822,5 @@ export default function LessonPage() {
         </div>
     );
 }
+
+    
