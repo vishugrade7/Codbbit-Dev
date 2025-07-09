@@ -32,7 +32,7 @@ export default function Testimonials() {
           {/* Testimonial Card */}
           <Card className="p-8 md:p-12">
             <CardContent className="flex flex-col items-center text-center gap-6">
-              <h2 className="text-2xl md:text-3xl font-medium max-w-3xl">
+              <h2 className="text-2xl md:text-3xl font-semibold max-w-3xl">
                 {testimonial.quote}
               </h2>
               <div className="flex flex-col items-center gap-2">
@@ -60,7 +60,7 @@ export default function Testimonials() {
                         <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                             <feature.icon className="h-6 w-6" />
                         </div>
-                        <h3 className="text-2xl font-bold">{feature.title}</h3>
+                        <h3 className="text-2xl font-semibold">{feature.title}</h3>
                         <p className="mt-4 text-muted-foreground">{feature.description}</p>
                     </CardContent>
                  </Card>

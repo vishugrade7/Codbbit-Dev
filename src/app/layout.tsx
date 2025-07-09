@@ -13,12 +13,14 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
 })
 
 const sourceCodePro = Source_Code_Pro({
   subsets: ['latin'],
   variable: '--font-source-code-pro',
   display: 'swap',
+  weight: ['400'],
 })
 
 export const metadata: Metadata = {

@@ -25,14 +25,14 @@ export default {
         code: ["var(--font-source-code-pro)"],
       },
       fontSize: {
-        'xs': 'clamp(0.75rem, 0.65rem + 0.5vw, 0.875rem)',
-        'sm': 'clamp(0.875rem, 0.75rem + 0.625vw, 1rem)',
-        'base': 'clamp(1rem, 0.85rem + 0.75vw, 1.125rem)',
-        'lg': 'clamp(1.125rem, 1rem + 0.625vw, 1.25rem)',
-        'xl': 'clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem)',
-        '2xl': 'clamp(1.5rem, 1.2rem + 1.5vw, 1.875rem)',
-        '3xl': 'clamp(1.875rem, 1.5rem + 1.875vw, 2.25rem)',
-        '4xl': 'clamp(2.25rem, 1.7rem + 2.75vw, 3rem)',
+        'xs': 'clamp(0.8125rem, 0.71rem + 0.5vw, 0.9375rem)',   // 13px -> 15px
+        'sm': 'clamp(0.875rem, 0.775rem + 0.5vw, 1rem)',      // 14px -> 16px
+        'base': 'clamp(0.9375rem, 0.8rem + 0.65vw, 1.125rem)',// 15px -> 18px
+        'lg': 'clamp(0.9375rem, 0.825rem + 0.7vw, 1.0625rem)',// 15px -> 17px
+        'xl': 'clamp(1.0625rem, 0.9rem + 0.8vw, 1.25rem)',   // 17px -> 20px
+        '2xl': 'clamp(1.25rem, 1.05rem + 1vw, 1.5rem)',      // 20px -> 24px
+        '3xl': 'clamp(1.5rem, 1.125rem + 1.875vw, 2rem)',   // 24px -> 32px
+        '4xl': 'clamp(2rem, 1.5rem + 2.5vw, 3rem)',          // 32px -> 48px
         '5xl': 'clamp(3rem, 2.25rem + 3.75vw, 3.75rem)',
         '6xl': 'clamp(3.75rem, 2.8rem + 4.75vw, 4.5rem)',
         '7xl': 'clamp(4.5rem, 3.4rem + 5.5vw, 6rem)',

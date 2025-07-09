@@ -16,7 +16,7 @@ export default function FeatureGrid() {
               <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                 <Code2 className="h-6 w-6" />
               </div>
-              <h2 className="text-3xl font-bold tracking-tight">Sharpen Your Salesforce Skills</h2>
+              <h2 className="text-3xl font-semibold tracking-tight">Sharpen Your Salesforce Skills</h2>
               <p className="mt-4 text-muted-foreground">
                 Challenge yourself on small Salesforce coding exercises. Each problem is crafted by the community to help you
                 strengthen different coding techniques. Master Apex, SOQL, and LWC, or quickly pick up any of the
@@ -50,7 +50,7 @@ export default function FeatureGrid() {
                 <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                   <ThumbsUp className="h-6 w-6" />
                 </div>
-                <h3 className="text-2xl font-bold">Get Instant Feedback</h3>
+                <h3 className="text-2xl font-semibold">Get Instant Feedback</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
                   Solve problems with your coding style right in the browser and use test cases (TDD) to check it as
                   you progress. Retrain with new, creative, and optimized approaches. Find all of the bugs in your
@@ -75,7 +75,7 @@ export default function FeatureGrid() {
                 <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                   <Award className="h-6 w-6" />
                 </div>
-                <h3 className="text-2xl font-bold">Earn Ranks and Honor</h3>
+                <h3 className="text-2xl font-semibold">Earn Ranks and Honor</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
                   Code challenges are ranked from beginner to expert level. As you complete higher-ranked problems, you
                   level up your profile and push your software development skills to your highest potential.
