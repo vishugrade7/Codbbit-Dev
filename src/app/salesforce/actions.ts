@@ -460,15 +460,6 @@ export async function executeAnonymousApex(userId: string, code: string): Promis
         const auth = await getSfdcConnection(userId);
         const endpoint = `${auth.instanceUrl}/services/data/v59.0/tooling/executeAnonymous/`;
         
-        const rawResponse = await fetch(endpoint, {
-            method: 'GET', // This endpoint actually uses GET despite what one might think
-            headers: {
-                'Authorization': `Bearer ${auth.accessToken}`,
-            },
-            // The body is passed as a query parameter
-            // This is a quirk of this specific endpoint
-        } as RequestInit & { next: { revalidate: number } });
-
         const urlWithQuery = new URL(endpoint);
         urlWithQuery.searchParams.append('anonymousBody', code);
 
@@ -485,10 +476,28 @@ export async function executeAnonymousApex(userId: string, code: string): Promis
         const debugLog = responseBody.diagnostic?.[0]?.debugLog || "";
 
         if (responseBody.success) {
-             return {
+            const userDebugLines = debugLog
+                .split('\n')
+                .filter((line: string) => line.includes('|USER_DEBUG|'))
+                .map((line: string) => {
+                    const parts = line.split('|');
+                    const debugIndex = parts.indexOf('DEBUG');
+                    if (debugIndex !== -1 && parts.length > debugIndex + 1) {
+                        return parts.slice(debugIndex + 1).join('|');
+                    }
+                    return null;
+                })
+                .filter((line: string | null): line is string => line !== null)
+                .join('\n');
+
+            const resultMessage = userDebugLines.trim() 
+                ? userDebugLines.trim()
+                : 'Execution successful. No USER_DEBUG output.';
+
+            return {
                 success: true,
-                result: 'Execution Successful',
-                logs: `${logHeader}${debugLog}`
+                result: resultMessage,
+                logs: `${logHeader}${debugLog}`,
             };
         } else if (!responseBody.compiled) {
              return {
