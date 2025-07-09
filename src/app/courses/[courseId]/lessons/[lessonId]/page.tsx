@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, CheckCircle2, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2 } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -151,12 +151,13 @@ const McqChallenge = ({ blockContent }: { blockContent: any }) => {
 };
 
 const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
-    const { user, userData, isPro } = useAuth();
+    const { user, userData } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     const { resolvedTheme } = useTheme();
 
     const [code, setCode] = useState(blockContent.defaultCode || '');
+    const [testCode, setTestCode] = useState(blockContent.testClassCode || '');
     const [isExecuting, setIsExecuting] = useState(false);
     const [isSolved, setIsSolved] = useState(false);
     const [executionSteps, setExecutionSteps] = useState<{ text: string; status: 'pending' | 'success' | 'error' | 'running' }[]>([]);
@@ -176,6 +177,11 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         setCode(v || '');
         setIsSolved(false); // Reset solved status on code change
     };
+    
+    const handleTestCodeChange = (v: string | undefined) => {
+        setTestCode(v || '');
+        setIsSolved(false);
+    };
 
     const handleExecute = async () => {
         if (!user) {
@@ -192,14 +198,18 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         setDebugOutput(null);
         setIsSolved(false);
 
-        const steps = [{ text: 'Compiling...', status: 'running' as const }];
+        const steps = [{ text: 'Initializing...', status: 'running' as const }];
         setExecutionSteps(steps);
 
-        const response = await executeSalesforceCode(user.uid, code, blockContent.executionType || 'anonymous');
+        const response = await executeSalesforceCode(
+            user.uid, 
+            code, 
+            blockContent.executionType || 'anonymous',
+            blockContent.executionType === 'class' ? testCode : undefined
+        );
         
         if (response.success) {
-            steps[0] = { text: 'Compiled successfully', status: 'success' };
-            steps.push({ text: 'Execution finished', status: 'success' });
+            steps[0] = { text: 'Execution finished successfully', status: 'success' };
             setExecutionSteps([...steps]);
             setDebugOutput(response.result);
             setIsSolved(true);
@@ -258,16 +268,30 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
                     <Separator />
                     <p className="text-muted-foreground pt-2 text-sm">{blockContent.description}</p>
                 </div>
-                <div className="h-48 w-full border rounded-md overflow-hidden">
-                    <MonacoEditor
-                        height="100%"
-                        language={editorLanguage}
-                        value={code}
-                        onChange={handleCodeChange}
-                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                        options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
-                    />
-                </div>
+
+                {blockContent.executionType === 'class' ? (
+                     <Tabs defaultValue="class">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="class">Apex Class</TabsTrigger>
+                            <TabsTrigger value="test">Test Class</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="class" className="mt-2">
+                            <div className="h-64 w-full border rounded-md overflow-hidden">
+                                <MonacoEditor height="100%" language={editorLanguage} value={code} onChange={handleCodeChange} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }} />
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="test" className="mt-2">
+                            <div className="h-64 w-full border rounded-md overflow-hidden">
+                                <MonacoEditor height="100%" language={editorLanguage} value={testCode} onChange={handleTestCodeChange} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }} />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                ) : (
+                    <div className="h-64 w-full border rounded-md overflow-hidden">
+                        <MonacoEditor height="100%" language={editorLanguage} value={code} onChange={handleCodeChange} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }} />
+                    </div>
+                )}
+                
                 <Button onClick={handleExecute} disabled={isExecuting}>
                     {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isExecuting ? 'Executing...' : 'Execute'}
@@ -325,7 +349,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
         case 'text':
           return (
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-              {block.content}
+              {block.content || ''}
             </ReactMarkdown>
           );
         case 'code':
@@ -391,7 +415,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           case 'numbered-list':
             return (
               <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                {block.content}
+                {block.content || ''}
               </ReactMarkdown>
             );
           case 'todo-list':

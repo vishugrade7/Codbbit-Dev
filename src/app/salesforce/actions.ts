@@ -458,7 +458,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 export async function executeSalesforceCode(
     userId: string, 
     code: string, 
-    executionType: 'anonymous' | 'class' | 'soql'
+    executionType: 'anonymous' | 'class' | 'soql',
+    testCode?: string,
 ): Promise<{ success: boolean; result: any; logs: string; type: 'soql' | 'apex' }> {
     try {
         const auth = await getSfdcConnection(userId);
@@ -489,7 +490,40 @@ export async function executeSalesforceCode(
                 logs: JSON.stringify(responseBody, null, 2),
                 type: 'soql',
             };
-        } else { // 'anonymous' or 'class'
+        } else if (executionType === 'class' && testCode) {
+            const log: string[] = [];
+            try {
+                const mainObjectName = getClassName(code);
+                const testObjectName = getClassName(testCode);
+
+                if (!mainObjectName || !testObjectName) throw new Error('Could not determine class names.');
+                
+                await deployMetadata(log, auth, 'ApexClass', mainObjectName, code);
+                const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, testCode);
+
+                const testRunId = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
+                    method: 'POST',
+                    body: JSON.stringify({ classids: testClassId })
+                });
+
+                for (let i = 0; i < 30; i++) {
+                    await sleep(1000);
+                    const jobResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=SELECT Status FROM AsyncApexJob WHERE Id = '${testRunId}'`);
+                    if (jobResult.records.length > 0 && ['Completed', 'Failed', 'Aborted'].includes(jobResult.records[0].Status)) {
+                         break;
+                    }
+                }
+
+                const resultQuery = `SELECT Message, MethodName, Outcome, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${testRunId}'`;
+                const testResultData = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(resultQuery)}`);
+                const formattedResults = testResultData.records.map((r: any) => `${r.Outcome.toUpperCase()}: ${r.MethodName} - ${r.Message || 'Success'}`).join('\n');
+                const didFail = testResultData.records.some((r: any) => r.Outcome === 'Fail');
+
+                return { success: !didFail, result: formattedResults, logs: JSON.stringify(testResultData, null, 2), type: 'apex' };
+            } catch (e: any) {
+                return { success: false, result: e.message, logs: e.stack, type: 'apex' };
+            }
+        } else { // 'anonymous' or class without test
             const endpoint = `${auth.instanceUrl}/services/data/v59.0/tooling/executeAnonymous/`;
             const urlWithQuery = new URL(endpoint);
             urlWithQuery.searchParams.append('anonymousBody', code);

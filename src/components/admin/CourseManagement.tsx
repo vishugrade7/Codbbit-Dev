@@ -832,6 +832,7 @@ function MermaidBlockEditor({ path }: { path: string }) {
 function InteractiveCodeBlockEditor({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { resolvedTheme } = useTheme();
+    const executionType = useWatch({ control, name: `${path}.content.executionType` });
 
     return (
         <div className="bg-muted p-4 rounded-md border space-y-4">
@@ -854,7 +855,7 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                             </SelectContent>
                         </Select>
                         <FormDescription>
-                            Select how this code block should be executed. For 'Apex Class', the user must write an anonymous script to execute it.
+                            Select how this code block should be executed. For 'Apex Class', you can provide a test class.
                         </FormDescription>
                         <FormMessage />
                     </FormItem>
@@ -887,12 +888,12 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                 name={`${path}.content.defaultCode`}
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Default Code</FormLabel>
+                        <FormLabel>{executionType === 'class' ? 'Sample Class Code' : 'Default Code'}</FormLabel>
                         <FormControl>
                              <div className="h-48 w-full border rounded-md overflow-hidden">
                                 <MonacoEditor
                                     height="100%"
-                                    language="java" // Apex is similar to Java for syntax highlighting
+                                    language="java"
                                     value={field.value}
                                     onChange={(value) => field.onChange(value || "")}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
@@ -904,6 +905,31 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                     </FormItem>
                 )}
             />
+            {executionType === 'class' && (
+                <FormField
+                    control={control}
+                    name={`${path}.content.testClassCode`}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Test Class Code (Optional)</FormLabel>
+                            <FormControl>
+                                <div className="h-48 w-full border rounded-md overflow-hidden">
+                                    <MonacoEditor
+                                        height="100%"
+                                        language="java"
+                                        value={field.value}
+                                        onChange={(value) => field.onChange(value || "")}
+                                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                        options={{ fontSize: 13, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                                    />
+                                </div>
+                            </FormControl>
+                            <FormDescription>If provided, this test class will be run against the sample class.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
         </div>
     );
 }
@@ -940,7 +966,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mcq': newBlock = { id, type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } }; break;
             case 'breadcrumb': newBlock = { id, type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] }; break;
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
-            case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous' } }; break;
+            case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous', testClassCode: '' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
             default: newBlock = { id, type, content: (type === 'bulleted-list' ? '* ' : (type === 'numbered-list' ? '1. ' : '')) };
