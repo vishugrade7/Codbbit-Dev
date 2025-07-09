@@ -753,18 +753,20 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                 </SortableContext>
                             </DndContext>
                             
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button type="button" variant="outline" size="sm" className="mt-2">
-                                        <PlusCircle className="mr-2 h-4 w-4" /> Add Content Block
-                                    </Button>
-                                </PopoverTrigger>
-                                <BlockTypePicker onSelect={addContentBlock} />
-                            </Popover>
-                            
-                            <Button type="button" variant="destructive" size="sm" className="mt-2 float-right" onClick={() => removeLesson(lessonIndex)}>
-                                <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
-                            </Button>
+                            <div className="flex justify-between items-center mt-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button type="button" variant="outline" size="sm">
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Content Block
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <BlockTypePicker onSelect={addContentBlock} />
+                                </Popover>
+                                
+                                <Button type="button" variant="destructive" size="sm" onClick={() => removeLesson(lessonIndex)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
+                                </Button>
+                            </div>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
@@ -1044,6 +1046,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
