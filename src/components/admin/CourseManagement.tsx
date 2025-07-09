@@ -734,6 +734,9 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                 </FormItem>
                             )} />
                         </AccordionTrigger>
+                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); removeLesson(lessonIndex); }}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                     </div>
                     <AccordionContent className="p-4 border-t">
                         <div className="space-y-4">
@@ -760,10 +763,6 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                     </PopoverTrigger>
                                     <BlockTypePicker onSelect={addContentBlock} />
                                 </Popover>
-                                
-                                <Button type="button" variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); removeLesson(lessonIndex); }}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
-                                </Button>
                             </div>
                         </div>
                     </AccordionContent>
@@ -1044,6 +1043,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
