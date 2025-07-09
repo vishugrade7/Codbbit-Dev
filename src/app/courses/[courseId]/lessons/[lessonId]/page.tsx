@@ -142,7 +142,7 @@ const McqChallenge = ({ blockContent }: { blockContent: any }) => {
     );
 };
 
-const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
+const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
       case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
@@ -154,7 +154,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
   const { theme } = useTheme();
 
   return (
-    <div className="prose dark:prose-invert max-w-none">
+    <>
       {(contentBlocks || []).map(block => {
         switch (block.type) {
           case 'text':
@@ -381,10 +381,43 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                 );
             case 'mermaid':
                  return <MermaidRenderer key={block.id} chart={block.content} />;
+            case 'two-column':
+                return (
+                    <div key={block.id} className="not-prose my-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <ContentRenderer contentBlocks={block.content.column1} allProblems={allProblems} />
+                        </div>
+                        <div className="space-y-4">
+                            <ContentRenderer contentBlocks={block.content.column2} allProblems={allProblems} />
+                        </div>
+                    </div>
+                );
+            case 'three-column':
+                return (
+                    <div key={block.id} className="not-prose my-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-4">
+                            <ContentRenderer contentBlocks={block.content.column1} allProblems={allProblems} />
+                        </div>
+                        <div className="space-y-4">
+                           <ContentRenderer contentBlocks={block.content.column2} allProblems={allProblems} />
+                        </div>
+                        <div className="space-y-4">
+                            <ContentRenderer contentBlocks={block.content.column3} allProblems={allProblems} />
+                        </div>
+                    </div>
+                );
           default:
             return null;
         }
       })}
+    </>
+  );
+};
+
+const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
+  return (
+    <div className="prose dark:prose-invert max-w-none">
+      <ContentRenderer contentBlocks={contentBlocks} allProblems={allProblems} />
     </div>
   );
 };

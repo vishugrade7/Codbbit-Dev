@@ -3,6 +3,7 @@
 'use client';
 
 import { z } from "zod";
+import type { ContentBlock } from "@/types";
 
 // #region Problem Schemas
 export const problemExampleSchema = z.object({
@@ -47,35 +48,35 @@ export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRe
 // #endregion
 
 // #region Course Schemas
-const contentBlockSchema = z.discriminatedUnion("type", [
-    z.object({ id: z.string(), type: z.literal("text"), content: z.string() }),
-    z.object({ id: z.string(), type: z.literal("code"), content: z.object({ code: z.string(), language: z.string() }) }),
-    z.object({ id: z.string(), type: z.literal("heading1"), content: z.string() }),
-    z.object({ id: z.string(), type: z.literal("heading2"), content: z.string() }),
-    z.object({ id: z.string(), type: z.literal("heading3"), content: z.string() }),
-    z.object({ id: z.string(), type: z.literal("quote"), content: z.string() }),
-    z.object({ id: z.string(), type: z.literal("callout"), content: z.object({ text: z.string(), icon: z.string() }) }),
+const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminatedUnion("type", [
+    z.object({ id: z.string(), type: z.literal("text"), content: z.string().min(1, 'Text content cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("code"), content: z.object({ code: z.string().min(1, 'Code cannot be empty.'), language: z.string() }) }),
+    z.object({ id: z.string(), type: z.literal("heading1"), content: z.string().min(1, 'Heading cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("heading2"), content: z.string().min(1, 'Heading cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("heading3"), content: z.string().min(1, 'Heading cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("quote"), content: z.string().min(1, 'Quote cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("callout"), content: z.object({ text: z.string().min(1, 'Callout text cannot be empty.'), icon: z.string() }) }),
     z.object({ id: z.string(), type: z.literal("divider"), content: z.literal("").default("") }),
-    z.object({ id: z.string(), type: z.literal("bulleted-list"), content: z.string() }),
-    z.object({ id: z.string(), type: z.literal("numbered-list"), content: z.string() }),
+    z.object({ id: z.string(), type: z.literal("bulleted-list"), content: z.string().min(1, 'List cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("numbered-list"), content: z.string().min(1, 'List cannot be empty.') }),
     z.object({
         id: z.string(),
         type: z.literal("todo-list"),
-        content: z.array(z.object({ id: z.string(), text: z.string(), checked: z.boolean() })),
+        content: z.array(z.object({ id: z.string(), text: z.string().min(1, 'To-do item text cannot be empty.'), checked: z.boolean() })).min(1, "To-do list must have at least one item."),
     }),
     z.object({
         id: z.string(),
         type: z.literal("toggle-list"),
-        content: z.object({ title: z.string(), text: z.string() }),
+        content: z.object({ title: z.string().min(1, 'Toggle title cannot be empty.'), text: z.string().min(1, 'Toggle content cannot be empty.') }),
     }),
     z.object({
         id: z.string(),
         type: z.literal("problem"),
-        content: z.object({ problemId: z.string(), title: z.string(), categoryName: z.string(), metadataType: z.string().optional() }),
+        content: z.object({ problemId: z.string().min(1, "A problem must be selected."), title: z.string(), categoryName: z.string(), metadataType: z.string().optional() }),
     }),
-    z.object({ id: z.string(), type: z.literal("image"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
-    z.object({ id: z.string(), type: z.literal("video"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
-    z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
+    z.object({ id: z.string(), type: z.literal("image"), content: z.string().url("Must be a valid URL").min(1, "Image URL is required.") }),
+    z.object({ id: z.string(), type: z.literal("video"), content: z.string().url("Must be a valid URL").min(1, "Video URL is required.") }),
+    z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").min(1, "Audio URL is required.") }),
     z.object({
         id: z.string(),
         type: z.literal("table"),
@@ -98,8 +99,25 @@ const contentBlockSchema = z.discriminatedUnion("type", [
         type: z.literal("breadcrumb"),
         content: z.array(z.object({ id: z.string(), text: z.string(), href: z.string().optional() })),
     }),
-    z.object({ id: z.string(), type: z.literal("mermaid"), content: z.string() }),
-]);
+    z.object({ id: z.string(), type: z.literal("mermaid"), content: z.string().min(1, "Mermaid diagram cannot be empty.") }),
+    z.object({
+        id: z.string(),
+        type: z.literal("two-column"),
+        content: z.object({
+            column1: z.array(contentBlockSchema),
+            column2: z.array(contentBlockSchema)
+        })
+    }),
+    z.object({
+        id: z.string(),
+        type: z.literal("three-column"),
+        content: z.object({
+            column1: z.array(contentBlockSchema),
+            column2: z.array(contentBlockSchema),
+            column3: z.array(contentBlockSchema)
+        })
+    }),
+]));
 
 
 const lessonSchema = z.object({
