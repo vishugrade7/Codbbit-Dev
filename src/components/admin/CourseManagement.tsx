@@ -436,8 +436,8 @@ function CodeBlockEditor({ field }: { field: any }) {
     }
 
     return (
-        <div className="rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6">
-             <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
+        <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 my-6">
+             <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800">
                 <div className="flex gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-red-500"></div>
                     <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
@@ -1019,10 +1019,12 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
     const parentPath = path.substring(0, path.lastIndexOf('.'));
     const blockIndex = parseInt(path.substring(path.lastIndexOf('.') + 1));
     const { remove: removeBlock } = useFieldArray({ name: parentPath });
-    
-    const block = useWatch({ control, name: path as any });
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
-
+    
+    // Call hooks unconditionally
+    const block = useWatch({ control, name: path as any });
+    
+    // Early return if block is not ready
     if (!block) {
         return null;
     }
@@ -1122,7 +1124,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
 }
 
 function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, lessonIndex: number, rhfId: string }) {
-    const { control, formState: { errors } } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
@@ -1140,9 +1142,27 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                         </FormItem>
                     )} />
                 </div>
-                 <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); removeLesson(lessonIndex); }}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => e.stopPropagation()}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete this lesson and all of its content. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => removeLesson(lessonIndex)}>
+                                Delete Lesson
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value={`lesson-${lessonIndex}`} className="border-t">
