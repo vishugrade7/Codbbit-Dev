@@ -166,7 +166,7 @@ export default function ProblemWorkspacePage() {
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
     const resultsPanelRef = useRef<ImperativePanelHandle>(null);
     const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
-    const [fontSize, setFontSize] = useState<number>(14);
+    const [fontSize, setFontSize] = useState<number>(16);
 
     const [isClient, setIsClient] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
