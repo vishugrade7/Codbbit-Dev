@@ -476,30 +476,28 @@ function ProblemBlock({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: n
 }
 
 function TableBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleIndex: number, lessonIndex: number, blockIndex: number }) {
-  const { control, getValues, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+  const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
   const headersPath = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.headers` as const;
   const rowsPath = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.rows` as const;
 
   const { fields: headerFields, append: appendHeader, remove: removeHeader } = useFieldArray({ control, name: headersPath });
-  const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({ control, name: rowsPath });
+  const { fields: rowFields, append: appendRow, remove: removeRow, update } = useFieldArray({ control, name: rowsPath });
 
   const addColumn = () => {
     appendHeader(`Header ${headerFields.length + 1}`);
-    const currentRows = getValues(rowsPath) || [];
-    const newRows = currentRows.map(row => [...row, '']);
-    setValue(rowsPath, newRows);
+    rowFields.forEach((row, index) => {
+        update(index, { ...row, values: [...row.values, ''] });
+    });
   };
 
   const removeColumn = (index: number) => {
     if (headerFields.length <= 1) return;
     removeHeader(index);
-    const currentRows = getValues(rowsPath) || [];
-    const newRows = currentRows.map(row => {
-        const newRow = [...row];
-        newRow.splice(index, 1);
-        return newRow;
+    rowFields.forEach((row, rowIndex) => {
+        const newValues = [...row.values];
+        newValues.splice(index, 1);
+        update(rowIndex, { ...row, values: newValues });
     });
-    setValue(rowsPath, newRows);
   };
 
   return (
@@ -522,7 +520,7 @@ function TableBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleInde
         {rowFields.map((rowField, rowIndex) => (
           <div key={rowField.id} className="flex items-center gap-2">
             {headerFields.map((_, colIndex) => (
-              <FormField key={`${rowField.id}-${colIndex}`} control={control} name={`${rowsPath}.${rowIndex}.${colIndex}`} render={({ field }) => (
+              <FormField key={`${rowField.id}-${colIndex}`} control={control} name={`${rowsPath}.${rowIndex}.values.${colIndex}`} render={({ field }) => (
                 <FormItem className="flex-1"><FormControl><Input {...field} placeholder={`Cell`}/></FormControl></FormItem>
               )} />
             ))}
@@ -530,7 +528,7 @@ function TableBlockEditor({ moduleIndex, lessonIndex, blockIndex }: { moduleInde
           </div>
         ))}
       </div>
-       <Button type="button" variant="outline" size="sm" onClick={() => appendRow(Array(headerFields.length).fill(''))}><PlusCircle className="mr-2 h-4 w-4" /> Add Row</Button>
+       <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ values: Array(headerFields.length).fill('') })}><PlusCircle className="mr-2 h-4 w-4" /> Add Row</Button>
     </div>
   )
 }
@@ -695,7 +693,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                 newBlock = { id: uuidv4(), type, content: { problemId: '', title: '', categoryName: '' } };
                 break;
             case 'table':
-                newBlock = { id: uuidv4(), type, content: { headers: ['Header 1'], rows: [['Cell 1']] } };
+                newBlock = { id: uuidv4(), type, content: { headers: ['Header 1'], rows: [{ values: ['Cell 1'] }] } };
                 break;
             case 'mcq':
                 newBlock = { id: uuidv4(), type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } };
@@ -1046,6 +1044,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 

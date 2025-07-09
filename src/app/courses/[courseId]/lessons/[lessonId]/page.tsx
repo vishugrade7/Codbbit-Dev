@@ -135,10 +135,8 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                             padding: '1rem', 
                             backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
                             fontSize: '0.95rem',
-                            whiteSpace: 'pre-wrap', 
-                            wordBreak: 'break-all'
                         }}
-                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)' } }}
+                        codeTagProps={{ style: { fontFamily: 'var(--font-source-code-pro)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }}
                         lineNumberStyle={{ color: '#858585', fontSize: '0.95rem' }}
                     >
                         {String(block.content.code || '').trim()}
@@ -289,7 +287,7 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                         </audio>
                     </div>
                 );
-             case 'table':
+            case 'table':
                 return (
                     <div key={block.id} className="not-prose my-6 overflow-x-auto">
                         <table className="w-full text-sm border-collapse">
@@ -301,9 +299,9 @@ const LessonContent = ({ contentBlocks, allProblems }: { contentBlocks: ContentB
                             </tr>
                             </thead>
                             <tbody>
-                            {block.content.rows.map((row: string[], rowIndex: number) => (
+                            {block.content.rows.map((row: { values: string[] }, rowIndex: number) => (
                                 <tr key={rowIndex} className="border-b">
-                                {row.map((cell: string, cellIndex: number) => (
+                                {row.values.map((cell: string, cellIndex: number) => (
                                     <td key={cellIndex} className="p-3 border">{cell}</td>
                                 ))}
                                 </tr>

@@ -78,7 +78,7 @@ const contentBlockSchema = z.discriminatedUnion("type", [
     z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").or(z.literal("")) }),
     z.object({ id: z.string(), type: z.literal("table"), content: z.object({
         headers: z.array(z.string().min(1, "Header cannot be empty.")).min(1, "Table must have at least one header."),
-        rows: z.array(z.array(z.string()))
+        rows: z.array(z.object({ values: z.array(z.string()) }))
     }) }),
     z.object({ id: z.string(), type: z.literal("mcq"), content: z.object({
         question: z.string().min(1, "Question is required."),
@@ -172,3 +172,4 @@ export const voucherFormSchema = z.object({
     oneTimeUse: z.boolean().optional(),
 });
 // #endregion
+
