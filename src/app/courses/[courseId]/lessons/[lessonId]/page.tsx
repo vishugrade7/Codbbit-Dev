@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -157,7 +158,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
       switch (block.type) {
         case 'text':
           return (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
               {block.content}
             </ReactMarkdown>
           );
@@ -201,7 +202,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
               return (
                   <blockquote className="not-prose mt-6 border-l-4 border-primary bg-muted/50 p-4 rounded-r-lg">
                       <div className="prose prose-sm dark:prose-invert text-muted-foreground italic">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                               {block.content}
                           </ReactMarkdown>
                       </div>
@@ -212,7 +213,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                   <div className="not-prose my-6 flex items-start gap-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
                       <div className="text-2xl pt-1">{block.content.icon}</div>
                       <div className="prose dark:prose-invert max-w-none text-primary/90">
-                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                               {block.content.text}
                           </ReactMarkdown>
                       </div>
@@ -223,7 +224,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           case 'bulleted-list':
           case 'numbered-list':
             return (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                 {block.content}
               </ReactMarkdown>
             );
@@ -250,7 +251,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                         </AccordionTrigger>
                         <AccordionContent className="p-4 pt-4 bg-background border-t">
                              <div className="prose dark:prose-invert max-w-none">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                                 {block.content.text}
                               </ReactMarkdown>
                              </div>

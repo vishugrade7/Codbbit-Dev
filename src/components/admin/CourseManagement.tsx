@@ -28,7 +28,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -147,8 +147,13 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
     const [selection, setSelection] = useState<{ start: number, end: number } | null>(null);
+
+    const [textColor, setTextColor] = useState('#000000');
+    const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+
 
     const handleSelect = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
         const textarea = event.currentTarget;
@@ -161,7 +166,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
         }
     };
     
-    const applyStyle = (prefix: string, suffix: string = prefix) => {
+    const applyMarkdownStyle = (prefix: string, suffix: string = prefix) => {
         if (!selection) return;
         const { start, end } = selection;
         const currentValue = value || '';
@@ -182,6 +187,48 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
         setIsToolbarOpen(false);
         setIsLinkDialogOpen(true);
     }
+    
+    const handleColorButtonClick = () => {
+        if (!selection) return;
+        setIsToolbarOpen(false);
+        setIsColorDialogOpen(true);
+    };
+
+    const applyColorStyle = () => {
+        if (!selection) return;
+        const { start, end } = selection;
+        const currentValue = value || '';
+        const selectedText = currentValue.substring(start, end);
+
+        let styles = [];
+        // Use a neutral default color that indicates "no style" to avoid adding unnecessary spans
+        if (textColor !== '#000001') styles.push(`color: ${textColor}`);
+        if (backgroundColor !== '#ffffff') {
+            styles.push(`background-color: ${backgroundColor}`);
+            styles.push(`padding: 2px 5px`);
+            styles.push(`border-radius: 4px`);
+        }
+        
+        if (styles.length === 0) {
+            setIsColorDialogOpen(false);
+            return;
+        }
+
+        const styleString = styles.join('; ');
+        const prefix = `<span style="${styleString}">`;
+        const suffix = `</span>`;
+        
+        const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
+        onChange(newValue);
+        
+        setIsColorDialogOpen(false);
+
+        setTimeout(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
+    };
+
 
     const applyLink = () => {
         if (!selection || !linkUrl) return;
@@ -218,11 +265,12 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                 />
             </PopoverTrigger>
             <PopoverContent className="w-auto p-1 flex items-center gap-1">
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('**'); }}><Bold className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('*'); }}><Italic className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('~~'); }}><Strikethrough className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('**'); }}><Bold className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('*'); }}><Italic className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('~~'); }}><Strikethrough className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleLinkButtonClick(); }}><LinkIcon className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleColorButtonClick(); }}><Palette className="h-4 w-4" /></Button>
             </PopoverContent>
             
             <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
@@ -237,6 +285,28 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancel</Button>
                         <Button onClick={applyLink}>Add Link</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isColorDialogOpen} onOpenChange={setIsColorDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Apply Color Styling</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Label htmlFor="text-color">Text Color</Label>
+                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-16" />
+                        </div>
+                         <div className="flex items-center gap-4">
+                            <Label htmlFor="bg-color">Background Color</Label>
+                            <Input id="bg-color" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="p-1 h-10 w-16" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsColorDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={applyColorStyle}>Apply Style</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
