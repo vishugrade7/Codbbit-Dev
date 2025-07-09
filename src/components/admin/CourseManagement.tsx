@@ -753,7 +753,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                 </SortableContext>
                             </DndContext>
                             
-                            <div className="flex justify-between items-center mt-2">
+                            <div className="flex justify-between items-center mt-4">
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button type="button" variant="outline" size="sm">
@@ -763,7 +763,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                     <BlockTypePicker onSelect={addContentBlock} />
                                 </Popover>
                                 
-                                <Button type="button" variant="destructive" size="sm" onClick={() => removeLesson(lessonIndex)}>
+                                <Button type="button" variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); removeLesson(lessonIndex); }}>
                                     <Trash2 className="mr-2 h-4 w-4" />Delete Lesson
                                 </Button>
                             </div>
@@ -1046,6 +1046,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
