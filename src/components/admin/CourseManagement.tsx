@@ -754,7 +754,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                                 </SortableContext>
                             </DndContext>
                             
-                            <div className="flex justify-between items-center mt-4">
+                             <div className="flex justify-between items-center mt-4">
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button type="button" variant="outline" size="sm">
@@ -1043,6 +1043,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
