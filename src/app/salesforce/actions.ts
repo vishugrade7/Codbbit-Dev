@@ -455,64 +455,90 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     }
 }
 
-export async function executeAnonymousApex(userId: string, code: string): Promise<{ success: boolean; result: string; logs: string; }> {
+export async function executeSalesforceCode(
+    userId: string, 
+    code: string, 
+    executionType: 'anonymous' | 'class' | 'soql'
+): Promise<{ success: boolean; result: string; logs: string; }> {
     try {
         const auth = await getSfdcConnection(userId);
-        const endpoint = `${auth.instanceUrl}/services/data/v59.0/tooling/executeAnonymous/`;
-        
-        const urlWithQuery = new URL(endpoint);
-        urlWithQuery.searchParams.append('anonymousBody', code);
 
-        const response = await fetch(urlWithQuery.toString(), {
-             method: 'GET',
-             headers: {
-                'Authorization': `Bearer ${auth.accessToken}`,
-            },
-        });
+        if (executionType === 'soql') {
+            const endpoint = `${auth.instanceUrl}/services/data/v59.0/query`;
+            const urlWithQuery = new URL(endpoint);
+            urlWithQuery.searchParams.append('q', code);
+            
+            const response = await fetch(urlWithQuery.toString(), {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${auth.accessToken}` },
+            });
+            
+            const responseBody = await response.json();
 
-        const responseBody = await response.json();
-        
-        // The debug log is returned in a response header.
-        const debugLog = response.headers.get('x-debug-log') || "";
-        const logHeader = `----------\nDEBUG LOG\n----------\n`;
-
-        if (responseBody.success) {
-            const userDebugLines = debugLog
-                .split('\n')
-                .filter((line: string) => line.includes('|USER_DEBUG|'))
-                .map((line: string) => {
-                    const parts = line.split('|');
-                    // Format is usually ...|USER_DEBUG|[line_number]|DEBUG|message
-                    const debugIndex = parts.indexOf('DEBUG');
-                    if (debugIndex !== -1 && parts.length > debugIndex + 1) {
-                        return parts.slice(debugIndex + 1).join('|');
-                    }
-                    return null;
-                })
-                .filter((line: string | null): line is string => line !== null)
-                .join('\n');
-
-            const resultMessage = userDebugLines.trim() 
-                ? userDebugLines.trim()
-                : 'Execution successful. No USER_DEBUG output.';
-
-            return {
-                success: true,
-                result: resultMessage,
-                logs: `${logHeader}${debugLog}`,
+            if (!response.ok) {
+                const errorMessage = responseBody[0]?.message || 'SOQL query failed.';
+                return { success: false, result: errorMessage, logs: JSON.stringify(responseBody, null, 2) };
+            }
+            
+            return { 
+                success: true, 
+                result: `Query returned ${responseBody.totalSize} record(s).\n\n${JSON.stringify(responseBody.records, null, 2)}`,
+                logs: JSON.stringify(responseBody, null, 2)
             };
-        } else if (!responseBody.compiled) {
-             return {
-                success: false,
-                result: `Compilation Error: ${responseBody.compileProblem}\nLine: ${responseBody.line}, Column: ${responseBody.column}`,
-                logs: `${logHeader}${debugLog}`
-            };
-        } else { // compiled but not success
-             return {
-                success: false,
-                result: `Runtime Error: ${responseBody.exceptionMessage}\n\nStack Trace:\n${responseBody.exceptionStackTrace}`,
-                logs: `${logHeader}${debugLog}`
-            };
+        } else { // 'anonymous' or 'class'
+            const endpoint = `${auth.instanceUrl}/services/data/v59.0/tooling/executeAnonymous/`;
+            const urlWithQuery = new URL(endpoint);
+            urlWithQuery.searchParams.append('anonymousBody', code);
+            
+            const response = await fetch(urlWithQuery.toString(), {
+                 method: 'GET',
+                 headers: {
+                    'Authorization': `Bearer ${auth.accessToken}`,
+                },
+            });
+    
+            const responseBody = await response.json();
+            
+            const debugLog = response.headers.get('x-debug-log') || "";
+            const logHeader = `----------\nDEBUG LOG\n----------\n`;
+    
+            if (responseBody.success) {
+                const userDebugLines = debugLog
+                    .split('\n')
+                    .filter((line: string) => line.includes('|USER_DEBUG|'))
+                    .map((line: string) => {
+                        const parts = line.split('|');
+                        const debugIndex = parts.indexOf('DEBUG');
+                        if (debugIndex !== -1 && parts.length > debugIndex + 1) {
+                            return parts.slice(debugIndex + 1).join('|');
+                        }
+                        return null;
+                    })
+                    .filter((line: string | null): line is string => line !== null)
+                    .join('\n');
+    
+                const resultMessage = userDebugLines.trim() 
+                    ? userDebugLines.trim()
+                    : 'Execution successful. No USER_DEBUG output.';
+    
+                return {
+                    success: true,
+                    result: resultMessage,
+                    logs: `${logHeader}${debugLog}`,
+                };
+            } else if (!responseBody.compiled) {
+                 return {
+                    success: false,
+                    result: `Compilation Error: ${responseBody.compileProblem}\nLine: ${responseBody.line}, Column: ${responseBody.column}`,
+                    logs: `${logHeader}${debugLog}`
+                };
+            } else { // compiled but not success
+                 return {
+                    success: false,
+                    result: `Runtime Error: ${responseBody.exceptionMessage}\n\nStack Trace:\n${responseBody.exceptionStackTrace}`,
+                    logs: `${logHeader}${debugLog}`
+                };
+            }
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';

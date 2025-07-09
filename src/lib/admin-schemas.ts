@@ -144,6 +144,7 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminated
             title: z.string().optional(),
             description: z.string().min(1, 'Description is required.'),
             defaultCode: z.string().min(1, 'Default code is required.'),
+            executionType: z.enum(['anonymous', 'soql', 'class']).default('anonymous'),
         }),
         backgroundColor: z.string().optional(),
         textColor: z.string().optional(),

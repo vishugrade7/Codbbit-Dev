@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useForm, useFieldArray, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,7 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,6 +62,7 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from '../ui/separator';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -834,6 +835,31 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
 
     return (
         <div className="bg-muted p-4 rounded-md border space-y-4">
+             <FormField
+                control={control}
+                name={`${path}.content.executionType`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Execution Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value || 'anonymous'}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an execution type" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="anonymous">Anonymous Apex</SelectItem>
+                                <SelectItem value="soql">SOQL Query</SelectItem>
+                                <SelectItem value="class">Apex Class</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormDescription>
+                            Select how this code block should be executed. For 'Apex Class', the user must write an anonymous script to execute it.
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
             <FormField
                 control={control}
                 name={`${path}.content.title`}
@@ -914,7 +940,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mcq': newBlock = { id, type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } }; break;
             case 'breadcrumb': newBlock = { id, type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] }; break;
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
-            case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here' } }; break;
+            case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
             default: newBlock = { id, type, content: (type === 'bulleted-list' ? '* ' : (type === 'numbered-list' ? '1. ' : '')) };

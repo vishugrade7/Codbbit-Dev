@@ -32,7 +32,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import mermaid from 'mermaid';
 import MonacoEditor from '@monaco-editor/react';
-import { executeAnonymousApex } from '@/app/salesforce/actions';
+import { executeSalesforceCode } from '@/app/salesforce/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -157,6 +157,16 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
     const [isExecuting, setIsExecuting] = useState(false);
     const [results, setResults] = useState<{ output: string, logs: string } | null>(null);
 
+    const editorLanguage = useMemo(() => {
+        switch (blockContent.executionType) {
+            case 'soql': return 'sql';
+            case 'class':
+            case 'anonymous':
+            default:
+                return 'java';
+        }
+    }, [blockContent.executionType]);
+
     const handleExecute = async () => {
         if (!user) {
             toast({ variant: 'destructive', title: 'Not Logged In' });
@@ -171,7 +181,7 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
         setIsExecuting(true);
         setResults(null);
         
-        const response = await executeAnonymousApex(user.uid, code);
+        const response = await executeSalesforceCode(user.uid, code, blockContent.executionType || 'anonymous');
         
         setResults({
             output: response.result,
@@ -208,7 +218,7 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
             <div className="h-64 w-full">
                 <MonacoEditor
                     height="100%"
-                    language="java"
+                    language={editorLanguage}
                     value={code}
                     onChange={(v) => setCode(v || '')}
                     theme="vs-dark"
