@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -333,6 +333,70 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
     );
 };
 
+const StepperChallenge = ({ blockContent }: { blockContent: any }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const steps = blockContent.steps || [];
+
+    const handleNext = () => {
+        if (currentIndex < steps.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+        }
+    };
+    const handlePrev = () => {
+        if (currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1);
+        }
+    };
+
+    const currentStep = steps[currentIndex];
+
+    return (
+        <div className="not-prose my-6 w-full text-center">
+            {blockContent.title && <h3 className="text-2xl font-semibold mb-2">{blockContent.title}</h3>}
+            <div className="flex items-center justify-center my-8">
+                {steps.map((step: any, index: number) => (
+                    <React.Fragment key={step.id}>
+                        <div className="flex flex-col items-center">
+                            <div className={cn(
+                                "h-10 w-10 rounded-full flex items-center justify-center text-white font-bold border-2 transition-all",
+                                index < currentIndex ? "bg-green-500 border-green-500" :
+                                index === currentIndex ? "bg-primary border-primary scale-110" :
+                                "bg-muted border-border"
+                            )}>
+                                {index < currentIndex ? <Check className="h-6 w-6" /> : <span className={cn(index === currentIndex ? "text-primary-foreground" : "text-muted-foreground")}>{index + 1}</span>}
+                            </div>
+                            <p className="text-sm mt-2 text-muted-foreground">{step.title}</p>
+                        </div>
+                        {index < steps.length - 1 && (
+                            <div className="flex-1 h-0.5 border-t-2 border-dashed border-border mx-2"></div>
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
+
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={handlePrev} disabled={currentIndex === 0}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Card className="flex-1 text-left min-h-[200px]">
+                    <CardContent className="p-6">
+                         <div className="prose dark:prose-invert max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                {currentStep?.content || ''}
+                            </ReactMarkdown>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Button variant="outline" size="icon" onClick={handleNext} disabled={currentIndex === steps.length - 1}>
+                    <ArrowRight className="h-4 w-4" />
+                </Button>
+            </div>
+             {blockContent.body && <p className="text-muted-foreground mt-4">{blockContent.body}</p>}
+        </div>
+    );
+};
+
+
 const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
@@ -572,6 +636,8 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                return <MermaidRenderer chart={block.content} />;
           case 'interactive-code':
                 return <InteractiveCodeChallenge blockContent={block.content} />;
+          case 'stepper':
+                return <StepperChallenge blockContent={block.content} />;
           case 'two-column':
               return (
                   <div className="not-prose my-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -850,3 +916,4 @@ export default function LessonPage() {
     
 
     
+

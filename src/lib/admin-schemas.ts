@@ -150,6 +150,20 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminated
         backgroundColor: z.string().optional(),
         textColor: z.string().optional(),
     }),
+    z.object({
+        id: z.string(),
+        type: z.literal("stepper"),
+        content: z.object({
+            title: z.string().optional(),
+            steps: z.array(z.object({
+                id: z.string(),
+                title: z.string().min(1, "Step title is required."),
+                content: z.string().min(1, "Step content is required."),
+            })).min(1, "Stepper must have at least one step."),
+        }),
+        backgroundColor: z.string().optional(),
+        textColor: z.string().optional(),
+    }),
 ]));
 
 

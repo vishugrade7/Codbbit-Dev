@@ -375,6 +375,7 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'table', label: 'Table', icon: <Table2 className="h-4 w-4" /> },
     { type: 'mcq', label: 'MCQ (Single)', icon: <ListChecks className="h-4 w-4" /> },
     { type: 'breadcrumb', label: 'Breadcrumb', icon: <Milestone className="h-4 w-4" /> },
+    { type: 'stepper', label: 'Stepper', icon: <Milestone className="h-4 w-4" /> },
     { type: 'mermaid', label: 'Mermaid Diagram', icon: <GitFork className="h-4 w-4" /> },
     { type: 'interactive-code', label: 'Interactive Code', icon: <FlaskConical className="h-4 w-4" /> },
     { type: 'two-column', label: 'Two Columns', icon: <BoxSelect className="h-4 w-4 rotate-90" /> },
@@ -833,6 +834,68 @@ function MermaidBlockEditor({ path }: { path: string }) {
     );
 }
 
+function StepperBlockEditor({ path }: { path: string }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `${path}.content.steps`,
+    });
+
+    const addStep = () => append({ id: uuidv4(), title: `Step ${fields.length + 1}`, content: '' });
+
+    return (
+        <div className="bg-muted p-4 rounded-md border space-y-4">
+            <FormField
+                control={control}
+                name={`${path}.content.title`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Stepper Title (Optional)</FormLabel>
+                        <FormControl><Input placeholder="e.g., How to Deploy to an Org" {...field} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            <Separator/>
+            {fields.map((item, index) => (
+                <div key={item.id} className="bg-background p-3 rounded-md border space-y-3">
+                    <div className="flex items-center justify-between">
+                         <FormField
+                            control={control}
+                            name={`${path}.content.steps.${index}.title`}
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl><Input placeholder={`Step ${index + 1} Title`} {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         {fields.length > 1 && (
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive ml-2" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                     <FormField
+                        control={control}
+                        name={`${path}.content.steps.${index}.content`}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormControl><TextEditorWithPreview field={field} placeholder="Content for this step..." /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            ))}
+            <FormField control={control} name={`${path}.content.steps`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
+            <Button type="button" variant="outline" size="sm" onClick={addStep}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Step
+            </Button>
+        </div>
+    );
+}
+
+
 function InteractiveCodeBlockEditor({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { resolvedTheme } = useTheme();
@@ -970,6 +1033,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mcq': newBlock = { id, type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } }; break;
             case 'breadcrumb': newBlock = { id, type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] }; break;
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
+            case 'stepper': newBlock = { id, type, content: { title: 'Stepper Title', steps: [{ id: uuidv4(), title: 'Step 1', content: 'Step 1 content'}] } }; break;
             case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous', testClassCode: '' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
@@ -1018,21 +1082,25 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
     const parentPath = path.substring(0, path.lastIndexOf('.'));
     const blockIndex = parseInt(path.substring(path.lastIndexOf('.') + 1));
-    const { remove: removeBlock } = useFieldArray({ name: parentPath as any });
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     
     // Call hooks unconditionally
+    const { remove: removeBlock } = useFieldArray({ name: parentPath as any });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const block = useWatch({ control, name: path as any });
+    
+    // Early return if block is not ready
+    if (!block) {
+        return null;
+    }
     
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        backgroundColor: block?.backgroundColor,
-        color: block?.textColor,
+        backgroundColor: block.backgroundColor,
+        color: block.textColor,
     };
 
     const renderBlockEditor = () => {
-        if (!block) return null;
         switch (block.type) {
             case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
@@ -1054,6 +1122,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
             case 'mcq': return <McqBlockEditor path={path} />;
             case 'breadcrumb': return <BreadcrumbBlockEditor path={path} />;
             case 'mermaid': return <MermaidBlockEditor path={path} />;
+            case 'stepper': return <StepperBlockEditor path={path} />;
             case 'interactive-code': return <InteractiveCodeBlockEditor path={path} />;
             case 'two-column': return <ColumnLayoutEditor path={path} numColumns={2} />;
             case 'three-column': return <ColumnLayoutEditor path={path} numColumns={3} />;
@@ -1084,10 +1153,10 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                                     id={`bg-color-picker-${rhfId}`}
                                     type="color"
                                     className="h-8 w-8 p-1 cursor-pointer"
-                                    value={block?.backgroundColor || '#ffffff'}
+                                    value={block.backgroundColor || '#ffffff'}
                                     onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
                                 />
-                                {block?.backgroundColor && (
+                                {block.backgroundColor && (
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
                                         <X className="h-4 w-4" />
                                     </Button>
@@ -1099,10 +1168,10 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                                     id={`text-color-picker-${rhfId}`}
                                     type="color"
                                     className="h-8 w-8 p-1 cursor-pointer"
-                                    value={block?.textColor || '#000000'}
+                                    value={block.textColor || '#000000'}
                                     onChange={(e) => setValue(`${path}.textColor`, e.target.value)}
                                 />
-                                {block?.textColor && (
+                                {block.textColor && (
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.textColor`, undefined)}>
                                         <X className="h-4 w-4" />
                                     </Button>
