@@ -498,7 +498,7 @@ export async function executeSalesforceCode(
                  method: 'GET',
                  headers: {
                     'Authorization': `Bearer ${auth.accessToken}`,
-                    'Sforce-Log-Options': 'logLevel=DEBUG'
+                    'Sforce-Log-Options': 'logLevel=FINEST'
                 },
             });
     
