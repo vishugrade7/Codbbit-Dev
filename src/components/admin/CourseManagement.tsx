@@ -340,7 +340,7 @@ const TextEditorWithPreview = ({ field, placeholder, className }: { field: any; 
                         <p className="p-2.5 text-xs font-semibold text-muted-foreground border-b shrink-0">Live Preview</p>
                         <div className="flex-1 p-4 overflow-auto bg-muted/10">
                             <div className="prose dark:prose-invert max-w-none">
-                                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[gfm]}>
                                     {field.value || ''}
                                 </ReactMarkdown>
                                 {!field.value && <span className="text-muted-foreground">Preview will appear here.</span>}
@@ -955,7 +955,7 @@ function ColumnLayoutEditor({ path, numColumns }: { path: string; numColumns: 2 
 
 function ContentBlockList({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { fields, append, move } = useFieldArray({ name: path });
+    const { fields, append, move } = useFieldArray({ name: path as any });
 
     const addContentBlock = (type: ContentBlock['type']) => {
         let newBlock: ContentBlock;
@@ -975,7 +975,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
             default: newBlock = { id, type, content: (type === 'bulleted-list' ? '* ' : (type === 'numbered-list' ? '1. ' : '')) };
         }
-        append(newBlock);
+        append(newBlock as any);
     };
 
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -1018,25 +1018,21 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
     const parentPath = path.substring(0, path.lastIndexOf('.'));
     const blockIndex = parseInt(path.substring(path.lastIndexOf('.') + 1));
-    const { remove: removeBlock } = useFieldArray({ name: parentPath });
+    const { remove: removeBlock } = useFieldArray({ name: parentPath as any });
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     
     // Call hooks unconditionally
     const block = useWatch({ control, name: path as any });
     
-    // Early return if block is not ready
-    if (!block) {
-        return null;
-    }
-
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        backgroundColor: block.backgroundColor,
-        color: block.textColor,
+        backgroundColor: block?.backgroundColor,
+        color: block?.textColor,
     };
 
     const renderBlockEditor = () => {
+        if (!block) return null;
         switch (block.type) {
             case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
@@ -1088,10 +1084,10 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                                     id={`bg-color-picker-${rhfId}`}
                                     type="color"
                                     className="h-8 w-8 p-1 cursor-pointer"
-                                    value={block.backgroundColor || '#ffffff'}
+                                    value={block?.backgroundColor || '#ffffff'}
                                     onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
                                 />
-                                {block.backgroundColor && (
+                                {block?.backgroundColor && (
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
                                         <X className="h-4 w-4" />
                                     </Button>
@@ -1103,10 +1099,10 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                                     id={`text-color-picker-${rhfId}`}
                                     type="color"
                                     className="h-8 w-8 p-1 cursor-pointer"
-                                    value={block.textColor || '#000000'}
+                                    value={block?.textColor || '#000000'}
                                     onChange={(e) => setValue(`${path}.textColor`, e.target.value)}
                                 />
-                                {block.textColor && (
+                                {block?.textColor && (
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.textColor`, undefined)}>
                                         <X className="h-4 w-4" />
                                     </Button>
@@ -1129,6 +1125,14 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
+    
+    // Call hooks unconditionally
+    const block = useWatch({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}` as any });
+    
+    // Early return if block is not ready
+    if (!block) {
+        return null;
+    }
     
     return (
         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
