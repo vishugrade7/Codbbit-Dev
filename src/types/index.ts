@@ -117,6 +117,7 @@ export type ContentBlock = {
   type: 'text' | 'code' | 'heading1' | 'heading2' | 'heading3' | 'quote' | 'callout' | 'divider' | 'bulleted-list' | 'numbered-list' | 'todo-list' | 'toggle-list' | 'problem' | 'image' | 'video' | 'audio' | 'table' | 'mcq' | 'breadcrumb' | 'mermaid' | 'two-column' | 'three-column';
   content: any; // string, {code, language}, ColumnContent, etc.
   backgroundColor?: string;
+  textColor?: string;
 };
 
 export type Lesson = {

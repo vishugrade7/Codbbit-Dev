@@ -412,11 +412,13 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
   return (
     <>
       {(contentBlocks || []).map(block => {
-        const wrapperStyle = block.backgroundColor ? { backgroundColor: block.backgroundColor } : {};
-        // Add padding if a background color is set, to give it some breathing room.
+        const wrapperStyle = {
+            ...(block.backgroundColor ? { backgroundColor: block.backgroundColor } : {}),
+            ...(block.textColor ? { color: block.textColor } : {}),
+        };
         const wrapperClassName = block.backgroundColor ? "p-4 rounded-lg my-6" : "";
 
-        if (block.backgroundColor) {
+        if (block.backgroundColor || block.textColor) {
              return (
                 <div key={block.id} style={wrapperStyle} className={wrapperClassName}>
                     {renderInnerBlock(block)}
@@ -424,7 +426,6 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
              )
         }
         
-        // Render block without a wrapper if no background color
         return <div key={block.id}>{renderInnerBlock(block)}</div>;
       })}
     </>

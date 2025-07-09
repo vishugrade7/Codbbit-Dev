@@ -809,6 +809,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
         transform: CSS.Transform.toString(transform),
         transition,
         backgroundColor: block.backgroundColor,
+        color: block.textColor,
     };
 
     if (!block) return null;
@@ -857,20 +858,37 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2">
-                        <div className="flex items-center gap-2">
-                            <Label htmlFor={`color-picker-${rhfId}`} className="text-sm font-medium">BG</Label>
-                            <Input
-                                id={`color-picker-${rhfId}`}
-                                type="color"
-                                className="h-8 w-8 p-1 cursor-pointer"
-                                value={block.backgroundColor || '#ffffff'}
-                                onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
-                            />
-                            {block.backgroundColor && (
-                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            )}
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor={`bg-color-picker-${rhfId}`} className="text-sm font-medium">BG</Label>
+                                <Input
+                                    id={`bg-color-picker-${rhfId}`}
+                                    type="color"
+                                    className="h-8 w-8 p-1 cursor-pointer"
+                                    value={block.backgroundColor || '#ffffff'}
+                                    onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
+                                />
+                                {block.backgroundColor && (
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <Label htmlFor={`text-color-picker-${rhfId}`} className="text-sm font-medium">Text</Label>
+                                <Input
+                                    id={`text-color-picker-${rhfId}`}
+                                    type="color"
+                                    className="h-8 w-8 p-1 cursor-pointer"
+                                    value={block.textColor || '#000000'}
+                                    onChange={(e) => setValue(`${path}.textColor`, e.target.value)}
+                                />
+                                {block.textColor && (
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.textColor`, undefined)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </PopoverContent>
                 </Popover>
@@ -891,9 +909,9 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
     
     return (
         <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
-            <div className="flex items-center p-2 gap-2">
-                <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
-                 <div className='flex-1'>
+            <div className="flex items-center p-3 gap-2">
+                <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 text-muted-foreground"><GripVertical className="h-5 w-5" /></button>
+                <div className='flex-1'>
                     <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
                         <FormItem>
                             <FormControl><Input placeholder={`Lesson ${lessonIndex + 1}: Title`} {...field} className="font-medium border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent" /></FormControl>
@@ -907,10 +925,10 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
             </div>
              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value={`lesson-${lessonIndex}`} className="border-b-0">
-                    <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline bg-muted/50">
-                        Lesson Content
+                    <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline bg-muted/50 rounded-b-md">
+                        <span className='font-normal'>Lesson Content</span>
                     </AccordionTrigger>
-                    <AccordionContent className="p-4 border-t">
+                    <AccordionContent className="p-4">
                         <div className="space-y-4">
                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
                                 <FormItem className="flex items-center gap-2"><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>Free Lesson</FormLabel></FormItem>
@@ -979,30 +997,23 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
                     </AlertDialogContent>
                 </AlertDialog>
             </CardHeader>
-            <Accordion type="single" collapsible defaultValue="module-content" className="w-full">
-                <AccordionItem value="module-content" className="border-none">
-                    <AccordionTrigger className="text-sm px-4 py-2 hover:no-underline bg-muted/50 rounded-b-lg">
-                        Module Content
-                    </AccordionTrigger>
-                    <AccordionContent className="p-4">
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-                            <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-4 pl-6 border-l-2">
-                                    {lessonFields.map((lessonItem, lessonIndex) => (
-                                        <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
-                                    ))}
-                                    <FormField control={control} name={`modules.${moduleIndex}.lessons`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
-                                </div>
-                            </SortableContext>
-                        </DndContext>
-                        <div className="flex justify-between items-center mt-4 ml-6">
-                            <Button type="button" variant="outline" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
-                            </Button>
+             <CardContent className="p-4 pt-0">
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+                    <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-4 pl-6 border-l-2">
+                            {lessonFields.map((lessonItem, lessonIndex) => (
+                                <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
+                            ))}
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
                         </div>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
+                    </SortableContext>
+                </DndContext>
+                <div className="flex justify-between items-center mt-4 ml-6">
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
+                    </Button>
+                </div>
+            </CardContent>
         </Card>
     );
 }
