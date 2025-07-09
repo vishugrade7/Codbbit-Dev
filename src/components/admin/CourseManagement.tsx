@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -27,7 +28,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -796,7 +797,7 @@ function ContentBlockList({ path }: { path: string }) {
 }
 
 function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
-    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
     const parentPath = path.substring(0, path.lastIndexOf('.'));
     const blockIndex = parseInt(path.substring(path.lastIndexOf('.') + 1));
     const { remove: removeBlock } = useFieldArray({ name: parentPath });
@@ -804,7 +805,11 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
     const block = useWatch({ control, name: path as any });
 
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
-    const style = { transform: CSS.Transform.toString(transform), transition };
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        backgroundColor: block.backgroundColor,
+    };
 
     if (!block) return null;
 
@@ -837,16 +842,42 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
     }
 
     return (
-        <div ref={setNodeRef} style={style} className="flex items-start gap-2">
+        <div ref={setNodeRef} style={style} className="flex items-start gap-2 p-2 border rounded-md">
             <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 mt-2 text-muted-foreground">
                 <GripVertical className="h-5 w-5" />
             </button>
              <div className="flex-1 space-y-2">
                 {renderBlockEditor()}
             </div>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-2" onClick={() => removeBlock(blockIndex)}>
-                <Trash2 className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-col items-center">
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2">
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor={`color-picker-${rhfId}`} className="text-sm font-medium">BG</Label>
+                            <Input
+                                id={`color-picker-${rhfId}`}
+                                type="color"
+                                className="h-8 w-8 p-1 cursor-pointer"
+                                value={block.backgroundColor || '#ffffff'}
+                                onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
+                            />
+                            {block.backgroundColor && (
+                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => removeBlock(blockIndex)}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </div>
         </div>
     );
 }

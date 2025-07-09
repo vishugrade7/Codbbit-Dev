@@ -49,64 +49,75 @@ export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRe
 
 // #region Course Schemas
 const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminatedUnion("type", [
-    z.object({ id: z.string(), type: z.literal("text"), content: z.string().min(1, 'Text content cannot be empty.') }),
-    z.object({ id: z.string(), type: z.literal("code"), content: z.object({ code: z.string().min(1, 'Code cannot be empty.'), language: z.string() }) }),
-    z.object({ id: z.string(), type: z.literal("heading1"), content: z.string().min(1, 'Heading cannot be empty.') }),
-    z.object({ id: z.string(), type: z.literal("heading2"), content: z.string().min(1, 'Heading cannot be empty.') }),
-    z.object({ id: z.string(), type: z.literal("heading3"), content: z.string().min(1, 'Heading cannot be empty.') }),
-    z.object({ id: z.string(), type: z.literal("quote"), content: z.string().min(1, 'Quote cannot be empty.') }),
-    z.object({ id: z.string(), type: z.literal("callout"), content: z.object({ text: z.string().min(1, 'Callout text cannot be empty.'), icon: z.string() }) }),
-    z.object({ id: z.string(), type: z.literal("divider"), content: z.literal("").default("") }),
-    z.object({ id: z.string(), type: z.literal("bulleted-list"), content: z.string().min(1, 'List cannot be empty.') }),
-    z.object({ id: z.string(), type: z.literal("numbered-list"), content: z.string().min(1, 'List cannot be empty.') }),
+    z.object({ id: z.string(), type: z.literal("text"), content: z.string().min(1, 'Text content cannot be empty.'), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("code"), content: z.object({ code: z.string().min(1, 'Code cannot be empty.'), language: z.string() }), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("heading1"), content: z.string().min(1, 'Heading cannot be empty.'), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("heading2"), content: z.string().min(1, 'Heading cannot be empty.'), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("heading3"), content: z.string().min(1, 'Heading cannot be empty.'), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("quote"), content: z.string().min(1, 'Quote cannot be empty.'), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("callout"), content: z.object({ text: z.string().min(1, 'Callout text cannot be empty.'), icon: z.string() }), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("divider"), content: z.literal("").default(""), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("bulleted-list"), content: z.string().min(1, 'List cannot be empty.'), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("numbered-list"), content: z.string().min(1, 'List cannot be empty.'), backgroundColor: z.string().optional() }),
     z.object({
         id: z.string(),
         type: z.literal("todo-list"),
         content: z.array(z.object({ id: z.string(), text: z.string().min(1, 'To-do item text cannot be empty.'), checked: z.boolean() })).min(1, "To-do list must have at least one item."),
+        backgroundColor: z.string().optional(),
     }),
     z.object({
         id: z.string(),
         type: z.literal("toggle-list"),
         content: z.object({ title: z.string().min(1, 'Toggle title cannot be empty.'), text: z.string().min(1, 'Toggle content cannot be empty.') }),
+        backgroundColor: z.string().optional(),
     }),
     z.object({
         id: z.string(),
         type: z.literal("problem"),
         content: z.object({ problemId: z.string().min(1, "A problem must be selected."), title: z.string(), categoryName: z.string(), metadataType: z.string().optional() }),
+        backgroundColor: z.string().optional(),
     }),
-    z.object({ id: z.string(), type: z.literal("image"), content: z.string().url("Must be a valid URL").min(1, "Image URL is required.") }),
-    z.object({ id: z.string(), type: z.literal("video"), content: z.string().url("Must be a valid URL").min(1, "Video URL is required.") }),
-    z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").min(1, "Audio URL is required.") }),
+    z.object({ id: z.string(), type: z.literal("image"), content: z.string().url("Must be a valid URL").min(1, "Image URL is required."), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("video"), content: z.string().url("Must be a valid URL").min(1, "Video URL is required."), backgroundColor: z.string().optional() }),
+    z.object({ id: z.string(), type: z.literal("audio"), content: z.string().url("Must be a valid URL").min(1, "Audio URL is required."), backgroundColor: z.string().optional() }),
     z.object({
         id: z.string(),
         type: z.literal("table"),
         content: z.object({
             headers: z.array(z.string().min(1, "Header cannot be empty.")).min(1, "Table must have at least one header."),
             rows: z.array(z.object({ values: z.array(z.string()) }))
-        })
+        }),
+        backgroundColor: z.string().optional(),
     }),
-    z.object({ id: z.string(), type: z.literal("mcq"), content: z.object({
-        question: z.string().min(1, "Question is required."),
-        options: z.array(z.object({
-            id: z.string(),
-            text: z.string().min(1, "Option text cannot be empty.")
-        })).min(2, "MCQ must have at least two options."),
-        correctAnswerIndex: z.number().int().min(0, "A correct answer must be selected."),
-        explanation: z.string().optional()
-    }) }),
+    z.object({
+        id: z.string(),
+        type: z.literal("mcq"),
+        content: z.object({
+            question: z.string().min(1, "Question is required."),
+            options: z.array(z.object({
+                id: z.string(),
+                text: z.string().min(1, "Option text cannot be empty.")
+            })).min(2, "MCQ must have at least two options."),
+            correctAnswerIndex: z.number().int().min(0, "A correct answer must be selected."),
+            explanation: z.string().optional()
+        }),
+        backgroundColor: z.string().optional(),
+    }),
     z.object({
         id: z.string(),
         type: z.literal("breadcrumb"),
         content: z.array(z.object({ id: z.string(), text: z.string(), href: z.string().optional() })),
+        backgroundColor: z.string().optional(),
     }),
-    z.object({ id: z.string(), type: z.literal("mermaid"), content: z.string().min(1, "Mermaid diagram cannot be empty.") }),
+    z.object({ id: z.string(), type: z.literal("mermaid"), content: z.string().min(1, "Mermaid diagram cannot be empty."), backgroundColor: z.string().optional() }),
     z.object({
         id: z.string(),
         type: z.literal("two-column"),
         content: z.object({
             column1: z.array(contentBlockSchema),
             column2: z.array(contentBlockSchema)
-        })
+        }),
+        backgroundColor: z.string().optional(),
     }),
     z.object({
         id: z.string(),
@@ -115,7 +126,8 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminated
             column1: z.array(contentBlockSchema),
             column2: z.array(contentBlockSchema),
             column3: z.array(contentBlockSchema)
-        })
+        }),
+        backgroundColor: z.string().optional(),
     }),
 ]));
 
