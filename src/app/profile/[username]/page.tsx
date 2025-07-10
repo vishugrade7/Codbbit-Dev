@@ -8,7 +8,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,14 +23,16 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import ContributionHeatmap from "@/components/contribution-heatmap";
 import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
-
+import { getCache, setCache } from "@/lib/cache";
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string };
+type ProblemWithCategory = Problem & { categoryName: string };
 
+const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 // This is the new public profile page
 export default function UserProfilePage() {
-    const { user: authUser, userData } = useAuth(); // Logged-in user
+    const { user: authUser, userData, isPro } = useAuth(); // Logged-in user
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
@@ -40,10 +42,53 @@ export default function UserProfilePage() {
     const [profileUser, setProfileUser] = useState<AppUser | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
+    const [loadingProblems, setLoadingProblems] = useState(true);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Fetch all problems data for use in starred/recent sections
+    useEffect(() => {
+        const fetchAllProblems = async () => {
+            setLoadingProblems(true);
+            if (!db) {
+                setLoadingProblems(false);
+                return;
+            }
+
+            const processData = (data: ApexProblemsData) => {
+                const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                    (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
+                );
+                setAllProblems(problems);
+            };
+            
+            const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            if (cachedData) {
+                processData(cachedData);
+                setLoadingProblems(false);
+                return;
+            }
+
+            try {
+                const apexDocRef = doc(db, "problems", "Apex");
+                const problemsSnap = await getDoc(apexDocRef);
+                if (problemsSnap.exists()) {
+                    const data = problemsSnap.data().Category as ApexProblemsData;
+                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    processData(data);
+                }
+            } catch (error) {
+                console.error("Error fetching all problems for suggestion:", error);
+            } finally {
+                setLoadingProblems(false);
+            }
+        };
+        fetchAllProblems();
+    }, []);
 
     // Effect to fetch the profile data based on username from URL using a real-time listener
     useEffect(() => {
@@ -90,6 +135,14 @@ export default function UserProfilePage() {
         
         return solvedDetails.slice(0, 5);
     }, [profileUser?.solvedProblems]);
+
+    const starredProblemsDetails = useMemo(() => {
+        if (loadingProblems || !profileUser?.starredProblems || allProblems.length === 0) {
+            return [];
+        }
+        const starredIds = new Set(profileUser.starredProblems);
+        return allProblems.filter(p => starredIds.has(p.id));
+    }, [profileUser?.starredProblems, allProblems, loadingProblems]);
 
 
     const handleAvatarClick = () => {
@@ -404,37 +457,73 @@ export default function UserProfilePage() {
               </CardContent>
           </Card>
 
-          {/* Recently Solved */}
-          <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
-              <CardContent>
-                  {recentlySolvedProblems.length > 0 ? (
-                      <div className="space-y-2">
-                          {recentlySolvedProblems.map(problem => (
-                              <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                  <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                      <div className="flex-1">
-                                          <p className="font-medium">{problem.title}</p>
-                                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                              <span>Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</span>
-                                              <span className="text-muted-foreground/50">•</span>
-                                              <Badge variant="secondary">{problem.categoryName}</Badge>
-                                          </div>
-                                      </div>
-                                      <div className="text-right shrink-0">
-                                          <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
-                                          <p className="text-sm font-semibold text-primary mt-1">+{problem.points} pts</p>
-                                      </div>
-                                  </div>
-                              </Link>
-                          ))}
-                      </div>
-                  ) : (
-                      <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
-                  )}
-              </CardContent>
-          </Card>
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card>
+                    <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
+                    <CardContent>
+                        {recentlySolvedProblems.length > 0 ? (
+                            <div className="space-y-2">
+                                {recentlySolvedProblems.map(problem => (
+                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                        <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                            <div className="flex-1">
+                                                <p className="font-medium">{problem.title}</p>
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                                    <span>Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</span>
+                                                    <span className="text-muted-foreground/50">•</span>
+                                                    <Badge variant="secondary">{problem.categoryName}</Badge>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
+                                                <p className="text-sm font-semibold text-primary mt-1">+{problem.points} pts</p>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
+                        )}
+                    </CardContent>
+                </Card>
 
+                <Card>
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
+                    <CardContent>
+                        {loadingProblems ? (
+                            <div className="flex justify-center items-center h-full"><LoaderCircle className="h-6 w-6 animate-spin text-primary" /></div>
+                        ) : starredProblemsDetails.length > 0 ? (
+                            <div className="space-y-2">
+                                {starredProblemsDetails.map(problem => {
+                                    const isLocked = problem.isPremium && !isPro;
+                                    const isSolved = userData?.solvedProblems?.[problem.id];
+                                    return (
+                                        <Link key={problem.id} href={isLocked ? '/pricing' : `/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                            <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                                <div className="flex-1">
+                                                    <p className="font-medium">{problem.title}</p>
+                                                    <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-4 shrink-0">
+                                                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                                                    {isSolved ? (
+                                                        <UserIcon className="h-4 w-4 text-green-500" />
+                                                    ) : (
+                                                         <Circle className="h-4 w-4 text-muted-foreground/50" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                             <p className="text-muted-foreground text-center py-4 text-sm">No problems starred yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+           </div>
       </div>
     </main>
     {isOwnProfile && <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={profileUser} />}
