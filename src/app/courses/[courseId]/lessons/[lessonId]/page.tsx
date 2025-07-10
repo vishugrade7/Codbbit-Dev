@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -407,7 +406,6 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
                     ) : (
                         <ArrowRight className="h-4 w-4" />
                     )}
-                    <span className="sr-only">{currentIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
                 </Button>
             </div>
              {blockContent.body && <p className="text-muted-foreground mt-4">{blockContent.body}</p>}
@@ -426,7 +424,7 @@ const markdownComponents: Components = {
                             <span {...props} className="comment-highlight" />
                         </TooltipTrigger>
                         <TooltipContent className="bg-background/80 backdrop-blur-md">
-                            <p>{dataComment}</p>
+                            <div>{dataComment}</div>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -961,22 +959,3 @@ export default function LessonPage() {
         </div>
     );
 }
-
-    
-
-    
-
-
-
-
-    
-
-
-
-
-    
-
-
-
-
-    
