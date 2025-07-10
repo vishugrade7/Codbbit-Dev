@@ -106,6 +106,10 @@ export type LeaderboardUser = {
   country: string;
   company?: string;
   companyLogoUrl?: string;
+  emailVerified?: boolean;
+  razorpaySubscriptionStatus?: string;
+  subscriptionEndDate?: any; // Firestore Timestamp
+  isAdmin?: boolean;
 };
 
 export type Contribution = {

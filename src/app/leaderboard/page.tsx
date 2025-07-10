@@ -15,14 +15,62 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star, ChevronsUpDown, Check, Code } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+
+const VerifiedIcon = () => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger>
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-label="Verified account"
+                    role="img"
+                    className="w-5 h-5 fill-current text-blue-500"
+                >
+                    <g>
+                        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.237C14.05 2.89 12.825 2 11.37.96 9.898 2 8.674 2.89 7.824 4.075c-.416-.153-.866-.237-1.336-.237-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.02-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.336-.238 1.092 1.47 2.652 2.438 4.45 2.438s3.358-.968 4.45-2.438c.416.152.866.238 1.336.238 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.068-2.415-1.207c-.246-.123-.404-.38-.404-.665 0-.414.336-.75.75-.75.143 0 .288.04.416.126l.115.068 2.415 1.207 4.334-6.5c.145-.217.382-.334.625-.334.143 0 .288.04.416.126l.115.068c.246.123.404.38.404.665 0 .413-.336.75-.75.75z"></path>
+                    </g>
+                </svg>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Verified</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+);
+
+const ProIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <defs>
+      <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
+        <stop offset="100%" style={{ stopColor: '#FFA500', stopOpacity: 1 }} />
+      </linearGradient>
+    </defs>
+    <path
+      d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+      fill="url(#gold-gradient)"
+      stroke="url(#gold-gradient)"
+    />
+  </svg>
+);
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -120,7 +168,11 @@ export default function Leaderboard() {
                 points: data.points || 0,
                 country: data.country || 'N/A',
                 company: data.company || '',
-                companyLogoUrl: data.companyLogoUrl || ''
+                companyLogoUrl: data.companyLogoUrl || '',
+                emailVerified: data.emailVerified || false,
+                razorpaySubscriptionStatus: data.razorpaySubscriptionStatus,
+                subscriptionEndDate: data.subscriptionEndDate,
+                isAdmin: data.isAdmin || false,
             };
         });
         setLeaderboardData(users);
@@ -175,6 +227,15 @@ export default function Leaderboard() {
     setCurrentPage(1);
     setFilterValue(value);
   }
+
+  const isUserPro = (user: LeaderboardUser) => {
+    if (!user) return false;
+    const isAdmin = user.isAdmin || false;
+    const status = user.razorpaySubscriptionStatus;
+    const endDate = user.subscriptionEndDate?.toDate();
+    const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
+    return isAdmin || hasActiveSub;
+  };
 
   const filteredData = useMemo(() => {
     let data = leaderboardData;
@@ -236,12 +297,21 @@ export default function Leaderboard() {
               <CardContent className="p-6 flex flex-col flex-grow">
                   <div className="flex justify-between items-start flex-grow">
                       <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
-                          <Avatar className="h-12 w-12 border-2 border-primary">
+                           <Avatar className={cn(
+                                "h-12 w-12 border-2", 
+                                isUserPro(currentUserEntry) 
+                                    ? "border-yellow-400" 
+                                    : "border-primary/50"
+                            )}>
                               <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
                               <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div>
-                              <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
+                               <div className="flex items-center gap-2">
+                                <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
+                                {isUserPro(currentUserEntry) && <ProIcon />}
+                                {currentUserEntry.emailVerified && <VerifiedIcon />}
+                            </div>
                               <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                                {currentUserEntry.company && (
                                 <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
@@ -417,12 +487,19 @@ export default function Leaderboard() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+                       <Avatar className={cn(
+                          "h-10 w-10 border-2", 
+                          isUserPro(user) ? "border-yellow-400" : "border-transparent"
+                      )}>
                         <AvatarImage src={user.avatarUrl} alt={user.name} />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-semibold">{user.name}</p>
+                        <div className="flex items-center gap-1.5">
+                            <p className="font-semibold">{user.name}</p>
+                             {isUserPro(user) && <ProIcon />}
+                             {user.emailVerified && <VerifiedIcon />}
+                        </div>
                         <p className="text-sm text-muted-foreground">@{user.username}</p>
                       </div>
                     </div>
