@@ -55,10 +55,10 @@ const ProIconOverlay = () => (
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="absolute -bottom-1 -right-1 h-7 w-7 flex items-center justify-center">
-                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="14" cy="14" r="14" fill="#FFC700"/>
-                        <path d="M11 10L7 14L11 18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M17 10L21 14L17 18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="11.5" fill="#1D9BF0" stroke="#0F172A" stroke-width="1"/>
+                        <path d="M9 10L6 13L9 16" stroke="#0F172A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 10L18 13L15 16" stroke="#0F172A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
             </TooltipTrigger>
