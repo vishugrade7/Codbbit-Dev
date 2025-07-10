@@ -1336,7 +1336,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'text', content: '' }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'callout', content: { icon: '💡', text: "Apex doesn't have a `main()` function like Java or C++. It runs in triggers, classes, and anonymous blocks." } }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         },
@@ -1349,7 +1349,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'text', content: '' }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'callout', content: { icon: '💡', text: "Apex doesn't have a `main()` function like Java or C++. It runs in triggers, classes, and anonymous blocks." } }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         });
@@ -1532,3 +1532,4 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
