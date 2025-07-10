@@ -44,8 +44,7 @@ const VerifiedIcon = () => (
                     fill="currentColor"
                 >
                    <g>
-                     <path d="M22,11.082V12a10,10,0,1,1-5.93-9.14" stroke="none"></path>
-                     <polyline points="22 4 12 14.01 9 11.01" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></polyline>
+                     <path d="M20.69,8.69,19.28,7.28a1,1,0,0,0-1.42,0l-6.15,6.15L8,9.72a1,1,0,0,0-1.42,0L5.16,11.14a1,1,0,0,0,0,1.42l5.4,5.4a1,1,0,0,0,1.42,0l8.71-8.71A1,1,0,0,0,20.69,8.69Z" stroke="none"></path>
                    </g>
                 </svg>
             </TooltipTrigger>
@@ -60,11 +59,11 @@ const ProIconOverlay = () => (
     <TooltipProvider>
         <Tooltip>
             <TooltipTrigger asChild>
-                <div className="absolute -bottom-1 -right-1 h-7 w-7 flex items-center justify-center">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="12" fill="#FDB813"/>
-                        <path d="M10 9.5L7.5 12L10 14.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14 9.5L16.5 12L14 14.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <div className="absolute -bottom-1 -right-1 h-6 w-6 flex items-center justify-center">
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill="#FDB813"/>
+                        <path d="M10.5 9.5L8 12L10.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14.5 9.5L17 12L14.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                 </div>
             </TooltipTrigger>
