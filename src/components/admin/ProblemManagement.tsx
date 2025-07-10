@@ -15,6 +15,7 @@ import Image from "next/image";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import mermaid from "mermaid";
 
 import { useToast } from "@/hooks/use-toast";
 import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore } from "@/app/upload-problem/actions";
@@ -620,6 +621,57 @@ const SortableDisplayOrderItem = ({ id, componentType }: { id: string, component
     );
 };
 
+const LiveMermaidPreview = ({ chart }: { chart: string }) => {
+    const { theme } = useTheme();
+    const [svg, setSvg] = useState('');
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+        });
+    }, [theme]);
+
+    useEffect(() => {
+        if (!chart) {
+            setSvg('');
+            setError('');
+            return;
+        }
+
+        const renderMermaid = async () => {
+            try {
+                // Unique ID for each render to avoid conflicts
+                const id = `live-mermaid-${Math.random().toString(36).substr(2, 9)}`;
+                const { svg: renderedSvg } = await mermaid.render(id, chart);
+                setSvg(renderedSvg);
+                setError('');
+            } catch (e: any) {
+                setError(e.message);
+                setSvg('');
+            }
+        };
+
+        const timer = setTimeout(renderMermaid, 300); // Debounce rendering
+        return () => clearTimeout(timer);
+
+    }, [chart, theme]);
+
+
+    return (
+        <div className="w-full h-full flex items-center justify-center">
+            {error ? (
+                <div className="p-4 text-destructive bg-destructive/10 rounded-md text-xs font-mono whitespace-pre-wrap w-full">
+                    {error}
+                </div>
+            ) : (
+                <div dangerouslySetInnerHTML={{ __html: svg }} className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full" />
+            )}
+        </div>
+    );
+};
+
 
 export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null, onClose: () => void }) {
     const { toast } = useToast();
@@ -669,6 +721,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
 
     const metadataTypeValue = form.watch("metadataType");
     const companyValue = form.watch("company");
+    const mermaidDiagramValue = form.watch("mermaidDiagram");
 
     useEffect(() => {
         if (companyValue !== selectedCompanyName) {
@@ -846,7 +899,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     </FormItem>
                                 )} />
                             </div>
-                            <FormItem>
+                             <FormItem>
                                 <FormLabel>Content Display Order</FormLabel>
                                 <DisplayOrderManager control={form.control} />
                                 <FormDescription>Drag to reorder how the main content appears on the problem page.</FormDescription>
@@ -865,13 +918,36 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                            <FormField control={form.control} name="mermaidDiagram" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Mermaid Diagram (Optional)</FormLabel>
-                                    <FormControl><Textarea placeholder="graph TD; A-->B;" {...field} rows={5} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+                            <FormField
+                                control={form.control}
+                                name="mermaidDiagram"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Mermaid Diagram (Optional)</FormLabel>
+                                        <ResizablePanelGroup direction="horizontal" className="min-h-[300px] max-w-full rounded-lg border">
+                                            <ResizablePanel defaultSize={50}>
+                                                <FormControl className="h-full">
+                                                    <Textarea 
+                                                        placeholder={'graph TD;\n    A-->B;'} 
+                                                        {...field} 
+                                                        className="font-mono h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2"
+                                                    />
+                                                </FormControl>
+                                            </ResizablePanel>
+                                            <ResizableHandle withHandle />
+                                            <ResizablePanel defaultSize={50}>
+                                                <div className="flex flex-col h-full bg-muted/30">
+                                                    <p className="p-2.5 text-xs font-semibold text-muted-foreground border-b">Live Preview</p>
+                                                    <div className="flex-1 p-4 overflow-auto">
+                                                        <LiveMermaidPreview chart={mermaidDiagramValue} />
+                                                    </div>
+                                                </div>
+                                            </ResizablePanel>
+                                        </ResizablePanelGroup>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="difficulty" render={({ field }) => (
                                     <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
