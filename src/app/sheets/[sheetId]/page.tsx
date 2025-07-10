@@ -216,6 +216,15 @@ export default function SheetDisplayPage() {
           default: return 'bg-muted';
         }
     };
+
+    const getDifficultyRowClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
+          case 'medium': return 'bg-primary/5 hover:bg-primary/10';
+          case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
+          default: return 'hover:bg-muted/50';
+        }
+    };
     
     const timeAgo = useMemo(() => {
         if (!sheet?.createdAt) return '';
@@ -415,7 +424,8 @@ export default function SheetDisplayPage() {
                                 <TableRow 
                                     key={problem.id} 
                                     className={cn(
-                                        "cursor-pointer hover:bg-muted/50",
+                                        "cursor-pointer",
+                                        getDifficultyRowClass(problem.difficulty),
                                         isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
                                     )}
                                     onClick={() => {
