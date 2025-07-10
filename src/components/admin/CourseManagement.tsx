@@ -149,7 +149,7 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onChange: (newValue: string) => void, [key: string]: any }) {
+function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onChange?: (newValue: string) => void, [key: string]: any }) {
     const editorRef = useRef<HTMLDivElement>(null);
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -207,7 +207,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
         if (selection) {
             restoreSelection();
             document.execCommand(command, false, valueArg);
-            if(editorRef.current) onChange(editorRef.current.innerHTML);
+            if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
             setIsToolbarOpen(false);
         }
     };
@@ -252,7 +252,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                 span.appendChild(selection.extractContents());
                 selection.insertNode(span);
             }
-            if(editorRef.current) onChange(editorRef.current.innerHTML);
+            if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
         }
         setIsCommentDialogOpen(false);
         setCommentText('');
@@ -272,13 +272,15 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                 span.appendChild(selection.extractContents());
                 selection.insertNode(span);
             }
-             if(editorRef.current) onChange(editorRef.current.innerHTML);
+             if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
         }
         setIsColorDialogOpen(false);
     };
 
     const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
-        onChange(event.currentTarget.innerHTML);
+        if (onChange) {
+            onChange(event.currentTarget.innerHTML);
+        }
     };
     
     return (
@@ -707,7 +709,11 @@ function McqBlockEditor({ path }: { path: string }) {
   return (
     <div className="bg-muted p-4 rounded-md border space-y-4">
       <FormField control={control} name={`${path}.content.question`} render={({ field }) => (
-          <FormItem><FormLabel>Question</FormLabel><FormControl><Textarea {...field} placeholder="What is the capital of France?" /></FormControl><FormMessage /></FormItem>
+          <FormItem>
+              <FormLabel>Question</FormLabel>
+              <FormControl><TextareaWithToolbar {...field} placeholder="What is the capital of France?" /></FormControl>
+              <FormMessage />
+          </FormItem>
       )} />
       
       <FormItem>
@@ -738,7 +744,10 @@ function McqBlockEditor({ path }: { path: string }) {
       <Button type="button" variant="outline" size="sm" onClick={addOption}><PlusCircle className="mr-2 h-4 w-4" /> Add Option</Button>
       
       <FormField control={control} name={`${path}.content.explanation`} render={({ field }) => (
-          <FormItem><FormLabel>Explanation (Optional)</FormLabel><FormControl><Textarea {...field} placeholder="Provide an explanation for the correct answer." /></FormControl></FormItem>
+          <FormItem>
+              <FormLabel>Explanation (Optional)</FormLabel>
+              <FormControl><TextareaWithToolbar {...field} placeholder="Provide an explanation for the correct answer." /></FormControl>
+          </FormItem>
       )} />
     </div>
   )
@@ -962,7 +971,7 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Description</FormLabel>
-                        <FormControl><Textarea placeholder="Declare a boolean variable..." {...field} /></FormControl>
+                        <FormControl><TextareaWithToolbar {...field} placeholder="Declare a boolean variable..." /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )}
@@ -1362,7 +1371,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'callout', content: { icon: '💡', text: "Apex doesn't have a `main()` function like Java or C++. It runs in triggers, classes, and anonymous blocks." } }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'callout', content: { icon: '💡', text: 'Apex doesn’t have a `main()` function like Java or C++. It runs in triggers, classes, and anonymous blocks.' } }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         },
@@ -1375,7 +1384,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
             description: course?.description || '',
             category: course?.category || '',
             thumbnailUrl: course?.thumbnailUrl || '',
-            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'callout', content: { icon: '💡', text: "Apex doesn't have a `main()` function like Java or C++. It runs in triggers, classes, and anonymous blocks." } }] }] }],
+            modules: course?.modules?.length ? course.modules : [{ id: uuidv4(), title: 'First Module', lessons: [{ id: uuidv4(), title: 'First Lesson', isFree: true, contentBlocks: [{id: uuidv4(), type: 'callout', content: { icon: '💡', text: 'Apex doesn’t have a `main()` function like Java or C++. It runs in triggers, classes, and anonymous blocks.' } }] }] }],
             isPublished: course?.isPublished || false,
             isPremium: course?.isPremium || false,
         });
@@ -1428,7 +1437,13 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                             <FormItem><FormLabel>Course Title</FormLabel><FormControl><Input placeholder="e.g., Introduction to Apex" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="description" render={({ field }) => (
-                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the course..." {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                    <TextareaWithToolbar {...field} placeholder="A brief summary of the course..." />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="category" render={({ field }) => (
@@ -1558,6 +1573,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
