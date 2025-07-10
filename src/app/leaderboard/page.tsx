@@ -56,8 +56,8 @@ const ProIconOverlay = () => (
                 <div className="absolute -bottom-1 -right-1 h-7 w-7 flex items-center justify-center">
                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="12" fill="#FDB813"/>
-                        <path d="M9.5 8L6 12L9.5 16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14.5 8L18 12L14.5 16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 9.5L7.5 12L10 14.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 9.5L16.5 12L14 14.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
             </TooltipTrigger>
