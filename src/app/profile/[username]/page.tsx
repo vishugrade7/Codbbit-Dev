@@ -366,7 +366,7 @@ export default function UserProfilePage() {
                     <Avatar className={cn(
                         "h-28 w-28 border-4", 
                         isProfileUserPro 
-                            ? "border-yellow-400 shadow-lg animate-glow" 
+                            ? "border-yellow-400 shadow-lg" 
                             : "border-primary/50"
                     )}>
                         <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
@@ -378,7 +378,7 @@ export default function UserProfilePage() {
                       <TooltipProvider>
                           <Tooltip>
                               <TooltipTrigger asChild>
-                                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md animate-sparkle">
+                                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
                                       <Code className="h-5 w-5"/>
                                   </div>
                               </TooltipTrigger>
