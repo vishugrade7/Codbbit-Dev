@@ -340,7 +340,7 @@ const TextEditorWithPreview = ({ field, placeholder, className }: { field: any; 
                         <p className="p-2.5 text-xs font-semibold text-muted-foreground border-b shrink-0">Live Preview</p>
                         <div className="flex-1 p-4 overflow-auto bg-muted/10">
                             <div className="prose dark:prose-invert max-w-none">
-                                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[gfm]}>
+                                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
                                     {field.value || ''}
                                 </ReactMarkdown>
                                 {!field.value && <span className="text-muted-foreground">Preview will appear here.</span>}
@@ -437,8 +437,8 @@ function CodeBlockEditor({ field }: { field: any }) {
     }
 
     return (
-        <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 my-6">
-             <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800">
+        <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6">
+             <div className="flex items-center justify-between px-4 py-2 bg-slate-800">
                 <div className="flex gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-red-500"></div>
                     <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
