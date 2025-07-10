@@ -364,6 +364,12 @@ export default function UserProfilePage() {
                             <Globe className="h-4 w-4 shrink-0" />
                             <span>{profileUser.country}</span>
                         </div>
+                        {profileUser.isEmailPublic && (
+                             <div className="flex items-center gap-2">
+                                <Mail className="h-4 w-4 shrink-0" />
+                                <span>{profileUser.email}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
