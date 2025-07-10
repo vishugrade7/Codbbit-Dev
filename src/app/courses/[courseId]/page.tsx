@@ -123,11 +123,13 @@ export default function CourseDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* --- Main Content --- */}
                     <div className="lg:col-span-2 space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <Badge variant="secondary" className="w-fit mb-2">{course.category}</Badge>
-                                <CardTitle className="text-3xl md:text-4xl font-bold font-headline tracking-tight">{course.title}</CardTitle>
-                                <CardDescription className="pt-2 text-base">{course.description}</CardDescription>
+                        <Card className="bg-gradient-to-br from-primary/10 to-background">
+                            <CardHeader className="p-4">
+                                <div className="flex items-center justify-between">
+                                    <Badge variant="secondary" className="w-fit">{course.category}</Badge>
+                                </div>
+                                <CardTitle className="text-2xl md:text-3xl font-bold font-headline tracking-tight pt-2">{course.title}</CardTitle>
+                                <CardDescription className="pt-1 text-base">{course.description}</CardDescription>
                             </CardHeader>
                         </Card>
 
