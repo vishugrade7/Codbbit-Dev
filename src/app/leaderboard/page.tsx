@@ -30,7 +30,7 @@ const VerifiedIcon = () => (
     <TooltipProvider>
         <Tooltip>
             <TooltipTrigger>
-                <svg
+                 <svg
                     viewBox="0 0 22 22"
                     aria-label="Verified account"
                     role="img"
@@ -51,28 +51,34 @@ const VerifiedIcon = () => (
 );
 
 const ProIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    className="w-5 h-5"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <defs>
-      <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
-        <stop offset="100%" style={{ stopColor: '#FFA500', stopOpacity: 1 }} />
-      </linearGradient>
-    </defs>
-    <path
-      d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-      fill="url(#gold-gradient)"
-      stroke="url(#gold-gradient)"
-    />
-  </svg>
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger>
+                <div className="relative h-5 w-5">
+                     <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <defs>
+                            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
+                                <stop offset="100%" style={{ stopColor: '#FFA500', stopOpacity: 1 }} />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Pro User</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
 );
 
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -312,7 +318,6 @@ export default function Leaderboard() {
                           <div>
                                <div className="flex items-center gap-2">
                                 <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
-                                {isUserPro(currentUserEntry) && <ProIcon />}
                                 {currentUserEntry.emailVerified && <VerifiedIcon />}
                             </div>
                               <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
@@ -500,7 +505,6 @@ export default function Leaderboard() {
                       <div>
                         <div className="flex items-center gap-1.5">
                             <p className="font-semibold">{user.name}</p>
-                             {isUserPro(user) && <ProIcon />}
                              {user.emailVerified && <VerifiedIcon />}
                         </div>
                         <p className="text-sm text-muted-foreground">@{user.username}</p>
