@@ -78,9 +78,6 @@ const ProIcon = () => (
             strokeLinecap="round"
             strokeLinejoin="round"
         />
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontSize="9" fill="#4A2C00" fontWeight="bold" fontFamily="sans-serif">
-            PRO
-        </text>
     </svg>
 );
 
