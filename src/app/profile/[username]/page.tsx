@@ -25,6 +25,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { getCache, setCache } from "@/lib/cache";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTheme } from "next-themes";
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -56,10 +57,11 @@ const VerifiedIcon = () => (
 
 // This is the new public profile page
 export default function UserProfilePage() {
-    const { user: authUser, userData, isPro } = useAuth(); // Logged-in user
+    const { user: authUser, userData, isPro: isAuthUserPro, brandingSettings, loadingBranding } = useAuth(); // Logged-in user
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
+    const { theme } = useTheme();
 
     const username = params.username as string;
 
@@ -73,6 +75,21 @@ export default function UserProfilePage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const isProfileUserPro = useMemo(() => {
+        if (!profileUser) return false;
+        const isAdmin = profileUser.isAdmin || false;
+        const status = profileUser.razorpaySubscriptionStatus;
+        const endDate = profileUser.subscriptionEndDate?.toDate();
+        const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
+        return isAdmin || hasActiveSub;
+    }, [profileUser]);
+
+    const proLogoSrc = useMemo(() => {
+        if (!brandingSettings) return null;
+        const isDark = theme === 'dark';
+        return (isDark ? brandingSettings.logo_pro_dark : brandingSettings.logo_pro_light) || null;
+    }, [brandingSettings, theme]);
 
     // Fetch all problems data for use in starred/recent sections
     useEffect(() => {
@@ -322,7 +339,7 @@ export default function UserProfilePage() {
           <Card className="p-6 sm:rounded-xl shadow-lg">
             <div className="flex flex-col sm:flex-row items-center gap-6">
                  <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                    <Avatar className="h-28 w-28 border-4 border-primary/50">
+                    <Avatar className={cn("h-28 w-28 border-4", isProfileUserPro ? "border-yellow-400" : "border-primary/50")}>
                         <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                         <AvatarFallback className="text-4xl">
                             {profileUser.name.split(' ').map(n => n[0]).join('')}
@@ -341,6 +358,18 @@ export default function UserProfilePage() {
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
                         {profileUser.emailVerified && <VerifiedIcon />}
+                        {isProfileUserPro && proLogoSrc && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Image src={proLogoSrc} alt="Pro User" width={24} height={24} />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Pro Member</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -551,7 +580,7 @@ export default function UserProfilePage() {
                         ) : starredProblemsDetails.length > 0 ? (
                             <div className="space-y-2">
                                 {starredProblemsDetails.map(problem => {
-                                    const isLocked = problem.isPremium && !isPro;
+                                    const isLocked = problem.isPremium && !isAuthUserPro;
                                     const isSolved = userData?.solvedProblems?.[problem.id];
                                     return (
                                         <Link key={problem.id} href={isLocked ? '/pricing' : `/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
