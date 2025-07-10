@@ -641,51 +641,53 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
     });
     
     useEffect(() => {
+        const defaultValues: z.infer<typeof problemFormSchema> = formMode === 'edit' && problem ? {
+            id: problem.id,
+            title: problem.title,
+            description: problem.description,
+            category: problem.categoryName,
+            difficulty: problem.difficulty,
+            metadataType: problem.metadataType,
+            triggerSObject: problem.triggerSObject || "",
+            sampleCode: problem.sampleCode,
+            testcases: problem.testcases,
+            examples: problem.examples?.length ? problem.examples.map(e => ({...e})) : [{ input: "", output: "", explanation: "" }],
+            hints: problem.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
+            company: problem.company || "",
+            companyLogoUrl: problem.companyLogoUrl || "",
+            isPremium: problem.isPremium || false,
+            imageUrl: problem.imageUrl || "",
+            mermaidDiagram: problem.mermaidDiagram || "",
+            displayOrder: problem.displayOrder || ['description', 'image', 'mermaid']
+        } : {
+            id: undefined,
+            title: "",
+            description: "",
+            category: "",
+            difficulty: "Easy",
+            metadataType: "Class",
+            triggerSObject: "",
+            sampleCode: "",
+            testcases: "",
+            examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
+            hints: [{value: ""}],
+            company: "",
+            companyLogoUrl: "",
+            isPremium: false,
+            imageUrl: "",
+            mermaidDiagram: "",
+            displayOrder: ['description', 'image', 'mermaid']
+        };
+        form.reset(defaultValues);
+        
         if (formMode === 'edit' && problem) {
-            form.reset({
-                id: problem.id,
-                title: problem.title,
-                description: problem.description,
-                category: problem.categoryName,
-                difficulty: problem.difficulty,
-                metadataType: problem.metadataType,
-                triggerSObject: problem.triggerSObject || "",
-                sampleCode: problem.sampleCode,
-                testcases: problem.testcases,
-                examples: problem.examples?.length ? problem.examples.map(e => ({...e})) : [{ input: "", output: "", explanation: "" }],
-                hints: problem.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
-                company: problem.company || "",
-                companyLogoUrl: problem.companyLogoUrl || "",
-                isPremium: problem.isPremium || false,
-                imageUrl: problem.imageUrl || "",
-                mermaidDiagram: problem.mermaidDiagram || "",
-                displayOrder: problem.displayOrder || ['description', 'image', 'mermaid']
-            });
             setCompanyLogo(problem.companyLogoUrl || null);
             setSelectedCompanyName(problem.company || null);
         } else {
-             form.reset({
-                id: undefined,
-                title: "",
-                description: "",
-                category: "",
-                difficulty: "Easy",
-                metadataType: "Class",
-                triggerSObject: "",
-                sampleCode: "",
-                testcases: "",
-                examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
-                hints: [{value: ""}],
-                company: "",
-                companyLogoUrl: "",
-                isPremium: false,
-                imageUrl: "",
-                mermaidDiagram: "",
-                displayOrder: ['description', 'image', 'mermaid']
-            });
             setCompanyLogo(null);
             setSelectedCompanyName(null);
         }
+
     }, [problem, form, formMode]);
 
     const metadataTypeValue = form.watch("metadataType");
