@@ -469,7 +469,7 @@ const markdownComponents: Components = {
             return (
                 <TooltipProvider>
                     <Tooltip>
-                        <TooltipTrigger>
+                        <TooltipTrigger asChild>
                             <span {...props} className="comment-highlight" />
                         </TooltipTrigger>
                         <TooltipContent className="bg-background/80 backdrop-blur-md">
@@ -773,7 +773,10 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
             ...(block.backgroundColor ? { background: block.backgroundColor } : {}),
             ...(block.textColor ? { color: block.textColor } : {}),
         };
-        const wrapperClassName = block.backgroundColor ? "p-4 rounded-lg my-6" : "";
+        const wrapperClassName = cn(
+            "my-4",
+            block.backgroundColor && "p-4 rounded-lg"
+        );
 
         if (block.backgroundColor || block.textColor) {
              return (
@@ -783,7 +786,11 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
              )
         }
         
-        return <div key={block.id}>{renderInnerBlock(block)}</div>;
+        return (
+            <div key={block.id} className="p-4 rounded-lg bg-background/60 backdrop-blur-lg border my-4">
+                {renderInnerBlock(block)}
+            </div>
+        );
       })}
     </>
   );
