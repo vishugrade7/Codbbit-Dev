@@ -164,6 +164,13 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     
     const [selection, setSelection] = useState<Range | null>(null);
 
+    // Sync external value changes to the editor
+    useEffect(() => {
+        if (editorRef.current && editorRef.current.innerHTML !== value) {
+            editorRef.current.innerHTML = value || '';
+        }
+    }, [value]);
+
     const saveSelection = useCallback(() => {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
@@ -283,7 +290,6 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                     onInput={handleInput}
                     onBlur={() => setIsToolbarOpen(false)}
                     contentEditable
-                    dangerouslySetInnerHTML={{ __html: value || '' }}
                     {...props}
                     className={cn(
                         'min-h-[200px] w-full rounded-md border-input bg-transparent p-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring prose dark:prose-invert max-w-none',
@@ -1551,6 +1557,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
