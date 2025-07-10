@@ -290,6 +290,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                     onInput={handleInput}
                     onBlur={() => setIsToolbarOpen(false)}
                     contentEditable
+                    suppressContentEditableWarning // Suppress warning about contentEditable without children
                     {...props}
                     className={cn(
                         'min-h-[200px] w-full rounded-md border-input bg-transparent p-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring prose dark:prose-invert max-w-none',
@@ -1557,6 +1558,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
