@@ -24,6 +24,7 @@ import ContributionHeatmap from "@/components/contribution-heatmap";
 import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
 import { getCache, setCache } from "@/lib/cache";
+import { cn } from "@/lib/utils";
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -252,6 +253,15 @@ export default function UserProfilePage() {
         }
     };
     
+    const getDifficultyRowClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
+          case 'medium': return 'bg-primary/5 hover:bg-primary/10';
+          case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
+          default: return 'hover:bg-muted/50';
+        }
+    };
+
     const CATEGORY_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
     
     const categoryData = profileUser.categoryPoints ? 
@@ -478,7 +488,7 @@ export default function UserProfilePage() {
                             <div className="space-y-2">
                                 {recentlySolvedProblemsDetails.map(problem => (
                                     <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                        <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                        <div className={cn("flex items-center justify-between gap-4 p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
                                             <div className="flex-1">
                                                 <p className="font-medium">{problem.title}</p>
                                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
@@ -513,7 +523,7 @@ export default function UserProfilePage() {
                                     const isSolved = userData?.solvedProblems?.[problem.id];
                                     return (
                                         <Link key={problem.id} href={isLocked ? '/pricing' : `/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                            <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                            <div className={cn("flex items-center justify-between gap-4 p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
                                                 <div className="flex-1">
                                                     <p className="font-medium">{problem.title}</p>
                                                     <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
