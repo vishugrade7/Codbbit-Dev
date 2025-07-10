@@ -1119,16 +1119,16 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
 
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar {...field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading2': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading3': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar field={field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
-            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextareaWithToolbar field={{value: field.value.text, onChange: (newText: string) => field.onChange({...field.value, text: newText})}} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar {...field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextareaWithToolbar value={field.value.text} onChange={(newText: string) => field.onChange({...field.value, text: newText})} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider': return <hr className="my-4"/>
-            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar {...field} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar {...field} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list': return <TodoListBlock path={path} />;
             case 'toggle-list': return <ToggleListBlock path={path} />;
             case 'problem': return <ProblemBlock path={path} />;
@@ -1558,6 +1558,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
