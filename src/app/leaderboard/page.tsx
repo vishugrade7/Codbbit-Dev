@@ -363,7 +363,7 @@ export default function Leaderboard() {
                           </div>
                       </div>
                       <div className="flex-shrink-0">
-                          <Button asChild size="sm">
+                          <Button asChild size="sm" className="text-primary-foreground dark:text-white">
                             <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
                               Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
