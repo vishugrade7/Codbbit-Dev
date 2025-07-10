@@ -15,6 +15,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -33,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/types";
 import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter } from "lucide-react";
 import { Switch } from "./ui/switch";
+import { ScrollArea } from "./ui/scroll-area";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -220,169 +222,172 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg h-full sm:h-auto flex flex-col">
+        <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+                Make changes to your profile here. Click save when you're done.
+            </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader className="flex flex-row justify-between items-center">
-              <div>
-                <DialogTitle>Edit Profile</DialogTitle>
-                <DialogDescription>
-                  Make changes to your profile here. Click save when you're done.
-                </DialogDescription>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 min-h-0 flex flex-col">
+            <ScrollArea className="flex-1 -mx-6 px-6">
+              <div className="space-y-4 py-4">
+                {currentUser && !currentUser.emailVerified && (
+                  <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm">
+                    Your email is not verified. 
+                    <Button variant="link" size="sm" className="p-0 h-auto ml-1 text-yellow-800 dark:text-yellow-300" onClick={handleResendVerification} disabled={isSendingVerification}>
+                      {isSendingVerification ? <Loader2 className="h-4 w-4 animate-spin"/> : "Resend verification email."}
+                    </Button>
+                  </div>
+                )}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <div className="relative">
+                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="Your full name" {...field} className="pl-10" />
+                        </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isEmailPublic"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Show Email</FormLabel>
+                        <FormDescription>
+                          Allow others to see your email on your public profile.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                        <div className="relative">
+                          <FormControl>
+                              <div className="relative">
+                                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    {companyLogo && !logoError ? (
+                                        <Image
+                                          src={companyLogo}
+                                          alt="Company Logo"
+                                          width={20}
+                                          height={20}
+                                          onError={() => setLogoError(true)}
+                                        />
+                                    ) : (
+                                        <Building className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <Input 
+                                    placeholder="Your company or college" 
+                                    {...field} 
+                                    className="pl-10"
+                                    autoComplete="off"
+                                    onFocus={() => companyValue && suggestions.length > 0 && setIsSuggestionsOpen(true)}
+                                    onBlur={() => setIsSuggestionsOpen(false)}
+                                  />
+                              </div>
+                          </FormControl>
+                          {isSuggestionsOpen && suggestions.length > 0 && (
+                            <Card className="absolute z-10 w-full mt-1 bg-popover border-border shadow-lg">
+                              <CardContent className="p-0">
+                                <ul className="flex flex-col">
+                                  {suggestions.map((suggestion) => (
+                                    <CompanySuggestionItem key={suggestion.domain} suggestion={suggestion} onClick={handleSuggestionClick} />
+                                  ))}
+                                </ul>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="trailheadUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Trailhead URL</FormLabel>
+                      <div className="relative">
+                            <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="https://trailblazer.me/id/..." {...field} className="pl-10" />
+                        </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="githubUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>GitHub URL</FormLabel>
+                      <div className="relative">
+                            <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="https://github.com/..." {...field} className="pl-10" />
+                        </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="linkedinUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>LinkedIn URL</FormLabel>
+                      <div className="relative">
+                            <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="https://linkedin.com/in/..." {...field} className="pl-10" />
+                        </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="twitterUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Twitter / X URL</FormLabel>
+                      <div className="relative">
+                            <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="https://x.com/..." {...field} className="pl-10" />
+                        </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+            </ScrollArea>
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save changes
               </Button>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-               {currentUser && !currentUser.emailVerified && (
-                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm">
-                  Your email is not verified. 
-                  <Button variant="link" size="sm" className="p-0 h-auto ml-1 text-yellow-800 dark:text-yellow-300" onClick={handleResendVerification} disabled={isSendingVerification}>
-                    {isSendingVerification ? <Loader2 className="h-4 w-4 animate-spin"/> : "Resend verification email."}
-                  </Button>
-                </div>
-              )}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <div className="relative">
-                          <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="Your full name" {...field} className="pl-10" />
-                      </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="isEmailPublic"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Show Email</FormLabel>
-                      <FormDescription>
-                        Allow others to see your email on your public profile.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                            <div className="relative">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                  {companyLogo && !logoError ? (
-                                      <Image
-                                        src={companyLogo}
-                                        alt="Company Logo"
-                                        width={20}
-                                        height={20}
-                                        onError={() => setLogoError(true)}
-                                      />
-                                  ) : (
-                                      <Building className="h-5 w-5 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <Input 
-                                  placeholder="Your company or college" 
-                                  {...field} 
-                                  className="pl-10"
-                                  autoComplete="off"
-                                  onFocus={() => companyValue && suggestions.length > 0 && setIsSuggestionsOpen(true)}
-                                  onBlur={() => setIsSuggestionsOpen(false)}
-                                />
-                            </div>
-                        </FormControl>
-                        {isSuggestionsOpen && suggestions.length > 0 && (
-                          <Card className="absolute z-10 w-full mt-1 bg-popover border-border shadow-lg">
-                            <CardContent className="p-0">
-                              <ul className="flex flex-col">
-                                {suggestions.map((suggestion) => (
-                                  <CompanySuggestionItem key={suggestion.domain} suggestion={suggestion} onClick={handleSuggestionClick} />
-                                ))}
-                              </ul>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="trailheadUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trailhead URL</FormLabel>
-                    <div className="relative">
-                          <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="https://trailblazer.me/id/..." {...field} className="pl-10" />
-                      </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="githubUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>GitHub URL</FormLabel>
-                    <div className="relative">
-                          <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="https://github.com/..." {...field} className="pl-10" />
-                      </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="linkedinUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>LinkedIn URL</FormLabel>
-                    <div className="relative">
-                          <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="https://linkedin.com/in/..." {...field} className="pl-10" />
-                      </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="twitterUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Twitter / X URL</FormLabel>
-                    <div className="relative">
-                          <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="https://x.com/..." {...field} className="pl-10" />
-                      </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
