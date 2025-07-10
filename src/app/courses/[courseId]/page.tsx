@@ -128,8 +128,8 @@ export default function CourseDetailPage() {
                                 <div className="flex items-center justify-between">
                                     <Badge variant="secondary" className="w-fit">{course.category}</Badge>
                                 </div>
-                                <CardTitle className="text-2xl md:text-3xl font-bold font-headline tracking-tight pt-2">{course.title}</CardTitle>
-                                <CardDescription className="pt-1 text-base">{course.description}</CardDescription>
+                                <CardTitle className="text-xl md:text-2xl font-bold font-headline tracking-tight pt-2">{course.title}</CardTitle>
+                                <CardDescription className="pt-1 text-sm">{course.description}</CardDescription>
                             </CardHeader>
                         </Card>
 
