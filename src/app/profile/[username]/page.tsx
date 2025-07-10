@@ -55,43 +55,33 @@ const VerifiedIcon = () => (
 );
 
 const ProIcon = () => (
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger>
-                 <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-6 h-6"
-                    >
-                    <defs>
-                        <linearGradient id="pro-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#FFD700" />
-                        <stop offset="100%" stop-color="#FFA500" />
-                        </linearGradient>
-                    </defs>
-                    <path
-                        d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.42 20L12 16.9L7.58 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z"
-                        fill="url(#pro-grad)"
-                        stroke="#B8860B"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-                    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="9" fill="#4A2C00" font-weight="bold" font-family="sans-serif">
-                        PRO
-                    </text>
-                </svg>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>Pro User</p>
-            </TooltipContent>
-        </Tooltip>
-    </TooltipProvider>
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-6 h-6"
+    >
+        <defs>
+            <linearGradient id="pro-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#FFA500" />
+            </linearGradient>
+        </defs>
+        <path
+            d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.42 20L12 16.9L7.58 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z"
+            fill="url(#pro-grad)"
+            stroke="#B8860B"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontSize="9" fill="#4A2C00" fontWeight="bold" fontFamily="sans-serif">
+            PRO
+        </text>
+    </svg>
 );
-
 
 
 // This is the new public profile page
