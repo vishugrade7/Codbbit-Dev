@@ -1,4 +1,5 @@
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -51,6 +52,7 @@ export type User = {
   emailVerified?: boolean;
   isEmailPublic?: boolean;
   avatarUrl: string;
+  about?: string;
   country: string;
   company?: string;
   companyLogoUrl?: string;

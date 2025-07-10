@@ -372,17 +372,17 @@ export default function UserProfilePage() {
                         </AvatarFallback>
                     </Avatar>
                     {isProfileUserPro && (
-                      <TooltipProvider>
-                          <Tooltip>
-                              <TooltipTrigger asChild>
-                                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
-                                      <Code className="h-5 w-5"/>
-                                  </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                  <p>Pro User</p>
-                              </TooltipContent>
-                          </Tooltip>
+                       <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                               <div className="absolute bottom-0 right-0 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
+                                    <Code className="h-5 w-5"/>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Pro User</p>
+                            </TooltipContent>
+                        </Tooltip>
                       </TooltipProvider>
                     )}
                     {isOwnProfile && (
@@ -401,6 +401,9 @@ export default function UserProfilePage() {
                          {isProfileUserPro && <ProIcon />}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+                    {profileUser.about && (
+                        <p className="mt-2 text-sm text-muted-foreground max-w-xl">{profileUser.about}</p>
+                    )}
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         {profileUser.company && (
                             <div className="flex items-center gap-2">

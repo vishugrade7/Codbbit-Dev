@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -35,9 +36,11 @@ import type { User } from "@/types";
 import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter } from "lucide-react";
 import { Switch } from "./ui/switch";
 import { ScrollArea } from "./ui/scroll-area";
+import { Textarea } from "./ui/textarea";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
+  about: z.string().max(200, "About text must be 200 characters or less.").optional(),
   isEmailPublic: z.boolean().optional(),
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
@@ -105,6 +108,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user.name || "",
+      about: user.about || "",
       isEmailPublic: user.isEmailPublic || false,
       company: user.company || "",
       companyLogoUrl: user.companyLogoUrl || "",
@@ -199,6 +203,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
         name: values.name,
+        about: values.about,
         isEmailPublic: values.isEmailPublic,
         company: values.company,
         companyLogoUrl: companyLogo || '',
@@ -251,6 +256,17 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
                             <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input placeholder="Your full name" {...field} className="pl-10" />
                         </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="about"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>About</FormLabel>
+                        <Textarea placeholder="Tell us a little about yourself" {...field} />
                       <FormMessage />
                     </FormItem>
                   )}

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -196,6 +197,7 @@ export default function SignupPage() {
           emailVerified: user.emailVerified,
           name: values.fullName,
           username: values.username.toLowerCase(),
+          about: "",
           company: values.company || '',
           country: values.country,
           points: 0,
