@@ -421,20 +421,20 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           );
         case 'code':
           return (
-              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6 dark:bg-slate-50 dark:border-slate-200">
-                  <div className="flex items-center justify-between px-4 py-2 bg-slate-800 dark:bg-slate-100">
+              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 dark:bg-slate-900 border-slate-700 dark:border-slate-700 my-6">
+                  <div className="flex items-center justify-between px-4 py-2 bg-slate-800 dark:bg-slate-800">
                       <div className="flex gap-1.5">
                       <div className="h-3 w-3 rounded-full bg-red-500"></div>
                       <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                       <div className="h-3 w-3 rounded-full bg-green-500"></div>
                       </div>
-                      <span className="text-sm text-slate-400 dark:text-slate-500 font-semibold tracking-wider">
+                      <span className="text-sm text-slate-400 dark:text-slate-400 font-semibold tracking-wider">
                       {block.content.language?.toUpperCase() || 'CODE'}
                       </span>
                   </div>
                    <SyntaxHighlighter
                       language={block.content.language === 'apex' ? 'java' : block.content.language}
-                      style={theme === 'dark' ? vscDarkPlus : vs}
+                      style={vscDarkPlus}
                       showLineNumbers={true}
                       customStyle={{ 
                           margin: 0, 
@@ -671,9 +671,13 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
       }
   };
 
+  if (!Array.isArray(contentBlocks)) {
+    return <p>{contentBlocks}</p>;
+  }
+
   return (
     <>
-      {(Array.isArray(contentBlocks) ? contentBlocks : []).map(block => {
+      {(contentBlocks || []).map(block => {
         const wrapperStyle = {
             ...(block.backgroundColor ? { background: block.backgroundColor } : {}),
             ...(block.textColor ? { color: block.textColor } : {}),
@@ -892,8 +896,8 @@ export default function LessonPage() {
                  <ResizableHandle withHandle className="hidden md:flex"/>
                 <ResizablePanel defaultSize={75}>
                     <main className="h-full flex flex-col bg-background relative">
-                        <div className="p-6 border-b flex items-center justify-between">
-                            <h1 className="text-3xl font-bold font-headline">{currentLesson.title}</h1>
+                        <div className="p-4 border-b flex items-center justify-between bg-background/80 backdrop-blur-sm">
+                            <h1 className="text-2xl font-bold font-headline">{currentLesson.title}</h1>
                         </div>
                         <ScrollArea className="flex-1">
                             <div className="p-6">
@@ -924,4 +928,5 @@ export default function LessonPage() {
 
 
     
+
 
