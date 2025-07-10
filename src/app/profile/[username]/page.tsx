@@ -144,6 +144,19 @@ export default function UserProfilePage() {
         return allProblems.filter(p => starredIds.has(p.id));
     }, [profileUser?.starredProblems, allProblems, loadingProblems]);
 
+    const difficultyTotals = useMemo(() => {
+        if (loadingProblems || allProblems.length === 0) {
+            return { Easy: 0, Medium: 0, Hard: 0, total: 0 };
+        }
+        return allProblems.reduce((acc, problem) => {
+            if (problem.difficulty === 'Easy') acc.Easy++;
+            else if (problem.difficulty === 'Medium') acc.Medium++;
+            else if (problem.difficulty === 'Hard') acc.Hard++;
+            acc.total++;
+            return acc;
+        }, { Easy: 0, Medium: 0, Hard: 0, total: 0 });
+    }, [allProblems, loadingProblems]);
+
 
     const handleAvatarClick = () => {
         if (!isUploading) {
@@ -204,7 +217,7 @@ export default function UserProfilePage() {
     };
 
 
-    if (loadingProfile) {
+    if (loadingProfile || loadingProblems) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -341,23 +354,23 @@ export default function UserProfilePage() {
                           <div>
                               <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
                                   <span>Easy</span>
-                                  <span className="font-semibold text-foreground">{easySolved} solved</span>
+                                  <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
                               </div>
-                              <Progress value={totalSolved > 0 ? (easySolved / totalSolved) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
+                              <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
                           </div>
                           <div>
                               <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
                                   <span>Medium</span>
-                                   <span className="font-semibold text-foreground">{mediumSolved} solved</span>
+                                   <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
                               </div>
-                              <Progress value={totalSolved > 0 ? (mediumSolved / totalSolved) * 100 : 0} className="h-2" />
+                              <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" />
                           </div>
                           <div>
                               <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
                                   <span>Hard</span>
-                                   <span className="font-semibold text-foreground">{hardSolved} solved</span>
+                                   <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
                               </div>
-                              <Progress value={totalSolved > 0 ? (hardSolved / totalSolved) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
+                              <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
                           </div>
                       </div>
                   </CardContent>
@@ -530,3 +543,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
