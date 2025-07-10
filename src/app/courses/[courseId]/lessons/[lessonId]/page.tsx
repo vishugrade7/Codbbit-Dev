@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -46,6 +47,54 @@ const getLessonIcon = (lesson: Lesson) => {
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 type ProblemWithCategory = Problem & { categoryName: string };
+
+const LiveCodeRenderer = ({ blockContent }: { blockContent: { html?: string; css?: string; js?: string } }) => {
+    const { theme } = useTheme();
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const srcDoc = useMemo(() => {
+        const { html = '', css = '', js = '' } = blockContent;
+        return `
+            <html>
+                <head>
+                    <style>
+                        body { 
+                            font-family: sans-serif;
+                            padding: 0.5rem;
+                            color: ${theme === 'dark' ? '#fff' : '#000'};
+                            background-color: transparent;
+                        }
+                        ${css}
+                    </style>
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}</script>
+                </body>
+            </html>
+        `;
+    }, [blockContent, theme]);
+
+    if (!isClient) {
+        return <div className="w-full h-48 bg-muted rounded-md animate-pulse" />;
+    }
+
+    return (
+        <div className="not-prose my-6 w-full h-64 border rounded-lg overflow-hidden bg-background">
+            <iframe
+                title="Live Code Preview"
+                srcDoc={srcDoc}
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-modals"
+            />
+        </div>
+    );
+};
+
 
 const MermaidRenderer = ({ chart }: { chart: string }) => {
     const { theme } = useTheme();
@@ -681,6 +730,8 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                 return <InteractiveCodeChallenge blockContent={block.content} />;
           case 'stepper':
                 return <StepperChallenge blockContent={block.content} allProblems={allProblems}/>;
+          case 'live-code':
+              return <LiveCodeRenderer blockContent={block.content} />;
           case 'two-column':
               return (
                   <div className="not-prose my-6 grid grid-cols-1 md:grid-cols-2 gap-6">

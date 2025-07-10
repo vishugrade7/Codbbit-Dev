@@ -164,6 +164,17 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminated
         backgroundColor: z.string().optional(),
         textColor: z.string().optional(),
     }),
+    z.object({
+        id: z.string(),
+        type: z.literal("live-code"),
+        content: z.object({
+            html: z.string().optional(),
+            css: z.string().optional(),
+            js: z.string().optional(),
+        }),
+        backgroundColor: z.string().optional(),
+        textColor: z.string().optional(),
+    }),
 ]));
 
 
