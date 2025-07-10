@@ -161,18 +161,22 @@ export type Example = {
 }
 
 export type Problem = {
-  id: string; // This will be a unique ID for the problem within the array
+  id: string;
   title: string;
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   examples: Example[];
   hints: string[];
+  sampleCode: string;
+  testcases: string;
   metadataType: 'Class' | 'Trigger';
   triggerSObject?: string;
-  categoryName?: string; // Added for convenience
+  categoryName?: string;
   company?: string;
   companyLogoUrl?: string;
   isPremium?: boolean;
+  imageUrl?: string;
+  mermaidDiagram?: string;
 };
 
 // This represents the structure of the data fetched from the `problems/Apex` document

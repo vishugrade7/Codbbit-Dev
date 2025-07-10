@@ -14,6 +14,7 @@ import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 import Image from "next/image";
 import { getCache, setCache } from "@/lib/cache";
+import mermaid from "mermaid";
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -134,6 +135,54 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
       {logElements}
     </div>
   );
+};
+
+const MermaidRenderer = ({ chart }: { chart: string }) => {
+    const { theme } = useTheme();
+    const mermaidId = useMemo(() => `mermaid-container-${Math.random().toString(36).substr(2, 9)}`, []);
+    
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isClient) return;
+
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+        });
+
+        const renderMermaid = async () => {
+             try {
+                const element = document.getElementById(mermaidId);
+                if (element) {
+                    const renderId = `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`;
+                    const { svg } = await mermaid.render(renderId, chart);
+                    element.innerHTML = svg;
+                }
+            } catch (error) {
+                console.error('Mermaid render error:', error);
+                 const element = document.getElementById(mermaidId);
+                 if (element) {
+                     element.innerHTML = `<div class="p-4 text-destructive bg-destructive/10 rounded-md text-xs font-mono whitespace-pre-wrap w-full"><p class="font-bold mb-2">Mermaid Render Error:</p>${(error as Error).message}</div>`
+                 }
+            }
+        };
+
+        const timer = setTimeout(renderMermaid, 100);
+        return () => clearTimeout(timer);
+
+    }, [chart, theme, mermaidId, isClient]);
+    
+    return (
+        <div id={mermaidId} className="not-prose my-6 w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto">
+            <div className="flex justify-center items-center min-h-[200px] text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+        </div>
+    );
 };
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -410,8 +459,15 @@ export default function ProblemWorkspacePage() {
                 </div>
                 )}
             </div>
+            {problem.imageUrl && (
+                <div className="relative w-full aspect-video my-4 rounded-lg overflow-hidden">
+                    <Image src={problem.imageUrl} alt="Problem visual aid" fill className="object-contain" />
+                </div>
+            )}
             <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
             
+            {problem.mermaidDiagram && <MermaidRenderer chart={problem.mermaidDiagram} />}
+
             {problem.examples.map((example, index) => (
                 <div key={index}>
                     <h3 className="font-semibold mb-2">Example {index + 1}</h3>

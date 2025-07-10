@@ -593,6 +593,8 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                 company: problem.company || "",
                 companyLogoUrl: problem.companyLogoUrl || "",
                 isPremium: problem.isPremium || false,
+                imageUrl: problem.imageUrl || "",
+                mermaidDiagram: problem.mermaidDiagram || "",
             });
             setCompanyLogo(problem.companyLogoUrl || null);
             setSelectedCompanyName(problem.company || null);
@@ -612,6 +614,8 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                 company: "",
                 companyLogoUrl: "",
                 isPremium: false,
+                imageUrl: "",
+                mermaidDiagram: "",
             });
             setCompanyLogo(null);
             setSelectedCompanyName(null);
@@ -804,6 +808,20 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     <FormMessage />
                                 </FormItem>
                             )} />
+                            <FormField control={form.control} name="imageUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Image URL (Optional)</FormLabel>
+                                    <FormControl><Input placeholder="https://placehold.co/600x400.png" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="mermaidDiagram" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Mermaid Diagram (Optional)</FormLabel>
+                                    <FormControl><Textarea placeholder="graph TD; A-->B;" {...field} rows={5} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="difficulty" render={({ field }) => (
                                     <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
@@ -926,4 +944,3 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
         </div>
     );
 }
-

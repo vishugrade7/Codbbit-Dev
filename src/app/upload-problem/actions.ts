@@ -88,6 +88,23 @@ export async function upsertProblemToFirestore(data: z.infer<typeof problemFormS
         
         const cleanExamples = data.examples.map(({ input, output, explanation }) => ({ input, output, explanation }));
 
+        const problemData: Omit<Problem, 'id'> = {
+            title: data.title,
+            description: data.description,
+            difficulty: data.difficulty,
+            metadataType: data.metadataType,
+            triggerSObject: data.triggerSObject,
+            sampleCode: data.sampleCode,
+            testcases: data.testcases,
+            examples: cleanExamples,
+            hints: data.hints ? data.hints.map(h => h.value) : [],
+            company: data.company,
+            companyLogoUrl: data.companyLogoUrl,
+            isPremium: data.isPremium,
+            imageUrl: data.imageUrl,
+            mermaidDiagram: data.mermaidDiagram,
+        };
+
         if (data.id) {
             // EDIT MODE
             let oldCategoryName: string | null = null;
@@ -106,18 +123,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof problemFormS
             if (oldCategoryName && problemIndex !== -1) {
                 const updatedProblem: Problem = {
                     id: data.id,
-                    title: data.title,
-                    description: data.description,
-                    difficulty: data.difficulty,
-                    metadataType: data.metadataType,
-                    triggerSObject: data.triggerSObject,
-                    sampleCode: data.sampleCode,
-                    testcases: data.testcases,
-                    examples: cleanExamples,
-                    hints: data.hints ? data.hints.map(h => h.value) : [],
-                    company: data.company,
-                    companyLogoUrl: data.companyLogoUrl,
-                    isPremium: data.isPremium,
+                    ...problemData
                 };
 
                 if (oldCategoryName === newCategoryName) {
@@ -138,18 +144,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof problemFormS
             const problemId = doc(collection(db, 'dummy')).id;
             const newProblem: Problem = {
                 id: problemId,
-                title: data.title,
-                description: data.description,
-                difficulty: data.difficulty,
-                metadataType: data.metadataType,
-                triggerSObject: data.triggerSObject,
-                sampleCode: data.sampleCode,
-                testcases: data.testcases,
-                examples: cleanExamples,
-                hints: data.hints ? data.hints.map(h => h.value) : [],
-                company: data.company,
-                companyLogoUrl: data.companyLogoUrl,
-                isPremium: data.isPremium || false,
+                ...problemData
             };
             
             if (!categories[newCategoryName]) {
@@ -212,6 +207,8 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
                 company: data.company,
                 companyLogoUrl: data.companyLogoUrl,
                 isPremium: data.isPremium || false,
+                imageUrl: data.imageUrl,
+                mermaidDiagram: data.mermaidDiagram,
             };
             
             const categoryName = data.category;

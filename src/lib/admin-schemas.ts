@@ -26,6 +26,8 @@ const baseProblemObjectSchema = z.object({
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
   isPremium: z.boolean().optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+  mermaidDiagram: z.string().optional(),
 });
 
 const triggerRefinement = (data: z.infer<typeof baseProblemObjectSchema>) => {
