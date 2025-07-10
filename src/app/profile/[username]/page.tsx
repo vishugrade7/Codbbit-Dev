@@ -55,32 +55,6 @@ const VerifiedIcon = () => (
     </TooltipProvider>
 );
 
-const ProIcon = () => (
-    <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-6 h-6"
-    >
-        <defs>
-            <linearGradient id="pro-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFD700" />
-            <stop offset="100%" stopColor="#FFA500" />
-            </linearGradient>
-        </defs>
-        <path
-            d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.42 20L12 16.9L7.58 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z"
-            fill="url(#pro-grad)"
-            stroke="#B8860B"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-    </svg>
-);
-
 
 // This is the new public profile page
 export default function UserProfilePage() {
@@ -398,7 +372,6 @@ export default function UserProfilePage() {
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
                         {profileUser.emailVerified && <VerifiedIcon />}
-                         {isProfileUserPro && <ProIcon />}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     {profileUser.about && (
