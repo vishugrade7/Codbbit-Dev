@@ -63,6 +63,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Separator } from '../ui/separator';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Component 1: CourseList
 export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, onAddNew: () => void }) {
@@ -406,6 +407,7 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'stepper', label: 'Stepper', icon: <Milestone className="h-4 w-4" /> },
     { type: 'mermaid', label: 'Mermaid Diagram', icon: <GitFork className="h-4 w-4" /> },
     { type: 'interactive-code', label: 'Interactive Code', icon: <FlaskConical className="h-4 w-4" /> },
+    { type: 'live-code', label: 'Live Code', icon: <Code2Icon className="h-4 w-4" /> },
     { type: 'two-column', label: 'Two Columns', icon: <BoxSelect className="h-4 w-4 rotate-90" /> },
     { type: 'three-column', label: 'Three Columns', icon: <BoxSelect className="h-4 w-4 rotate-90" /> },
   ];
@@ -498,6 +500,55 @@ function CodeBlockEditor({ field }: { field: any }) {
         </div>
     );
 }
+
+function LiveCodeBlockEditor({ field }: { field: any }) {
+    const { resolvedTheme } = useTheme();
+    const [localContent, setLocalContent] = useState(
+        typeof field.value === 'object' && field.value !== null
+            ? field.value
+            : { html: '', css: '', js: '' }
+    );
+    
+    useEffect(() => {
+        if (typeof field.value === 'object' && field.value !== null) {
+            setLocalContent(field.value);
+        }
+    }, [field.value]);
+
+    const handleCodeChange = (language: 'html' | 'css' | 'js', newValue: string | undefined) => {
+        const newContent = { ...localContent, [language]: newValue || '' };
+        setLocalContent(newContent);
+        field.onChange(newContent);
+    };
+
+    return (
+        <div className="bg-muted p-4 rounded-md border">
+            <Tabs defaultValue="html">
+                <TabsList>
+                    <TabsTrigger value="html">HTML</TabsTrigger>
+                    <TabsTrigger value="css">CSS</TabsTrigger>
+                    <TabsTrigger value="js">JavaScript</TabsTrigger>
+                </TabsList>
+                <TabsContent value="html" className="mt-2">
+                    <div className="h-48 w-full border rounded-md overflow-hidden">
+                        <MonacoEditor height="100%" language="html" value={localContent.html} onChange={(v) => handleCodeChange('html', v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 13, minimap: { enabled: false } }} />
+                    </div>
+                </TabsContent>
+                <TabsContent value="css" className="mt-2">
+                    <div className="h-48 w-full border rounded-md overflow-hidden">
+                         <MonacoEditor height="100%" language="css" value={localContent.css} onChange={(v) => handleCodeChange('css', v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 13, minimap: { enabled: false } }} />
+                    </div>
+                </TabsContent>
+                <TabsContent value="js" className="mt-2">
+                    <div className="h-48 w-full border rounded-md overflow-hidden">
+                         <MonacoEditor height="100%" language="javascript" value={localContent.js} onChange={(v) => handleCodeChange('js', v)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 13, minimap: { enabled: false } }} />
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
+}
+
 
 function TodoListBlock({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
@@ -711,7 +762,7 @@ function McqBlockEditor({ path }: { path: string }) {
       <FormField control={control} name={`${path}.content.question`} render={({ field }) => (
           <FormItem>
               <FormLabel>Question</FormLabel>
-              <FormControl><TextareaWithToolbar {...field} placeholder="What is the capital of France?" /></FormControl>
+              <FormControl><TextEditorWithPreview field={field} placeholder="What is the capital of France?" /></FormControl>
               <FormMessage />
           </FormItem>
       )} />
@@ -746,7 +797,7 @@ function McqBlockEditor({ path }: { path: string }) {
       <FormField control={control} name={`${path}.content.explanation`} render={({ field }) => (
           <FormItem>
               <FormLabel>Explanation (Optional)</FormLabel>
-              <FormControl><TextareaWithToolbar {...field} placeholder="Provide an explanation for the correct answer." /></FormControl>
+              <FormControl><TextEditorWithPreview field={field} placeholder="Provide an explanation for the correct answer." /></FormControl>
           </FormItem>
       )} />
     </div>
@@ -971,7 +1022,7 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Description</FormLabel>
-                        <FormControl><TextareaWithToolbar {...field} placeholder="Declare a boolean variable..." /></FormControl>
+                        <FormControl><TextEditorWithPreview {...field} placeholder="Declare a boolean variable..." /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )}
@@ -1061,6 +1112,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
             case 'stepper': newBlock = { id, type, content: { title: 'Stepper Title', steps: [{ id: uuidv4(), title: 'Step 1', content: [{ id: uuidv4(), type: 'text', content: 'Step 1 content'}] }] } }; break;
             case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous', testClassCode: '' } }; break;
+            case 'live-code': newBlock = { id, type, content: { html: '', css: '', js: '' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
             default: newBlock = { id, type, content: (type === 'bulleted-list' ? '<ul><li></li></ul>' : (type === 'numbered-list' ? '<ol><li></li></ol>' : '')) };
@@ -1150,6 +1202,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
             case 'mermaid': return <MermaidBlockEditor path={path} />;
             case 'stepper': return <StepperBlockEditor path={path} />;
             case 'interactive-code': return <InteractiveCodeBlockEditor path={path} />;
+            case 'live-code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><LiveCodeBlockEditor field={field} /></FormControl><FormMessage /></FormItem>)} />;
             case 'two-column': return <ColumnLayoutEditor path={path} numColumns={2} />;
             case 'three-column': return <ColumnLayoutEditor path={path} numColumns={3} />;
             default: const _exhaustiveCheck: never = block.type; return null;
@@ -1440,7 +1493,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                             <FormItem>
                                 <FormLabel>Description</FormLabel>
                                 <FormControl>
-                                    <TextareaWithToolbar {...field} placeholder="A brief summary of the course..." />
+                                    <TextEditorWithPreview {...field} placeholder="A brief summary of the course..." />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -1573,10 +1626,4 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-
-
-
-
-
-
 
