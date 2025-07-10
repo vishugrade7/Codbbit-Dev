@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
@@ -30,6 +29,19 @@ type RecentlySolvedProblem = SolvedProblemType & { id: string };
 type ProblemWithCategory = Problem & { categoryName: string };
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
+
+const VerifiedIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-blue-500">
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style={{stopColor: 'rgb(59, 130, 246)', stopOpacity: 1}} />
+          <stop offset="100%" style={{stopColor: 'rgb(37, 99, 235)', stopOpacity: 1}} />
+        </linearGradient>
+      </defs>
+      <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" fill="url(#grad1)" />
+    </svg>
+);
+
 
 // This is the new public profile page
 export default function UserProfilePage() {
@@ -315,7 +327,10 @@ export default function UserProfilePage() {
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
                 )}
                 <div className="flex-1 text-center sm:text-left">
-                    <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                        <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
+                        {profileUser.isEmailPublic && <VerifiedIcon />}
+                    </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         {profileUser.company && (

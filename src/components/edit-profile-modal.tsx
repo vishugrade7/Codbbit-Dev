@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getAuth, sendEmailVerification } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -95,6 +96,8 @@ type EditProfileModalProps = {
 export default function EditProfileModal({ isOpen, onOpenChange, user }: EditProfileModalProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -115,6 +118,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
   const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(user.company || null);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
 
   const companyValue = form.watch("company");
 
@@ -167,6 +171,26 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
     setSuggestions([]);
   };
 
+  const handleResendVerification = async () => {
+    if (!currentUser) return;
+    setIsSendingVerification(true);
+    try {
+      await sendEmailVerification(currentUser);
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your inbox (and spam folder) to verify your email.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not send verification email. Please try again later.",
+      });
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
+
   async function onSubmit(values: z.infer<typeof profileSchema>) {
     setIsLoading(true);
     try {
@@ -212,6 +236,14 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
               </Button>
             </DialogHeader>
             <div className="space-y-4 py-4">
+               {currentUser && !currentUser.emailVerified && (
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm">
+                  Your email is not verified. 
+                  <Button variant="link" size="sm" className="p-0 h-auto ml-1 text-yellow-800 dark:text-yellow-300" onClick={handleResendVerification} disabled={isSendingVerification}>
+                    {isSendingVerification ? <Loader2 className="h-4 w-4 animate-spin"/> : "Resend verification email."}
+                  </Button>
+                </div>
+              )}
               <FormField
                 control={form.control}
                 name="name"

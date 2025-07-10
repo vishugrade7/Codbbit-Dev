@@ -193,6 +193,7 @@ export default function SignupPage() {
       await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: user.email,
+          emailVerified: user.emailVerified,
           name: values.fullName,
           username: values.username.toLowerCase(),
           company: values.company || '',
