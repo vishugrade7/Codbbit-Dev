@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { toggleSheetFollow } from '../actions';
 import { getCache, setCache } from '@/lib/cache';
 
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -257,127 +258,107 @@ export default function SheetDisplayPage() {
                 </Button>
             </div>
             
-            <Card className="mb-8">
-                <CardHeader>
+             <Card className="mb-8 overflow-hidden">
+                <CardHeader className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                         <div className="flex-1">
-                            <div className="flex items-start gap-4">
+                            <CardTitle className="text-2xl md:text-3xl font-headline">{sheet.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-2">
+                                {sheet.creatorAvatarUrl && (
+                                    <Avatar className="h-6 w-6">
+                                        <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                        <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                )}
+                                <span className="text-sm">
+                                    Created by{' '}
+                                    {sheet.creatorUsername ? (
+                                        <Link href={`/profile/${sheet.creatorUsername}`} className="font-semibold text-foreground hover:underline">
+                                            {sheet.creatorName}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-semibold text-foreground">{sheet.creatorName}</span>
+                                    )}{' '}
+                                    {timeAgo}
+                                </span>
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                           <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow} size="sm">
+                                {isTogglingFollow ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : isFollowed ? (<UserCheck className="mr-2 h-4 w-4" />) : (<UserPlus className="mr-2 h-4 w-4" />)}
+                                {isFollowed ? 'Following' : 'Follow'}
+                            </Button>
+                            <Button onClick={handleCopyLink} variant="outline" size="sm"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
+                        </div>
+                    </div>
+                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
+                        <Users className="h-4 w-4" />
+                        <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
+                    </div>
+                </CardHeader>
+                
+                 {(uniqueCategories.length > 0 || problems.length > 0) && (
+                    <CardContent className="p-4 sm:p-6 border-t">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                             <div className="md:col-span-2 space-y-4">
+                                <h4 className="text-sm font-semibold text-muted-foreground">TOPICS COVERED</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    <Badge
+                                        variant={categoryFilter === 'All' ? 'default' : 'secondary'}
+                                        onClick={() => setCategoryFilter('All')}
+                                        className="cursor-pointer"
+                                    >
+                                        All Topics
+                                    </Badge>
+                                    {uniqueCategories.map(category => {
+                                        const isCompleted = categoryCompletionStatus[category];
+                                        return (
+                                            <Badge
+                                                key={category}
+                                                variant={categoryFilter === category ? 'default' : 'secondary'}
+                                                onClick={() => setCategoryFilter(category)}
+                                                className="cursor-pointer flex items-center gap-1.5"
+                                            >
+                                                <span>{category}</span>
+                                                {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
+                                            </Badge>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div className="md:col-span-1 space-y-4">
                                 <div>
-                                    <CardTitle className="text-3xl font-headline">{sheet.name}</CardTitle>
-                                    <CardDescription className="flex items-center gap-2 mt-2">
-                                        {sheet.creatorAvatarUrl && (
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                                <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        )}
-                                        <span>
-                                            Created by{' '}
-                                            {sheet.creatorUsername ? (
-                                                <Link href={`/profile/${sheet.creatorUsername}`} className="font-semibold text-foreground hover:underline">
-                                                    {sheet.creatorName}
-                                                </Link>
-                                            ) : (
-                                                <span className="font-semibold text-foreground">{sheet.creatorName}</span>
-                                            )}{' '}
-                                            {timeAgo}
-                                        </span>
-                                    </CardDescription>
+                                    <h4 className="text-sm font-semibold mb-2 text-muted-foreground">PROGRESS</h4>
+                                    <Progress value={progressPercentage} className="h-2" />
+                                    <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16 text-muted-foreground">Easy</span>
+                                        <div className="flex-1 bg-muted rounded-full h-2">
+                                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                        </div>
+                                        <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16 text-muted-foreground">Medium</span>
+                                        <div className="flex-1 bg-muted rounded-full h-2">
+                                            <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                        </div>
+                                        <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16 text-muted-foreground">Hard</span>
+                                        <div className="flex-1 bg-muted rounded-full h-2">
+                                            <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                        </div>
+                                        <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-col items-stretch sm:items-end gap-3 shrink-0">
-                            <div className="flex flex-row items-center gap-4">
-                                <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow}>
-                                    {isTogglingFollow ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : isFollowed ? (
-                                        <UserCheck className="mr-2 h-4 w-4" />
-                                    ) : (
-                                        <UserPlus className="mr-2 h-4 w-4" />
-                                    )}
-                                    {isFollowed ? 'Following' : 'Follow'}
-                                </Button>
-                                <Button onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
-                            </div>
-                            <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
-                                <Users className="h-4 w-4" />
-                                <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    {(uniqueCategories.length > 0 || problems.length > 0) && (
-                        <div className="border-t pt-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                             <div className="md:col-span-2">
-                                {uniqueCategories.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground">TOPICS COVERED</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            <Badge
-                                                variant={categoryFilter === 'All' ? 'default' : 'secondary'}
-                                                onClick={() => setCategoryFilter('All')}
-                                                className="cursor-pointer"
-                                            >
-                                                All Topics
-                                            </Badge>
-                                            {uniqueCategories.map(category => {
-                                                const isCompleted = categoryCompletionStatus[category];
-                                                return (
-                                                    <Badge
-                                                        key={category}
-                                                        variant={categoryFilter === category ? 'default' : 'secondary'}
-                                                        onClick={() => setCategoryFilter(category)}
-                                                        className="cursor-pointer flex items-center gap-1.5"
-                                                    >
-                                                        <span>{category}</span>
-                                                        {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
-                                                    </Badge>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="md:col-span-1">
-                                {problems.length > 0 && (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">PROGRESS</h4>
-                                            <Progress value={progressPercentage} className="h-2" />
-                                            <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">DIFFICULTY BREAKDOWN</h4>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-16 text-muted-foreground">Easy</span>
-                                                    <div className="flex-1 bg-muted rounded-full h-2">
-                                                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
-                                                    </div>
-                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-16 text-muted-foreground">Medium</span>
-                                                    <div className="flex-1 bg-muted rounded-full h-2">
-                                                        <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
-                                                    </div>
-                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-16 text-muted-foreground">Hard</span>
-                                                    <div className="flex-1 bg-muted rounded-full h-2">
-                                                        <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
-                                                    </div>
-                                                    <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </CardHeader>
+                    </CardContent>
+                )}
             </Card>
             
             {problems.length > 0 && (
@@ -420,11 +401,11 @@ export default function SheetDisplayPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50px]">#</TableHead>
+                                <TableHead className="w-[50px] text-center hidden sm:table-cell">#</TableHead>
                                 <TableHead>Title</TableHead>
-                                <TableHead>Category</TableHead>
+                                <TableHead className="hidden md:table-cell">Category</TableHead>
                                 <TableHead className="text-right">Difficulty</TableHead>
-                                <TableHead className="w-[80px] text-center">Status</TableHead>
+                                <TableHead className="w-[80px] text-center hidden sm:table-cell">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -444,20 +425,23 @@ export default function SheetDisplayPage() {
                                             router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
                                         }
                                     }}>
-                                    <TableCell className="font-medium">{index + 1}</TableCell>
+                                    <TableCell className="font-medium text-center hidden sm:table-cell">{index + 1}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
-                                            <span className={cn(isLocked && "filter blur-sm")}>{problem.title}</span>
+                                            <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
+                                        </div>
+                                         <div className="md:hidden mt-1 text-xs text-muted-foreground">
+                                            <Badge variant="secondary" className="mr-2">{problem.categoryName}</Badge>
                                         </div>
                                     </TableCell>
-                                    <TableCell><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
+                                    <TableCell className="hidden md:table-cell"><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
                                     <TableCell className="text-right">
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
                                             {problem.difficulty}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="hidden sm:table-cell">
                                         <div className="flex justify-center">
                                             {userData?.solvedProblems?.[problem.id] ? (
                                                 <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -472,8 +456,10 @@ export default function SheetDisplayPage() {
                     </Table>
                 </div>
             ) : (
-                <div className="text-center py-12">
-                    <p className="text-muted-foreground">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
+                <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-semibold">{problems.length > 0 ? "No Matches" : "Sheet is Empty"}</h3>
+                    <p className="text-muted-foreground mt-1 text-sm">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
                 </div>
             )}
         </main>
