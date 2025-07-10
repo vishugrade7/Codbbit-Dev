@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
 import { getCache, setCache } from "@/lib/cache";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -31,15 +32,25 @@ type ProblemWithCategory = Problem & { categoryName: string };
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 const VerifiedIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-blue-500">
-      <defs>
-        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" style={{stopColor: 'rgb(59, 130, 246)', stopOpacity: 1}} />
-          <stop offset="100%" style={{stopColor: 'rgb(37, 99, 235)', stopOpacity: 1}} />
-        </linearGradient>
-      </defs>
-      <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" fill="url(#grad1)" />
-    </svg>
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger>
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-label="Verified account"
+                    role="img"
+                    className="w-6 h-6 fill-current text-blue-500"
+                >
+                    <g>
+                        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.237C14.05 2.89 12.825 2 11.37.96 9.898 2 8.674 2.89 7.824 4.075c-.416-.153-.866-.237-1.336-.237-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.02-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.336-.238 1.092 1.47 2.652 2.438 4.45 2.438s3.358-.968 4.45-2.438c.416.152.866.238 1.336.238 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.068-2.415-1.207c-.246-.123-.404-.38-.404-.665 0-.414.336-.75.75-.75.143 0 .288.04.416.126l.115.068 2.415 1.207 4.334-6.5c.145-.217.382-.334.625-.334.143 0 .288.04.416.126l.115.068c.246.123.404.38.404.665 0 .413-.336.75-.75.75z"></path>
+                    </g>
+                </svg>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Verified</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
 );
 
 
@@ -329,7 +340,7 @@ export default function UserProfilePage() {
                 <div className="flex-1 text-center sm:text-left">
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
-                        {profileUser.isEmailPublic && <VerifiedIcon />}
+                        {profileUser.emailVerified && <VerifiedIcon />}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
