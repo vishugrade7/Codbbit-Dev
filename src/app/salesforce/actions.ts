@@ -259,7 +259,6 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                 solvedAt: serverTimestamp(),
                 points: pointsToAward,
                 difficulty: problem.difficulty,
-                categoryName: categoryName,
                 title: problem.title,
             };
             const newTotalSolved = Object.keys(solvedProblems).length;
@@ -284,10 +283,25 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
             // --- Badge Awarding Logic ---
             const newAchievements = { ...(userData.achievements || {}) };
             const categoryCounts: { [key: string]: number } = {};
-            Object.values(solvedProblems).forEach((p: SolvedProblemDetail) => {
-                categoryCounts[p.categoryName] = (categoryCounts[p.categoryName] || 0) + 1;
-            });
-            const activeDaysCount = Object.keys(submissionHeatmap).length;
+            // Re-fetch solved problems inside transaction to count categories correctly
+            const currentSolvedProblems = userData.solvedProblems || {};
+            const allProblemsDoc = await getDoc(doc(db, "problems", "Apex"));
+            const allProblemsData = allProblemsDoc.data()?.Category as ApexProblemsData;
+            
+            if (allProblemsData) {
+                Object.values(currentSolvedProblems).forEach((p: SolvedProblemDetail) => {
+                    // Find the original problem to get its category
+                    for (const catName in allProblemsData) {
+                        const foundProblem = allProblemsData[catName].Questions.find(q => q.title === p.title);
+                        if (foundProblem) {
+                            categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
+                            break;
+                        }
+                    }
+                });
+                // Add the current problem being solved
+                categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
+            }
 
 
             for (const badge of badgesToAward) {
@@ -311,6 +325,7 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                             }
                             break;
                         case 'ACTIVE_DAYS':
+                            const activeDaysCount = Object.keys(submissionHeatmap).length;
                             if (activeDaysCount >= criteria.value) earned = true;
                             break;
                     }

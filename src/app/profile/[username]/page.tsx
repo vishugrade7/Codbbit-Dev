@@ -119,22 +119,22 @@ export default function UserProfilePage() {
         return () => unsubscribe();
     }, [username]);
     
-    const recentlySolvedProblems = useMemo(() => {
-        if (!profileUser?.solvedProblems) return [];
-
-        const solvedDetails: RecentlySolvedProblem[] = Object.entries(profileUser.solvedProblems).map(([id, details]) => ({
-            id,
-            ...details,
-        }));
-
-        solvedDetails.sort((a, b) => {
-            const dateA = a.solvedAt?.toDate ? a.solvedAt.toDate() : new Date(0);
-            const dateB = b.solvedAt?.toDate ? b.solvedAt.toDate() : new Date(0);
-            return dateB.getTime() - dateA.getTime();
-        });
+    const recentlySolvedProblemsDetails = useMemo(() => {
+        if (!profileUser?.solvedProblems || loadingProblems || allProblems.length === 0) return [];
+    
+        const solvedProblemIds = Object.keys(profileUser.solvedProblems);
         
-        return solvedDetails.slice(0, 5);
-    }, [profileUser?.solvedProblems]);
+        const recentlySolvedMap = new Map(
+            allProblems
+                .filter(p => solvedProblemIds.includes(p.id))
+                .map(p => [p.id, { ...p, solvedAt: profileUser.solvedProblems![p.id].solvedAt, points: profileUser.solvedProblems![p.id].points }])
+        );
+
+        return Array.from(recentlySolvedMap.values())
+            .sort((a, b) => b.solvedAt.toDate().getTime() - a.solvedAt.toDate().getTime())
+            .slice(0, 5);
+    
+    }, [profileUser?.solvedProblems, allProblems, loadingProblems]);
 
     const starredProblemsDetails = useMemo(() => {
         if (loadingProblems || !profileUser?.starredProblems || allProblems.length === 0) {
@@ -461,9 +461,9 @@ export default function UserProfilePage() {
                 <Card>
                     <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
                     <CardContent>
-                        {recentlySolvedProblems.length > 0 ? (
+                        {recentlySolvedProblemsDetails.length > 0 ? (
                             <div className="space-y-2">
-                                {recentlySolvedProblems.map(problem => (
+                                {recentlySolvedProblemsDetails.map(problem => (
                                     <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
                                         <div className="flex items-center justify-between gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors">
                                             <div className="flex-1">
@@ -508,7 +508,7 @@ export default function UserProfilePage() {
                                                 <div className="flex items-center gap-4 shrink-0">
                                                     <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                                                     {isSolved ? (
-                                                        <UserIcon className="h-4 w-4 text-green-500" />
+                                                        <CheckCircle2 className="h-4 w-4 text-green-500" />
                                                     ) : (
                                                          <Circle className="h-4 w-4 text-muted-foreground/50" />
                                                     )}
@@ -530,3 +530,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+

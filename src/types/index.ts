@@ -4,7 +4,6 @@ export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
   difficulty: 'Easy' | 'Medium' | 'Hard';
-  categoryName: string;
   title: string;
 };
 
