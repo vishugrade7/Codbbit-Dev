@@ -150,164 +150,152 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
 }
 
 function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onChange: (newValue: string) => void, [key: string]: any }) {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-
+    
     const [linkUrl, setLinkUrl] = useState('');
     const [commentText, setCommentText] = useState('');
-    const [selection, setSelection] = useState<{ start: number, end: number } | null>(null);
-
+    
     const [textColor, setTextColor] = useState('#000000');
     const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+    
+    const [selection, setSelection] = useState<Range | null>(null);
 
+    const saveSelection = useCallback(() => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+                setSelection(range);
+            }
+        }
+    }, []);
 
-    const handleSelect = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
-        const textarea = event.currentTarget;
-        const hasSelection = textarea.selectionStart !== textarea.selectionEnd;
-        if (hasSelection) {
-            setSelection({ start: textarea.selectionStart, end: textarea.selectionEnd });
-            setIsToolbarOpen(true);
-        } else {
+    const restoreSelection = useCallback(() => {
+        if (selection) {
+            const sel = window.getSelection();
+            sel?.removeAllRanges();
+            sel?.addRange(selection);
+        }
+    }, [selection]);
+
+    const handleSelect = useCallback(() => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+             if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+                const hasSelection = range.toString().length > 0;
+                setIsToolbarOpen(hasSelection);
+                if(hasSelection) saveSelection();
+            } else {
+                 setIsToolbarOpen(false);
+            }
+        }
+    }, [saveSelection]);
+    
+    const applyStyle = (command: string, valueArg: string | null = null) => {
+        if (selection) {
+            restoreSelection();
+            document.execCommand(command, false, valueArg);
+            if(editorRef.current) onChange(editorRef.current.innerHTML);
             setIsToolbarOpen(false);
         }
     };
     
-    const applyMarkdownStyle = (prefix: string, suffix: string = prefix) => {
-        if (!selection) return;
-        const { start, end } = selection;
-        const currentValue = value || '';
-        const selectedText = currentValue.substring(start, end);
-        
-        const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
-        onChange(newValue);
-        setIsToolbarOpen(false); // Close toolbar after action
-
-        setTimeout(() => {
-            textareaRef.current?.focus();
-            textareaRef.current?.setSelectionRange(start + prefix.length, end + prefix.length);
-        }, 0);
-    };
-
     const handleLinkButtonClick = () => {
-        if (!selection) return;
+        saveSelection();
         setIsToolbarOpen(false);
         setIsLinkDialogOpen(true);
-    }
-    
+    };
+
     const handleCommentButtonClick = () => {
-        if (!selection) return;
+        saveSelection();
         setIsToolbarOpen(false);
         setIsCommentDialogOpen(true);
     };
 
     const handleColorButtonClick = () => {
-        if (!selection) return;
+        saveSelection();
         setIsToolbarOpen(false);
         setIsColorDialogOpen(true);
     };
-
-    const applyColorStyle = () => {
-        if (!selection) return;
-        const { start, end } = selection;
-        const currentValue = value || '';
-        const selectedText = currentValue.substring(start, end);
-
-        let styles = [];
-        // Use a neutral default color that indicates "no style" to avoid adding unnecessary spans
-        if (textColor !== '#000001') styles.push(`color: ${textColor}`);
-        if (backgroundColor !== '#ffffff') {
-            styles.push(`background-color: ${backgroundColor}`);
-            styles.push(`padding: 2px 5px`);
-            styles.push(`border-radius: 4px`);
-        }
-        
-        if (styles.length === 0) {
-            setIsColorDialogOpen(false);
-            return;
-        }
-
-        const styleString = styles.join('; ');
-        const prefix = `<span style="${styleString}">`;
-        const suffix = `</span>`;
-        
-        const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
-        onChange(newValue);
-        
-        setIsColorDialogOpen(false);
-
-        setTimeout(() => {
-            textareaRef.current?.focus();
-            textareaRef.current?.setSelectionRange(start + prefix.length, end + prefix.length);
-        }, 0);
-    };
-
-
+    
     const applyLink = () => {
-        if (!selection || !linkUrl) return;
-        const { start, end } = selection;
-        const currentValue = value || '';
-        const selectedText = currentValue.substring(start, end);
-        
-        const newValue = `${currentValue.substring(0, start)}[${selectedText}](${linkUrl})${currentValue.substring(end)}`;
-        onChange(newValue);
-        
+        if (linkUrl) {
+            applyStyle('createLink', linkUrl);
+        }
         setIsLinkDialogOpen(false);
         setLinkUrl('');
-
-        setTimeout(() => {
-            textareaRef.current?.focus();
-            textareaRef.current?.setSelectionRange(start + 1, start + 1 + selectedText.length);
-        }, 0);
-    }
-
-    const applyComment = () => {
-        if (!selection || !commentText) return;
-        const { start, end } = selection;
-        const currentValue = value || '';
-        const selectedText = currentValue.substring(start, end);
-
-        // HTML encode the comment to prevent issues
-        const encodedComment = commentText.replace(/"/g, '&quot;');
-        
-        const prefix = `<span data-comment="${encodedComment}">`;
-        const suffix = `</span>`;
-
-        const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
-        onChange(newValue);
-
-        setIsCommentDialogOpen(false);
-        setCommentText('');
-
-        setTimeout(() => {
-            textareaRef.current?.focus();
-            textareaRef.current?.setSelectionRange(start + prefix.length, end + prefix.length);
-        }, 0);
     };
 
-    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        onChange(e.target.value);
-    }
+    const applyComment = () => {
+        if (commentText && selection) {
+            restoreSelection();
+            const encodedComment = commentText.replace(/"/g, '&quot;');
+            const span = document.createElement('span');
+            span.setAttribute('data-comment', encodedComment);
+            span.className = 'comment-highlight'; // Add class for styling
+            try {
+                selection.surroundContents(span);
+            } catch (e) {
+                // Fallback for complex selections
+                span.appendChild(selection.extractContents());
+                selection.insertNode(span);
+            }
+            if(editorRef.current) onChange(editorRef.current.innerHTML);
+        }
+        setIsCommentDialogOpen(false);
+        setCommentText('');
+    };
+
+    const applyColorStyle = () => {
+        if (selection) {
+            restoreSelection();
+            const span = document.createElement('span');
+            let styles = '';
+            if (textColor !== '#000000') styles += `color: ${textColor};`;
+            if (backgroundColor !== '#ffffff') styles += `background-color: ${backgroundColor}; padding: 2px 5px; border-radius: 4px;`;
+            span.setAttribute('style', styles);
+            try {
+                selection.surroundContents(span);
+            } catch (e) {
+                span.appendChild(selection.extractContents());
+                selection.insertNode(span);
+            }
+             if(editorRef.current) onChange(editorRef.current.innerHTML);
+        }
+        setIsColorDialogOpen(false);
+    };
+
+    const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
+        onChange(event.currentTarget.innerHTML);
+    };
     
     return (
-        <Popover open={isToolbarOpen} onOpenChange={setIsToolbarOpen}>
+         <Popover open={isToolbarOpen} onOpenChange={setIsToolbarOpen}>
             <PopoverTrigger asChild>
-                <Textarea 
-                    ref={textareaRef} 
-                    onSelect={handleSelect} 
-                    onBlur={() => setIsToolbarOpen(false)} 
-                    value={value} 
-                    onChange={handleTextareaChange} 
-                    {...props} 
+                <div
+                    ref={editorRef}
+                    onSelect={handleSelect}
+                    onInput={handleInput}
+                    onBlur={() => setIsToolbarOpen(false)}
+                    contentEditable
+                    dangerouslySetInnerHTML={{ __html: value || '' }}
+                    {...props}
+                    className={cn(
+                        'min-h-[200px] w-full rounded-md border-input bg-transparent p-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring prose dark:prose-invert max-w-none',
+                        props.className
+                    )}
                 />
             </PopoverTrigger>
             <PopoverContent className="w-auto p-1 flex items-center gap-0.5 bg-neutral-800 border-neutral-700">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('**'); }}><Bold className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('*'); }}><Italic className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('~~'); }}><Strikethrough className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyStyle('bold'); }}><Bold className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyStyle('italic'); }}><Italic className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyStyle('strikeThrough'); }}><Strikethrough className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyStyle('insertUnorderedList'); }}><List className="h-4 w-4" /></Button>
                 <Separator orientation="vertical" className="h-5 bg-neutral-700 mx-1" />
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); handleLinkButtonClick(); }}><LinkIcon className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); handleColorButtonClick(); }}><Palette className="h-4 w-4" /></Button>
@@ -1059,7 +1047,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous', testClassCode: '' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;
-            default: newBlock = { id, type, content: (type === 'bulleted-list' ? '* ' : (type === 'numbered-list' ? '1. ' : '')) };
+            default: newBlock = { id, type, content: (type === 'bulleted-list' ? '<ul><li></li></ul>' : (type === 'numbered-list' ? '<ol><li></li></ol>' : '')) };
         }
         append(newBlock as any);
     };
@@ -1124,16 +1112,16 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
 
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading2': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading3': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextEditorWithPreview field={field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
-            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextEditorWithPreview field={{value: field.value.text, onChange: (newText: string) => field.onChange({...field.value, text: newText})}} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar field={field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextareaWithToolbar field={{value: field.value.text, onChange: (newText: string) => field.onChange({...field.value, text: newText})}} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider': return <hr className="my-4"/>
-            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} placeholder="* Item 1..." /></FormControl><FormMessage/></FormItem>)}/>
-            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} placeholder="1. Item 1..." /></FormControl><FormMessage/></FormItem>)}/>
+            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar field={field} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list': return <TodoListBlock path={path} />;
             case 'toggle-list': return <ToggleListBlock path={path} />;
             case 'problem': return <ProblemBlock path={path} />;
@@ -1563,5 +1551,6 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
