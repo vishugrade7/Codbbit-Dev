@@ -150,8 +150,9 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
     );
 }
 
-function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onChange?: (newValue: string) => void, [key: string]: any }) {
+function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onChange: (newValue: string) => void, [key: string]: any }) {
     const editorRef = useRef<HTMLDivElement>(null);
+    const lastValue = useRef(value);
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
@@ -167,8 +168,9 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
 
     // Sync external value changes to the editor
     useEffect(() => {
-        if (editorRef.current && editorRef.current.innerHTML !== value) {
+        if (editorRef.current && lastValue.current !== value) {
             editorRef.current.innerHTML = value || '';
+            lastValue.current = value;
         }
     }, [value]);
 
@@ -280,7 +282,9 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
 
     const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
         if (onChange) {
-            onChange(event.currentTarget.innerHTML);
+            const newValue = event.currentTarget.innerHTML;
+            lastValue.current = newValue;
+            onChange(newValue);
         }
     };
     
@@ -369,12 +373,12 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     )
 }
 
-function TextEditorWithPreview({ field, placeholder, className }: { field: any; placeholder?: string; className?: string }) {
+function TextEditorWithPreview({ value, onChange, placeholder, className }: { value: string, onChange: (newValue: string) => void, placeholder?: string; className?: string }) {
     return (
         <div className={cn("rounded-md border", className)}>
              <TextareaWithToolbar
-                value={field.value}
-                onChange={field.onChange}
+                value={value}
+                onChange={onChange}
                 placeholder={placeholder || "Enter lesson content here..."}
                 className="h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2 min-h-[200px]"
             />
@@ -630,7 +634,7 @@ function ToggleListBlock({ path }: { path: string }) {
                         render={({ field }) => (
                             <FormItem>
                                 <FormControl>
-                                    <TextEditorWithPreview field={field} placeholder="Toggle content..." />
+                                    <TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Toggle content..." />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -762,7 +766,7 @@ function McqBlockEditor({ path }: { path: string }) {
       <FormField control={control} name={`${path}.content.question`} render={({ field }) => (
           <FormItem>
               <FormLabel>Question</FormLabel>
-              <FormControl><TextEditorWithPreview field={field} placeholder="What is the capital of France?" /></FormControl>
+              <FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="What is the capital of France?" /></FormControl>
               <FormMessage />
           </FormItem>
       )} />
@@ -797,7 +801,7 @@ function McqBlockEditor({ path }: { path: string }) {
       <FormField control={control} name={`${path}.content.explanation`} render={({ field }) => (
           <FormItem>
               <FormLabel>Explanation (Optional)</FormLabel>
-              <FormControl><TextEditorWithPreview field={field} placeholder="Provide an explanation for the correct answer." /></FormControl>
+              <FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Provide an explanation for the correct answer." /></FormControl>
           </FormItem>
       )} />
     </div>
@@ -1022,7 +1026,7 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Description</FormLabel>
-                        <FormControl><TextEditorWithPreview {...field} placeholder="Declare a boolean variable..." /></FormControl>
+                        <FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Declare a boolean variable..." /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )}
@@ -1180,16 +1184,16 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
 
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar {...field} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading2': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading3': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar {...field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
             case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextareaWithToolbar value={field.value.text} onChange={(newText: string) => field.onChange({...field.value, text: newText})} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider': return <hr className="my-4"/>
-            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar {...field} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar {...field} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextareaWithToolbar value={field.value} onChange={field.onChange} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list': return <TodoListBlock path={path} />;
             case 'toggle-list': return <ToggleListBlock path={path} />;
             case 'problem': return <ProblemBlock path={path} />;
@@ -1493,7 +1497,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                             <FormItem>
                                 <FormLabel>Description</FormLabel>
                                 <FormControl>
-                                    <TextEditorWithPreview {...field} placeholder="A brief summary of the course..." />
+                                    <TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="A brief summary of the course..." />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
