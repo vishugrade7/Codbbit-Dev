@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import ReactConfetti from 'react-confetti';
 
 
 const getLessonIcon = (lesson: Lesson) => {
@@ -335,15 +336,20 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
 
 const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; allProblems: ProblemWithCategory[] }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isCompleted, setIsCompleted] = useState(false);
     const steps = blockContent.steps || [];
 
     const handleNext = () => {
         if (currentIndex < steps.length - 1) {
             setCurrentIndex(currentIndex + 1);
+        } else if (currentIndex === steps.length - 1) {
+            setIsCompleted(true);
         }
     };
     const handlePrev = () => {
-        if (currentIndex > 0) {
+        if (isCompleted) {
+            setIsCompleted(false);
+        } else if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
         }
     };
@@ -351,7 +357,8 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
     const currentStep = steps[currentIndex];
 
     return (
-        <div className="not-prose my-6 w-full text-center">
+        <div className="not-prose my-6 w-full text-center relative overflow-hidden">
+            {isCompleted && <ReactConfetti recycle={false} numberOfPieces={200} />}
             {blockContent.title && <h3 className="text-2xl font-semibold mb-2">{blockContent.title}</h3>}
             <div className="flex items-center justify-center my-8 max-w-xl mx-auto">
                 {steps.map((step: any, index: number) => (
@@ -359,11 +366,11 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
                         <div className="flex flex-col items-center">
                             <div className={cn(
                                 "h-8 w-8 rounded-full flex items-center justify-center text-white font-bold border-2 transition-all",
-                                index < currentIndex ? "bg-green-500 border-green-500" :
+                                isCompleted || index < currentIndex ? "bg-green-500 border-green-500" :
                                 index === currentIndex ? "bg-primary border-primary scale-110" :
                                 "bg-muted border-border"
                             )}>
-                                {index < currentIndex ? <Check className="h-5 w-5" /> : <span className={cn(index === currentIndex ? "text-primary-foreground" : "text-muted-foreground")}>{index + 1}</span>}
+                                {(isCompleted || index < currentIndex) ? <Check className="h-5 w-5" /> : <span className={cn(index === currentIndex ? "text-primary-foreground" : "text-muted-foreground")}>{index + 1}</span>}
                             </div>
                             <p className="text-sm mt-2 text-muted-foreground">{step.title}</p>
                         </div>
@@ -375,18 +382,26 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
             </div>
 
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={handlePrev} disabled={currentIndex === 0}>
+                <Button variant="outline" size="icon" onClick={handlePrev} disabled={!isCompleted && currentIndex === 0}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <Card className="flex-1 text-left min-h-[200px]">
-                    <CardContent className="p-6">
-                         <div className="prose dark:prose-invert max-w-none">
-                            <ContentRenderer contentBlocks={currentStep?.content || []} allProblems={allProblems} />
-                        </div>
-                    </CardContent>
+                    {isCompleted ? (
+                        <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
+                            <PartyPopper className="h-12 w-12 text-primary"/>
+                             <h4 className="text-2xl font-bold">Completed!</h4>
+                             <p className="text-muted-foreground">Great job finishing all the steps.</p>
+                        </CardContent>
+                    ) : (
+                        <CardContent className="p-6">
+                            <div className="prose dark:prose-invert max-w-none">
+                                <ContentRenderer contentBlocks={currentStep?.content || []} allProblems={allProblems} />
+                            </div>
+                        </CardContent>
+                    )}
                 </Card>
-                 <Button variant="outline" size="icon" onClick={handleNext} disabled={currentIndex === steps.length - 1}>
-                    <ArrowRight className="h-4 w-4" />
+                 <Button variant="outline" size="icon" onClick={handleNext} disabled={isCompleted}>
+                    {currentIndex === steps.length - 1 ? 'Finish' : <ArrowRight className="h-4 w-4" />}
                 </Button>
             </div>
              {blockContent.body && <p className="text-muted-foreground mt-4">{blockContent.body}</p>}
@@ -896,7 +911,7 @@ export default function LessonPage() {
                  <ResizableHandle withHandle className="hidden md:flex"/>
                 <ResizablePanel defaultSize={75}>
                     <main className="h-full flex flex-col bg-background relative">
-                        <div className="p-4 border-b flex items-center justify-between bg-background/60 backdrop-blur-lg">
+                        <div className="p-4 border-b flex items-center justify-between bg-background/60 backdrop-blur-md">
                             <h1 className="text-2xl font-bold font-headline">{currentLesson.title}</h1>
                         </div>
                         <ScrollArea className="flex-1">
@@ -933,3 +948,4 @@ export default function LessonPage() {
 
 
     
+
