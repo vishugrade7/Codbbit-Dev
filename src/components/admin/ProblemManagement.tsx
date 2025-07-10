@@ -717,7 +717,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
         setCompanyLogo(problem?.companyLogoUrl || null);
         setSelectedCompanyName(problem?.company || null);
 
-    }, [problem, form]);
+    }, [problem, form.reset]);
 
     const metadataTypeValue = form.watch("metadataType");
     const companyValue = form.watch("company");
