@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
@@ -368,6 +369,20 @@ export default function UserProfilePage() {
                             {profileUser.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                     </Avatar>
+                    {isProfileUserPro && (
+                      <TooltipProvider>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center border-2 border-background">
+                                      <Code className="h-5 w-5"/>
+                                  </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                  <p>Pro User</p>
+                              </TooltipContent>
+                          </Tooltip>
+                      </TooltipProvider>
+                    )}
                     {isOwnProfile && (
                         <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                             {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
@@ -381,7 +396,6 @@ export default function UserProfilePage() {
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
                         {profileUser.emailVerified && <VerifiedIcon />}
-                        {isProfileUserPro && <ProIcon />}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
