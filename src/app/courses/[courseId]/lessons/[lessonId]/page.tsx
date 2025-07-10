@@ -353,17 +353,17 @@ const StepperChallenge = ({ blockContent }: { blockContent: any }) => {
     return (
         <div className="not-prose my-6 w-full text-center">
             {blockContent.title && <h3 className="text-2xl font-semibold mb-2">{blockContent.title}</h3>}
-            <div className="flex items-center justify-center my-8">
+            <div className="flex items-center justify-center my-8 max-w-xl mx-auto">
                 {steps.map((step: any, index: number) => (
                     <React.Fragment key={step.id}>
                         <div className="flex flex-col items-center">
                             <div className={cn(
-                                "h-10 w-10 rounded-full flex items-center justify-center text-white font-bold border-2 transition-all",
+                                "h-8 w-8 rounded-full flex items-center justify-center text-white font-bold border-2 transition-all",
                                 index < currentIndex ? "bg-green-500 border-green-500" :
                                 index === currentIndex ? "bg-primary border-primary scale-110" :
                                 "bg-muted border-border"
                             )}>
-                                {index < currentIndex ? <Check className="h-6 w-6" /> : <span className={cn(index === currentIndex ? "text-primary-foreground" : "text-muted-foreground")}>{index + 1}</span>}
+                                {index < currentIndex ? <Check className="h-5 w-5" /> : <span className={cn(index === currentIndex ? "text-primary-foreground" : "text-muted-foreground")}>{index + 1}</span>}
                             </div>
                             <p className="text-sm mt-2 text-muted-foreground">{step.title}</p>
                         </div>
@@ -918,3 +918,6 @@ export default function LessonPage() {
     
 
 
+
+
+    
