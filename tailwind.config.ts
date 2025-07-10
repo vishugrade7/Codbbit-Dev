@@ -25,19 +25,19 @@ export default {
         code: ["var(--font-source-code-pro)"],
       },
       fontSize: {
-        'xs': 'clamp(0.75rem, 0.6rem + 0.5vw, 0.875rem)',   // 12px -> 14px
-        'sm': 'clamp(0.875rem, 0.7rem + 0.5vw, 1rem)',      // 14px -> 16px
-        'base': 'clamp(1rem, 0.8rem + 0.65vw, 1.125rem)',   // 16px -> 18px
-        'lg': 'clamp(1.125rem, 0.9rem + 0.7vw, 1.25rem)',    // 18px -> 20px
-        'xl': 'clamp(1.25rem, 1rem + 0.8vw, 1.5rem)',       // 20px -> 24px
-        '2xl': 'clamp(1.5rem, 1.2rem + 1vw, 1.875rem)',     // 24px -> 30px
-        '3xl': 'clamp(1.875rem, 1.5rem + 1.5vw, 2.25rem)',  // 30px -> 36px
-        '4xl': 'clamp(2.25rem, 1.8rem + 2.5vw, 3rem)',      // 36px -> 48px
-        '5xl': 'clamp(3rem, 2.4rem + 3.75vw, 3.75rem)',   // 48px -> 60px
-        '6xl': 'clamp(3.75rem, 3rem + 4.75vw, 4.5rem)',   // 60px -> 72px
-        '7xl': 'clamp(4.5rem, 3.6rem + 5.5vw, 6rem)',     // 72px -> 96px
-        '8xl': 'clamp(6rem, 4.8rem + 7.5vw, 8rem)',       // 96px -> 128px
-        '9xl': 'clamp(8rem, 6.4rem + 10vw, 10rem)',      // 128px -> 160px
+        'xs': 'clamp(0.6rem, 0.5rem + 0.5vw, 0.75rem)',
+        'sm': 'clamp(0.75rem, 0.6rem + 0.5vw, 0.875rem)',
+        'base': 'clamp(0.875rem, 0.7rem + 0.65vw, 1rem)',
+        'lg': 'clamp(1rem, 0.8rem + 0.7vw, 1.125rem)',
+        'xl': 'clamp(1.125rem, 0.9rem + 0.8vw, 1.25rem)',
+        '2xl': 'clamp(1.25rem, 1rem + 1vw, 1.5rem)',
+        '3xl': 'clamp(1.5rem, 1.2rem + 1.5vw, 1.875rem)',
+        '4xl': 'clamp(1.875rem, 1.5rem + 2.5vw, 2.25rem)',
+        '5xl': 'clamp(2.25rem, 1.8rem + 3.75vw, 3rem)',
+        '6xl': 'clamp(3rem, 2.4rem + 4.75vw, 3.75rem)',
+        '7xl': 'clamp(3.75rem, 3rem + 5.5vw, 4.5rem)',
+        '8xl': 'clamp(4.5rem, 3.6rem + 7.5vw, 6rem)',
+        '9xl': 'clamp(6rem, 4.8rem + 10vw, 8rem)',
       },
       colors: {
         background: 'hsl(var(--background))',
