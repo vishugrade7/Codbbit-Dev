@@ -585,8 +585,8 @@ function DisplayOrderManager({ control }: { control: any }) {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={fields.map(field => field.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
-                    {fields.map((field: any, index) => (
-                         <SortableDisplayOrderItem key={field.id} id={field.id} componentType={field.component} />
+                    {fields.map((field, index) => (
+                         <SortableDisplayOrderItem key={field.id} id={field.id} componentType={(field as any).value} />
                     ))}
                 </div>
             </SortableContext>
@@ -641,54 +641,31 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
     });
     
     useEffect(() => {
-        const defaultValues: z.infer<typeof problemFormSchema> = formMode === 'edit' && problem ? {
-            id: problem.id,
-            title: problem.title,
-            description: problem.description,
-            category: problem.categoryName,
-            difficulty: problem.difficulty,
-            metadataType: problem.metadataType,
-            triggerSObject: problem.triggerSObject || "",
-            sampleCode: problem.sampleCode,
-            testcases: problem.testcases,
-            examples: problem.examples?.length ? problem.examples.map(e => ({...e})) : [{ input: "", output: "", explanation: "" }],
-            hints: problem.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
-            company: problem.company || "",
-            companyLogoUrl: problem.companyLogoUrl || "",
-            isPremium: problem.isPremium || false,
-            imageUrl: problem.imageUrl || "",
-            mermaidDiagram: problem.mermaidDiagram || "",
-            displayOrder: problem.displayOrder || ['description', 'image', 'mermaid']
-        } : {
-            id: undefined,
-            title: "",
-            description: "",
-            category: "",
-            difficulty: "Easy",
-            metadataType: "Class",
-            triggerSObject: "",
-            sampleCode: "",
-            testcases: "",
-            examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
-            hints: [{value: ""}],
-            company: "",
-            companyLogoUrl: "",
-            isPremium: false,
-            imageUrl: "",
-            mermaidDiagram: "",
-            displayOrder: ['description', 'image', 'mermaid']
+        const defaultValues: z.infer<typeof problemFormSchema> = {
+            id: problem?.id,
+            title: problem?.title || "",
+            description: problem?.description || "",
+            category: problem?.categoryName || "",
+            difficulty: problem?.difficulty || "Easy",
+            metadataType: problem?.metadataType || "Class",
+            triggerSObject: problem?.triggerSObject || "",
+            sampleCode: problem?.sampleCode || "",
+            testcases: problem?.testcases || "",
+            examples: problem?.examples?.length ? problem.examples.map(e => ({...e})) : [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }],
+            hints: problem?.hints?.length ? problem.hints.map(h => ({ value: h })) : [{value: ""}],
+            company: problem?.company || "",
+            companyLogoUrl: problem?.companyLogoUrl || "",
+            isPremium: problem?.isPremium || false,
+            imageUrl: problem?.imageUrl || "",
+            mermaidDiagram: problem?.mermaidDiagram || "",
+            displayOrder: problem?.displayOrder || ['description', 'image', 'mermaid']
         };
         form.reset(defaultValues);
         
-        if (formMode === 'edit' && problem) {
-            setCompanyLogo(problem.companyLogoUrl || null);
-            setSelectedCompanyName(problem.company || null);
-        } else {
-            setCompanyLogo(null);
-            setSelectedCompanyName(null);
-        }
+        setCompanyLogo(problem?.companyLogoUrl || null);
+        setSelectedCompanyName(problem?.company || null);
 
-    }, [problem, form, formMode]);
+    }, [problem, form]);
 
     const metadataTypeValue = form.watch("metadataType");
     const companyValue = form.watch("company");
