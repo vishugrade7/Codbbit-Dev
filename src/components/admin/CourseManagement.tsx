@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -154,7 +154,10 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
+    const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+
     const [linkUrl, setLinkUrl] = useState('');
+    const [commentText, setCommentText] = useState('');
     const [selection, setSelection] = useState<{ start: number, end: number } | null>(null);
 
     const [textColor, setTextColor] = useState('#000000');
@@ -194,6 +197,12 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
         setIsLinkDialogOpen(true);
     }
     
+    const handleCommentButtonClick = () => {
+        if (!selection) return;
+        setIsToolbarOpen(false);
+        setIsCommentDialogOpen(true);
+    };
+
     const handleColorButtonClick = () => {
         if (!selection) return;
         setIsToolbarOpen(false);
@@ -254,6 +263,30 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
         }, 0);
     }
 
+    const applyComment = () => {
+        if (!selection || !commentText) return;
+        const { start, end } = selection;
+        const currentValue = value || '';
+        const selectedText = currentValue.substring(start, end);
+
+        // HTML encode the comment to prevent issues
+        const encodedComment = commentText.replace(/"/g, '&quot;');
+        
+        const prefix = `<span data-comment="${encodedComment}">`;
+        const suffix = `</span>`;
+
+        const newValue = `${currentValue.substring(0, start)}${prefix}${selectedText}${suffix}${currentValue.substring(end)}`;
+        onChange(newValue);
+
+        setIsCommentDialogOpen(false);
+        setCommentText('');
+
+        setTimeout(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
+    };
+
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onChange(e.target.value);
     }
@@ -277,6 +310,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                 <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleLinkButtonClick(); }}><LinkIcon className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleColorButtonClick(); }}><Palette className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleCommentButtonClick(); }}><MessageSquarePlus className="h-4 w-4" /></Button>
             </PopoverContent>
             
             <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
@@ -291,6 +325,22 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancel</Button>
                         <Button onClick={applyLink}>Add Link</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+             <Dialog open={isCommentDialogOpen} onOpenChange={setIsCommentDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Comment</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <Label htmlFor="comment-text">Comment Text</Label>
+                        <Textarea id="comment-text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Enter your comment..." />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCommentDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={applyComment}>Add Comment</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

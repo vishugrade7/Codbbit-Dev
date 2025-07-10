@@ -16,7 +16,7 @@ import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRigh
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { Progress } from '@/components/ui/progress';
@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import ReactConfetti from 'react-confetti';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const getLessonIcon = (lesson: Lesson) => {
@@ -414,6 +415,27 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
     );
 };
 
+const markdownComponents: Components = {
+    span: ({ node, ...props }) => {
+        const dataComment = (node?.properties as any)?.dataComment;
+        if (dataComment) {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <span {...props} className="comment-highlight" />
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-background/80 backdrop-blur-md">
+                            <p>{dataComment}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            );
+        }
+        return <span {...props} />;
+    },
+};
+
 
 const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[] | string, allProblems: ProblemWithCategory[] }) => {
   const getDifficultyBadgeClass = (difficulty: string) => {
@@ -435,7 +457,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
       switch (block.type) {
         case 'text':
           return (
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={markdownComponents}>
               {block.content || ''}
             </ReactMarkdown>
           );
@@ -479,7 +501,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
               return (
                   <blockquote className="not-prose mt-6 border-l-4 border-primary bg-muted/50 p-4 rounded-r-lg">
                       <div className="prose prose-sm dark:prose-invert text-muted-foreground italic">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={markdownComponents}>
                               {block.content}
                           </ReactMarkdown>
                       </div>
@@ -490,7 +512,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                   <div className="not-prose my-6 flex items-start gap-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
                       <div className="text-2xl pt-1">{block.content.icon}</div>
                       <div className="prose dark:prose-invert max-w-none text-primary/90">
-                         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={markdownComponents}>
                               {block.content.text}
                           </ReactMarkdown>
                       </div>
@@ -501,7 +523,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           case 'bulleted-list':
           case 'numbered-list':
             return (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={markdownComponents}>
                 {block.content || ''}
               </ReactMarkdown>
             );
@@ -528,7 +550,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                         </AccordionTrigger>
                         <AccordionContent className="p-4 pt-4 bg-background border-t">
                              <div className="prose dark:prose-invert max-w-none">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={markdownComponents}>
                                 {block.content.text}
                               </ReactMarkdown>
                              </div>
@@ -916,7 +938,7 @@ export default function LessonPage() {
                  <ResizableHandle withHandle className="hidden md:flex"/>
                 <ResizablePanel defaultSize={75}>
                     <main className="h-full flex flex-col bg-background relative">
-                        <div className="p-4 border-b flex items-center justify-between bg-background/60 backdrop-blur-md">
+                        <div className="p-4 border-b flex items-center justify-between bg-background/60 backdrop-blur-sm">
                             <h1 className="text-2xl font-bold font-headline">{currentLesson.title}</h1>
                         </div>
                         <ScrollArea className="flex-1">
