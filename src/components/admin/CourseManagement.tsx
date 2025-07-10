@@ -303,14 +303,15 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                     {...props} 
                 />
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-1 flex items-center gap-1">
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('**'); }}><Bold className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('*'); }}><Italic className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('~~'); }}><Strikethrough className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleLinkButtonClick(); }}><LinkIcon className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleColorButtonClick(); }}><Palette className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); handleCommentButtonClick(); }}><MessageSquarePlus className="h-4 w-4" /></Button>
+            <PopoverContent className="w-auto p-1 flex items-center gap-0.5 bg-neutral-800 border-neutral-700">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('**'); }}><Bold className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('*'); }}><Italic className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('~~'); }}><Strikethrough className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); applyMarkdownStyle('`'); }}><Code2Icon className="h-4 w-4" /></Button>
+                <Separator orientation="vertical" className="h-5 bg-neutral-700 mx-1" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); handleLinkButtonClick(); }}><LinkIcon className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); handleColorButtonClick(); }}><Palette className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-300 hover:bg-neutral-700 hover:text-white" onMouseDown={(e) => { e.preventDefault(); handleCommentButtonClick(); }}><MessageSquarePlus className="h-4 w-4" /></Button>
             </PopoverContent>
             
             <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
@@ -370,35 +371,15 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     )
 }
 
-const TextEditorWithPreview = ({ field, placeholder, className }: { field: any; placeholder?: string; className?: string }) => {
+function TextEditorWithPreview({ field, placeholder, className }: { field: any; placeholder?: string; className?: string }) {
     return (
         <div className={cn("rounded-md border", className)}>
-            <ResizablePanelGroup direction="horizontal" className="min-h-[200px] max-w-full">
-                <ResizablePanel defaultSize={50} minSize={30}>
-                    <div className="h-full">
-                        <TextareaWithToolbar
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder={placeholder || "Enter lesson content here..."}
-                            className="h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2"
-                        />
-                    </div>
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={50} minSize={30}>
-                    <div className="flex flex-col h-full">
-                        <p className="p-2.5 text-xs font-semibold text-muted-foreground border-b shrink-0">Live Preview</p>
-                        <div className="flex-1 p-4 overflow-auto bg-muted/10">
-                            <div className="prose dark:prose-invert max-w-none">
-                                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                                    {field.value || ''}
-                                </ReactMarkdown>
-                                {!field.value && <span className="text-muted-foreground">Preview will appear here.</span>}
-                            </div>
-                        </div>
-                    </div>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+             <TextareaWithToolbar
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={placeholder || "Enter lesson content here..."}
+                className="h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2 min-h-[200px]"
+            />
         </div>
     );
 };
@@ -1582,4 +1563,5 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
