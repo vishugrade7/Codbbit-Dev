@@ -403,8 +403,9 @@ export default function UserProfilePage() {
                                   >
                                       <PieChart>
                                           <ChartTooltip
-                                              cursor={false}
-                                              content={<ChartTooltipContent hideLabel nameKey="name" />}
+                                                cursor={false}
+                                                content={<ChartTooltipContent hideLabel nameKey="name" />}
+                                                allowReorder="end"
                                           />
                                           <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
                                               {categoryData.map((entry, index) => (
