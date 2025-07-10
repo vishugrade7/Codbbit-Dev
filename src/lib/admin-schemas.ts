@@ -158,7 +158,7 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => z.discriminated
             steps: z.array(z.object({
                 id: z.string(),
                 title: z.string().min(1, "Step title is required."),
-                content: z.string().min(1, "Step content is required."),
+                content: z.array(contentBlockSchema).min(1, "Step must have content."),
             })).min(1, "Stepper must have at least one step."),
         }),
         backgroundColor: z.string().optional(),

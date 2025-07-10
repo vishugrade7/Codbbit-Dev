@@ -841,7 +841,7 @@ function StepperBlockEditor({ path }: { path: string }) {
         name: `${path}.content.steps`,
     });
 
-    const addStep = () => append({ id: uuidv4(), title: `Step ${fields.length + 1}`, content: '' });
+    const addStep = () => append({ id: uuidv4(), title: `Step ${fields.length + 1}`, content: [{ id: uuidv4(), type: 'text', content: '' }] });
 
     return (
         <div className="bg-muted p-4 rounded-md border space-y-4">
@@ -875,16 +875,7 @@ function StepperBlockEditor({ path }: { path: string }) {
                             </Button>
                         )}
                     </div>
-                     <FormField
-                        control={control}
-                        name={`${path}.content.steps.${index}.content`}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormControl><TextEditorWithPreview field={field} placeholder="Content for this step..." /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                     <ContentBlockList path={`${path}.content.steps.${index}.content`} />
                 </div>
             ))}
             <FormField control={control} name={`${path}.content.steps`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
@@ -1033,7 +1024,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mcq': newBlock = { id, type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } }; break;
             case 'breadcrumb': newBlock = { id, type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] }; break;
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
-            case 'stepper': newBlock = { id, type, content: { title: 'Stepper Title', steps: [{ id: uuidv4(), title: 'Step 1', content: 'Step 1 content'}] } }; break;
+            case 'stepper': newBlock = { id, type, content: { title: 'Stepper Title', steps: [{ id: uuidv4(), title: 'Step 1', content: [{ id: uuidv4(), type: 'text', content: 'Step 1 content'}] }] } }; break;
             case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous', testClassCode: '' } }; break;
             case 'two-column': newBlock = { id, type, content: { column1: [], column2: [] } }; break;
             case 'three-column': newBlock = { id, type, content: { column1: [], column2: [], column3: [] } }; break;

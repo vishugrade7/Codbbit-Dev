@@ -333,7 +333,7 @@ const InteractiveCodeChallenge = ({ blockContent }: { blockContent: any }) => {
     );
 };
 
-const StepperChallenge = ({ blockContent }: { blockContent: any }) => {
+const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; allProblems: ProblemWithCategory[] }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const steps = blockContent.steps || [];
 
@@ -381,9 +381,7 @@ const StepperChallenge = ({ blockContent }: { blockContent: any }) => {
                 <Card className="flex-1 text-left min-h-[200px]">
                     <CardContent className="p-6">
                          <div className="prose dark:prose-invert max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                                {currentStep?.content || ''}
-                            </ReactMarkdown>
+                            <ContentRenderer contentBlocks={currentStep?.content || []} allProblems={allProblems} />
                         </div>
                     </CardContent>
                 </Card>
@@ -637,7 +635,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           case 'interactive-code':
                 return <InteractiveCodeChallenge blockContent={block.content} />;
           case 'stepper':
-                return <StepperChallenge blockContent={block.content} />;
+                return <StepperChallenge blockContent={block.content} allProblems={allProblems}/>;
           case 'two-column':
               return (
                   <div className="not-prose my-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -672,7 +670,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
     <>
       {(contentBlocks || []).map(block => {
         const wrapperStyle = {
-            ...(block.backgroundColor ? { backgroundColor: block.backgroundColor } : {}),
+            ...(block.backgroundColor ? { background: block.backgroundColor } : {}),
             ...(block.textColor ? { color: block.textColor } : {}),
         };
         const wrapperClassName = block.backgroundColor ? "p-4 rounded-lg my-6" : "";
@@ -756,7 +754,7 @@ export default function LessonPage() {
                         setNextLesson(currentLessonIndex < allLessons.length - 1 ? { lessonId: allLessons[currentLessonIndex + 1].lesson.id } : null);
 
                         // If lesson has problem blocks, fetch all problems
-                        if (lesson.contentBlocks.some(b => b.type === 'problem')) {
+                        if (lesson.contentBlocks.some(b => b.type === 'problem' || b.type === 'stepper')) {
                             const processProblems = (data: ApexProblemsData) => {
                                 const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                                     (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
