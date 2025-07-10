@@ -118,6 +118,8 @@ export type ContentBlock = {
   content: any; // string, {code, language}, ColumnContent, etc.
   backgroundColor?: string;
   textColor?: string;
+  width?: string;
+  align?: 'left' | 'center' | 'right';
 };
 
 export type Lesson = {

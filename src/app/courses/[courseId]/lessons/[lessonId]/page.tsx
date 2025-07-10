@@ -769,25 +769,20 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
   return (
     <>
       {(contentBlocks || []).map(block => {
-        const wrapperStyle = {
-            ...(block.backgroundColor ? { background: block.backgroundColor } : {}),
+        const wrapperStyle: React.CSSProperties = {
+            ...(block.backgroundColor ? { backgroundColor: block.backgroundColor } : {}),
             ...(block.textColor ? { color: block.textColor } : {}),
+            ...(block.width ? { width: block.width, maxWidth: '100%' } : {}),
         };
         const wrapperClassName = cn(
             "my-4",
-            block.backgroundColor && "p-4 rounded-lg"
+            block.backgroundColor && "p-4 rounded-lg",
+            block.align === 'center' && 'mx-auto',
+            block.align === 'right' && 'ml-auto',
         );
 
-        if (block.backgroundColor || block.textColor) {
-             return (
-                <div key={block.id} style={wrapperStyle} className={wrapperClassName}>
-                    {renderInnerBlock(block)}
-                </div>
-             )
-        }
-        
         return (
-            <div key={block.id} className="p-4 rounded-lg bg-background/60 backdrop-blur-lg border my-4">
+            <div key={block.id} style={wrapperStyle} className={wrapperClassName}>
                 {renderInnerBlock(block)}
             </div>
         );

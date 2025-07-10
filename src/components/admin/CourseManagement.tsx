@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus, Clipboard, Upload } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus, Clipboard, Upload, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -1178,9 +1178,7 @@ function ImageBlockEditor({ path }: { path: string }) {
                     )}
                 </div>
             ) : (
-                 <FormField control={control} name={`${path}.content`} render={({ field }) => (
-                    <FormItem><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
+                 <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>)}/>
             )}
 
             <div className="flex gap-2">
@@ -1326,37 +1324,65 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                             <Pencil className="h-4 w-4" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2">
-                        <div className="flex items-center gap-4">
+                    <PopoverContent className="w-auto p-2 space-y-2">
+                         <div className="space-y-1">
+                            <Label className="text-xs">Layout</Label>
                             <div className="flex items-center gap-2">
-                                <Label htmlFor={`bg-color-picker-${rhfId}`} className="text-sm font-medium">BG</Label>
-                                <Input
-                                    id={`bg-color-picker-${rhfId}`}
-                                    type="color"
-                                    className="h-8 w-8 p-1 cursor-pointer"
-                                    value={block.backgroundColor || '#ffffff'}
-                                    onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
-                                />
-                                {block.backgroundColor && (
-                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
+                                <Select value={block.align || 'left'} onValueChange={(value) => setValue(`${path}.align`, value === 'left' ? undefined : value)}>
+                                    <SelectTrigger className="h-8 w-auto">
+                                        <SelectValue placeholder="Align" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="left"><AlignLeft className="h-4 w-4"/></SelectItem>
+                                        <SelectItem value="center"><AlignCenter className="h-4 w-4"/></SelectItem>
+                                        <SelectItem value="right"><AlignRight className="h-4 w-4"/></SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Select value={block.width || '100%'} onValueChange={(value) => setValue(`${path}.width`, value === '100%' ? undefined : value)}>
+                                    <SelectTrigger className="h-8 w-[80px]">
+                                        <SelectValue placeholder="Width" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="25%">25%</SelectItem>
+                                        <SelectItem value="50%">50%</SelectItem>
+                                        <SelectItem value="75%">75%</SelectItem>
+                                        <SelectItem value="100%">100%</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                             <div className="flex items-center gap-2">
-                                <Label htmlFor={`text-color-picker-${rhfId}`} className="text-sm font-medium">Text</Label>
-                                <Input
-                                    id={`text-color-picker-${rhfId}`}
-                                    type="color"
-                                    className="h-8 w-8 p-1 cursor-pointer"
-                                    value={block.textColor || '#000000'}
-                                    onChange={(e) => setValue(`${path}.textColor`, e.target.value)}
-                                />
-                                {block.textColor && (
-                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setValue(`${path}.textColor`, undefined)}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
+                        </div>
+                        <Separator/>
+                        <div className="space-y-1">
+                            <Label className="text-xs">Color</Label>
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                    <Input
+                                        id={`bg-color-picker-${rhfId}`}
+                                        type="color"
+                                        className="h-8 w-8 p-1 cursor-pointer"
+                                        value={block.backgroundColor || '#ffffff'}
+                                        onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
+                                    />
+                                    {block.backgroundColor && (
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                                 <div className="flex items-center gap-1">
+                                    <Input
+                                        id={`text-color-picker-${rhfId}`}
+                                        type="color"
+                                        className="h-8 w-8 p-1 cursor-pointer"
+                                        value={block.textColor || '#000000'}
+                                        onChange={(e) => setValue(`${path}.textColor`, e.target.value)}
+                                    />
+                                    {block.textColor && (
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setValue(`${path}.textColor`, undefined)}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </PopoverContent>
@@ -1728,6 +1754,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 
 
