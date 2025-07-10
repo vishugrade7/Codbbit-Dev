@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -56,9 +55,9 @@ const ProIconOverlay = () => (
             <TooltipTrigger asChild>
                 <div className="absolute -bottom-1 -right-1 h-7 w-7 flex items-center justify-center">
                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="11.5" fill="#1D9BF0" stroke="#0F172A" stroke-width="1"/>
-                        <path d="M9 10L6 13L9 16" stroke="#0F172A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M15 10L18 13L15 16" stroke="#0F172A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="12" fill="#FDB813"/>
+                        <path d="M9.5 8L6 12L9.5 16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14.5 8L18 12L14.5 16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
             </TooltipTrigger>
