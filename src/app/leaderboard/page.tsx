@@ -54,8 +54,8 @@ const ProIconOverlay = () => (
     <TooltipProvider>
         <Tooltip>
             <TooltipTrigger asChild>
-                <div className="absolute bottom-0 right-0 h-7 w-7 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
-                    <Code className="h-4 w-4"/>
+                <div className="absolute bottom-0 right-0 h-6 w-6 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
+                    <Code className="h-3 w-3"/>
                 </div>
             </TooltipTrigger>
             <TooltipContent>
