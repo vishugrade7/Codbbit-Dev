@@ -50,28 +50,12 @@ const VerifiedIcon = () => (
     </TooltipProvider>
 );
 
-const ProIcon = () => (
+const ProIconOverlay = () => (
     <TooltipProvider>
         <Tooltip>
-            <TooltipTrigger>
-                <div className="relative h-5 w-5">
-                     <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <defs>
-                            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
-                                <stop offset="100%" style={{ stopColor: '#FFA500', stopOpacity: 1 }} />
-                            </linearGradient>
-                        </defs>
-                    </svg>
+            <TooltipTrigger asChild>
+                <div className="absolute bottom-0 right-0 h-7 w-7 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
+                    <Code className="h-4 w-4"/>
                 </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -80,6 +64,7 @@ const ProIcon = () => (
         </Tooltip>
     </TooltipProvider>
 );
+
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -306,15 +291,18 @@ export default function Leaderboard() {
               <CardContent className="p-6 flex flex-col flex-grow">
                   <div className="flex justify-between items-start flex-grow">
                       <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
-                           <Avatar className={cn(
-                                "h-12 w-12 border-2", 
-                                isUserPro(currentUserEntry) 
-                                    ? "border-yellow-400" 
-                                    : "border-primary/50"
-                            )}>
-                              <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                              <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
+                           <div className="relative">
+                               <Avatar className={cn(
+                                    "h-12 w-12 border-2", 
+                                    isUserPro(currentUserEntry) 
+                                        ? "border-yellow-400" 
+                                        : "border-primary/50"
+                                )}>
+                                  <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                                  <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              {isUserPro(currentUserEntry) && <ProIconOverlay />}
+                           </div>
                           <div>
                                <div className="flex items-center gap-2">
                                 <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
@@ -495,13 +483,16 @@ export default function Leaderboard() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                       <Avatar className={cn(
-                          "h-10 w-10 border-2", 
-                          isUserPro(user) ? "border-yellow-400" : "border-transparent"
-                      )}>
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
+                       <div className="relative">
+                          <Avatar className={cn(
+                              "h-10 w-10 border-2", 
+                              isUserPro(user) ? "border-yellow-400" : "border-transparent"
+                          )}>
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          {isUserPro(user) && <ProIconOverlay />}
+                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
                             <p className="font-semibold">{user.name}</p>

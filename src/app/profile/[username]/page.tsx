@@ -57,6 +57,21 @@ const VerifiedIcon = () => (
     </TooltipProvider>
 );
 
+const ProIconOverlay = () => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="absolute -bottom-1 -right-1 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
+                    <Code className="h-5 w-5"/>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Pro User</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+);
+
 
 // This is the new public profile page
 export default function UserProfilePage() {
@@ -348,18 +363,7 @@ export default function UserProfilePage() {
                         </AvatarFallback>
                     </Avatar>
                     {isProfileUserPro && (
-                       <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                               <div className="absolute bottom-0 right-0 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md">
-                                    <Code className="h-5 w-5"/>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Pro User</p>
-                            </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                       <ProIconOverlay />
                     )}
                     {isOwnProfile && (
                         <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
