@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData } from "@/types";
+import type { Problem, ApexProblemsData, ProblemLayoutComponent } from "@/types";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
@@ -440,59 +440,64 @@ export default function ProblemWorkspacePage() {
         }
     };
 
-    const ProblemDetails = () => (
-        <div className="p-4 h-full overflow-y-auto space-y-6">
-            <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
-            <div className="flex items-center gap-4 flex-wrap">
-                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                <Badge variant="secondary">{categoryName}</Badge>
-                {problem.company && (
-                    <div className="flex items-center gap-1.5">
-                        {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
-                        <span className="text-sm font-medium">{problem.company}</span>
-                    </div>
-                )}
-                {isSolved && (
-                <div className="flex items-center gap-1.5 text-sm text-green-400">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Solved</span>
-                </div>
-                )}
-            </div>
-            {problem.imageUrl && (
-                <div className="relative w-full aspect-video my-4 rounded-lg overflow-hidden">
-                    <Image src={problem.imageUrl} alt="Problem visual aid" fill className="object-contain" />
-                </div>
-            )}
-            <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
-            
-            {problem.mermaidDiagram && <MermaidRenderer chart={problem.mermaidDiagram} />}
+    const componentMap: Record<ProblemLayoutComponent, React.ReactNode> = {
+        description: <div key="description" className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />,
+        image: problem.imageUrl ? <div key="image" className="relative w-full aspect-video my-4 rounded-lg overflow-hidden"><Image src={problem.imageUrl} alt="Problem visual aid" fill className="object-contain" /></div> : null,
+        mermaid: problem.mermaidDiagram ? <MermaidRenderer key="mermaid" chart={problem.mermaidDiagram} /> : null
+    };
 
-            {problem.examples.map((example, index) => (
-                <div key={index}>
-                    <h3 className="font-semibold mb-2">Example {index + 1}</h3>
-                    <Card className="bg-card/50">
-                        <CardContent className="p-4 font-code text-sm">
-                            {example.input && <p><strong>Input:</strong> {example.input}</p>}
-                            <p><strong>Output:</strong> {example.output}</p>
-                            {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
-                        </CardContent>
-                    </Card>
+    const ProblemDetails = () => {
+        const displayOrder = problem.displayOrder || ['description', 'image', 'mermaid'];
+
+        return (
+            <div className="p-4 h-full overflow-y-auto space-y-6">
+                <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
+                <div className="flex items-center gap-4 flex-wrap">
+                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                    <Badge variant="secondary">{categoryName}</Badge>
+                    {problem.company && (
+                        <div className="flex items-center gap-1.5">
+                            {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
+                            <span className="text-sm font-medium">{problem.company}</span>
+                        </div>
+                    )}
+                    {isSolved && (
+                    <div className="flex items-center gap-1.5 text-sm text-green-400">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>Solved</span>
+                    </div>
+                    )}
                 </div>
-            ))}
+
+                {displayOrder.map(key => componentMap[key])}
+
+                {problem.examples.map((example, index) => (
+                    <div key={index}>
+                        <h3 className="font-semibold mb-2">Example {index + 1}</h3>
+                        <Card className="bg-card/50">
+                            <CardContent className="p-4 font-code text-sm">
+                                {example.input && <p><strong>Input:</strong> {example.input}</p>}
+                                <p><strong>Output:</strong> {example.output}</p>
+                                {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
+                            </CardContent>
+                        </Card>
+                    </div>
+                ))}
 
                 {problem.hints && problem.hints.length > 0 && (
-                <div>
-                    <h3 className="font-semibold mb-2">Constraints</h3>
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                        {problem.hints.map((hint, index) => (
-                            <li key={index}>{hint}</li>
-                        ))}
-                    </ul>
-                </div>
+                    <div>
+                        <h3 className="font-semibold mb-2">Constraints</h3>
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                            {problem.hints.map((hint, index) => (
+                                <li key={index}>{hint}</li>
+                            ))}
+                        </ul>
+                    </div>
                 )}
-        </div>
-    );
+            </div>
+        );
+    }
+
 
     const EditorAndResults = () => (
         <ResizablePanelGroup direction="vertical">

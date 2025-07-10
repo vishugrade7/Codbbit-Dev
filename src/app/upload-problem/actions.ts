@@ -103,6 +103,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof problemFormS
             isPremium: data.isPremium,
             imageUrl: data.imageUrl,
             mermaidDiagram: data.mermaidDiagram,
+            displayOrder: data.displayOrder,
         };
 
         if (data.id) {
@@ -209,6 +210,7 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
                 isPremium: data.isPremium || false,
                 imageUrl: data.imageUrl,
                 mermaidDiagram: data.mermaidDiagram,
+                displayOrder: data.displayOrder,
             };
             
             const categoryName = data.category;

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
@@ -9,8 +10,11 @@ import { useTheme } from "next-themes";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData } from "@/types";
+import type { Problem, ApexProblemsData, ProblemLayoutComponent } from "@/types";
 import Image from "next/image";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 import { useToast } from "@/hooks/use-toast";
 import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore } from "@/app/upload-problem/actions";
@@ -189,7 +193,10 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 ],
                 company: "Google",
                 companyLogoUrl: "https://logo.clearbit.com/google.com",
-                isPremium: false
+                isPremium: false,
+                imageUrl: "",
+                mermaidDiagram: "",
+                displayOrder: ["description", "image", "mermaid"],
             }
         ];
         const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(sampleData, null, 2))}`;
@@ -557,6 +564,63 @@ function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { 
     );
 }
 
+function DisplayOrderManager({ control }: { control: any }) {
+    const { fields, move } = useFieldArray({
+        control,
+        name: "displayOrder",
+    });
+
+    const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+    
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = fields.findIndex((item) => item.id === active.id);
+            const newIndex = fields.findIndex((item) => item.id === over.id);
+            move(oldIndex, newIndex);
+        }
+    };
+    
+    return (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={fields.map(field => field.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                    {fields.map((field: any, index) => (
+                         <SortableDisplayOrderItem key={field.id} id={field.id} componentType={field.component} />
+                    ))}
+                </div>
+            </SortableContext>
+        </DndContext>
+    );
+}
+
+const SortableDisplayOrderItem = ({ id, componentType }: { id: string, componentType: ProblemLayoutComponent }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    const label = useMemo(() => {
+        switch (componentType) {
+            case 'description': return 'Description';
+            case 'image': return 'Image';
+            case 'mermaid': return 'Mermaid Diagram';
+        }
+    }, [componentType]);
+
+    return (
+        <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+            <Button type="button" variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...listeners} {...attributes}>
+                <GripVertical className="h-4 w-4" />
+            </Button>
+            <span className="font-medium text-sm">{label}</span>
+        </div>
+    );
+};
+
+
 export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null, onClose: () => void }) {
     const { toast } = useToast();
     const { resolvedTheme } = useTheme();
@@ -595,6 +659,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                 isPremium: problem.isPremium || false,
                 imageUrl: problem.imageUrl || "",
                 mermaidDiagram: problem.mermaidDiagram || "",
+                displayOrder: problem.displayOrder || ['description', 'image', 'mermaid']
             });
             setCompanyLogo(problem.companyLogoUrl || null);
             setSelectedCompanyName(problem.company || null);
@@ -616,6 +681,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                 isPremium: false,
                 imageUrl: "",
                 mermaidDiagram: "",
+                displayOrder: ['description', 'image', 'mermaid']
             });
             setCompanyLogo(null);
             setSelectedCompanyName(null);
@@ -822,6 +888,11 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     <FormMessage />
                                 </FormItem>
                             )} />
+                             <FormItem>
+                                <FormLabel>Content Display Order</FormLabel>
+                                <DisplayOrderManager control={form.control} />
+                                <FormDescription>Drag to reorder how the main content appears on the problem page.</FormDescription>
+                            </FormItem>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="difficulty" render={({ field }) => (
                                     <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>

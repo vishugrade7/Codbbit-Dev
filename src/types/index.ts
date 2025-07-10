@@ -160,6 +160,8 @@ export type Example = {
     explanation?: string;
 }
 
+export type ProblemLayoutComponent = 'description' | 'image' | 'mermaid';
+
 export type Problem = {
   id: string;
   title: string;
@@ -177,6 +179,7 @@ export type Problem = {
   isPremium?: boolean;
   imageUrl?: string;
   mermaidDiagram?: string;
+  displayOrder?: ProblemLayoutComponent[];
 };
 
 // This represents the structure of the data fetched from the `problems/Apex` document
