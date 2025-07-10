@@ -400,12 +400,13 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
                         </CardContent>
                     )}
                 </Card>
-                 <Button onClick={handleNext} disabled={isCompleted}>
+                 <Button size="icon" onClick={handleNext} disabled={isCompleted}>
                     {currentIndex === steps.length - 1 ? (
-                        <>Finish <Check className="ml-2 h-4 w-4"/></>
+                        <Check className="h-4 w-4"/>
                     ) : (
-                        <><span className="sr-only">Next</span><ArrowRight className="h-4 w-4" /></>
+                        <ArrowRight className="h-4 w-4" />
                     )}
+                    <span className="sr-only">{currentIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
                 </Button>
             </div>
              {blockContent.body && <p className="text-muted-foreground mt-4">{blockContent.body}</p>}
@@ -954,3 +955,6 @@ export default function LessonPage() {
     
 
 
+
+
+    
