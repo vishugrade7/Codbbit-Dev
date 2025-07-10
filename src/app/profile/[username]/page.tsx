@@ -54,6 +54,45 @@ const VerifiedIcon = () => (
     </TooltipProvider>
 );
 
+const ProIcon = () => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger>
+                 <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-6 h-6"
+                    >
+                    <defs>
+                        <linearGradient id="pro-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FFD700" />
+                        <stop offset="100%" stop-color="#FFA500" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.42 20L12 16.9L7.58 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z"
+                        fill="url(#pro-grad)"
+                        stroke="#B8860B"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="9" fill="#4A2C00" font-weight="bold" font-family="sans-serif">
+                        PRO
+                    </text>
+                </svg>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Pro User</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+);
+
+
 
 // This is the new public profile page
 export default function UserProfilePage() {
@@ -84,12 +123,6 @@ export default function UserProfilePage() {
         const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
         return isAdmin || hasActiveSub;
     }, [profileUser]);
-
-    const proLogoSrc = useMemo(() => {
-        if (!brandingSettings) return null;
-        const isDark = theme === 'dark';
-        return (isDark ? brandingSettings.logo_pro_dark : brandingSettings.logo_pro_light) || null;
-    }, [brandingSettings, theme]);
 
     // Fetch all problems data for use in starred/recent sections
     useEffect(() => {
@@ -350,9 +383,6 @@ export default function UserProfilePage() {
                             {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
                         </div>
                     )}
-                    <div className="absolute -bottom-2 -right-2 h-10 w-10 bg-primary rounded-full flex items-center justify-center border-4 border-background">
-                        <Code className="h-5 w-5 text-primary-foreground" />
-                    </div>
                 </div>
                 {isOwnProfile && (
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
@@ -361,18 +391,7 @@ export default function UserProfilePage() {
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
                         {profileUser.emailVerified && <VerifiedIcon />}
-                        {isProfileUserPro && proLogoSrc && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Image src={proLogoSrc} alt="Pro User" width={24} height={24} />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Pro Member</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
+                        {isProfileUserPro && <ProIcon />}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -396,7 +415,7 @@ export default function UserProfilePage() {
                             <Globe className="h-4 w-4 shrink-0" />
                             <span>{profileUser.country}</span>
                         </div>
-                        {profileUser.isEmailPublic && (
+                        {profileUser.isEmailPublic && profileUser.email && (
                              <div className="flex items-center gap-2">
                                 <Mail className="h-4 w-4 shrink-0" />
                                 <span>{profileUser.email}</span>
