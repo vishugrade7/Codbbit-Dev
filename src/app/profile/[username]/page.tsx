@@ -363,7 +363,12 @@ export default function UserProfilePage() {
           <Card className="p-6 sm:rounded-xl shadow-lg">
             <div className="flex flex-col sm:flex-row items-center gap-6">
                  <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                    <Avatar className={cn("h-28 w-28 border-4", isProfileUserPro ? "border-yellow-400" : "border-primary/50")}>
+                    <Avatar className={cn(
+                        "h-28 w-28 border-4", 
+                        isProfileUserPro 
+                            ? "border-yellow-400 shadow-lg animate-glow" 
+                            : "border-primary/50"
+                    )}>
                         <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                         <AvatarFallback className="text-4xl">
                             {profileUser.name.split(' ').map(n => n[0]).join('')}
@@ -373,7 +378,7 @@ export default function UserProfilePage() {
                       <TooltipProvider>
                           <Tooltip>
                               <TooltipTrigger asChild>
-                                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center border-2 border-background">
+                                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-full flex items-center justify-center border-2 border-background shadow-md animate-sparkle">
                                       <Code className="h-5 w-5"/>
                                   </div>
                               </TooltipTrigger>
@@ -396,6 +401,7 @@ export default function UserProfilePage() {
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
                         {profileUser.emailVerified && <VerifiedIcon />}
+                         {isProfileUserPro && <ProIcon />}
                     </div>
                     <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
