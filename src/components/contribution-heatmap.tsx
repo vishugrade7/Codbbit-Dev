@@ -4,9 +4,10 @@
 import CalendarHeatmap from 'react-calendar-heatmap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flame } from 'lucide-react';
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import 'react-calendar-heatmap/dist/styles.css';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type HeatmapProps = {
   data: { [date: string]: number };
@@ -22,10 +23,18 @@ const shiftDate = (date: Date, numDays: number): Date => {
 };
 
 export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak = 0 }: HeatmapProps) {
-  const [duration, setDuration] = useState('1y'); // '6m' or '1y'
+  const isMobile = useIsMobile();
+  const [duration, setDuration] = useState('1y');
   const [tooltipContent, setTooltipContent] = useState('');
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check if isMobile has been determined to avoid setting state based on undefined
+    if (typeof isMobile === 'boolean') {
+        setDuration(isMobile ? '6m' : '1y');
+    }
+  }, [isMobile]);
   
   const today = new Date();
   const endDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
