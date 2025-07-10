@@ -23,7 +23,7 @@ import { collection, query, getDocs, orderBy, doc, getDoc } from "firebase/fires
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from "@/types";
-import { upsertCourseToFirestore } from "@/app/upload-problem/actions";
+import { upsertCourseToFirestore, uploadCourseImage } from "@/app/upload-problem/actions";
 import { courseFormSchema } from "@/lib/admin-schemas";
 import { getCache, setCache } from "@/lib/cache";
 
@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus, Clipboard, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -303,6 +303,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
                         'min-h-[200px] w-full rounded-md border-input bg-transparent p-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring prose dark:prose-invert max-w-none',
                         props.className
                     )}
+                    dangerouslySetInnerHTML={{ __html: value || '' }}
                 />
             </PopoverTrigger>
             <PopoverContent className="w-auto p-1 flex items-center gap-0.5 bg-neutral-800 border-neutral-700">
@@ -373,12 +374,12 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     )
 }
 
-function TextEditorWithPreview({ field, placeholder, className }: { field: { value: string, onChange: (newValue: string) => void }, placeholder?: string; className?: string }) {
+function TextEditorWithPreview({ value, onChange, placeholder, className }: { value: string, onChange: (newValue: string) => void; placeholder?: string; className?: string }) {
     return (
         <div className={cn("rounded-md border", className)}>
              <TextareaWithToolbar
-                value={field.value}
-                onChange={field.onChange}
+                value={value}
+                onChange={onChange}
                 placeholder={placeholder || "Enter lesson content here..."}
                 className="h-full w-full resize-none border-none rounded-none focus-visible:ring-0 p-2 min-h-[200px]"
             />
@@ -634,7 +635,7 @@ function ToggleListBlock({ path }: { path: string }) {
                         render={({ field }) => (
                             <FormItem>
                                 <FormControl>
-                                    <TextEditorWithPreview field={field} placeholder="Toggle content..." />
+                                    <TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Toggle content..." />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -766,7 +767,7 @@ function McqBlockEditor({ path }: { path: string }) {
       <FormField control={control} name={`${path}.content.question`} render={({ field }) => (
           <FormItem>
               <FormLabel>Question</FormLabel>
-              <FormControl><TextEditorWithPreview field={field} placeholder="What is the capital of France?" /></FormControl>
+              <FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="What is the capital of France?" /></FormControl>
               <FormMessage />
           </FormItem>
       )} />
@@ -801,7 +802,7 @@ function McqBlockEditor({ path }: { path: string }) {
       <FormField control={control} name={`${path}.content.explanation`} render={({ field }) => (
           <FormItem>
               <FormLabel>Explanation (Optional)</FormLabel>
-              <FormControl><TextEditorWithPreview field={field} placeholder="Provide an explanation for the correct answer." /></FormControl>
+              <FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Provide an explanation for the correct answer." /></FormControl>
           </FormItem>
       )} />
     </div>
@@ -1026,7 +1027,7 @@ function InteractiveCodeBlockEditor({ path }: { path: string }) {
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Description</FormLabel>
-                        <FormControl><TextEditorWithPreview field={field} placeholder="Declare a boolean variable..." /></FormControl>
+                        <FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Declare a boolean variable..." /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )}
@@ -1093,6 +1094,103 @@ function ColumnLayoutEditor({ path, numColumns }: { path: string; numColumns: 2 
                     <ContentBlockList path={`${path}.content.${key}`} />
                 </div>
             ))}
+        </div>
+    );
+}
+
+function ImageBlockEditor({ path }: { path: string }) {
+    const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { toast } = useToast();
+    const courseId = useWatch({ control, name: 'id' });
+    const imageUrl = useWatch({ control, name: `${path}.content` });
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+    const [view, setView] = useState<'preview' | 'url'>('preview');
+
+    const processAndUploadFile = useCallback(async (file: File) => {
+        if (!courseId) {
+            toast({ variant: 'destructive', title: 'Save Course First', description: 'Please save the course before uploading images.' });
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast({ variant: 'destructive', title: 'File too large', description: 'Please select an image smaller than 5MB.' });
+            return;
+        }
+        setUploading(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const dataUrl = reader.result as string;
+            const result = await uploadCourseImage(dataUrl, courseId);
+            if (result.success && result.url) {
+                setValue(`${path}.content`, result.url, { shouldDirty: true });
+                toast({ title: 'Image uploaded successfully!' });
+            } else {
+                toast({ variant: 'destructive', title: 'Upload failed', description: result.error });
+            }
+            setUploading(false);
+        };
+        reader.onerror = () => {
+            setUploading(false);
+            toast({ variant: 'destructive', title: 'Error reading file' });
+        };
+    }, [courseId, path, setValue, toast]);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            processAndUploadFile(file);
+        }
+    };
+
+    const handlePaste = async (event: React.ClipboardEvent<HTMLDivElement>) => {
+        const items = event.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    event.preventDefault();
+                    processAndUploadFile(file);
+                    return;
+                }
+            }
+        }
+    };
+    
+    return (
+        <div className="space-y-2" onPaste={handlePaste}>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+            {view === 'preview' ? (
+                <div className="relative w-full aspect-video bg-muted/50 rounded-md flex items-center justify-center p-2 border-2 border-dashed">
+                    {uploading ? (
+                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                            <span>Uploading...</span>
+                        </div>
+                    ) : imageUrl ? (
+                        <Image src={imageUrl} alt="Image Preview" fill className="object-contain" />
+                    ) : (
+                        <div className="text-center text-muted-foreground">
+                            <ImageIcon className="mx-auto h-12 w-12" />
+                            <p className="mt-2 font-semibold">Paste, or upload an image</p>
+                            <p className="text-xs">Max file size 5MB.</p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                 <FormField control={control} name={`${path}.content`} render={({ field }) => (
+                    <FormItem><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+            )}
+
+            <div className="flex gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                    <Upload className="mr-2 h-4 w-4" /> Upload
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setView(v => v === 'preview' ? 'url' : 'preview')}>
+                    <LinkIcon className="mr-2 h-4 w-4" /> {view === 'preview' ? 'Use URL' : 'Use Upload'}
+                </Button>
+            </div>
         </div>
     );
 }
@@ -1184,20 +1282,20 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
 
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} /></FormControl><FormMessage/></FormItem>)}/>
             case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading1': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading2': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
             case 'heading3': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextEditorWithPreview field={field} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
-            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextEditorWithPreview field={{...field, value: field.value.text}} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextEditorWithPreview value={field.value.text} onChange={(v) => field.onChange({...field.value, text: v})} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider': return <hr className="my-4"/>
-            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview field={field} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
             case 'todo-list': return <TodoListBlock path={path} />;
             case 'toggle-list': return <ToggleListBlock path={path} />;
             case 'problem': return <ProblemBlock path={path} />;
-            case 'image': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem className="space-y-2"><FormLabel className="text-xs text-muted-foreground">Image Block</FormLabel><FormControl><Input placeholder="Image URL..." {...field} /></FormControl>{field.value && (<div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden"><Image src={field.value} alt="Image Preview" fill className="object-contain" /></div>)}<FormMessage /></FormItem>)}/>
+            case 'image': return <ImageBlockEditor path={path} />;
             case 'video': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Video Block</FormLabel><FormControl><Input placeholder="Video URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
             case 'audio': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Audio Block</FormLabel><FormControl><Input placeholder="Audio URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
             case 'table': return <TableBlockEditor path={path} />;
@@ -1497,7 +1595,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                             <FormItem>
                                 <FormLabel>Description</FormLabel>
                                 <FormControl>
-                                    <TextEditorWithPreview field={field} placeholder="A brief summary of the course..." />
+                                    <TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="A brief summary of the course..." />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -1630,5 +1728,6 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
 
 

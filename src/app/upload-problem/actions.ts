@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, qu
 import { db } from '@/lib/firebase';
 import type { Problem, Course, User, NavLink, Badge, ApexProblemsData, PricingSettings, Voucher } from '@/types';
 import { adminStorage } from '@/lib/firebaseAdmin';
+import { v4 as uuidv4 } from 'uuid';
 import {
   problemFormSchema,
   bulkUploadSchema,
@@ -328,6 +329,45 @@ export async function upsertCourseToFirestore(data: z.infer<typeof courseFormSch
         console.error("Error upserting course:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
+    }
+}
+
+export async function uploadCourseImage(dataUrl: string, courseId: string): Promise<{ success: boolean; url?: string; error?: string }> {
+    if (!dataUrl) {
+        return { success: false, error: 'No image data provided.' };
+    }
+     if (!courseId) {
+        return { success: false, error: 'Course ID is required for organizing uploads.' };
+    }
+
+    try {
+        const bucket = adminStorage.bucket('showcase-canvas-rx61p.firebasestorage.app');
+        const fileName = `${uuidv4()}`; 
+        const filePath = `course-images/${courseId}/${fileName}`;
+        const file = bucket.file(filePath);
+
+        const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+            throw new Error('Invalid data URL format.');
+        }
+        const contentType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        await file.save(buffer, {
+            metadata: {
+                contentType: contentType,
+                cacheControl: 'public, max-age=31536000', // Cache for a year
+            },
+        });
+
+        await file.makePublic();
+        const downloadURL = file.publicUrl();
+
+        return { success: true, url: downloadURL };
+    } catch (error: any) {
+        console.error("Error uploading course image:", error);
+        return { success: false, error: error.message || 'An unknown server error occurred.' };
     }
 }
 
