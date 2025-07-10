@@ -395,7 +395,7 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
 };
 
 
-const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[], allProblems: ProblemWithCategory[] }) => {
+const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[] | string, allProblems: ProblemWithCategory[] }) => {
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
       case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
@@ -405,6 +405,11 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
     }
   };
   const { theme } = useTheme();
+
+  // Handle legacy string content for Stepper for backward compatibility
+  if (typeof contentBlocks === 'string') {
+    return <p>{contentBlocks}</p>;
+  }
 
   const renderInnerBlock = (block: ContentBlock) => {
       switch (block.type) {
@@ -416,14 +421,14 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
           );
         case 'code':
           return (
-              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 my-6">
-                  <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800">
+              <div className="not-prose w-full overflow-x-auto rounded-lg shadow-lg border bg-slate-900 border-slate-700 my-6 dark:bg-slate-50 dark:border-slate-200">
+                  <div className="flex items-center justify-between px-4 py-2 bg-slate-800 dark:bg-slate-100">
                       <div className="flex gap-1.5">
                       <div className="h-3 w-3 rounded-full bg-red-500"></div>
                       <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                       <div className="h-3 w-3 rounded-full bg-green-500"></div>
                       </div>
-                      <span className="text-sm text-slate-500 dark:text-slate-400 font-semibold tracking-wider">
+                      <span className="text-sm text-slate-400 dark:text-slate-500 font-semibold tracking-wider">
                       {block.content.language?.toUpperCase() || 'CODE'}
                       </span>
                   </div>
@@ -668,7 +673,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
 
   return (
     <>
-      {(contentBlocks || []).map(block => {
+      {(Array.isArray(contentBlocks) ? contentBlocks : []).map(block => {
         const wrapperStyle = {
             ...(block.backgroundColor ? { background: block.backgroundColor } : {}),
             ...(block.textColor ? { color: block.textColor } : {}),
@@ -919,3 +924,4 @@ export default function LessonPage() {
 
 
     
+
