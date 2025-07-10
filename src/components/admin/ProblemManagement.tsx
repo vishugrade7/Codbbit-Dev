@@ -586,7 +586,7 @@ function DisplayOrderManager({ control }: { control: any }) {
             <SortableContext items={fields.map(field => field.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
                     {fields.map((field, index) => (
-                         <SortableDisplayOrderItem key={field.id} id={field.id} componentType={(field as any).value} />
+                         <SortableDisplayOrderItem key={field.id} id={field.id} componentType={(field as any).value as ProblemLayoutComponent} />
                     ))}
                 </div>
             </SortableContext>
@@ -642,7 +642,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
     
     useEffect(() => {
         const defaultValues: z.infer<typeof problemFormSchema> = {
-            id: problem?.id,
+            id: problem?.id || undefined,
             title: problem?.title || "",
             description: problem?.description || "",
             category: problem?.categoryName || "",
@@ -665,7 +665,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
         setCompanyLogo(problem?.companyLogoUrl || null);
         setSelectedCompanyName(problem?.company || null);
 
-    }, [problem, form.reset]);
+    }, [problem, form]);
 
     const metadataTypeValue = form.watch("metadataType");
     const companyValue = form.watch("company");
@@ -846,6 +846,11 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     </FormItem>
                                 )} />
                             </div>
+                            <FormItem>
+                                <FormLabel>Content Display Order</FormLabel>
+                                <DisplayOrderManager control={form.control} />
+                                <FormDescription>Drag to reorder how the main content appears on the problem page.</FormDescription>
+                            </FormItem>
                             <FormField control={form.control} name="description" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Description (HTML supported)</FormLabel>
@@ -867,11 +872,6 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                             <FormItem>
-                                <FormLabel>Content Display Order</FormLabel>
-                                <DisplayOrderManager control={form.control} />
-                                <FormDescription>Drag to reorder how the main content appears on the problem page.</FormDescription>
-                            </FormItem>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="difficulty" render={({ field }) => (
                                     <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
