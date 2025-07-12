@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -33,6 +33,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
@@ -623,30 +632,33 @@ export default function ProblemWorkspacePage() {
                             <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
                         <div className="p-4 border-b space-y-4 shrink-0">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search problems..."
-                                    className="w-full pl-9 h-9"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <span className="text-xs font-medium text-muted-foreground">DIFFICULTY</span>
-                                <div className="flex gap-2 mt-2">
-                                    {["All", "Easy", "Medium", "Hard"].map((diff) => (
-                                        <Button
-                                            key={diff}
-                                            variant={difficultyFilter === diff ? "default" : "outline"}
-                                            size="sm"
-                                            onClick={() => setDifficultyFilter(diff)}
-                                            className="flex-1"
-                                        >
-                                            {diff}
-                                        </Button>
-                                    ))}
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search problems..."
+                                        className="w-full pl-9 h-9"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
                                 </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="icon" className="h-9 w-9">
+                                            <Filter className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                                            <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                         <div className="py-2 overflow-y-auto flex-1">
