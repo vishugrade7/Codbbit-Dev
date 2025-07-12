@@ -15,17 +15,31 @@ import { Separator } from './ui/separator';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { useTheme } from 'next-themes';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
+import { getPublicNavigationLinks } from '@/app/upload-problem/actions';
+import type { NavLink } from '@/types';
 
-const navItems = [
-  { href: '/', label: 'Home', icon: Home, animation: 'group-hover:animate-icon-bounce' },
-  { href: '/apex-problems', label: 'Practice', icon: Code, animation: 'group-hover:animate-icon-shake' },
-  { href: '/courses', label: 'Courses', icon: BookOpenCheck, animation: 'group-hover:animate-icon-flip' },
-  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy, animation: 'group-hover:animate-icon-wiggle' },
-  { href: '/problem-sheets', label: 'Sheets', icon: ClipboardList, animation: 'group-hover:animate-icon-shake' },
-  { href: '/lwc-playground', label: 'Playground', icon: Play, animation: 'group-hover:animate-icon-pulse' },
-];
+const ICONS: { [key: string]: React.ElementType } = {
+  'default': Home,
+  '/': Home,
+  '/apex-problems': Code,
+  '/courses': BookOpenCheck,
+  '/leaderboard': Trophy,
+  '/problem-sheets': ClipboardList,
+  '/lwc-playground': Play,
+};
+
+const ANIMATIONS: { [key: string]: string } = {
+  'default': 'group-hover:animate-icon-bounce',
+  '/': 'group-hover:animate-icon-bounce',
+  '/apex-problems': 'group-hover:animate-icon-shake',
+  '/courses': 'group-hover:animate-icon-flip',
+  '/leaderboard': 'group-hover:animate-icon-wiggle',
+  '/problem-sheets': 'group-hover:animate-icon-shake',
+  '/lwc-playground': 'group-hover:animate-icon-pulse',
+};
+
 
 const adminNavItems = [
   { href: '/upload-problem', label: 'Admin', icon: UploadCloud, animation: 'group-hover:animate-icon-bounce' }
@@ -39,8 +53,11 @@ const getInitials = (name: string) => {
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userData, isPro, brandingSettings, loadingBranding } = useAuth();
+  const { user, userData, isPro, brandingSettings, loadingBranding, loading: authLoading } = useAuth();
   const { theme, setTheme } = useTheme();
+
+  const [navLinks, setNavLinks] = useState<NavLink[]>([]);
+  const [loadingNav, setLoadingNav] = useState(true);
 
   const logoSrc = useMemo(() => {
     if (!brandingSettings) return "/favicon.ico";
@@ -57,14 +74,41 @@ export default function Sidebar() {
     }
     return brandingSettings.logo_light || '/favicon.ico';
   }, [brandingSettings, isPro, theme]);
+
+  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
+  
+  useEffect(() => {
+    const fetchNavLinks = async () => {
+      setLoadingNav(true);
+      const links = await getPublicNavigationLinks();
+      setNavLinks(links);
+      setLoadingNav(false);
+    };
+    fetchNavLinks();
+  }, []);
+
+  const visibleNavLinks = useMemo(() => {
+    if (authLoading || loadingNav) return [];
+    
+    return navLinks.filter(link => {
+        if (isAuthorizedAdmin) {
+            return true;
+        }
+        if (!link.isEnabled) {
+            return false;
+        }
+        if (link.isPro && !isPro) {
+            return false;
+        }
+        return true;
+    });
+  }, [navLinks, authLoading, loadingNav, isPro, isAuthorizedAdmin]);
   
   const handleLogout = async () => {
     if (!auth) return;
     await auth.signOut();
     router.push('/');
   };
-
-  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
   
   if (!user) {
     return null;
@@ -84,28 +128,32 @@ export default function Sidebar() {
         <Separator className="w-2/3" />
         
         <nav className="flex flex-col items-center gap-4 py-4">
-          {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "rounded-lg group",
-                    pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/20"
-                  )}
-                >
-                  <Link href={item.href}>
-                    <item.icon className={cn("h-5 w-5", item.animation)} />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{item.label}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
+          {visibleNavLinks.map((item) => {
+            const Icon = ICONS[item.href] || ICONS['default'];
+            const animation = ANIMATIONS[item.href] || ANIMATIONS['default'];
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "rounded-lg group",
+                      pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/20"
+                    )}
+                  >
+                    <Link href={item.href}>
+                      <Icon className={cn("h-5 w-5", animation)} />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{item.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
           {isAuthorizedAdmin && adminNavItems.map((item) => (
             <Tooltip key={item.href}>
               <TooltipTrigger asChild>
