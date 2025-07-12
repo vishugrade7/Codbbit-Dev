@@ -1,6 +1,5 @@
 
 import { Code2, ThumbsUp, Award, ArrowRight } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -32,13 +31,7 @@ export default function FeatureGrid() {
               </div>
             </CardContent>
             <div className="p-6 md:p-8 flex items-center justify-center bg-muted/30">
-                 <Image
-                    src="https://images.unsplash.com/photo-1628258334105-2a0b3d6efee1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb2Rpbmd8ZW58MHx8fHwxNzUyMjIxODI4fDA&ixlib=rb-4.1.0&q=80&w=1080"
-                    alt="Problem solving interface"
-                    width={600}
-                    height={350}
-                    className="rounded-lg shadow-2xl object-cover"
-                />
+                 
             </div>
           </Card>
 
@@ -56,14 +49,7 @@ export default function FeatureGrid() {
                   programming practice.
                 </p>
                  <div className="mt-6 -mx-6 -mb-6 md:-mx-12 md:-mb-12">
-                     <Image
-                        src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0ZXN0JTIwcmVzdWx0cyUyMHVpfGVufDB8fHx8MTc1MjY2NDM5Nnww&ixlib=rb-4.1.0&q=80&w=1080"
-                        alt="Instant feedback UI"
-                        width={500}
-                        height={300}
-                        data-ai-hint="analytics dashboard"
-                        className="rounded-b-lg object-cover"
-                    />
+                     
                 </div>
               </CardContent>
             </Card>
@@ -80,14 +66,7 @@ export default function FeatureGrid() {
                   level up your profile and push your software development skills to your highest potential.
                 </p>
                  <div className="mt-6 -mx-6 -mb-6 md:-mx-12 md:-mb-12">
-                     <Image
-                        src="https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb250cmlidXRpb24lMjBncmFwaHxlbnwwfHx8fDE3NTI2NjQ0MTJ8MA&ixlib=rb-4.1.0&q=80&w=1080"
-                        alt="Contribution graph"
-                        width={500}
-                        height={300}
-                        data-ai-hint="mountain achievement"
-                        className="rounded-b-lg object-cover"
-                    />
+                     
                 </div>
               </CardContent>
             </Card>

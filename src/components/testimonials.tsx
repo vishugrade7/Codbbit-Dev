@@ -80,10 +80,6 @@ export default function Testimonials() {
                           {testimonial.quote}
                         </h2>
                         <div className="flex flex-col items-center gap-2">
-                          <Avatar>
-                            <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.avatarHint} />
-                            <AvatarFallback>{testimonial.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                          </Avatar>
                           <div>
                             <p className="font-semibold">{testimonial.name}</p>
                             <p className="text-sm text-muted-foreground">{testimonial.role}</p>
