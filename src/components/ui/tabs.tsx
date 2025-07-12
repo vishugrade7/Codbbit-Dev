@@ -32,13 +32,20 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm",
-      "data-[state=inactive]:text-neutral-300 data-[state=inactive]:hover:bg-white/5 data-[state=inactive]:hover:text-white",
+      "data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm",
+      "data-[state=inactive]:text-neutral-300 data-[state=inactive]:hover:text-white",
       className
     )}
     {...props}
   >
-    {children}
+    {props["data-state"] === "active" && (
+      <motion.div
+        layoutId={props.layoutId || 'active-tab-indicator'}
+        className="absolute inset-0 z-0 rounded-md bg-primary"
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      />
+    )}
+    <span className="relative z-10">{children}</span>
   </TabsPrimitive.Trigger>
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
