@@ -33,11 +33,10 @@ export default function FeatureGrid() {
             </CardContent>
             <div className="p-8 flex items-center justify-center bg-muted/30">
                  <Image
-                    src="https://placehold.co/600x400.png"
+                    src="https://images.unsplash.com/photo-1628258334105-2a0b3d6efee1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb2Rpbmd8ZW58MHx8fHwxNzUyMjIxODI4fDA&ixlib=rb-4.1.0&q=80&w=1080"
                     alt="Problem solving interface"
                     width={600}
                     height={400}
-                    data-ai-hint="code editor ui"
                     className="rounded-lg shadow-2xl object-cover"
                 />
             </div>
