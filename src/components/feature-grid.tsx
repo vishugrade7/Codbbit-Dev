@@ -36,7 +36,7 @@ export default function FeatureGrid() {
                     src="https://images.unsplash.com/photo-1628258334105-2a0b3d6efee1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb2Rpbmd8ZW58MHx8fHwxNzUyMjIxODI4fDA&ixlib=rb-4.1.0&q=80&w=1080"
                     alt="Problem solving interface"
                     width={600}
-                    height={400}
+                    height={350}
                     className="rounded-lg shadow-2xl object-cover"
                 />
             </div>
