@@ -11,7 +11,6 @@ import {
   problemFormSchema,
   bulkUploadSchema,
   courseFormSchema,
-  navLinksSchema,
   badgeFormSchema,
   pricingFormSchema,
   voucherFormSchema,
@@ -372,11 +371,11 @@ export async function uploadCourseImage(dataUrl: string, courseId: string): Prom
 
 // #region Navigation Settings
 const defaultNavLinks: NavLink[] = [
-    { id: 'apex-problems', label: 'Practice Problems', href: '/apex-problems', isEnabled: true, isProtected: true },
-    { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true },
-    { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true },
-    { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true },
-    { id: 'lwc-playground', label: 'LWC Playground', href: '/lwc-playground', isEnabled: true, isProtected: false },
+    { id: 'apex-problems', label: 'Practice Problems', href: '/apex-problems', isEnabled: true, isProtected: true, isPro: false },
+    { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true, isPro: false },
+    { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true, isPro: false },
+    { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true, isPro: false },
+    { id: 'lwc-playground', label: 'LWC Playground', href: '/lwc-playground', isEnabled: true, isProtected: false, isPro: false },
 ];
 
 export async function getNavigationSettings(): Promise<NavLink[]> {
@@ -408,21 +407,34 @@ export async function getNavigationSettings(): Promise<NavLink[]> {
 
 export async function updateNavigationSettings(links: NavLink[]) {
     if (!db) return { success: false, error: "Database not initialized." };
+
+    // In-line schema definition to avoid client/server import issues
+    const navLinksServerSchema = z.object({
+        links: z.array(z.object({
+            id: z.string(),
+            label: z.string().min(1, 'Label is required'),
+            href: z.string().min(1, 'Href is required').refine(val => val.startsWith('/'), { message: 'Href must start with /' }),
+            isEnabled: z.boolean(),
+            isProtected: z.boolean(),
+            isPro: z.boolean().optional(),
+        }))
+    });
     
-    const validation = navLinksSchema.safeParse({ links });
+    const validation = navLinksServerSchema.safeParse({ links });
     if (!validation.success) {
         return { success: false, error: validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
     }
 
     const settingsDocRef = doc(db, 'settings', 'navigation');
     try {
-        await setDoc(settingsDocRef, { links: validation.data });
+        await setDoc(settingsDocRef, { links: validation.data.links });
         return { success: true, message: "Navigation settings updated successfully." };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
 }
+
 
 export async function getPublicNavigationLinks(): Promise<NavLink[]> {
     try {
