@@ -37,85 +37,54 @@ import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 
-const DefaultLine = ({ line, index }: { line: string, index: number }) => (
-  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
-    <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-    <p className="font-code text-sm flex-1 text-muted-foreground">{line.replace(/^>/, '').trim()}</p>
-  </div>
-);
+type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
 
-const CongratsLine = ({ line, index }: { line: string, index: number }) => (
-  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
-    <Star className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-    <p className="font-code text-sm flex-1 text-foreground font-semibold">{line.replace(/^>/, '').trim()}</p>
-  </div>
-);
-
-const BadgeLine = ({ line, index }: { line: string, index: number }) => (
-  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up flex items-start gap-3">
-    <Award className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-    <p className="font-code text-sm flex-1 text-foreground font-semibold">{line.replace(/^>/, '').trim()}</p>
-  </div>
-);
-
-const HeadingLine = ({ line, index }: { line: string, index: number }) => (
-   <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
-    <p className="font-code text-sm text-foreground font-bold pt-4 pb-1">{line}</p>
-  </div>
-);
-
-const ErrorBlock = ({ lines, index }: { lines: string[], index: number }) => (
-  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-1">
-    {lines.map((line, idx) => (
-      <div key={idx} className="flex items-start gap-3">
-        {idx === 0 && <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />}
-        <p className={`font-code text-sm text-destructive flex-1 ${idx > 0 ? 'pl-8' : 'font-semibold'}`}>{line}</p>
-      </div>
-    ))}
-  </div>
-);
-
-
-const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmitting: boolean }) => {
+const SubmissionResultsView = ({ log, isSubmitting, success, step }: { log: string, isSubmitting: boolean, success: boolean, step: SubmissionStep }) => {
   const logElements = useMemo(() => {
     if (!log) return [];
-    const lines = log.split('\n').filter(l => l.trim() !== '');
-    const elements: React.ReactNode[] = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.includes('--- ERROR ---')) {
-        const errorContent: string[] = [];
-        errorContent.push(line.replace('--- ERROR ---', 'ERROR').trim());
-        while (i + 1 < lines.length && !lines[i + 1].trim().startsWith('---')) {
-          i++;
-          errorContent.push(lines[i].replace(/^>/, '').trim());
-        }
-        elements.push(<ErrorBlock key={`error-block-${i}`} lines={errorContent} index={elements.length} />);
-      } else if (line.includes('Congratulations')) {
-        elements.push(<CongratsLine key={i} line={line} index={elements.length} />);
-      } else if (line.includes('New Badges Earned')) {
-        elements.push(<BadgeLine key={i} line={line} index={elements.length} />);
-      } else if (line.trim().startsWith('---')) {
-        elements.push(<HeadingLine key={i} line={line} index={elements.length} />);
-      } else {
-        elements.push(<DefaultLine key={i} line={line} index={elements.length} />);
+    if (!success) {
+      const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
+      const match = log.match(errorRegex);
+      if (match && match[1]) {
+        return [<ErrorBlock key="error-block" lines={match[1].trim().split('\n')} />];
       }
     }
-    return elements;
-  }, [log]);
-  
+    return log.split('\n').filter(l => l.trim() !== '').map((line, i) => <DefaultLine key={i} line={line} index={i} />);
+  }, [log, success]);
 
   if (isSubmitting) {
+    const steps = [
+      { id: 'saving', label: 'Saving...', progress: step === 'saving' ? 50 : (step === 'testing' || step === 'done' ? 100 : 0) },
+      { id: 'testing', label: 'Testing...', progress: step === 'testing' ? 50 : (step === 'done' ? 100 : 0) },
+    ];
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-          <p className="font-semibold">Running Submission...</p>
-          <p className="text-sm text-muted-foreground">Please wait while we connect to Salesforce and run your tests.</p>
+          <div className="w-full max-w-sm space-y-3">
+            {steps.map(s => (
+                <div key={s.id}>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">{s.label}</p>
+                    <Progress value={s.progress} className="h-2" />
+                </div>
+            ))}
+          </div>
       </div>
     );
+  }
+  
+  if (success) {
+      return (
+         <div className="flex flex-col items-center justify-center h-full text-center p-4">
+             <div className="p-3 bg-green-500/10 rounded-full mb-4">
+                <CheckCircle2 className="h-12 w-12 text-green-500" />
+             </div>
+             <p className="font-bold text-2xl">Success!</p>
+             <p className="text-muted-foreground">All test cases passed.</p>
+         </div>
+      )
   }
 
   if (!log.trim() && !isSubmitting) {
@@ -130,12 +99,26 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
       )
   }
 
-  return (
-    <div className="space-y-2">
-      {logElements}
-    </div>
-  );
+  return <div className="space-y-2">{logElements}</div>;
 };
+
+const DefaultLine = ({ line, index }: { line: string, index: number }) => (
+  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
+    <p className="font-code text-sm text-muted-foreground">{line}</p>
+  </div>
+);
+
+const ErrorBlock = ({ lines }: { lines: string[] }) => (
+  <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-1">
+    {lines.map((line, idx) => (
+      <div key={idx} className="flex items-start gap-3">
+        {idx === 0 && <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />}
+        <p className={`font-code text-sm text-destructive flex-1 ${idx > 0 ? 'pl-8' : 'font-semibold'}`}>{line}</p>
+      </div>
+    ))}
+  </div>
+);
+
 
 const MermaidRenderer = ({ chart }: { chart: string }) => {
     const { theme } = useTheme();
@@ -203,6 +186,8 @@ export default function ProblemWorkspacePage() {
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submissionSuccess, setSubmissionSuccess] = useState(false);
+    const [submissionStep, setSubmissionStep] = useState<SubmissionStep>('idle');
     const [code, setCode] = useState("");
     const [results, setResults] = useState("");
     const [isStarred, setIsStarred] = useState(false);
@@ -355,17 +340,24 @@ export default function ProblemWorkspacePage() {
         }
 
         setIsSubmitting(true);
+        setSubmissionSuccess(false);
         setResults("");
+        setSubmissionStep('saving');
 
         // Auto-expand results panel
         const panel = resultsPanelRef.current;
         if (panel && panel.isCollapsed()) {
             panel.expand();
         }
+        
+        const onProgress = (step: 'testing' | 'done') => {
+            setSubmissionStep(step);
+        };
 
-        const response = await submitApexSolution(user.uid, problem, code);
+        const response = await submitApexSolution(user.uid, problem, code, onProgress);
         
         setResults(response.details || response.message);
+        setSubmissionSuccess(response.success);
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
@@ -383,6 +375,7 @@ export default function ProblemWorkspacePage() {
         }
         
         setIsSubmitting(false);
+        setSubmissionStep('idle');
     };
 
     const handleToggleStar = async () => {
@@ -455,11 +448,11 @@ export default function ProblemWorkspacePage() {
                 <div className="flex items-center gap-4 flex-wrap">
                     <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                     <Badge variant="secondary">{categoryName}</Badge>
-                    {problem.company && (
-                        <div className="flex items-center gap-1.5">
-                            {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
-                            <span className="text-sm font-medium">{problem.company}</span>
-                        </div>
+                     {problem.company && (
+                        <Badge variant="secondary" className="flex items-center gap-1.5 bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                            {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-full object-contain"/>}
+                            <span>{problem.company}</span>
+                        </Badge>
                     )}
                     {isSolved && (
                     <div className="flex items-center gap-1.5 text-sm text-green-400">
@@ -586,7 +579,7 @@ export default function ProblemWorkspacePage() {
                         </Button>
                     </div>
                     <div className="flex-1 p-4 overflow-auto">
-                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
                     </div>
                 </div>
             </ResizablePanel>

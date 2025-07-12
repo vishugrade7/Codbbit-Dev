@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -52,8 +52,8 @@ const ProIconOverlay = () => (
     <TooltipProvider>
         <Tooltip>
             <TooltipTrigger asChild>
-                <div className="absolute -bottom-1 -right-1 h-5 w-5 flex items-center justify-center">
-                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div className="absolute -bottom-1 -right-1 h-6 w-6 flex items-center justify-center">
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" fill="#FDB813"/>
                         <path d="M10.5 9.5L8 12L10.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M14.5 9.5L17 12L14.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -295,9 +295,9 @@ export default function Leaderboard() {
                       <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
                            <div className="relative">
                                <Avatar className={cn(
-                                    "h-12 w-12 border-2", 
+                                    "h-20 w-20 border-4", 
                                     isUserPro(currentUserEntry) 
-                                        ? "border-yellow-400" 
+                                        ? "border-yellow-400 shadow-lg" 
                                         : "border-primary/50"
                                 )}>
                                   <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
@@ -505,16 +505,12 @@ export default function Leaderboard() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      {user.company && (
-                          <>
-                            {user.companyLogoUrl ? (
-                                <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="rounded-sm object-contain"/>
-                            ) : ( <Building className="h-4 w-4" /> )}
-                            <span>{user.company}</span>
-                          </>
-                      )}
-                    </div>
+                     {user.company ? (
+                         <Badge variant="secondary" className="bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                             {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
+                             <span>{user.company}</span>
+                         </Badge>
+                     ) : null}
                   </TableCell>
                   <TableCell>{user.country === 'N/A' ? '' : user.country}</TableCell>
                   <TableCell className="text-right font-bold text-lg font-mono">{user.points.toLocaleString()}</TableCell>

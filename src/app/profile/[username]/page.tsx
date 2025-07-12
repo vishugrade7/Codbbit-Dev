@@ -387,20 +387,10 @@ export default function UserProfilePage() {
                     )}
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         {profileUser.company && (
-                            <div className="flex items-center gap-2">
-                                {profileUser.companyLogoUrl ? (
-                                    <Image
-                                        src={profileUser.companyLogoUrl}
-                                        alt={`${profileUser.company} logo`}
-                                        width={16}
-                                        height={16}
-                                        className="rounded-sm object-contain"
-                                    />
-                                ) : (
-                                    <Building className="h-4 w-4 shrink-0" />
-                                )}
+                            <Badge variant="secondary" className="bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                                {profileUser.companyLogoUrl && <Image src={profileUser.companyLogoUrl} alt={profileUser.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
                                 <span>{profileUser.company}</span>
-                            </div>
+                            </Badge>
                         )}
                         <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4 shrink-0" />
