@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -39,6 +39,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 import ReactConfetti from 'react-confetti';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 
 const getLessonIcon = (lesson: Lesson) => {
@@ -933,58 +934,75 @@ export default function LessonPage() {
     if (!course || !currentLesson) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><p>Lesson not found or you do not have access.</p></div>;
     }
+    
+    const CourseSidebar = () => (
+        <ScrollArea className="h-full p-4">
+            <div className="mb-4">
+                <Button variant="ghost" onClick={() => router.push(`/courses/${courseId}`)} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Course
+                </Button>
+                <h2 className="text-lg font-semibold">{course.title}</h2>
+                {totalLessonsCount > 0 && (
+                    <div className="mt-2 space-y-1">
+                        <Progress value={progressPercentage} className="h-2" />
+                        <p className="text-xs text-muted-foreground">{completedLessonsCount} / {totalLessonsCount} lessons completed</p>
+                    </div>
+                )}
+            </div>
+            <Accordion type="single" collapsible defaultValue={currentModuleId ?? undefined} className="w-full">
+                 {course.modules.map((moduleItem) => (
+                    <AccordionItem key={moduleItem.id} value={moduleItem.id}>
+                        <AccordionTrigger className="text-base font-semibold hover:no-underline">{moduleItem.title}</AccordionTrigger>
+                        <AccordionContent>
+                            <ul className="space-y-1 pt-2">
+                                {moduleItem.lessons.map((lesson) => {
+                                    const isLessonLocked = (course.isPremium && !isPro) || (!lesson.isFree && !isPro);
+                                    const isCompleted = !!userData?.completedLessons?.[lesson.id];
+
+                                    return (
+                                     <li key={lesson.id}>
+                                        <Link 
+                                            href={isLessonLocked ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                            className={cn(
+                                                "flex items-center justify-between p-3 rounded-md transition-colors group",
+                                                lesson.id === lessonId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                                            )}
+                                        >
+                                            <div className={cn("flex items-center gap-3", isCompleted && !isLessonLocked && "text-muted-foreground")}>
+                                                {getLessonIcon(lesson)}
+                                                <span className="font-medium">{lesson.title}</span>
+                                            </div>
+                                            {isLessonLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                                        </Link>
+                                    </li>
+                                )})}
+                            </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                 ))}
+            </Accordion>
+        </ScrollArea>
+    );
 
     return (
         <div className="h-screen flex flex-col pt-16 md:pt-0">
+             <div className="md:hidden fixed bottom-6 right-6 z-50">
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button size="icon" className="rounded-full shadow-lg h-14 w-14">
+                            <LayoutGrid className="h-6 w-6" />
+                            <span className="sr-only">Open Course Index</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background/80 backdrop-blur-sm">
+                       <CourseSidebar />
+                    </SheetContent>
+                </Sheet>
+            </div>
             <ResizablePanelGroup direction="horizontal" className="flex-1">
                 <ResizablePanel defaultSize={25} minSize={20} className="hidden md:block bg-card">
-                    <ScrollArea className="h-full p-4">
-                        <div className="mb-4">
-                            <Button variant="ghost" onClick={() => router.push(`/courses/${courseId}`)} className="mb-4">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Course
-                            </Button>
-                            <h2 className="text-lg font-semibold">{course.title}</h2>
-                            {totalLessonsCount > 0 && (
-                                <div className="mt-2 space-y-1">
-                                    <Progress value={progressPercentage} className="h-2" />
-                                    <p className="text-xs text-muted-foreground">{completedLessonsCount} / {totalLessonsCount} lessons completed</p>
-                                </div>
-                            )}
-                        </div>
-                        <Accordion type="single" collapsible defaultValue={currentModuleId ?? undefined} className="w-full">
-                             {course.modules.map((moduleItem) => (
-                                <AccordionItem key={moduleItem.id} value={moduleItem.id}>
-                                    <AccordionTrigger className="text-base font-semibold hover:no-underline">{moduleItem.title}</AccordionTrigger>
-                                    <AccordionContent>
-                                        <ul className="space-y-1 pt-2">
-                                            {moduleItem.lessons.map((lesson) => {
-                                                const isLessonLocked = (course.isPremium && !isPro) || (!lesson.isFree && !isPro);
-                                                const isCompleted = !!userData?.completedLessons?.[lesson.id];
-
-                                                return (
-                                                 <li key={lesson.id}>
-                                                    <Link 
-                                                        href={isLessonLocked ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
-                                                        className={cn(
-                                                            "flex items-center justify-between p-3 rounded-md transition-colors group",
-                                                            lesson.id === lessonId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                                                        )}
-                                                    >
-                                                        <div className={cn("flex items-center gap-3", isCompleted && !isLessonLocked && "text-muted-foreground")}>
-                                                            {getLessonIcon(lesson)}
-                                                            <span className="font-medium">{lesson.title}</span>
-                                                        </div>
-                                                        {isLessonLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-                                                    </Link>
-                                                </li>
-                                            )})}
-                                        </ul>
-                                    </AccordionContent>
-                                </AccordionItem>
-                             ))}
-                        </Accordion>
-                    </ScrollArea>
+                    <CourseSidebar />
                 </ResizablePanel>
                  <ResizableHandle withHandle className="hidden md:flex"/>
                 <ResizablePanel defaultSize={75}>
