@@ -76,13 +76,14 @@ export default function Header() {
   const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
 
   const visibleNavLinks = useMemo(() => {
-    if (authLoading) return []; // Don't show links until auth status is known
+    if (authLoading) return [];
     return navLinks.filter(link => {
-        if (!link.isEnabled) return false;
-        if (link.isPro) return isPro || isAuthorizedAdmin; // Show pro links to pro users and admins
+        if (!link.isEnabled && !isAuthorizedAdmin) return false;
+        if (link.isPro && !isPro && !isAuthorizedAdmin) return false;
         return true;
     });
   }, [navLinks, authLoading, isPro, isAuthorizedAdmin]);
+
 
   return (
     <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/70 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50", user && "md:hidden")}>
@@ -155,7 +156,8 @@ export default function Header() {
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           "text-lg font-medium transition-colors hover:text-foreground/80",
-                          pathname === link.href ? "text-foreground" : "text-foreground/60"
+                          pathname === link.href ? "text-foreground" : "text-foreground/60",
+                          !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
                         )}
                       >
                         {link.label}
@@ -214,7 +216,8 @@ export default function Header() {
                     href={link.href}
                     className={cn(
                     "transition-colors hover:text-foreground/80",
-                    pathname === link.href ? "text-foreground" : "text-foreground/60"
+                    pathname === link.href ? "text-foreground" : "text-foreground/60",
+                    !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
                     )}
                 >
                     {link.label}
