@@ -1,4 +1,8 @@
 
+"use client";
+
+import * as React from "react";
+import Autoplay from "embla-carousel-autoplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Target, Users } from "lucide-react";
@@ -48,17 +52,24 @@ const features = [
 ];
 
 export default function Testimonials() {
+  const plugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
+
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
       <div className="container px-4 md:px-6">
         <div className="grid gap-6 lg:gap-8">
           {/* Testimonial Card */}
            <Carousel
+              plugins={[plugin.current]}
               opts={{
                 align: "start",
                 loop: true,
               }}
               className="w-full"
+              onMouseEnter={plugin.current.stop}
+              onMouseLeave={plugin.current.reset}
             >
               <CarouselContent>
                 {testimonials.map((testimonial, index) => (
