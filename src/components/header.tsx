@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -128,18 +129,19 @@ export default function Header() {
                             <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
                                 <Settings className="h-4 w-4" /> Settings
                             </Link>
-                            <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                                <Bug className="h-4 w-4" /> Report a Bug
-                            </Link>
-                             <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                                <LifeBuoy className="h-4 w-4" /> Support
-                            </Link>
                             {!isPro && (
                                 <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-primary bg-primary/10 transition-all hover:bg-primary/20">
                                     <Rocket className="h-4 w-4" />
                                     <span>Upgrade</span>
                                 </Link>
                             )}
+                            <Separator className="my-2" />
+                            <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                                <Bug className="h-4 w-4" /> Report a Bug
+                            </Link>
+                             <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                                <LifeBuoy className="h-4 w-4" /> Support
+                            </Link>
                         </div>
                       </div>
                       <Separator />
