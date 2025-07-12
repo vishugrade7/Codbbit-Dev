@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase";
 import type { ProblemSheet } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, PlusCircle, Users, Pencil, Bookmark, FileText, ClipboardList, Search } from "lucide-react";
@@ -163,7 +164,7 @@ export default function ProblemSheetsListPage() {
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-          <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)} className="w-full md:w-auto">
+          <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)}>
               <TabsList>
                   <TabsTrigger value="all">All Sheets</TabsTrigger>
                   <TabsTrigger value="my-sheets" disabled={!authUser}>My Sheets</TabsTrigger>
@@ -304,3 +305,5 @@ export default function ProblemSheetsListPage() {
     </main>
   );
 }
+
+    
