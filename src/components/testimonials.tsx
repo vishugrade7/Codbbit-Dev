@@ -75,8 +75,8 @@ export default function Testimonials() {
                 {testimonials.map((testimonial, index) => (
                   <CarouselItem key={index}>
                     <div className="p-1">
-                      <Card className="p-8 md:p-12">
-                        <CardContent className="flex flex-col items-center text-center gap-6">
+                      <Card className="p-6 md:p-8 lg:p-12">
+                        <CardContent className="flex flex-col items-center text-center gap-6 p-0">
                           <h2 className="text-2xl md:text-3xl font-semibold max-w-3xl">
                             {testimonial.quote}
                           </h2>
@@ -105,7 +105,7 @@ export default function Testimonials() {
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
             {features.map((feature, index) => (
                  <Card key={index}>
-                    <CardContent className="p-8 md:p-12">
+                    <CardContent className="p-6 md:p-8 lg:p-12">
                         <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                             <feature.icon className="h-6 w-6" />
                         </div>
