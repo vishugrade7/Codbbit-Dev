@@ -717,7 +717,7 @@ export default function ProblemWorkspacePage() {
         <main className="flex-1 overflow-auto h-full">
             <div className="md:hidden h-full">
                 <Tabs defaultValue="problem" className="flex flex-col h-full">
-                    <TabsList className="grid w-full grid-cols-2 border-b bg-card">
+                    <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="problem">Problem</TabsTrigger>
                         <TabsTrigger value="code">Code</TabsTrigger>
                     </TabsList>
