@@ -32,7 +32,8 @@ export default function ApexProblemsView() {
     const fetchCategories = async () => {
         setLoading(true);
 
-        const processData = (data: ApexProblemsData) => {
+        const processData = (data: ApexProblemsData | null) => {
+            if (!data) return;
             const categoriesInfo: CategoryInfo[] = Object.entries(data)
                 .map(([name, categoryData]) => {
                     const questions = categoryData.Questions || [];
@@ -44,7 +45,7 @@ export default function ApexProblemsView() {
             setCategories(categoriesInfo);
         };
         
-        const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+        const cachedData = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
         if (cachedData) {
             processData(cachedData);
             setLoading(false);
@@ -62,7 +63,7 @@ export default function ApexProblemsView() {
 
             if (docSnap.exists()) {
                 const data = docSnap.data().Category as ApexProblemsData;
-                setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                 processData(data);
             }
         } catch (error) {

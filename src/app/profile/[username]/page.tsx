@@ -114,14 +114,15 @@ export default function UserProfilePage() {
                 return;
             }
 
-            const processData = (data: ApexProblemsData) => {
+            const processData = (data: ApexProblemsData | null) => {
+                if (!data) return;
                 const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                     (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                 );
                 setAllProblems(problems);
             };
             
-            const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            const cachedData = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
             if (cachedData) {
                 processData(cachedData);
                 setLoadingProblems(false);
@@ -133,7 +134,7 @@ export default function UserProfilePage() {
                 const problemsSnap = await getDoc(apexDocRef);
                 if (problemsSnap.exists()) {
                     const data = problemsSnap.data().Category as ApexProblemsData;
-                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                     processData(data);
                 }
             } catch (error) {

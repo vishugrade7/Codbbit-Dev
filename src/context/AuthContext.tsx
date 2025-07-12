@@ -51,13 +51,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (!firebaseUser) {
         setUserData(null);
         setLoading(false);
         sessionStorage.removeItem('appSessionId'); // Clear session on logout
-        clearCache('apexProblemsData'); // Clear problems cache on logout
+        await clearCache('apexProblemsData'); // Clear problems cache on logout
       }
     });
 

@@ -51,14 +51,15 @@ function CreateProblemSheetClient() {
             setLoading(true);
             try {
                 // Fetch all problems
-                const processProblems = (data: ApexProblemsData) => {
+                const processProblems = (data: ApexProblemsData | null) => {
+                    if (!data) return;
                     const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                         (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                     );
                     setAllProblems(problems);
                 };
 
-                const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+                const cachedProblems = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
                 if (cachedProblems) {
                     processProblems(cachedProblems);
                 } else {
@@ -66,7 +67,7 @@ function CreateProblemSheetClient() {
                     const problemsSnap = await getDoc(apexDocRef);
                     if (problemsSnap.exists()) {
                         const data = problemsSnap.data().Category as ApexProblemsData;
-                        setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                        await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                         processProblems(data);
                     }
                 }

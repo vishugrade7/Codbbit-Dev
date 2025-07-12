@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -74,7 +73,8 @@ export default function SheetDisplayPage() {
             }
             
             if (sheetData.problemIds && sheetData.problemIds.length > 0) {
-                 const processProblems = (data: ApexProblemsData) => {
+                 const processProblems = (data: ApexProblemsData | null) => {
+                    if (!data) return;
                     const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                         (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                     );
@@ -89,7 +89,7 @@ export default function SheetDisplayPage() {
                     setProblems(sortedProblems);
                 };
 
-                const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+                const cachedProblems = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
                 if (cachedProblems) {
                     processProblems(cachedProblems);
                 } else {
@@ -97,7 +97,7 @@ export default function SheetDisplayPage() {
                     const apexSnap = await getDoc(apexDocRef);
                     if (apexSnap.exists()) {
                         const data = apexSnap.data().Category as ApexProblemsData;
-                        setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                        await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                         processProblems(data);
                     }
                 }

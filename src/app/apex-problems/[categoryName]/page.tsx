@@ -46,17 +46,19 @@ export default function CategoryProblemsPage() {
     const fetchProblems = async () => {
       setLoading(true);
 
-      const processData = (data: ApexProblemsData) => {
+      const processData = (data: ApexProblemsData | null) => {
+          if (!data) return;
           const categoryData = data[categoryName];
           if (categoryData && categoryData.Questions) {
             setProblems(categoryData.Questions.sort((a,b) => a.title.localeCompare(b.title)));
           }
       };
 
-      const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+      const cachedData = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
       if (cachedData) {
           processData(cachedData);
           setLoading(false);
+          // Optional: re-fetch in the background to keep data fresh, but for now this is fine.
           return;
       }
       
@@ -66,7 +68,7 @@ export default function CategoryProblemsPage() {
 
         if (docSnap.exists()) {
           const data = docSnap.data().Category as ApexProblemsData;
-          setCache(APEX_PROBLEMS_CACHE_KEY, data);
+          await setCache(APEX_PROBLEMS_CACHE_KEY, data);
           processData(data);
         }
       } catch (error) {

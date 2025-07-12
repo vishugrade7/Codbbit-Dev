@@ -264,7 +264,8 @@ export default function ProblemWorkspacePage() {
         setLoading(true);
 
         const fetchProblems = async () => {
-            const processData = (data: ApexProblemsData) => {
+            const processData = (data: ApexProblemsData | null) => {
+                if (!data) return;
                 const categoryData = data[categoryName];
                 
                 if (categoryData && categoryData.Questions) {
@@ -288,7 +289,7 @@ export default function ProblemWorkspacePage() {
                 }
             };
             
-            const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            const cachedData = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
             if (cachedData) {
                 processData(cachedData);
                 setLoading(false);
@@ -300,7 +301,7 @@ export default function ProblemWorkspacePage() {
                 const docSnap = await getDoc(apexDocRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data().Category as ApexProblemsData;
-                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                     processData(data);
                 } else {
                     setProblem(null);
