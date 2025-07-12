@@ -72,7 +72,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden">
         {/* Floating Icons Background */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 hidden md:block">
             {icons.map((item, index) => (
             <div 
                 key={index} 
@@ -97,7 +97,7 @@ export default function Home() {
             <p className="mx-auto mt-6 max-w-[700px] text-lg text-muted-foreground md:text-xl">
             Improve your development skills by training with your peers on code kata that continuously challenge and push your coding practice.
             </p>
-            <div className="mt-8 flex justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
                 <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-blue-800 text-primary-foreground hover:opacity-90 transition-opacity">
                 <Link href="/apex-problems">
                     Get Started
