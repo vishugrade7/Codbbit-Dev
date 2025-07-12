@@ -383,9 +383,9 @@ export default function Leaderboard() {
       <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
           <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
               <TabsList>
-                  <TabsTrigger value="Global" isActive={filterType === 'Global'}>Global</TabsTrigger>
-                  <TabsTrigger value="Country" isActive={filterType === 'Country'}>By Country</TabsTrigger>
-                  <TabsTrigger value="Company" isActive={filterType === 'Company'}>By Company</TabsTrigger>
+                  <TabsTrigger value="Global">Global</TabsTrigger>
+                  <TabsTrigger value="Country">By Country</TabsTrigger>
+                  <TabsTrigger value="Company">By Company</TabsTrigger>
               </TabsList>
           </Tabs>
           
