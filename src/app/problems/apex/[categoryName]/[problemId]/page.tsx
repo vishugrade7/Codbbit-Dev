@@ -453,8 +453,8 @@ export default function ProblemWorkspacePage() {
                     <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                     <Badge variant="secondary">{categoryName}</Badge>
                      {problem.company && (
-                        <Badge variant="secondary" className="flex items-center gap-1.5">
-                            {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-full object-contain"/>}
+                        <Badge variant="secondary">
+                            {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
                             <span>{problem.company}</span>
                         </Badge>
                     )}
@@ -618,7 +618,7 @@ export default function ProblemWorkspacePage() {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M4 4H12V20H4V4ZM14 4H20V12H14V4ZM14 14H20V20H14V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background/80 backdrop-blur-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <SheetHeader className="p-4 border-b shrink-0">
                             <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
