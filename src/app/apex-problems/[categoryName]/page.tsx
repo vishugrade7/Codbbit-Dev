@@ -126,42 +126,44 @@ export default function CategoryProblemsPage() {
       </div>
       
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-                placeholder="Search problems by title..."
-                className="w-full pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
-        </div>
-
-        <div className="md:hidden">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                        <Filter className="mr-2 h-4 w-4" /> Filters
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel>Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                        <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                        <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-            </DropdownMenu>
+        <div className="flex-1 flex gap-2">
+            <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Search problems by title..."
+                    className="w-full pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="md:hidden">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                            <Filter className="h-4 w-4" />
+                            <span className="sr-only">Filters</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end">
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                            <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                            <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
         
         <div className="hidden md:flex items-center gap-4">
