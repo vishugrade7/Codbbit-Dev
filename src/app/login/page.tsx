@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,6 +28,9 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { updateActiveSession } from "@/app/profile/actions";
+import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "next-themes";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const formSchema = z.object({
@@ -43,6 +47,19 @@ export default function LoginPage() {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  
+  const { brandingSettings, loadingBranding, isPro } = useAuth();
+  const { theme } = useTheme();
+
+  const logoSrc = useMemo(() => {
+    if (!brandingSettings) return "/favicon.ico";
+    const isDark = theme === 'dark';
+    if (isPro) {
+      return (isDark ? brandingSettings.logo_pro_dark : brandingSettings.logo_pro_light) || '/favicon.ico';
+    }
+    return (isDark ? brandingSettings.logo_dark : brandingSettings.logo_light) || '/favicon.ico';
+  }, [brandingSettings, isPro, theme]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -157,6 +174,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+           <div className="flex justify-center mb-4">
+            {loadingBranding ? (
+                <Skeleton className="h-10 w-10 rounded-lg" />
+            ) : (
+                <Link href="/" className="flex items-center gap-2">
+                    <Image src={logoSrc} alt="Codbbit logo" width={40} height={40} />
+                </Link>
+            )}
+           </div>
           <CardTitle className="text-2xl font-headline">Welcome back</CardTitle>
           <CardDescription>
             Don't have an account?{" "}

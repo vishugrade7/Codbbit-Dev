@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -21,6 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, User, AtSign, Building, Globe, Mail, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "next-themes";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -105,6 +108,19 @@ export default function SignupPage() {
   const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
+
+  const { brandingSettings, loadingBranding, isPro } = useAuth();
+  const { theme } = useTheme();
+
+  const logoSrc = useMemo(() => {
+    if (!brandingSettings) return "/favicon.ico";
+    const isDark = theme === 'dark';
+    if (isPro) {
+      return (isDark ? brandingSettings.logo_pro_dark : brandingSettings.logo_pro_light) || '/favicon.ico';
+    }
+    return (isDark ? brandingSettings.logo_dark : brandingSettings.logo_light) || '/favicon.ico';
+  }, [brandingSettings, isPro, theme]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -245,6 +261,15 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+                {loadingBranding ? (
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                ) : (
+                    <Link href="/" className="flex items-center gap-2">
+                        <Image src={logoSrc} alt="Codbbit logo" width={40} height={40} />
+                    </Link>
+                )}
+           </div>
           <CardTitle className="text-2xl font-headline">Create an account</CardTitle>
           <CardDescription>
              Already have an account?{" "}
