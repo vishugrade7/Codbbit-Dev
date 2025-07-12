@@ -374,6 +374,12 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     
     try {
         log.push("--- Starting Submission ---");
+        
+        const userDocRefCheck = await getDoc(doc(db, "users", userId));
+        if (userDocRefCheck.exists() && userDocRefCheck.data().solvedProblems?.[problem.id]) {
+            return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
+        }
+
         const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
         const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
         const problemTypeKeyword = problem.metadataType.toLowerCase();
@@ -392,11 +398,6 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Problem Configuration Error', details: msg };
         }
         
-        const userDocRefCheck = await getDoc(doc(db, "users", userId));
-        if (userDocRefCheck.exists() && userDocRefCheck.data().solvedProblems?.[problem.id]) {
-            return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
-        }
-
         const auth = await getSfdcConnection(userId);
         
         const mainObjectName = getClassName(userCode);
