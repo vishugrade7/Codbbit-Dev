@@ -5,17 +5,15 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Loader2, IndianRupee, Ticket } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, Loader2, IndianRupee, Ticket, Sparkles, Gem, Building } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getPricingSettings } from "@/app/upload-problem/actions";
 import type { PricingSettings } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
+import { cn } from "@/lib/utils";
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -34,7 +32,7 @@ const loadRazorpayScript = () => {
 
 
 export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'biannually' | 'annually'>("monthly");
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>("annually");
   const { user, userData } = useAuth();
   const isIndianUser = userData?.country === 'India';
   const { toast } = useToast();
@@ -94,23 +92,12 @@ export default function PricingPage() {
         currencyCode,
         save: null,
       },
-      biannually: {
-        id: 'biannually' as const,
-        price: prices.biannually.price,
-        total: prices.biannually.total,
-        suffix: "/month",
-        billDesc: `Billed ${currency}${prices.biannually.total} every 6 months.`,
-        save: "16%",
-        currency: currency,
-        currencyCode,
-      },
       annually: {
         id: 'annually' as const,
         price: prices.annually.price,
         total: prices.annually.total,
-        suffix: "/month",
-        billDesc: `Billed ${currency}${prices.annually.total} annually.`,
-        save: "33%",
+        suffix: "/year",
+        save: "Save 33%",
         currency: currency,
         currencyCode,
       },
@@ -121,7 +108,6 @@ export default function PricingPage() {
   }, [isIndianUser, pricingSettings]);
 
   const currentPlan = plans ? plans[billingCycle] : null;
-  const freePlan = plans ? plans.free : null;
 
   const handleUpgrade = async () => {
     if (!user || !userData) {
@@ -166,7 +152,7 @@ export default function PricingPage() {
         currency: orderResponse.currency,
         name: "Codbbit",
         description: "Pro Plan Subscription",
-        image: "https://placehold.co/128x128.png", // You should have a logo in your public folder
+        image: "https://placehold.co/128x128.png",
         order_id: orderResponse.orderId,
         handler: async function (response: any) {
             const verificationResult = await verifyAndSavePayment(
@@ -190,7 +176,7 @@ export default function PricingPage() {
             email: userData.email,
         },
         theme: {
-            color: "#1976D2" // A blue shade similar to your primary color
+            color: "#1976D2"
         },
         modal: {
             ondismiss: function() {
@@ -213,144 +199,121 @@ export default function PricingPage() {
   };
 
 
-  if (loadingPricing || loadingConfig) {
+  if (loadingPricing || loadingConfig || !plans) {
     return (
       <main className="flex-1 container py-12 flex justify-center items-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </main>
     )
   }
-  
-  if (!plans || !freePlan || !currentPlan) {
-    return (
-       <main className="flex-1 container py-12 text-center">
-        <h1 className="text-2xl font-bold text-destructive">Pricing Not Available</h1>
-        <p className="text-muted-foreground mt-2">We're sorry, but we couldn't load the pricing information. Please contact support.</p>
-      </main>
-    )
-  }
 
+  const freeFeatures = [
+    "Access to free problems",
+    "Access to free courses",
+    "Community support"
+  ];
+
+  const proFeatures = [
+    "Everything in Free, plus:",
+    "Access to all premium problems",
+    "Access to all premium courses",
+    "Advanced analytics & insights",
+    "Priority support",
+    "Certificate for each course"
+  ];
+  
+  const enterpriseFeatures = [
+      "Everything in Pro",
+      "Customized learning paths",
+      "Team management & dashboards",
+      "Dedicated account manager",
+  ];
 
   return (
     <main className="flex-1 container py-12">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
-          Choose Your Plan
+      <div className="text-center mb-12">
+        <p className="text-primary font-semibold mb-2">Plans made for you</p>
+        <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
+          Unlock Premium Learning with Codbbit Pro
         </h1>
-        <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-          Unlock your full potential with our premium features. Get unlimited access to all problems, advanced analytics, and more.
-        </p>
       </div>
 
-      <div className="flex justify-center mb-10">
-          <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="w-auto">
-              <TabsList>
-                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                  <TabsTrigger value="biannually">6 Months</TabsTrigger>
-                  <TabsTrigger value="annually">Yearly</TabsTrigger>
-              </TabsList>
-          </Tabs>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {/* Free Plan */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Free</CardTitle>
-            <CardDescription>For individuals starting their Salesforce journey.</CardDescription>
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-lg"><Sparkles className="h-6 w-6 text-green-500"/></div>
+                <div>
+                    <CardTitle>Free Plan</CardTitle>
+                    <CardDescription>Limited Access</CardDescription>
+                </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-4xl font-bold">{freePlan.currency}0<span className="text-lg font-normal text-muted-foreground">/month</span></div>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Access to free problems</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Basic profile stats</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Community support</li>
-            </ul>
+          <CardContent className="space-y-4 flex-grow">
+            <Button variant="outline" className="w-full" disabled>Start now</Button>
+            <div className="space-y-3 pt-4">
+                <h4 className="font-semibold">What's included</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                    {freeFeatures.map(f => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> {f}</li>)}
+                </ul>
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" disabled>Your Current Plan</Button>
-          </CardFooter>
         </Card>
 
         {/* Pro Plan */}
-        <Card className="border-primary shadow-lg relative">
-           <div className="absolute top-0 -translate-y-1/2 w-full flex justify-center">
-               <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
-                  Most Popular
-                  {currentPlan.save && <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs">Save {currentPlan.save}</span>}
-               </div>
-           </div>
-          <CardHeader className="pt-8">
-            <CardTitle>Pro</CardTitle>
-            <CardDescription>For professionals aiming to master their skills.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col">
-              <div className="flex items-baseline">
-                  <span className="text-4xl font-bold">{currentPlan.currency}{currentPlan.price}</span>
-                  <span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span>
+        <Card className="border-primary shadow-2xl flex flex-col relative">
+          <div className="absolute -top-3 right-6 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-semibold">Most Popular</div>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-4">
+                  <div className="p-3 bg-yellow-100 rounded-lg"><Gem className="h-6 w-6 text-yellow-500"/></div>
+                  <div>
+                      <CardTitle>Pro Plan</CardTitle>
+                      <CardDescription>All courses + AI Mentor</CardDescription>
+                  </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{currentPlan.billDesc}</p>
+              <div className="bg-muted p-1 rounded-full flex text-sm">
+                <button onClick={() => setBillingCycle('monthly')} className={cn("px-3 py-1 rounded-full", billingCycle === 'monthly' && "bg-background shadow-sm text-primary font-semibold")}>Monthly</button>
+                <button onClick={() => setBillingCycle('annually')} className={cn("px-3 py-1 rounded-full", billingCycle === 'annually' && "bg-background shadow-sm text-primary font-semibold")}>Yearly</button>
+              </div>
             </div>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Everything in Free</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Access to all premium problems</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Advanced analytics & insights</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Priority support</li>
-            </ul>
-            <div className="px-1 pt-4">
-                <Label htmlFor="voucher" className="flex items-center gap-2 mb-2"><Ticket className="h-4 w-4" />Voucher Code</Label>
-                <Input 
-                    id="voucher" 
-                    placeholder="Enter code for a discount"
-                    value={voucherCode}
-                    onChange={(e) => setVoucherCode(e.target.value)}
-                />
+          </CardHeader>
+          <CardContent className="space-y-4 flex-grow">
+             <div className="text-4xl font-bold">{currentPlan.currency}{currentPlan.price}<span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span></div>
+            <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut}>
+                {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Start today
+            </Button>
+             <div className="space-y-3 pt-4">
+                <h4 className="font-semibold">What's included</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                    {proFeatures.map(f => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> {f}</li>)}
+                </ul>
             </div>
           </CardContent>
-          <CardFooter>
-            {!isRazorpayReady ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="w-full" tabIndex={0}>
-                      <Button className="w-full" disabled>
-                        Upgrade to Pro
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Payment processing is not available.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut}>
-                {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Upgrade to Pro
-              </Button>
-            )}
-          </CardFooter>
         </Card>
 
         {/* Enterprise Plan */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Enterprise</CardTitle>
-            <CardDescription>For teams and organizations seeking success.</CardDescription>
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg"><Building className="h-6 w-6 text-blue-500"/></div>
+                <div>
+                    <CardTitle>Enterprise Plan</CardTitle>
+                    <CardDescription>For Colleges & Universities</CardDescription>
+                </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="text-4xl font-bold">Contact Us</div>
-             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Everything in Pro</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Team management & dashboards</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Custom problem sets</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Dedicated account manager</li>
-            </ul>
+          <CardContent className="space-y-4 flex-grow">
+             <Button variant="outline" className="w-full" onClick={() => router.push('/contact')}>Contact us</Button>
+              <div className="space-y-3 pt-4">
+                <h4 className="font-semibold">What's included</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                    {enterpriseFeatures.map(f => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> {f}</li>)}
+                </ul>
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full">Contact Sales</Button>
-          </CardFooter>
         </Card>
       </div>
     </main>
