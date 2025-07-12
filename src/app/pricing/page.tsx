@@ -5,14 +5,12 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Loader2, IndianRupee, Ticket, Sparkles, Gem, Building } from "lucide-react";
+import { Check, Loader2, IndianRupee, Sparkles, Gem, Building } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
 import { getPricingSettings } from "@/app/upload-problem/actions";
 import type { PricingSettings } from "@/types";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 // Function to load the Razorpay script
@@ -42,7 +40,6 @@ export default function PricingPage() {
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [pricingSettings, setPricingSettings] = useState<PricingSettings | null>(null);
   const [loadingPricing, setLoadingPricing] = useState(true);
-  const [voucherCode, setVoucherCode] = useState('');
 
   useEffect(() => {
     const checkConfig = async () => {
@@ -137,7 +134,6 @@ export default function PricingPage() {
         currentPlan.id,
         currentPlan.currencyCode,
         user.uid,
-        voucherCode.trim()
     );
 
     if (orderResponse.error || !orderResponse.orderId) {
@@ -160,8 +156,7 @@ export default function PricingPage() {
               user.uid,
               orderResponse.amount,
               currentPlan.currencyCode,
-              currentPlan.id,
-              voucherCode.trim() || null
+              currentPlan.id
             );
             if (verificationResult.success) {
                 toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
@@ -210,16 +205,19 @@ export default function PricingPage() {
   const freeFeatures = [
     "Access to free problems",
     "Access to free courses",
+    "Limited AI Assistant",
     "Community support"
   ];
 
   const proFeatures = [
-    "Everything in Free, plus:",
-    "Access to all premium problems",
-    "Access to all premium courses",
+    "Access to all premium content",
+    "Unlimited AI Assistant",
     "Advanced analytics & insights",
+    "Build real world projects",
+    "Video solutions and hints",
+    "Certificate for each course",
+    "Invite to Pro community",
     "Priority support",
-    "Certificate for each course"
   ];
   
   const enterpriseFeatures = [
@@ -227,94 +225,100 @@ export default function PricingPage() {
       "Customized learning paths",
       "Team management & dashboards",
       "Dedicated account manager",
+      "Faculty and Admin dashboard",
+      "Priority support",
   ];
 
   return (
-    <main className="flex-1 container py-12">
-      <div className="text-center mb-12">
-        <p className="text-primary font-semibold mb-2">Plans made for you</p>
-        <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
-          Unlock Premium Learning with Codbbit Pro
-        </h1>
-      </div>
+    <main className="flex-1 w-full dark:bg-slate-900 bg-slate-50 py-12 md:py-24">
+      <div className="container">
+        <div className="text-center mb-12">
+          <p className="text-primary font-semibold mb-2">Plans made for you</p>
+          <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight dark:text-white">
+            Unlock Premium Learning with Codbbit Pro
+          </h1>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {/* Free Plan */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-lg"><Sparkles className="h-6 w-6 text-green-500"/></div>
-                <div>
-                    <CardTitle>Free Plan</CardTitle>
-                    <CardDescription>Limited Access</CardDescription>
-                </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 flex-grow">
-            <Button variant="outline" className="w-full" disabled>Start now</Button>
-            <div className="space-y-3 pt-4">
-                <h4 className="font-semibold">What's included</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                    {freeFeatures.map(f => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> {f}</li>)}
-                </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pro Plan */}
-        <Card className="border-primary shadow-2xl flex flex-col relative">
-          <div className="absolute -top-3 right-6 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-semibold">Most Popular</div>
-          <CardHeader>
-            <div className="flex justify-between items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Free Plan */}
+          <Card className="flex flex-col bg-background rounded-2xl shadow-sm">
+            <CardHeader className="p-8">
               <div className="flex items-center gap-4">
-                  <div className="p-3 bg-yellow-100 rounded-lg"><Gem className="h-6 w-6 text-yellow-500"/></div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg"><Sparkles className="h-6 w-6 text-green-500"/></div>
                   <div>
-                      <CardTitle>Pro Plan</CardTitle>
-                      <CardDescription>All courses + AI Mentor</CardDescription>
+                      <CardTitle className="text-xl">Free Plan</CardTitle>
+                      <CardDescription>Limited Access</CardDescription>
                   </div>
               </div>
-              <div className="bg-muted p-1 rounded-full flex text-sm">
-                <button onClick={() => setBillingCycle('monthly')} className={cn("px-3 py-1 rounded-full transition-colors", billingCycle === 'monthly' ? "bg-background shadow-sm text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>Monthly</button>
-                <button onClick={() => setBillingCycle('annually')} className={cn("px-3 py-1 rounded-full transition-colors", billingCycle === 'annually' ? "bg-background shadow-sm text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>Yearly</button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 flex-grow">
-             <div className="text-4xl font-bold">{currentPlan.currency}{currentPlan.price}<span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span></div>
-            <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut}>
-                {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Start today
-            </Button>
-             <div className="space-y-3 pt-4">
-                <h4 className="font-semibold">What's included</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                    {proFeatures.map(f => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> {f}</li>)}
-                </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Enterprise Plan */}
-        <Card className="flex flex-col">
-          <CardHeader>
-             <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-lg"><Building className="h-6 w-6 text-blue-500"/></div>
-                <div>
-                    <CardTitle>Enterprise Plan</CardTitle>
-                    <CardDescription>For Colleges & Universities</CardDescription>
-                </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 flex-grow">
-             <Button variant="outline" className="w-full" onClick={() => router.push('/contact')}>Contact us</Button>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6 flex-grow">
+              <Button variant="outline" className="w-full text-lg py-6" disabled>Start now</Button>
               <div className="space-y-3 pt-4">
-                <h4 className="font-semibold">What's included</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                    {enterpriseFeatures.map(f => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> {f}</li>)}
-                </ul>
-            </div>
-          </CardContent>
-        </Card>
+                  <h4 className="font-semibold">What's included</h4>
+                  <ul className="space-y-3 text-muted-foreground">
+                      {freeFeatures.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-green-500" /> {f}</li>)}
+                  </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pro Plan */}
+          <Card className="flex flex-col bg-background rounded-2xl shadow-lg border-2 border-primary/50 relative">
+            <div className="absolute top-8 right-8 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold">Most Popular</div>
+            <CardHeader className="p-8">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg"><Gem className="h-6 w-6 text-yellow-500"/></div>
+                    <div>
+                        <CardTitle className="text-xl">Pro Plan</CardTitle>
+                        <CardDescription>All courses + AI Mentor</CardDescription>
+                    </div>
+                </div>
+              </div>
+              <div className="pt-4">
+                <div className="bg-muted p-1 rounded-full flex text-sm w-fit">
+                  <button onClick={() => setBillingCycle('monthly')} className={cn("px-4 py-1.5 rounded-full transition-colors font-semibold", billingCycle === 'monthly' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}>Monthly</button>
+                  <button onClick={() => setBillingCycle('annually')} className={cn("px-4 py-1.5 rounded-full transition-colors font-semibold", billingCycle === 'annually' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}>Yearly</button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6 flex-grow">
+               <div className="text-5xl font-bold dark:text-white">{currentPlan.currency}{currentPlan.price}<span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span></div>
+              <Button className="w-full text-lg py-6" onClick={handleUpgrade} disabled={isCheckingOut}>
+                  {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Start today
+              </Button>
+               <div className="space-y-3 pt-4">
+                  <h4 className="font-semibold">What's included</h4>
+                  <ul className="space-y-3 text-muted-foreground">
+                      {proFeatures.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-green-500" /> {f}</li>)}
+                  </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enterprise Plan */}
+          <Card className="flex flex-col bg-background rounded-2xl shadow-sm">
+            <CardHeader className="p-8">
+               <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><Building className="h-6 w-6 text-blue-500"/></div>
+                  <div>
+                      <CardTitle className="text-xl">Enterprise Plan</CardTitle>
+                      <CardDescription>For Colleges & Universities</CardDescription>
+                  </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6 flex-grow">
+               <Button variant="outline" className="w-full text-lg py-6" onClick={() => router.push('/contact')}>Contact us</Button>
+                <div className="space-y-3 pt-4">
+                  <h4 className="font-semibold">What's included</h4>
+                  <ul className="space-y-3 text-muted-foreground">
+                      {enterpriseFeatures.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-green-500" /> {f}</li>)}
+                  </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </main>
   );
