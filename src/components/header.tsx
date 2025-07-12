@@ -77,9 +77,20 @@ export default function Header() {
 
   const visibleNavLinks = useMemo(() => {
     if (authLoading) return [];
+    
     return navLinks.filter(link => {
-        if (!link.isEnabled && !isAuthorizedAdmin) return false;
-        if (link.isPro && !isPro && !isAuthorizedAdmin) return false;
+        // Admins can see all links, even disabled ones (for management purposes)
+        if (isAuthorizedAdmin) {
+            return true;
+        }
+        // Regular users only see enabled links
+        if (!link.isEnabled) {
+            return false;
+        }
+        // Hide pro links from non-pro users
+        if (link.isPro && !isPro) {
+            return false;
+        }
         return true;
     });
   }, [navLinks, authLoading, isPro, isAuthorizedAdmin]);
