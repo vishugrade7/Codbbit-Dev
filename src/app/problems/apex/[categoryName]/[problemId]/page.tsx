@@ -47,6 +47,7 @@ import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
@@ -195,6 +196,7 @@ export default function ProblemWorkspacePage() {
     
     const { user, userData, isPro } = useAuth();
     const { toast } = useToast();
+    const isMobile = useIsMobile();
     const [problem, setProblem] = useState<Problem | null>(null);
     const [allProblems, setAllProblems] = useState<Problem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -226,6 +228,11 @@ export default function ProblemWorkspacePage() {
             resultsPanelRef.current.collapse();
         }
     }, []);
+
+    useEffect(() => {
+        // Set initial font size based on device
+        setFontSize(isMobile ? 12 : 16);
+    }, [isMobile]);
 
     const toggleFullScreen = () => {
         const panel = leftPanelRef.current;
