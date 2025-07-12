@@ -10,13 +10,13 @@ export default function FeatureGrid() {
       <div className="container px-4 md:px-6">
         <div className="grid gap-6 lg:gap-8">
           {/* Top Card */}
-          <Card className="lg:grid lg:grid-cols-2 lg:gap-8 overflow-hidden">
-            <CardContent className="p-6 md:p-12 flex flex-col justify-center">
+          <Card className="overflow-hidden">
+            <CardContent className="p-6 md:p-12 flex flex-col items-center text-center justify-center">
               <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                 <Code2 className="h-6 w-6" />
               </div>
-              <h2 className="text-3xl font-semibold tracking-tight">Sharpen Your Salesforce Skills</h2>
-              <p className="mt-4 text-muted-foreground">
+              <h2 className="text-3xl font-semibold tracking-tight max-w-2xl">Sharpen Your Salesforce Skills</h2>
+              <p className="mt-4 text-muted-foreground max-w-2xl">
                 Challenge yourself on small Salesforce coding exercises. Each problem is crafted by the community to help you
                 strengthen different coding techniques. Master Apex, SOQL, and LWC, or quickly pick up any of the
                 supported technologies.
@@ -30,9 +30,6 @@ export default function FeatureGrid() {
                 </Button>
               </div>
             </CardContent>
-            <div className="p-6 md:p-8 flex items-center justify-center bg-muted/30">
-                 
-            </div>
           </Card>
 
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
@@ -48,9 +45,6 @@ export default function FeatureGrid() {
                   you progress. Retrain with new, creative, and optimized approaches. Find all of the bugs in your
                   programming practice.
                 </p>
-                 <div className="mt-6 -mx-6 -mb-6 md:-mx-12 md:-mb-12">
-                     
-                </div>
               </CardContent>
             </Card>
 
@@ -65,9 +59,6 @@ export default function FeatureGrid() {
                   Code challenges are ranked from beginner to expert level. As you complete higher-ranked problems, you
                   level up your profile and push your software development skills to your highest potential.
                 </p>
-                 <div className="mt-6 -mx-6 -mb-6 md:-mx-12 md:-mb-12">
-                     
-                </div>
               </CardContent>
             </Card>
           </div>

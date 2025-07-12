@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import Autoplay from "embla-carousel-autoplay";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Target, Users } from "lucide-react";
 import {
@@ -19,22 +18,16 @@ const testimonials = [
         quote: "Accidentally got addicted to Codbbit, oops. The problems are the perfect mix of challenging and fun for any Salesforce developer.",
         name: "Alex Johnson",
         role: "Salesforce Developer",
-        avatar: "https://placehold.co/48x48.png",
-        avatarHint: "woman face",
     },
     {
         quote: "The best platform for practicing Apex. My coding speed and quality have improved dramatically. Highly recommended for interview prep!",
         name: "Samantha Lee",
         role: "Senior Salesforce Consultant",
-        avatar: "https://placehold.co/48x48.png",
-        avatarHint: "woman portrait",
     },
     {
         quote: "Codbbit's interactive courses are a game-changer. I finally understood complex LWC concepts that I struggled with for months.",
         name: "Michael Chen",
         role: "Technical Architect",
-        avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtZW58ZW58MHx8fHwxNzUyMzE2MTEzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-        avatarHint: "man professional",
     }
 ];
 
@@ -74,16 +67,14 @@ export default function Testimonials() {
               <CarouselContent>
                 {testimonials.map((testimonial, index) => (
                   <CarouselItem key={index}>
-                    <Card className="p-6 md:p-8 lg:p-12">
-                      <CardContent className="flex flex-col items-center text-center gap-6 p-0">
-                        <h2 className="text-2xl md:text-3xl font-semibold max-w-sm md:max-w-3xl">
+                    <Card className="border-0 shadow-none">
+                      <CardContent className="p-6 md:p-8 lg:p-12 flex flex-col items-center text-center gap-4">
+                        <h2 className="text-2xl md:text-3xl font-semibold max-w-xl md:max-w-3xl">
                           {testimonial.quote}
                         </h2>
-                        <div className="flex flex-col items-center gap-2">
-                          <div>
+                        <div className="flex flex-col items-center">
                             <p className="font-semibold">{testimonial.name}</p>
                             <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                          </div>
                         </div>
                       </CardContent>
                     </Card>
