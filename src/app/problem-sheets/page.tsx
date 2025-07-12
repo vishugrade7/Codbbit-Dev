@@ -64,6 +64,8 @@ export default function ProblemSheetsListPage() {
   const [filterMode, setFilterMode] = useState<'all' | 'my-sheets' | 'following'>('all');
   const [isTogglingFollow, setIsTogglingFollow] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
 
   useEffect(() => {
     const fetchSheets = async () => {
@@ -168,13 +170,15 @@ export default function ProblemSheetsListPage() {
                   <TabsTrigger value="following" disabled={!authUser}>Following</TabsTrigger>
               </TabsList>
           </Tabs>
-          <div className="relative w-full md:max-w-xs">
+          <div className={cn("relative w-full md:max-w-xs transition-all duration-300 ease-in-out", isSearchFocused && "md:max-w-md")}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
                 placeholder="Search sheets by name, creator..."
                 className="w-full pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
             />
           </div>
       </div>
