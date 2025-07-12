@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -673,6 +673,7 @@ export default function ProblemWorkspacePage() {
                                 >
                                     <span className="truncate pr-4">{p.title}</span>
                                     <div className="flex items-center gap-2 shrink-0">
+                                        {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
                                             {p.difficulty}
                                         </Badge>
