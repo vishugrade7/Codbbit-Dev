@@ -74,25 +74,23 @@ export default function Testimonials() {
               <CarouselContent>
                 {testimonials.map((testimonial, index) => (
                   <CarouselItem key={index}>
-                    <div className="p-1">
-                      <Card className="p-6 md:p-8 lg:p-12">
-                        <CardContent className="flex flex-col items-center text-center gap-6 p-0">
-                          <h2 className="text-2xl md:text-3xl font-semibold max-w-3xl">
-                            {testimonial.quote}
-                          </h2>
-                          <div className="flex flex-col items-center gap-2">
-                            <Avatar>
-                              <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.avatarHint} />
-                              <AvatarFallback>{testimonial.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-semibold">{testimonial.name}</p>
-                              <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                            </div>
+                    <Card className="p-6 md:p-8 lg:p-12">
+                      <CardContent className="flex flex-col items-center text-center gap-6 p-0">
+                        <h2 className="text-2xl md:text-3xl font-semibold max-w-sm md:max-w-3xl">
+                          {testimonial.quote}
+                        </h2>
+                        <div className="flex flex-col items-center gap-2">
+                          <Avatar>
+                            <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.avatarHint} />
+                            <AvatarFallback>{testimonial.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold">{testimonial.name}</p>
+                            <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </CarouselItem>
                 ))}
               </CarouselContent>
