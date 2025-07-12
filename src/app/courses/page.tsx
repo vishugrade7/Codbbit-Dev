@@ -64,7 +64,7 @@ export default function Courses() {
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       ) : courses.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {courses.map((course) => {
             const isLocked = course.isPremium && !isPro;
 
@@ -86,7 +86,7 @@ export default function Courses() {
                         <Star className="h-3.5 w-3.5" />
                         <span className="font-semibold">4.6 (103.4k+)</span>
                     </Badge>
-                    <h3 className="font-bold text-lg leading-snug flex-grow">
+                    <h3 className="font-semibold text-base leading-snug flex-grow">
                         <Link href={`/courses/${course.id}`} className="hover:underline">
                             {course.title || 'Untitled Course'}
                         </Link>
@@ -94,19 +94,19 @@ export default function Courses() {
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                         {course.description}
                     </p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-4">
                         <div className="flex items-center gap-1.5">
-                            <BookOpen className="h-4 w-4"/>
+                            <BookOpen className="h-3.5 w-3.5"/>
                             <span>{course.modules.length} {course.modules.length === 1 ? 'module' : 'modules'}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <Users className="h-4 w-4"/>
+                            <Users className="h-3.5 w-3.5"/>
                             <span>451k+ learners</span>
                         </div>
                     </div>
                 </CardContent>
-                <div className="p-4 pt-0">
-                    <Button asChild className="w-full" size="lg">
+                <div className="p-4 pt-0 mt-auto">
+                    <Button asChild className="w-full" size="sm">
                         <Link href={`/courses/${course.id}`}>Enroll Now</Link>
                     </Button>
                 </div>
