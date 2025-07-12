@@ -166,9 +166,9 @@ export default function ProblemSheetsListPage() {
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <Tabs value={filterMode} onValueChange={(value) => setFilterMode(value as any)}>
               <TabsList>
-                  <TabsTrigger value="all" layoutId="problem-sheets-tabs">All Sheets</TabsTrigger>
-                  <TabsTrigger value="my-sheets" disabled={!authUser} layoutId="problem-sheets-tabs">My Sheets</TabsTrigger>
-                  <TabsTrigger value="following" disabled={!authUser} layoutId="problem-sheets-tabs">Following</TabsTrigger>
+                  <TabsTrigger value="all">All Sheets</TabsTrigger>
+                  <TabsTrigger value="my-sheets" disabled={!authUser}>My Sheets</TabsTrigger>
+                  <TabsTrigger value="following" disabled={!authUser}>Following</TabsTrigger>
               </TabsList>
           </Tabs>
           <div className={cn("relative w-full md:max-w-xs transition-all duration-300 ease-in-out", isSearchFocused && "md:max-w-md")}>
