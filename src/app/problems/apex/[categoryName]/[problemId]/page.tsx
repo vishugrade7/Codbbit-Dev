@@ -358,7 +358,7 @@ export default function ProblemWorkspacePage() {
             setSubmissionStep(step);
         };
 
-        const response = await submitApexSolution(user.uid, problem, code, onProgress);
+        const response = await submitApexSolution(user.uid, problem, code);
         
         setResults(response.details || response.message);
         setSubmissionSuccess(response.success);
