@@ -45,6 +45,8 @@ type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
 const SubmissionResultsView = ({ log, isSubmitting, success, step }: { log: string, isSubmitting: boolean, success: boolean, step: SubmissionStep }) => {
   const logElements = useMemo(() => {
     if (!log) return [];
+    
+    // If there was an error, only show the error block.
     if (!success) {
       const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
       const match = log.match(errorRegex);
@@ -52,7 +54,9 @@ const SubmissionResultsView = ({ log, isSubmitting, success, step }: { log: stri
         return [<ErrorBlock key="error-block" lines={match[1].trim().split('\n')} />];
       }
     }
-    return log.split('\n').filter(l => l.trim() !== '').map((line, i) => <DefaultLine key={i} line={line} index={i} />);
+
+    // Otherwise (success or in-progress without final error), show all logs
+    return log.split('\n').filter(l => l.trim() !== '' && !l.includes('--- ERROR ---')).map((line, i) => <DefaultLine key={i} line={line} index={i} />);
   }, [log, success]);
 
   if (isSubmitting) {
@@ -427,7 +431,7 @@ export default function ProblemWorkspacePage() {
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
         case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-        case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+        case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
         case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
         default: return 'bg-muted';
         }

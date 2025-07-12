@@ -263,7 +263,7 @@ export default function Leaderboard() {
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
       case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
       case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
       default: return 'bg-muted';
     }

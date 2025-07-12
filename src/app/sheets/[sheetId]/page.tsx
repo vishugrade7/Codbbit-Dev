@@ -211,7 +211,7 @@ export default function SheetDisplayPage() {
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
           case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-          case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
           case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
           default: return 'bg-muted';
         }
@@ -220,7 +220,7 @@ export default function SheetDisplayPage() {
     const getDifficultyRowClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
           case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
-          case 'medium': return 'bg-primary/5 hover:bg-primary/10';
+          case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
           case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
           default: return 'hover:bg-muted/50';
         }
@@ -352,7 +352,7 @@ export default function SheetDisplayPage() {
                                     <div className="flex items-center gap-2">
                                         <span className="w-16 text-muted-foreground">Medium</span>
                                         <div className="flex-1 bg-muted rounded-full h-2">
-                                            <div className="bg-primary h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                            <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
                                         </div>
                                         <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
                                     </div>

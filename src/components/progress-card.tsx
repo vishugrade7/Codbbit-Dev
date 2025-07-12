@@ -23,7 +23,7 @@ const chartConfig = {
   },
   medium: {
     label: "Medium",
-    color: "hsl(var(--primary))",
+    color: "hsl(48 96% 51%)", // yellow-500
   },
   hard: {
     label: "Hard",
@@ -108,7 +108,7 @@ export function ProgressCard({
 
         <div className="w-full flex-1 space-y-2" style={{
             '--color-easy': 'hsl(142.1 76.2% 41%)',
-            '--color-medium': 'hsl(var(--primary))',
+            '--color-medium': 'hsl(48 96% 51%)',
             '--color-hard': 'hsl(var(--destructive))',
         } as React.CSSProperties}>
             <div className="flex items-center justify-between text-sm">
