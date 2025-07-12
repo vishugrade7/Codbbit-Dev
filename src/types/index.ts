@@ -210,6 +210,7 @@ export type NavLink = {
   href: string;
   isEnabled: boolean;
   isProtected: boolean; // To prevent deletion of core links
+  isPro?: boolean; // To mark a link as for Pro users only
 };
 
 export type Badge = {

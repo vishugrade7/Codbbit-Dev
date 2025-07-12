@@ -236,6 +236,7 @@ export const navLinksSchema = z.object({
         href: z.string().min(1, 'Href is required').refine(val => val.startsWith('/'), { message: 'Href must start with /' }),
         isEnabled: z.boolean(),
         isProtected: z.boolean(),
+        isPro: z.boolean().optional(),
     }))
 });
 // #endregion

@@ -74,6 +74,15 @@ export default function Header() {
 
   const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
 
+  const visibleNavLinks = useMemo(() => {
+    if (authLoading) return []; // Don't show links until auth status is known
+    return navLinks.filter(link => {
+        if (!link.isEnabled) return false;
+        if (link.isPro) return isPro || isAuthorizedAdmin; // Show pro links to pro users and admins
+        return true;
+    });
+  }, [navLinks, authLoading, isPro, isAuthorizedAdmin]);
+
   return (
     <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/70 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50", user && "md:hidden")}>
       <div className="container flex h-16 items-center justify-between">
@@ -137,7 +146,7 @@ export default function Header() {
                     </>
                   )}
                   <nav className="grid gap-4">
-                    {navLinks.map((link) => (
+                    {visibleNavLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
@@ -190,14 +199,14 @@ export default function Header() {
             <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
-             {loadingNav ? (
+             {(loadingNav || authLoading) ? (
                 <>
                     <Skeleton className="h-5 w-24" />
                     <Skeleton className="h-5 w-20" />
                     <Skeleton className="h-5 w-28" />
                 </>
             ) : (
-                navLinks.map((link) => (
+                visibleNavLinks.map((link) => (
                 <Link
                     key={link.href}
                     href={link.href}

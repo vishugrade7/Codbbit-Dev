@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, PlusCircle, Trash2, GripVertical } from "lucide-react";
+import { Separator } from "../ui/separator";
 
 export function NavigationManagementView() {
     const { toast } = useToast();
@@ -97,6 +98,17 @@ export function NavigationManagementView() {
                                     <div className="flex items-center gap-4 pl-2">
                                         <FormField
                                             control={form.control}
+                                            name={`links.${index}.isPro`}
+                                            render={({ field: switchField }) => (
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor={`pro-${index}`} className="text-sm">Pro Only</Label>
+                                                    <Switch id={`pro-${index}`} checked={switchField.value} onCheckedChange={switchField.onChange} />
+                                                </div>
+                                            )}
+                                        />
+                                        <Separator orientation="vertical" className="h-6" />
+                                        <FormField
+                                            control={form.control}
                                             name={`links.${index}.isEnabled`}
                                             render={({ field: switchField }) => (
                                                 <div className="flex items-center gap-2">
@@ -114,7 +126,7 @@ export function NavigationManagementView() {
                             </div>
                         ))}
                         </div>
-                        <Button type="button" variant="outline" onClick={() => append({ id: crypto.randomUUID(), label: '', href: '/', isEnabled: false, isProtected: false })}>
+                        <Button type="button" variant="outline" onClick={() => append({ id: crypto.randomUUID(), label: '', href: '/', isEnabled: false, isProtected: false, isPro: false })}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Link
                         </Button>
                     </CardContent>
