@@ -338,7 +338,14 @@ export default function SheetDisplayPage() {
                             <div className="md:col-span-1 space-y-4">
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-muted-foreground">PROGRESS</h4>
-                                    <Progress value={progressPercentage} className="h-2" />
+                                    <div className="relative">
+                                        <Progress value={progressPercentage} className="h-4" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-xs font-bold text-primary-foreground mix-blend-difference">
+                                                {Math.round(progressPercentage)}%
+                                            </span>
+                                        </div>
+                                    </div>
                                     <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
                                 </div>
                                 <div className="space-y-2 text-sm">
