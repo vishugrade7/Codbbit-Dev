@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock } from "lucide-react";
+import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock, Filter } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
@@ -37,6 +39,7 @@ export default function CategoryProblemsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!categoryName) return;
@@ -108,6 +111,38 @@ export default function CategoryProblemsPage() {
     }
   };
 
+  const FilterControls = () => (
+    <>
+      <div className="space-y-2">
+        <Label>Status</Label>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full">
+                <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="All">All Statuses</SelectItem>
+                <SelectItem value="Solved">Solved</SelectItem>
+                <SelectItem value="Unsolved">Unsolved</SelectItem>
+            </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>Difficulty</Label>
+        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+            <SelectTrigger className="w-full">
+                <SelectValue placeholder="Difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="All">All Difficulties</SelectItem>
+                <SelectItem value="Easy">Easy</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Hard">Hard</SelectItem>
+            </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+
 
   return (
     <main className="flex-1 container py-8">
@@ -134,7 +169,7 @@ export default function CategoryProblemsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="Status" />
@@ -156,6 +191,25 @@ export default function CategoryProblemsPage() {
                   <SelectItem value="Hard">Hard</SelectItem>
               </SelectContent>
           </Select>
+        </div>
+        <div className="md:hidden">
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                        <Filter className="mr-2 h-4 w-4" />
+                        Filters
+                    </Button>
+                </SheetTrigger>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Filter Problems</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-8 space-y-6">
+                        <FilterControls />
+                         <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
       </div>
 
