@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -43,84 +43,84 @@ import { Progress } from "@/components/ui/progress";
 type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
 
 const SubmissionResultsView = ({ log, isSubmitting, success, step }: { log: string, isSubmitting: boolean, success: boolean, step: SubmissionStep }) => {
-  const logElements = useMemo(() => {
-    if (!log) return [];
-    
-    // If there was an error, only show the error block.
-    if (!success) {
-      const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
-      const match = log.match(errorRegex);
-      if (match && match[1]) {
-        return [<ErrorBlock key="error-block" lines={match[1].trim().split('\n')} />];
-      }
+    const logElements = useMemo(() => {
+        if (!log) return [];
+        
+        // If there was an error, only show the error block.
+        if (!success) {
+            const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
+            const match = log.match(errorRegex);
+            if (match && match[1]) {
+                return [<ErrorBlock key="error-block" lines={match[1].trim().split('\n')} />];
+            }
+        }
+
+        // Otherwise (success or in-progress without final error), show all logs
+        return log.split('\n').filter(l => l.trim() !== '' && !l.includes('--- ERROR ---')).map((line, i) => <DefaultLine key={i} line={line} index={i} />);
+    }, [log, success]);
+
+    if (isSubmitting) {
+        const steps = [
+            { id: 'saving', label: 'Saving...', progress: step === 'saving' ? 50 : (step === 'testing' || step === 'done' ? 100 : 0) },
+            { id: 'testing', label: 'Testing...', progress: step === 'testing' ? 50 : (step === 'done' ? 100 : 0) },
+        ];
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                <div className="w-full max-w-sm space-y-3">
+                    {steps.map(s => (
+                        <div key={s.id}>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">{s.label}</p>
+                            <Progress value={s.progress} className="h-2" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+  
+    if (success) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                <div className="p-3 bg-green-500/10 rounded-full mb-4">
+                    <CheckCircle2 className="h-12 w-12 text-green-500" />
+                </div>
+                <p className="font-bold text-2xl">Success!</p>
+                <p className="text-muted-foreground">All test cases passed.</p>
+            </div>
+        )
     }
 
-    // Otherwise (success or in-progress without final error), show all logs
-    return log.split('\n').filter(l => l.trim() !== '' && !l.includes('--- ERROR ---')).map((line, i) => <DefaultLine key={i} line={line} index={i} />);
-  }, [log, success]);
-
-  if (isSubmitting) {
-    const steps = [
-      { id: 'saving', label: 'Saving...', progress: step === 'saving' ? 50 : (step === 'testing' || step === 'done' ? 100 : 0) },
-      { id: 'testing', label: 'Testing...', progress: step === 'testing' ? 50 : (step === 'done' ? 100 : 0) },
-    ];
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-          <div className="w-full max-w-sm space-y-3">
-            {steps.map(s => (
-                <div key={s.id}>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">{s.label}</p>
-                    <Progress value={s.progress} className="h-2" />
+    if (!log.trim() && !isSubmitting) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                <div className="p-3 bg-primary/10 rounded-full mb-4">
+                    <Play className="h-8 w-8 text-primary" />
                 </div>
-            ))}
-          </div>
-      </div>
-    );
-  }
-  
-  if (success) {
-      return (
-         <div className="flex flex-col items-center justify-center h-full text-center p-4">
-             <div className="p-3 bg-green-500/10 rounded-full mb-4">
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
-             </div>
-             <p className="font-bold text-2xl">Success!</p>
-             <p className="text-muted-foreground">All test cases passed.</p>
-         </div>
-      )
-  }
+                <p className="font-semibold">Ready to Run</p>
+                <p className="text-sm text-muted-foreground">Submit your solution to run tests against the problem's criteria.</p>
+            </div>
+        )
+    }
 
-  if (!log.trim() && !isSubmitting) {
-      return (
-         <div className="flex flex-col items-center justify-center h-full text-center p-4">
-             <div className="p-3 bg-primary/10 rounded-full mb-4">
-                <Play className="h-8 w-8 text-primary" />
-             </div>
-             <p className="font-semibold">Ready to Run</p>
-             <p className="text-sm text-muted-foreground">Submit your solution to run tests against the problem's criteria.</p>
-         </div>
-      )
-  }
-
-  return <div className="space-y-2">{logElements}</div>;
+    return <div className="space-y-2">{logElements}</div>;
 };
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
-  <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
-    <p className="font-code text-sm text-muted-foreground">{line}</p>
-  </div>
+    <div style={{ animationDelay: `${index * 75}ms` }} className="opacity-0 animate-fade-in-up">
+        <p className="font-code text-sm text-muted-foreground">{line}</p>
+    </div>
 );
 
 const ErrorBlock = ({ lines }: { lines: string[] }) => (
-  <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-1">
-    {lines.map((line, idx) => (
-      <div key={idx} className="flex items-start gap-3">
-        {idx === 0 && <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />}
-        <p className={`font-code text-sm text-destructive flex-1 ${idx > 0 ? 'pl-8' : 'font-semibold'}`}>{line}</p>
-      </div>
-    ))}
-  </div>
+    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-1">
+        {lines.map((line, idx) => (
+            <div key={idx} className="flex items-start gap-3">
+                {idx === 0 && <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />}
+                <p className={`font-code text-sm text-destructive flex-1 ${idx > 0 ? 'pl-8' : 'font-semibold'}`}>{line}</p>
+            </div>
+        ))}
+    </div>
 );
 
 
@@ -618,7 +618,7 @@ export default function ProblemWorkspacePage() {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M4 4H12V20H4V4ZM14 4H20V12H14V4ZM14 14H20V20H14V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col">
+                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <SheetHeader className="p-4 border-b shrink-0">
                             <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
