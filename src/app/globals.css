@@ -87,8 +87,8 @@
     min-height: 100vh;
     background-color: hsl(var(--background));
     background-image: 
-      linear-gradient(hsl(var(--border) / 0.1) 1px, transparent 1px),
-      linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px);
+      linear-gradient(hsl(var(--primary) / 0.05) 1px, transparent 1px),
+      linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 }
