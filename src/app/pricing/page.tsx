@@ -274,8 +274,8 @@ export default function PricingPage() {
                   </div>
               </div>
               <div className="bg-muted p-1 rounded-full flex text-sm">
-                <button onClick={() => setBillingCycle('monthly')} className={cn("px-3 py-1 rounded-full", billingCycle === 'monthly' && "bg-background shadow-sm text-primary font-semibold")}>Monthly</button>
-                <button onClick={() => setBillingCycle('annually')} className={cn("px-3 py-1 rounded-full", billingCycle === 'annually' && "bg-background shadow-sm text-primary font-semibold")}>Yearly</button>
+                <button onClick={() => setBillingCycle('monthly')} className={cn("px-3 py-1 rounded-full transition-colors", billingCycle === 'monthly' ? "bg-background shadow-sm text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>Monthly</button>
+                <button onClick={() => setBillingCycle('annually')} className={cn("px-3 py-1 rounded-full transition-colors", billingCycle === 'annually' ? "bg-background shadow-sm text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>Yearly</button>
               </div>
             </div>
           </CardHeader>
