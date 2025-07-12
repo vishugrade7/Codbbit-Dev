@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
@@ -39,7 +39,6 @@ export default function CategoryProblemsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!categoryName) return;
@@ -111,39 +110,6 @@ export default function CategoryProblemsPage() {
     }
   };
 
-  const FilterControls = () => (
-    <>
-      <div className="space-y-2">
-        <Label>Status</Label>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full">
-                <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="All">All Statuses</SelectItem>
-                <SelectItem value="Solved">Solved</SelectItem>
-                <SelectItem value="Unsolved">Unsolved</SelectItem>
-            </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Difficulty</Label>
-        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-            <SelectTrigger className="w-full">
-                <SelectValue placeholder="Difficulty" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="All">All Difficulties</SelectItem>
-                <SelectItem value="Easy">Easy</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Hard">Hard</SelectItem>
-            </SelectContent>
-        </Select>
-      </div>
-    </>
-  );
-
-
   return (
     <main className="flex-1 container py-8">
       <div className="flex items-center gap-4 mb-8">
@@ -160,37 +126,44 @@ export default function CategoryProblemsPage() {
       </div>
       
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="flex flex-1 items-center gap-2">
-            <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Search problems by title..."
-                    className="w-full pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-            <div className="md:hidden">
-                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="outline" size="icon">
-                            <Filter className="h-4 w-4" />
-                            <span className="sr-only">Filters</span>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent>
-                        <SheetHeader>
-                            <SheetTitle>Filter Problems</SheetTitle>
-                        </SheetHeader>
-                        <div className="mt-8 space-y-6">
-                            <FilterControls />
-                            <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
-                        </div>
-                    </SheetContent>
-                </Sheet>
-            </div>
+        <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+                placeholder="Search problems by title..."
+                className="w-full pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
         </div>
 
+        <div className="md:hidden">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                        <Filter className="mr-2 h-4 w-4" /> Filters
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel>Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                        <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                        <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+        
         <div className="hidden md:flex items-center gap-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
