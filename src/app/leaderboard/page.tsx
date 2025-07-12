@@ -312,7 +312,7 @@ export default function Leaderboard() {
                             </div>
                               <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                                {currentUserEntry.company && (
-                                <Badge variant="secondary" className="mt-1 bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                                <Badge variant="secondary" className="mt-1">
                                     {currentUserEntry.companyLogoUrl && <Image src={currentUserEntry.companyLogoUrl} alt={`${currentUserEntry.company} logo`} width={16} height={16} className="mr-1.5 rounded-sm object-contain"/>}
                                     <span>{currentUserEntry.company}</span>
                                 </Badge>
@@ -502,7 +502,7 @@ export default function Leaderboard() {
                   </TableCell>
                   <TableCell>
                      {user.company ? (
-                         <Badge variant="secondary" className="bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                         <Badge variant="secondary">
                              {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
                              <span>{user.company}</span>
                          </Badge>

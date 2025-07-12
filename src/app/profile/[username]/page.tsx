@@ -387,7 +387,7 @@ export default function UserProfilePage() {
                     )}
                     <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         {profileUser.company && (
-                            <Badge variant="secondary" className="bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                            <Badge variant="secondary" className="mt-1">
                                 {profileUser.companyLogoUrl && <Image src={profileUser.companyLogoUrl} alt={profileUser.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
                                 <span>{profileUser.company}</span>
                             </Badge>

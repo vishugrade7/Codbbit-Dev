@@ -453,7 +453,7 @@ export default function ProblemWorkspacePage() {
                     <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                     <Badge variant="secondary">{categoryName}</Badge>
                      {problem.company && (
-                        <Badge variant="secondary" className="flex items-center gap-1.5 bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                        <Badge variant="secondary" className="flex items-center gap-1.5">
                             {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-full object-contain"/>}
                             <span>{problem.company}</span>
                         </Badge>
