@@ -33,7 +33,7 @@ const testimonials = [
         quote: "Codbbit's interactive courses are a game-changer. I finally understood complex LWC concepts that I struggled with for months.",
         name: "Michael Chen",
         role: "Technical Architect",
-        avatar: "https://placehold.co/48x48.png",
+        avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtZW58ZW58MHx8fHwxNzUyMzE2MTEzfDA&ixlib=rb-4.1.0&q=80&w=1080",
         avatarHint: "man professional",
     }
 ];
