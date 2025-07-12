@@ -615,7 +615,7 @@ export default function ProblemWorkspacePage() {
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Menu className="h-5 w-5" />
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M4 4H12V20H4V4ZM14 4H20V12H14V4ZM14 14H20V20H14V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 max-w-sm flex flex-col">
