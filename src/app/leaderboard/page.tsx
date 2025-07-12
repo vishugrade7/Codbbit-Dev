@@ -314,7 +314,7 @@ export default function Leaderboard() {
                                {currentUserEntry.company && (
                                 <Badge variant="secondary" className="mt-1">
                                     {currentUserEntry.companyLogoUrl && <Image src={currentUserEntry.companyLogoUrl} alt={`${currentUserEntry.company} logo`} width={16} height={16} className="mr-1.5 rounded-sm object-contain"/>}
-                                    <span>{currentUserEntry.company}</span>
+                                    <span className="truncate">{currentUserEntry.company}</span>
                                 </Badge>
                               )}
                           </div>
@@ -504,7 +504,7 @@ export default function Leaderboard() {
                      {user.company ? (
                          <Badge variant="secondary">
                              {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
-                             <span>{user.company}</span>
+                             <span className="truncate">{user.company}</span>
                          </Badge>
                      ) : null}
                   </TableCell>

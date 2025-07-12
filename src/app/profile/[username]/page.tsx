@@ -389,7 +389,7 @@ export default function UserProfilePage() {
                         {profileUser.company && (
                             <Badge variant="secondary" className="mt-1">
                                 {profileUser.companyLogoUrl && <Image src={profileUser.companyLogoUrl} alt={profileUser.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
-                                <span>{profileUser.company}</span>
+                                <span className="truncate">{profileUser.company}</span>
                             </Badge>
                         )}
                         <div className="flex items-center gap-2">

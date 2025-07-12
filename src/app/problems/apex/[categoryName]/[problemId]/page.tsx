@@ -471,7 +471,7 @@ export default function ProblemWorkspacePage() {
                      {problem.company && (
                         <Badge variant="secondary">
                             {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
-                            <span>{problem.company}</span>
+                            <span className="truncate">{problem.company}</span>
                         </Badge>
                     )}
                     {isSolved && (
