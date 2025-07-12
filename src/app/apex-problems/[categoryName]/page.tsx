@@ -158,58 +158,61 @@ export default function CategoryProblemsPage() {
               </p>
           </div>
       </div>
-
+      
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search problems by title..."
-            className="w-full pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-1 items-center gap-2">
+            <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Search problems by title..."
+                    className="w-full pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="md:hidden">
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="outline" size="icon">
+                            <Filter className="h-4 w-4" />
+                            <span className="sr-only">Filters</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                        <SheetHeader>
+                            <SheetTitle>Filter Problems</SheetTitle>
+                        </SheetHeader>
+                        <div className="mt-8 space-y-6">
+                            <FilterControls />
+                            <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            </div>
         </div>
+
         <div className="hidden md:flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="All">All Statuses</SelectItem>
-                  <SelectItem value="Solved">Solved</SelectItem>
-                  <SelectItem value="Unsolved">Unsolved</SelectItem>
-              </SelectContent>
-          </Select>
-          <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="All">All Difficulties</SelectItem>
-                  <SelectItem value="Easy">Easy</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Hard">Hard</SelectItem>
-              </SelectContent>
-          </Select>
-        </div>
-        <div className="md:hidden">
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                        <Filter className="mr-2 h-4 w-4" />
-                        Filters
-                    </Button>
-                </SheetTrigger>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>Filter Problems</SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-8 space-y-6">
-                        <FilterControls />
-                         <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
-                    </div>
-                </SheetContent>
-            </Sheet>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Solved">Solved</SelectItem>
+                    <SelectItem value="Unsolved">Unsolved</SelectItem>
+                </SelectContent>
+            </Select>
+            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="All">All Difficulties</SelectItem>
+                    <SelectItem value="Easy">Easy</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Hard">Hard</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
       </div>
 
