@@ -8,8 +8,6 @@ import type { Problem, Course, User, NavLink, Badge, ApexProblemsData, PricingSe
 import { adminStorage } from '@/lib/firebaseAdmin';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  problemFormSchema,
-  bulkUploadSchema,
   courseFormSchema,
   badgeFormSchema,
   pricingFormSchema,
@@ -72,7 +70,7 @@ export async function setAdminStatus(userId: string, status: boolean) {
     }
 }
 
-export async function upsertProblemToFirestore(data: z.infer<typeof problemFormSchema>) {
+export async function upsertProblemToFirestore(data: z.infer<typeof import('@/lib/admin-schemas').problemFormSchema>) {
     const apexDocRef = doc(db, 'problems', 'Apex');
 
     try {
@@ -165,6 +163,47 @@ export async function upsertProblemToFirestore(data: z.infer<typeof problemFormS
 }
 
 export async function bulkUpsertProblemsFromJSON(jsonData: any[]) {
+     const problemExampleSchema = z.object({
+        input: z.string().optional(),
+        output: z.string().min(1, "Output is required."),
+        explanation: z.string().optional(),
+    });
+
+    const baseProblemObjectSchema = z.object({
+      title: z.string().min(1, "Title is required."),
+      description: z.string().min(1, "Description is required."),
+      category: z.string().min(1, "Category is required."),
+      difficulty: z.enum(["Easy", "Medium", "Hard"]),
+      metadataType: z.enum(["Class", "Trigger"]),
+      triggerSObject: z.string().optional(),
+      sampleCode: z.string().min(1, "Sample code is required."),
+      testcases: z.string().min(1, "Test cases is required."),
+      examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
+      hints: z.array(z.string()).optional(),
+      company: z.string().optional(),
+      companyLogoUrl: z.string().url().or(z.literal("")).optional(),
+      isPremium: z.boolean().optional().default(false),
+      imageUrl: z.string().url().or(z.literal("")).optional(),
+      mermaidDiagram: z.string().optional(),
+      displayOrder: z.array(z.enum(['description', 'image', 'mermaid'])).optional(),
+    });
+
+    const triggerRefinement = (data: z.infer<typeof baseProblemObjectSchema>) => {
+        if (data.metadataType === 'Trigger') {
+            return !!data.triggerSObject && data.triggerSObject.length > 0;
+        }
+        return true;
+    };
+
+    const triggerRefinementOptions = {
+        message: "Trigger SObject is required when Metadata Type is Trigger.",
+        path: ["triggerSObject"],
+    };
+    
+    const bulkUploadSchema = z.array(
+        baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions)
+    );
+    
     let problemsToUpload;
     try {
         problemsToUpload = bulkUploadSchema.parse(jsonData);
@@ -201,7 +240,7 @@ export async function bulkUpsertProblemsFromJSON(jsonData: any[]) {
                 sampleCode: data.sampleCode,
                 testcases: data.testcases,
                 examples: data.examples,
-                hints: data.hints ? data.hints.map(h => h.value) : [],
+                hints: data.hints || [],
                 company: data.company,
                 companyLogoUrl: data.companyLogoUrl,
                 isPremium: data.isPremium || false,
