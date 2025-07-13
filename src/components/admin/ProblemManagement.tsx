@@ -93,30 +93,24 @@ const parseCsvToJson = (csv: string): any[] => {
 
         for (let j = 0; j < headers.length; j++) {
             const header = headers[j];
-            let value = currentline[j]?.trim() || '';
+            let value: any = currentline[j]?.trim() || '';
             
-            // Handle specific field types
-            if (header === 'examples' || header === 'hints') {
+            // Handle complex fields that are stringified JSON
+            if (['examples', 'hints', 'displayOrder'].includes(header)) {
                 try {
-                    // It's a stringified JSON, so we parse it
+                    // Remove starting/ending quotes if they exist before parsing
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        value = value.substring(1, value.length - 1);
+                    }
+                    // Replace double double-quotes with single double-quotes
+                    value = value.replace(/""/g, '"');
                     value = JSON.parse(value);
                 } catch (e) {
-                    // If parsing fails, maybe it's a simple string. Wrap it.
-                    console.warn(`CSV parsing warning for field '${header}': Could not parse JSON. Treating as simple string. Value:`, value);
-                    if (header === 'hints') {
-                        value = value ? [{ value: value }] : [];
-                    } else {
-                        value = [];
-                    }
+                    console.warn(`CSV parsing warning for field '${header}': Could not parse JSON. Treating as empty. Value:`, value, e);
+                    value = [];
                 }
             } else if (header === 'isPremium') {
                 value = value.toLowerCase() === 'true';
-            } else if (['displayOrder'].includes(header)) {
-                 try {
-                    value = value ? value.split(';').map(s => s.trim()) : [];
-                } catch(e) {
-                    value = [];
-                }
             }
             
             obj[header] = value;
@@ -259,7 +253,8 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
             const value = (sample as any)[header];
             if (typeof value === 'object' && value !== null) {
                 // Wrap JSON strings in quotes to handle commas within them
-                return `"${JSON.stringify(value)}"`;
+                // Also escape any double-quotes inside the JSON string itself
+                return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
             }
             return `"${value}"`; // Also quote simple values
         });

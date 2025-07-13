@@ -24,9 +24,9 @@ const baseProblemObjectSchema = z.object({
   examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
   hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
   company: z.string().optional(),
-  companyLogoUrl: z.string().url().optional().or(z.literal('')),
-  isPremium: z.boolean().optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  companyLogoUrl: z.string().url().or(z.literal('')).optional(),
+  isPremium: z.boolean().optional().default(false),
+  imageUrl: z.string().url().or(z.literal('')).optional(),
   mermaidDiagram: z.string().optional(),
   displayOrder: z.array(z.enum(['description', 'image', 'mermaid'])).optional(),
 });
@@ -48,8 +48,7 @@ export const problemFormSchema = baseProblemObjectSchema
     .refine(triggerRefinement, triggerRefinementOptions);
 
 export const bulkUploadSchema = z.array(
-    baseProblemObjectSchema
-    .refine(triggerRefinement, triggerRefinementOptions)
+    baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions)
 );
 // #endregion
 
@@ -245,4 +244,3 @@ export const voucherFormSchema = z.object({
     oneTimeUse: z.boolean().optional(),
 });
 // #endregion
-
