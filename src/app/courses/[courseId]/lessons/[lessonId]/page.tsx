@@ -2,9 +2,9 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from 'link';
 import Image from 'next/image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData, MindmapNode } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid, ChevronDown, ChevronUp } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -467,69 +467,152 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
     );
 };
 
+// #region Mindmap Component
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 44;
+const HORIZONTAL_SPACING = 100;
+const VERTICAL_SPACING = 20;
+
+type ProcessedNode = MindmapNode & {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    children?: ProcessedNode[];
+};
+
 const MindmapRenderer = ({ content }: { content: string }) => {
     const [mapData, setMapData] = useState<MindmapNode | null>(null);
+    const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+    const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
     useEffect(() => {
         try {
             const parsed = JSON.parse(content);
             setMapData(parsed.root);
+            setExpandedNodes({ [parsed.root.id]: true }); // Expand root by default
         } catch (e) {
             console.error("Failed to parse mindmap JSON:", e);
             setMapData(null);
         }
     }, [content]);
 
-    const renderNode = (node: MindmapNode, isRoot = false) => (
-        <div key={node.id} className="flex flex-col items-center">
-            <div className="relative group">
-                <Button variant="outline" className="shadow-lg min-w-[120px] h-auto py-2 px-4 text-center">
-                    {node.label}
-                </Button>
-                {node.content && (
-                    <div className="absolute bottom-full mb-2 w-48 p-2 bg-popover text-popover-foreground border rounded-md shadow-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        {node.content}
-                    </div>
-                )}
-            </div>
-            {node.children && node.children.length > 0 && (
-                <div className="flex gap-4 mt-8 relative">
-                    {/* Horizontal line */}
-                    <div className="absolute top-[-16px] left-1/2 -translate-x-1/2 h-4 w-px bg-border" />
-                    {node.children.map((child, index) => (
-                        <div key={child.id} className="flex flex-col items-center relative">
-                            {/* Vertical line connecting to parent */}
-                            <div className="absolute bottom-full h-4 w-px bg-border" />
-                            {/* Horizontal line connecting siblings */}
-                            {node.children && node.children.length > 1 && (
-                                <div
-                                    className={cn(
-                                        "absolute top-[-16px] h-px bg-border",
-                                        index === 0 ? "left-1/2 right-0" : "", // First child
-                                        index === node.children.length - 1 ? "left-0 right-1/2" : "", // Last child
-                                        index > 0 && index < node.children.length - 1 ? "left-0 right-0" : "" // Middle children
-                                    )}
-                                />
-                            )}
-                            {renderNode(child)}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+    const toggleNode = useCallback((nodeId: string) => {
+        setExpandedNodes(prev => ({ ...prev, [nodeId]: !prev[nodeId] }));
+    }, []);
+
+    const { positionedNodes, connections } = useMemo(() => {
+        if (!mapData) return { positionedNodes: [], connections: [] };
+
+        const positionedMap = new Map<string, ProcessedNode>();
+        const connectionList: { from: ProcessedNode, to: ProcessedNode }[] = [];
+
+        const calculateLayout = (node: MindmapNode, x: number, y: number): { height: number; subtreeNodes: ProcessedNode[] } => {
+            const isExpanded = expandedNodes[node.id] && node.children && node.children.length > 0;
+            let totalHeight = NODE_HEIGHT;
+            const subtreeNodes: ProcessedNode[] = [];
+            
+            const processedNode: ProcessedNode = { ...node, x, y, width: NODE_WIDTH, height: NODE_HEIGHT };
+            subtreeNodes.push(processedNode);
+            positionedMap.set(node.id, processedNode);
+
+            if (isExpanded) {
+                let currentY = y - ((node.children!.length - 1) * (NODE_HEIGHT + VERTICAL_SPACING)) / 2;
+                
+                node.children!.forEach(child => {
+                    const childLayout = calculateLayout(child, x + NODE_WIDTH + HORIZONTAL_SPACING, currentY);
+                    
+                    connectionList.push({ from: processedNode, to: childLayout.subtreeNodes[0] });
+                    subtreeNodes.push(...childLayout.subtreeNodes);
+
+                    const childSubtreeHeight = childLayout.height;
+                    currentY += childSubtreeHeight + VERTICAL_SPACING;
+                });
+
+                const childrenHeight = node.children!.reduce((acc, child) => {
+                     const childLayout = calculateLayout(child, 0, 0); // Recalculate just for height
+                     return acc + childLayout.height + VERTICAL_SPACING;
+                }, -VERTICAL_SPACING);
+
+                totalHeight = Math.max(NODE_HEIGHT, childrenHeight);
+            }
+             
+            processedNode.y = y; // Re-center parent node based on its children block
+            if(isExpanded) {
+                const childrenHeights = node.children.map(child => calculateLayout(child, 0, 0).height);
+                const totalChildrenHeight = childrenHeights.reduce((sum, h) => sum + h, 0) + (childrenHeights.length - 1) * VERTICAL_SPACING;
+                processedNode.y = y + (totalChildrenHeight - NODE_HEIGHT) / 2;
+            }
+
+            return { height: totalHeight, subtreeNodes };
+        };
+        
+        const finalLayout = calculateLayout(mapData, 50, 300);
+
+        let maxX = 0, maxY = 0;
+        finalLayout.subtreeNodes.forEach(n => {
+            if (n.x + n.width > maxX) maxX = n.x + n.width;
+            if (n.y + n.height > maxY) maxY = n.y + n.height;
+        });
+
+        setCanvasSize({ width: maxX + 50, height: maxY + 50 });
+
+        return { positionedNodes: finalLayout.subtreeNodes, connections: connectionList };
+
+    }, [mapData, expandedNodes]);
 
     if (!mapData) {
         return <div className="p-4 text-destructive bg-destructive/10 rounded-md">Invalid Mindmap Data</div>;
     }
 
+    const getBezierPath = (from: ProcessedNode, to: ProcessedNode) => {
+        const startX = from.x + from.width;
+        const startY = from.y + from.height / 2;
+        const endX = to.x;
+        const endY = to.y + to.height / 2;
+        const cp1X = startX + HORIZONTAL_SPACING / 2;
+        const cp1Y = startY;
+        const cp2X = endX - HORIZONTAL_SPACING / 2;
+        const cp2Y = endY;
+        return `M ${startX},${startY} C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${endX},${endY}`;
+    };
+
     return (
-        <div className="not-prose my-6 w-full flex justify-center p-8 overflow-auto">
-            {renderNode(mapData, true)}
+        <div className="not-prose my-6 w-full p-4 overflow-auto bg-muted/20 rounded-lg border">
+            <svg width={canvasSize.width} height={canvasSize.height}>
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--border))" />
+                    </marker>
+                </defs>
+                
+                {connections.map(({ from, to }, index) => (
+                    <path key={index} d={getBezierPath(from, to)} stroke="hsl(var(--border))" strokeWidth="1.5" fill="none" />
+                ))}
+
+                {positionedNodes.map(node => (
+                    <foreignObject key={node.id} x={node.x} y={node.y} width={node.width} height={node.height} className="overflow-visible">
+                        <div
+                            className="bg-background border border-border rounded-lg shadow-md h-full flex items-center justify-center p-2 group relative"
+                            title={node.content}
+                        >
+                            <span className="text-sm text-center text-foreground">{node.label}</span>
+                            {node.children && node.children.length > 0 && (
+                                <button
+                                    onClick={() => toggleNode(node.id)}
+                                    className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-background border hover:bg-muted flex items-center justify-center z-10"
+                                >
+                                    {expandedNodes[node.id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </button>
+                            )}
+                        </div>
+                    </foreignObject>
+                ))}
+            </svg>
         </div>
     );
 };
-
+// #endregion
 
 const markdownComponents: Components = {
     span: ({ node, ...props }) => {
