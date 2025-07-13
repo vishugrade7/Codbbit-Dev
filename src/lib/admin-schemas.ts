@@ -81,119 +81,118 @@ const mindmapSchema = z.object({
     root: mindmapNodeSchema,
 });
 
-
-const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() => 
-    contentBlockBaseSchema.and(
-        z.discriminatedUnion("type", [
-            z.object({ type: z.literal("text"), content: z.string().min(1, 'Text content cannot be empty.') }),
-            z.object({ type: z.literal("code"), content: z.object({ code: z.string().min(1, 'Code cannot be empty.'), language: z.string() }) }),
-            z.object({ type: z.literal("heading1"), content: z.string().min(1, 'Heading cannot be empty.') }),
-            z.object({ type: z.literal("heading2"), content: z.string().min(1, 'Heading cannot be empty.') }),
-            z.object({ type: z.literal("heading3"), content: z.string().min(1, 'Heading cannot be empty.') }),
-            z.object({ type: z.literal("quote"), content: z.string().min(1, 'Quote cannot be empty.') }),
-            z.object({ type: z.literal("callout"), content: z.object({ text: z.string().min(1, 'Callout text cannot be empty.'), icon: z.string() }) }),
-            z.object({ type: z.literal("divider"), content: z.literal("").default("") }),
-            z.object({ type: z.literal("bulleted-list"), content: z.string().min(1, 'List cannot be empty.') }),
-            z.object({ type: z.literal("numbered-list"), content: z.string().min(1, 'List cannot be empty.') }),
-            z.object({
-                type: z.literal("todo-list"),
-                content: z.array(z.object({ id: z.string(), text: z.string().min(1, 'To-do item text cannot be empty.'), checked: z.boolean() })).min(1, "To-do list must have at least one item."),
-            }),
-            z.object({
-                type: z.literal("toggle-list"),
-                content: z.object({ title: z.string().min(1, 'Toggle title cannot be empty.'), text: z.string().min(1, 'Toggle content cannot be empty.') }),
-            }),
-            z.object({
-                type: z.literal("problem"),
-                content: z.object({ problemId: z.string().min(1, "A problem must be selected."), title: z.string(), categoryName: z.string(), metadataType: z.string().optional() }),
-            }),
-            z.object({ type: z.literal("image"), content: z.string().url("Must be a valid URL").min(1, "Image URL is required.") }),
-            z.object({ type: z.literal("video"), content: z.string().url("Must be a valid URL").min(1, "Video URL is required.") }),
-            z.object({ type: z.literal("audio"), content: z.string().url("Must be a valid URL").min(1, "Audio URL is required.") }),
-            z.object({
-                type: z.literal("table"),
-                content: z.object({
-                    headers: z.array(z.string().min(1, "Header cannot be empty.")).min(1, "Table must have at least one header."),
-                    rows: z.array(z.object({ values: z.array(z.string()) }))
-                }),
-            }),
-            z.object({
-                type: z.literal("mcq"),
-                content: z.object({
-                    question: z.string().min(1, "Question is required."),
-                    options: z.array(z.object({
-                        id: z.string(),
-                        text: z.string().min(1, "Option text cannot be empty.")
-                    })).min(2, "MCQ must have at least two options."),
-                    correctAnswerIndex: z.number().int().min(0, "A correct answer must be selected."),
-                    explanation: z.string().optional()
-                }),
-            }),
-            z.object({
-                type: z.literal("breadcrumb"),
-                content: z.array(z.object({ id: z.string(), text: z.string(), href: z.string().optional() })),
-            }),
-            z.object({ type: z.literal("mermaid"), content: z.string().min(1, "Mermaid diagram cannot be empty.") }),
-            z.object({
-                type: z.literal("two-column"),
-                content: z.object({
-                    column1: z.array(contentBlockSchema),
-                    column2: z.array(contentBlockSchema)
-                }),
-            }),
-            z.object({
-                type: z.literal("three-column"),
-                content: z.object({
-                    column1: z.array(contentBlockSchema),
-                    column2: z.array(contentBlockSchema),
-                    column3: z.array(contentBlockSchema)
-                }),
-            }),
-             z.object({
-                type: z.literal("interactive-code"),
-                content: z.object({
-                    title: z.string().optional(),
-                    description: z.string().min(1, 'Description is required.'),
-                    defaultCode: z.string().min(1, 'Default code is required.'),
-                    executionType: z.enum(['anonymous', 'soql', 'class']).default('anonymous'),
-                    testClassCode: z.string().optional(),
-                }),
-            }),
-            z.object({
-                type: z.literal("stepper"),
-                content: z.object({
-                    title: z.string().optional(),
-                    steps: z.array(z.object({
-                        id: z.string(),
-                        title: z.string().min(1, "Step title is required."),
-                        content: z.array(contentBlockSchema).min(1, "Step must have content."),
-                    })).min(1, "Stepper must have at least one step."),
-                }),
-            }),
-            z.object({
-                type: z.literal("live-code"),
-                content: z.object({
-                    html: z.string().optional(),
-                    css: z.string().optional(),
-                    js: z.string().optional(),
-                }),
-            }),
-            z.object({
-                type: z.literal("mindmap"),
-                content: z.string().refine(val => {
-                    try {
-                        const parsed = JSON.parse(val);
-                        mindmapSchema.parse(parsed);
-                        return true;
-                    } catch (e) {
-                        return false;
-                    }
-                }, "Invalid Mindmap JSON structure."),
-            }),
-        ])
-    )
+// Define a placeholder schema for the recursive parts
+const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() =>
+  contentBlockBaseSchema.and(
+    z.discriminatedUnion('type', [
+      z.object({ type: z.literal("text"), content: z.string().min(1, 'Text content cannot be empty.') }),
+      z.object({ type: z.literal("code"), content: z.object({ code: z.string().min(1, 'Code cannot be empty.'), language: z.string() }) }),
+      z.object({ type: z.literal("heading1"), content: z.string().min(1, 'Heading cannot be empty.') }),
+      z.object({ type: z.literal("heading2"), content: z.string().min(1, 'Heading cannot be empty.') }),
+      z.object({ type: z.literal("heading3"), content: z.string().min(1, 'Heading cannot be empty.') }),
+      z.object({ type: z.literal("quote"), content: z.string().min(1, 'Quote cannot be empty.') }),
+      z.object({ type: z.literal("callout"), content: z.object({ text: z.string().min(1, 'Callout text cannot be empty.'), icon: z.string() }) }),
+      z.object({ type: z.literal("divider"), content: z.literal("").default("") }),
+      z.object({ type: z.literal("bulleted-list"), content: z.string().min(1, 'List cannot be empty.') }),
+      z.object({ type: z.literal("numbered-list"), content: z.string().min(1, 'List cannot be empty.') }),
+      z.object({
+          type: z.literal("todo-list"),
+          content: z.array(z.object({ id: z.string(), text: z.string().min(1, 'To-do item text cannot be empty.'), checked: z.boolean() })).min(1, "To-do list must have at least one item."),
+      }),
+      z.object({
+          type: z.literal("toggle-list"),
+          content: z.object({ title: z.string().min(1, 'Toggle title cannot be empty.'), text: z.string().min(1, 'Toggle content cannot be empty.') }),
+      }),
+      z.object({
+          type: z.literal("problem"),
+          content: z.object({ problemId: z.string().min(1, "A problem must be selected."), title: z.string(), categoryName: z.string(), metadataType: z.string().optional() }),
+      }),
+      z.object({ type: z.literal("image"), content: z.string().url("Must be a valid URL").min(1, "Image URL is required.") }),
+      z.object({ type: z.literal("video"), content: z.string().url("Must be a valid URL").min(1, "Video URL is required.") }),
+      z.object({ type: z.literal("audio"), content: z.string().url("Must be a valid URL").min(1, "Audio URL is required.") }),
+      z.object({
+          type: z.literal("table"),
+          content: z.object({
+              headers: z.array(z.string().min(1, "Header cannot be empty.")).min(1, "Table must have at least one header."),
+              rows: z.array(z.object({ values: z.array(z.string()) }))
+          }),
+      }),
+      z.object({
+          type: z.literal("mcq"),
+          content: z.object({
+              question: z.string().min(1, "Question is required."),
+              options: z.array(z.object({
+                  id: z.string(),
+                  text: z.string().min(1, "Option text cannot be empty.")
+              })).min(2, "MCQ must have at least two options."),
+              correctAnswerIndex: z.number().int().min(0, "A correct answer must be selected."),
+              explanation: z.string().optional()
+          }),
+      }),
+      z.object({
+          type: z.literal("breadcrumb"),
+          content: z.array(z.object({ id: z.string(), text: z.string(), href: z.string().optional() })),
+      }),
+      z.object({ type: z.literal("mermaid"), content: z.string().min(1, "Mermaid diagram cannot be empty.") }),
+       z.object({
+          type: z.literal("mindmap"),
+          content: z.string().refine(val => {
+              try {
+                  const parsed = JSON.parse(val);
+                  mindmapSchema.parse(parsed);
+                  return true;
+              } catch (e) {
+                  return false;
+              }
+          }, "Invalid Mindmap JSON structure."),
+      }),
+      z.object({
+          type: z.literal("two-column"),
+          content: z.object({
+              column1: z.array(z.lazy(() => contentBlockSchema)),
+              column2: z.array(z.lazy(() => contentBlockSchema))
+          }),
+      }),
+      z.object({
+          type: z.literal("three-column"),
+          content: z.object({
+              column1: z.array(z.lazy(() => contentBlockSchema)),
+              column2: z.array(z.lazy(() => contentBlockSchema)),
+              column3: z.array(z.lazy(() => contentBlockSchema))
+          }),
+      }),
+       z.object({
+          type: z.literal("interactive-code"),
+          content: z.object({
+              title: z.string().optional(),
+              description: z.string().min(1, 'Description is required.'),
+              defaultCode: z.string().min(1, 'Default code is required.'),
+              executionType: z.enum(['anonymous', 'soql', 'class']).default('anonymous'),
+              testClassCode: z.string().optional(),
+          }),
+      }),
+      z.object({
+          type: z.literal("stepper"),
+          content: z.object({
+              title: z.string().optional(),
+              steps: z.array(z.object({
+                  id: z.string(),
+                  title: z.string().min(1, "Step title is required."),
+                  content: z.array(z.lazy(() => contentBlockSchema)).min(1, "Step must have content."),
+              })).min(1, "Stepper must have at least one step."),
+          }),
+      }),
+      z.object({
+          type: z.literal("live-code"),
+          content: z.object({
+              html: z.string().optional(),
+              css: z.string().optional(),
+              js: z.string().optional(),
+          }),
+      }),
+    ])
+  )
 );
-
 
 const lessonSchema = z.object({
     id: z.string(),
