@@ -102,24 +102,26 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
     const mermaidId = useMemo(() => `mermaid-container-${Math.random().toString(36).substr(2, 9)}`, []);
     
     const [isClient, setIsClient] = useState(false);
+    
     useEffect(() => {
         setIsClient(true);
-    }, []);
-
+        if (isClient) {
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme === 'dark' ? 'dark' : 'default',
+            });
+        }
+    }, [isClient, theme]);
+    
     useEffect(() => {
-        if (!isClient) return;
-
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: theme === 'dark' ? 'dark' : 'default',
-        });
-
+        if (!isClient || !chart) return;
+    
         const renderMermaid = async () => {
              try {
                 const element = document.getElementById(mermaidId);
                 if (element) {
-                    const renderId = `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`;
-                    const { svg } = await mermaid.render(renderId, chart);
+                    element.innerHTML = ''; // Clear previous render
+                    const { svg } = await mermaid.render(mermaidId + '-graph', chart);
                     element.innerHTML = svg;
                 }
             } catch (error) {
@@ -130,11 +132,12 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
                  }
             }
         };
-
-        const timer = setTimeout(renderMermaid, 100);
+    
+        // Use a small timeout to ensure the DOM is ready for mermaid
+        const timer = setTimeout(renderMermaid, 50);
         return () => clearTimeout(timer);
-
-    }, [chart, theme, mermaidId, isClient]);
+    
+    }, [chart, mermaidId, isClient]);
     
     return (
         <div id={mermaidId} className="not-prose my-6 w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto">
@@ -467,16 +470,8 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
 // #region Mindmap Component
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 44;
-const HORIZONTAL_SPACING = 100;
-const VERTICAL_SPACING = 20;
-const NODE_COLORS = [
-    'bg-primary/10 border-primary/20 text-primary-foreground', // Level 0
-    'bg-blue-500/10 border-blue-500/20 text-blue-200',
-    'bg-green-500/10 border-green-500/20 text-green-200',
-    'bg-yellow-500/10 border-yellow-500/20 text-yellow-200',
-    'bg-purple-500/10 border-purple-500/20 text-purple-200',
-    'bg-pink-500/10 border-pink-500/20 text-pink-200',
-];
+const HORIZONTAL_SPACING = 150;
+const VERTICAL_SPACING = 30;
 
 type ProcessedNode = MindmapNode & {
     x: number;
@@ -581,7 +576,7 @@ const MindmapRenderer = ({ content }: { content: string }) => {
     };
 
     return (
-        <div className="not-prose my-6 w-full p-4 overflow-auto bg-muted/20 rounded-lg border">
+        <div className="not-prose my-6 w-full p-4 overflow-auto bg-slate-900/50 dark:bg-black/20 rounded-lg border border-slate-700/50">
             <svg width={canvasSize.width} height={canvasSize.height}>
                 <defs>
                     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -590,19 +585,19 @@ const MindmapRenderer = ({ content }: { content: string }) => {
                 </defs>
                 
                 {connections.map(({ from, to }, index) => (
-                    <path key={index} d={getBezierPath(from, to)} stroke="hsl(var(--border))" strokeWidth="1.5" fill="none" />
+                    <path key={index} d={getBezierPath(from, to)} stroke="hsl(var(--border) / 0.3)" strokeWidth="1" fill="none" />
                 ))}
 
                 {positionedNodes.map(node => (
                     <foreignObject key={node.id} x={node.x} y={node.y} width={node.width} height={node.height} className="overflow-visible">
                         <div
                             className={cn(
-                                "border rounded-lg shadow-md h-full flex items-center justify-center p-2 group relative",
-                                NODE_COLORS[node.depth % NODE_COLORS.length]
+                                "border rounded-lg shadow-md h-full flex items-center justify-center p-2 group relative transition-all",
+                                "bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700/80 hover:border-slate-600"
                             )}
                             title={node.content}
                         >
-                            <span className="text-sm text-center text-foreground">{node.label}</span>
+                            <span className="text-sm text-center font-medium">{node.label}</span>
                             {node.children && node.children.length > 0 && (
                                 <button
                                     onClick={() => toggleNode(node.id)}
