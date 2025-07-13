@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus, Clipboard, Upload, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { Loader2, PlusCircle, Edit, GripVertical, Trash2, TextIcon, Code2Icon, Languages, Type, MessageSquareQuote, Minus, AlertTriangle, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, ChevronRight, FileQuestion, ImageIcon, VideoIcon, FileAudioIcon, Bold, Italic, Strikethrough, Link as LinkIcon, Table2, ListChecks, BoxSelect, Sheet, Milestone, GitFork, Pencil, X, Palette, FlaskConical, MessageSquarePlus, Clipboard, Upload, AlignLeft, AlignCenter, AlignRight, BrainCircuit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
@@ -411,6 +411,7 @@ function BlockTypePicker({ onSelect }: { onSelect: (type: ContentBlock['type']) 
     { type: 'breadcrumb', label: 'Breadcrumb', icon: <Milestone className="h-4 w-4" /> },
     { type: 'stepper', label: 'Stepper', icon: <Milestone className="h-4 w-4" /> },
     { type: 'mermaid', label: 'Mermaid Diagram', icon: <GitFork className="h-4 w-4" /> },
+    { type: 'mindmap', label: 'Mindmap', icon: <BrainCircuit className="h-4 w-4" /> },
     { type: 'interactive-code', label: 'Interactive Code', icon: <FlaskConical className="h-4 w-4" /> },
     { type: 'live-code', label: 'Live Code', icon: <Code2Icon className="h-4 w-4" /> },
     { type: 'two-column', label: 'Two Columns', icon: <BoxSelect className="h-4 w-4 rotate-90" /> },
@@ -925,6 +926,34 @@ function MermaidBlockEditor({ path }: { path: string }) {
     );
 }
 
+function MindmapBlockEditor({ path }: { path: string }) {
+    const { control } = useFormContext();
+
+    return (
+        <FormField
+            control={control}
+            name={`${path}.content`}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Mindmap JSON</FormLabel>
+                    <FormControl>
+                        <Textarea
+                            placeholder={`{\n  "root": {\n    "id": "root",\n    "label": "Main Idea",\n    "children": []\n  }\n}`}
+                            {...field}
+                            className="font-mono h-48"
+                        />
+                    </FormControl>
+                    <FormDescription>
+                        Enter the mindmap structure as a JSON object.
+                    </FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    );
+}
+
+
 function StepperBlockEditor({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { fields, append, remove } = useFieldArray({
@@ -1210,6 +1239,7 @@ function ContentBlockList({ path }: { path: string }) {
             case 'mcq': newBlock = { id, type, content: { question: '', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' } }; break;
             case 'breadcrumb': newBlock = { id, type, content: [{ id: uuidv4(), text: 'Home', href: '/' }] }; break;
             case 'mermaid': newBlock = { id, type, content: 'graph TD;\n    A-->B;' }; break;
+            case 'mindmap': newBlock = { id, type, content: JSON.stringify({ root: { id: 'root', label: 'Main Idea', children: [] } }, null, 2) }; break;
             case 'stepper': newBlock = { id, type, content: { title: 'Stepper Title', steps: [{ id: uuidv4(), title: 'Step 1', content: [{ id: uuidv4(), type: 'text', content: 'Step 1 content'}] }] } }; break;
             case 'interactive-code': newBlock = { id, type, content: { title: 'Try It Yourself', description: 'Your task description here.', defaultCode: '// Your Apex code here', executionType: 'anonymous', testClassCode: '' } }; break;
             case 'live-code': newBlock = { id, type, content: { html: '', css: '', js: '' } }; break;
@@ -1300,6 +1330,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
             case 'mcq': return <McqBlockEditor path={path} />;
             case 'breadcrumb': return <BreadcrumbBlockEditor path={path} />;
             case 'mermaid': return <MermaidBlockEditor path={path} />;
+            case 'mindmap': return <MindmapBlockEditor path={path} />;
             case 'stepper': return <StepperBlockEditor path={path} />;
             case 'interactive-code': return <InteractiveCodeBlockEditor path={path} />;
             case 'live-code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><LiveCodeBlockEditor field={field} /></FormControl><FormMessage /></FormItem>)} />;
@@ -1754,7 +1785,3 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-
-
-
-

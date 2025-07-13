@@ -117,9 +117,16 @@ export type Contribution = {
   count: number;
 };
 
+export type MindmapNode = {
+    id: string;
+    label: string;
+    content?: string;
+    children?: MindmapNode[];
+};
+
 export type ContentBlock = {
   id: string;
-  type: 'text' | 'code' | 'heading1' | 'heading2' | 'heading3' | 'quote' | 'callout' | 'divider' | 'bulleted-list' | 'numbered-list' | 'todo-list' | 'toggle-list' | 'problem' | 'image' | 'video' | 'audio' | 'table' | 'mcq' | 'breadcrumb' | 'mermaid' | 'two-column' | 'three-column' | 'interactive-code' | 'stepper' | 'live-code';
+  type: 'text' | 'code' | 'heading1' | 'heading2' | 'heading3' | 'quote' | 'callout' | 'divider' | 'bulleted-list' | 'numbered-list' | 'todo-list' | 'toggle-list' | 'problem' | 'image' | 'video' | 'audio' | 'table' | 'mcq' | 'breadcrumb' | 'mermaid' | 'two-column' | 'three-column' | 'interactive-code' | 'stepper' | 'live-code' | 'mindmap';
   content: any; // string, {code, language}, ColumnContent, etc.
   backgroundColor?: string;
   textColor?: string;

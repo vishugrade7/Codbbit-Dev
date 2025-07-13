@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
-import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from '@/types';
+import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData, MindmapNode } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid } from 'lucide-react';
@@ -105,11 +105,13 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
     useEffect(() => {
         setIsClient(true);
         // Initialize mermaid only on the client, and only once.
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: theme === 'dark' ? 'dark' : 'default',
-        });
-    }, [theme]);
+        if (isClient) {
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme === 'dark' ? 'dark' : 'default',
+            });
+        }
+    }, [theme, isClient]);
 
     useEffect(() => {
         if (!isClient || !chart) return;
@@ -465,6 +467,70 @@ const StepperChallenge = ({ blockContent, allProblems }: { blockContent: any; al
     );
 };
 
+const MindmapRenderer = ({ content }: { content: string }) => {
+    const [mapData, setMapData] = useState<MindmapNode | null>(null);
+
+    useEffect(() => {
+        try {
+            const parsed = JSON.parse(content);
+            setMapData(parsed.root);
+        } catch (e) {
+            console.error("Failed to parse mindmap JSON:", e);
+            setMapData(null);
+        }
+    }, [content]);
+
+    const renderNode = (node: MindmapNode, isRoot = false) => (
+        <div key={node.id} className="flex flex-col items-center">
+            <div className="relative group">
+                <Button variant="outline" className="shadow-lg min-w-[120px] h-auto py-2 px-4 text-center">
+                    {node.label}
+                </Button>
+                {node.content && (
+                    <div className="absolute bottom-full mb-2 w-48 p-2 bg-popover text-popover-foreground border rounded-md shadow-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        {node.content}
+                    </div>
+                )}
+            </div>
+            {node.children && node.children.length > 0 && (
+                <div className="flex gap-4 mt-8 relative">
+                    {/* Horizontal line */}
+                    <div className="absolute top-[-16px] left-1/2 -translate-x-1/2 h-4 w-px bg-border" />
+                    {node.children.map((child, index) => (
+                        <div key={child.id} className="flex flex-col items-center relative">
+                            {/* Vertical line connecting to parent */}
+                            <div className="absolute bottom-full h-4 w-px bg-border" />
+                            {/* Horizontal line connecting siblings */}
+                            {node.children && node.children.length > 1 && (
+                                <div
+                                    className={cn(
+                                        "absolute top-[-16px] h-px bg-border",
+                                        index === 0 ? "left-1/2 right-0" : "", // First child
+                                        index === node.children.length - 1 ? "left-0 right-1/2" : "", // Last child
+                                        index > 0 && index < node.children.length - 1 ? "left-0 right-0" : "" // Middle children
+                                    )}
+                                />
+                            )}
+                            {renderNode(child)}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    if (!mapData) {
+        return <div className="p-4 text-destructive bg-destructive/10 rounded-md">Invalid Mindmap Data</div>;
+    }
+
+    return (
+        <div className="not-prose my-6 w-full flex justify-center p-8 overflow-auto">
+            {renderNode(mapData, true)}
+        </div>
+    );
+};
+
+
 const markdownComponents: Components = {
     span: ({ node, ...props }) => {
         const dataComment = (node?.properties as any)?.dataComment;
@@ -735,6 +801,8 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                 return <StepperChallenge blockContent={block.content} allProblems={allProblems}/>;
           case 'live-code':
               return <LiveCodeRenderer blockContent={block.content} />;
+          case 'mindmap':
+              return <MindmapRenderer content={block.content} />;
           case 'two-column':
               return (
                   <div className="not-prose my-6 grid grid-cols-1 md:grid-cols-2 gap-6">

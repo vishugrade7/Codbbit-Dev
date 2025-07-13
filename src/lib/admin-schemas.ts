@@ -3,7 +3,7 @@
 'use client';
 
 import { z } from "zod";
-import type { ContentBlock } from "@/types";
+import type { ContentBlock, MindmapNode } from "@/types";
 
 // #region Problem Schemas
 export const problemExampleSchema = z.object({
@@ -51,7 +51,11 @@ export const problemFormSchema = baseProblemObjectSchema
     .refine(triggerRefinement, triggerRefinementOptions);
 
 export const bulkUploadSchema = z.array(
-    baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions)
+    baseProblemObjectSchema
+      .extend({
+        hints: z.array(z.string()).optional(),
+      })
+      .refine(triggerRefinement, triggerRefinementOptions)
 );
 // #endregion
 
@@ -62,6 +66,19 @@ const contentBlockBaseSchema = z.object({
     textColor: z.string().optional(),
     width: z.string().optional(),
     align: z.enum(['left', 'center', 'right']).optional(),
+});
+
+const mindmapNodeSchema: z.ZodType<MindmapNode> = z.lazy(() =>
+  z.object({
+    id: z.string(),
+    label: z.string().min(1, 'Node label is required.'),
+    content: z.string().optional(),
+    children: z.array(mindmapNodeSchema).optional(),
+  })
+);
+
+const mindmapSchema = z.object({
+    root: mindmapNodeSchema,
 });
 
 
@@ -160,6 +177,18 @@ const contentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() =>
                     css: z.string().optional(),
                     js: z.string().optional(),
                 }),
+            }),
+            z.object({
+                type: z.literal("mindmap"),
+                content: z.string().refine(val => {
+                    try {
+                        const parsed = JSON.parse(val);
+                        mindmapSchema.parse(parsed);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                }, "Invalid Mindmap JSON structure."),
             }),
         ])
     )
