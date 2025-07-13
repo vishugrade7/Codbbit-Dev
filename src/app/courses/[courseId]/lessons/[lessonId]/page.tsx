@@ -15,7 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid, ChevronDown, ChevronUp } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -104,23 +104,22 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
         setIsClient(true);
-        // Initialize mermaid only on the client, and only once.
-        if (isClient) {
-            mermaid.initialize({
-                startOnLoad: false,
-                theme: theme === 'dark' ? 'dark' : 'default',
-            });
-        }
-    }, [theme, isClient]);
+    }, []);
 
     useEffect(() => {
-        if (!isClient || !chart) return;
+        if (!isClient) return;
+
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+        });
 
         const renderMermaid = async () => {
              try {
                 const element = document.getElementById(mermaidId);
                 if (element) {
-                    const { svg } = await mermaid.render(mermaidId + '-graph', chart);
+                    const renderId = `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`;
+                    const { svg } = await mermaid.render(renderId, chart);
                     element.innerHTML = svg;
                 }
             } catch (error) {
@@ -131,11 +130,9 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
                  }
             }
         };
-        
-        // This check ensures we don't try to render before the container is in the DOM.
-        if (document.getElementById(mermaidId)) {
-            renderMermaid();
-        }
+
+        const timer = setTimeout(renderMermaid, 100);
+        return () => clearTimeout(timer);
 
     }, [chart, theme, mermaidId, isClient]);
     
@@ -472,12 +469,21 @@ const NODE_WIDTH = 180;
 const NODE_HEIGHT = 44;
 const HORIZONTAL_SPACING = 100;
 const VERTICAL_SPACING = 20;
+const NODE_COLORS = [
+    'bg-primary/10 border-primary/20 text-primary-foreground', // Level 0
+    'bg-blue-500/10 border-blue-500/20 text-blue-200',
+    'bg-green-500/10 border-green-500/20 text-green-200',
+    'bg-yellow-500/10 border-yellow-500/20 text-yellow-200',
+    'bg-purple-500/10 border-purple-500/20 text-purple-200',
+    'bg-pink-500/10 border-pink-500/20 text-pink-200',
+];
 
 type ProcessedNode = MindmapNode & {
     x: number;
     y: number;
     width: number;
     height: number;
+    depth: number;
     children?: ProcessedNode[];
 };
 
@@ -507,12 +513,12 @@ const MindmapRenderer = ({ content }: { content: string }) => {
         const positionedMap = new Map<string, ProcessedNode>();
         const connectionList: { from: ProcessedNode, to: ProcessedNode }[] = [];
 
-        const calculateLayout = (node: MindmapNode, x: number, y: number): { height: number; subtreeNodes: ProcessedNode[] } => {
+        const calculateLayout = (node: MindmapNode, x: number, y: number, depth: number): { height: number; subtreeNodes: ProcessedNode[] } => {
             const isExpanded = expandedNodes[node.id] && node.children && node.children.length > 0;
             let totalHeight = NODE_HEIGHT;
             const subtreeNodes: ProcessedNode[] = [];
             
-            const processedNode: ProcessedNode = { ...node, x, y, width: NODE_WIDTH, height: NODE_HEIGHT };
+            const processedNode: ProcessedNode = { ...node, x, y, width: NODE_WIDTH, height: NODE_HEIGHT, depth };
             subtreeNodes.push(processedNode);
             positionedMap.set(node.id, processedNode);
 
@@ -520,7 +526,7 @@ const MindmapRenderer = ({ content }: { content: string }) => {
                 let currentY = y - ((node.children!.length - 1) * (NODE_HEIGHT + VERTICAL_SPACING)) / 2;
                 
                 node.children!.forEach(child => {
-                    const childLayout = calculateLayout(child, x + NODE_WIDTH + HORIZONTAL_SPACING, currentY);
+                    const childLayout = calculateLayout(child, x + NODE_WIDTH + HORIZONTAL_SPACING, currentY, depth + 1);
                     
                     connectionList.push({ from: processedNode, to: childLayout.subtreeNodes[0] });
                     subtreeNodes.push(...childLayout.subtreeNodes);
@@ -529,25 +535,22 @@ const MindmapRenderer = ({ content }: { content: string }) => {
                     currentY += childSubtreeHeight + VERTICAL_SPACING;
                 });
 
-                const childrenHeight = node.children!.reduce((acc, child) => {
-                     const childLayout = calculateLayout(child, 0, 0); // Recalculate just for height
-                     return acc + childLayout.height + VERTICAL_SPACING;
-                }, -VERTICAL_SPACING);
+                const childrenHeights = node.children.map(child => calculateLayout(child, 0, 0, depth + 1).height);
+                const totalChildrenHeight = childrenHeights.reduce((sum, h) => sum + h, 0) + (childrenHeights.length - 1) * VERTICAL_SPACING;
+                totalHeight = Math.max(NODE_HEIGHT, totalChildrenHeight);
 
-                totalHeight = Math.max(NODE_HEIGHT, childrenHeight);
+                // Re-center parent node based on its children block
+                const firstChild = positionedMap.get(node.children[0].id);
+                const lastChild = positionedMap.get(node.children[node.children.length - 1].id);
+                if (firstChild && lastChild) {
+                    processedNode.y = firstChild.y + (lastChild.y - firstChild.y) / 2;
+                }
             }
              
-            processedNode.y = y; // Re-center parent node based on its children block
-            if(isExpanded) {
-                const childrenHeights = node.children.map(child => calculateLayout(child, 0, 0).height);
-                const totalChildrenHeight = childrenHeights.reduce((sum, h) => sum + h, 0) + (childrenHeights.length - 1) * VERTICAL_SPACING;
-                processedNode.y = y + (totalChildrenHeight - NODE_HEIGHT) / 2;
-            }
-
             return { height: totalHeight, subtreeNodes };
         };
         
-        const finalLayout = calculateLayout(mapData, 50, 300);
+        const finalLayout = calculateLayout(mapData, 50, 300, 0);
 
         let maxX = 0, maxY = 0;
         finalLayout.subtreeNodes.forEach(n => {
@@ -555,7 +558,7 @@ const MindmapRenderer = ({ content }: { content: string }) => {
             if (n.y + n.height > maxY) maxY = n.y + n.height;
         });
 
-        setCanvasSize({ width: maxX + 50, height: maxY + 50 });
+        setCanvasSize({ width: maxX + 50, height: Math.max(maxY + 50, 600) });
 
         return { positionedNodes: finalLayout.subtreeNodes, connections: connectionList };
 
@@ -593,7 +596,10 @@ const MindmapRenderer = ({ content }: { content: string }) => {
                 {positionedNodes.map(node => (
                     <foreignObject key={node.id} x={node.x} y={node.y} width={node.width} height={node.height} className="overflow-visible">
                         <div
-                            className="bg-background border border-border rounded-lg shadow-md h-full flex items-center justify-center p-2 group relative"
+                            className={cn(
+                                "border rounded-lg shadow-md h-full flex items-center justify-center p-2 group relative",
+                                NODE_COLORS[node.depth % NODE_COLORS.length]
+                            )}
                             title={node.content}
                         >
                             <span className="text-sm text-center text-foreground">{node.label}</span>
