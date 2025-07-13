@@ -104,23 +104,21 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
         setIsClient(true);
-    }, []);
-
-    useEffect(() => {
-        if (!isClient) return;
-
+        // Initialize mermaid only on the client, and only once.
         mermaid.initialize({
             startOnLoad: false,
             theme: theme === 'dark' ? 'dark' : 'default',
         });
+    }, [theme]);
+
+    useEffect(() => {
+        if (!isClient || !chart) return;
 
         const renderMermaid = async () => {
              try {
                 const element = document.getElementById(mermaidId);
                 if (element) {
-                    // Use a unique ID for rendering that doesn't conflict with the container
-                    const renderId = `mermaid-graph-${Math.random().toString(36).substr(2, 9)}`;
-                    const { svg } = await mermaid.render(renderId, chart);
+                    const { svg } = await mermaid.render(mermaidId + '-graph', chart);
                     element.innerHTML = svg;
                 }
             } catch (error) {
@@ -131,17 +129,21 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
                  }
             }
         };
-
-        const timer = setTimeout(renderMermaid, 100);
-        return () => clearTimeout(timer);
+        
+        // This check ensures we don't try to render before the container is in the DOM.
+        if (document.getElementById(mermaidId)) {
+            renderMermaid();
+        }
 
     }, [chart, theme, mermaidId, isClient]);
     
     return (
         <div id={mermaidId} className="not-prose my-6 w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto">
-            <div className="flex justify-center items-center min-h-[200px] text-muted-foreground">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
+            {!isClient && (
+                <div className="flex justify-center items-center min-h-[200px] text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+            )}
         </div>
     );
 };
@@ -632,7 +634,7 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
                       </CardContent>
                       <CardFooter>
                           <Button asChild>
-                              <Link href={`/problems/apex/${encodeURIComponent(block.content.categoryName)}/${block.content.problemId}`}>
+                              <Link href={`/problems/apex/${encodeURIComponent(problemDetails?.categoryName || '')}/${block.content.problemId}`}>
                                   Solve Problem
                               </Link>
                           </Button>
@@ -858,14 +860,14 @@ export default function LessonPage() {
 
                         // If lesson has problem blocks, fetch all problems
                         if (lesson.contentBlocks.some(b => b.type === 'problem' || b.type === 'stepper')) {
-                            const processProblems = (data: ApexProblemsData) => {
+                            const processProblems = async (data: ApexProblemsData) => {
                                 const problems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
                                     (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                                 );
                                 setAllProblems(problems);
                             };
 
-                            const cachedProblems = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+                            const cachedProblems = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
                             if (cachedProblems) {
                                 processProblems(cachedProblems);
                             } else {
@@ -873,7 +875,7 @@ export default function LessonPage() {
                                 const apexSnap = await getDoc(apexDocRef);
                                 if (apexSnap.exists()) {
                                     const data = apexSnap.data().Category as ApexProblemsData;
-                                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                                    await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                                     processProblems(data);
                                 }
                             }
