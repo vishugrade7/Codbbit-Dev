@@ -164,16 +164,14 @@ export async function upsertProblemToFirestore(data: z.infer<typeof problemFormS
     }
 }
 
-export async function bulkUpsertProblemsFromJSON(jsonString: string) {
-    let problemsToUpload: z.infer<typeof bulkUploadSchema>;
-
+export async function bulkUpsertProblemsFromJSON(jsonData: any[]) {
+    let problemsToUpload;
     try {
-        const jsonData = JSON.parse(jsonString);
         problemsToUpload = bulkUploadSchema.parse(jsonData);
     } catch (error) {
         const errorMessage = error instanceof z.ZodError 
             ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-            : (error instanceof Error ? error.message : "Invalid JSON format.");
+            : "Invalid JSON or data structure.";
         return { success: false, error: `Invalid file content: ${errorMessage}` };
     }
     
@@ -408,7 +406,6 @@ export async function getNavigationSettings(): Promise<NavLink[]> {
 export async function updateNavigationSettings(links: NavLink[]) {
     if (!db) return { success: false, error: "Database not initialized." };
 
-    // In-line schema definition to avoid client/server import issues
     const navLinksServerSchema = z.object({
         links: z.array(z.object({
             id: z.string(),
@@ -761,3 +758,4 @@ export async function deleteVoucher(voucherId: string) {
 }
 
 // #endregion
+

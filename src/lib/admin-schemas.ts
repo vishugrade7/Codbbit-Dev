@@ -47,7 +47,10 @@ export const problemFormSchema = baseProblemObjectSchema
     .extend({ id: z.string().optional() })
     .refine(triggerRefinement, triggerRefinementOptions);
 
-export const bulkUploadSchema = z.array(baseProblemObjectSchema.refine(triggerRefinement, triggerRefinementOptions));
+export const bulkUploadSchema = z.array(
+    baseProblemObjectSchema
+    .refine(triggerRefinement, triggerRefinementOptions)
+);
 // #endregion
 
 // #region Course Schemas
@@ -242,3 +245,4 @@ export const voucherFormSchema = z.object({
     oneTimeUse: z.boolean().optional(),
 });
 // #endregion
+

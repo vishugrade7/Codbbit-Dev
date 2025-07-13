@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -81,6 +81,51 @@ const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySug
     </li>
   );
 };
+
+const parseCsvToJson = (csv: string): any[] => {
+    const lines = csv.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const result = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const obj: any = {};
+        const currentline = lines[i].split(',');
+
+        for (let j = 0; j < headers.length; j++) {
+            const header = headers[j];
+            let value = currentline[j]?.trim() || '';
+            
+            // Handle specific field types
+            if (header === 'examples' || header === 'hints') {
+                try {
+                    // It's a stringified JSON, so we parse it
+                    value = JSON.parse(value);
+                } catch (e) {
+                    // If parsing fails, maybe it's a simple string. Wrap it.
+                    console.warn(`CSV parsing warning for field '${header}': Could not parse JSON. Treating as simple string. Value:`, value);
+                    if (header === 'hints') {
+                        value = value ? [{ value: value }] : [];
+                    } else {
+                        value = [];
+                    }
+                }
+            } else if (header === 'isPremium') {
+                value = value.toLowerCase() === 'true';
+            } else if (['displayOrder'].includes(header)) {
+                 try {
+                    value = value ? value.split(';').map(s => s.trim()) : [];
+                } catch(e) {
+                    value = [];
+                }
+            }
+            
+            obj[header] = value;
+        }
+        result.push(obj);
+    }
+    return result;
+};
+
 
 export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) => void, onAddNew: () => void }) {
     const { toast } = useToast();
@@ -144,7 +189,18 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         setIsUploading(true);
         try {
             const content = await file.text();
-            const result = await bulkUpsertProblemsFromJSON(content);
+            let jsonData;
+
+            if (file.type === 'application/json' || file.name.endsWith('.json')) {
+                jsonData = JSON.parse(content);
+            } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                jsonData = parseCsvToJson(content);
+            } else {
+                throw new Error("Unsupported file type. Please upload a .json or .csv file.");
+            }
+            
+            const result = await bulkUpsertProblemsFromJSON(jsonData);
+
             if (result.success) {
                 toast({ title: 'Success!', description: result.message });
                 fetchProblems();
@@ -155,7 +211,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
             toast({
                 variant: 'destructive',
                 title: 'Upload Failed',
-                description: error.message || 'Could not process the JSON file.',
+                description: error.message || 'Could not process the file.',
                 duration: 9000,
             });
         } finally {
@@ -166,46 +222,55 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         }
     };
 
-    const handleDownloadSample = () => {
-        const sampleData = [
-            {
-                title: "Sample Problem: Two Sum",
-                description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.",
-                category: "Arrays & Hashing",
-                difficulty: "Easy",
-                metadataType: "Class",
-                triggerSObject: "",
-                sampleCode: "public class Solution {\n    public List<Integer> twoSum(List<Integer> nums, Integer target) {\n        // Your code here\n    }\n}",
-                testcases: "@isTest\nprivate class SolutionTest {\n    @isTest\n    static void testTwoSum_basic() {\n        Solution s = new Solution();\n        List<Integer> result = s.twoSum(new List<Integer>{2, 7, 11, 15}, 9);\n        System.assertEquals(new List<Integer>{0, 1}, result);\n    }\n}",
-                examples: [
-                    {
-                        input: "nums = [2,7,11,15], target = 9",
-                        output: "[0,1]",
-                        explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]."
-                    },
-                    {
-                        input: "nums = [3,2,4], target = 6",
-                        output: "[1,2]",
-                        explanation: ""
-                    }
-                ],
-                hints: [
-                    { value: "A really simple way to solve this is using a HashMap to store the numbers you've seen and their indices." }
-                ],
-                company: "Google",
-                companyLogoUrl: "https://logo.clearbit.com/google.com",
-                isPremium: false,
-                imageUrl: "",
-                mermaidDiagram: "",
-                displayOrder: ["description", "image", "mermaid"],
-            }
-        ];
+    const getSampleData = () => {
+        return {
+            title: "Sample Problem: Two Sum",
+            description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.",
+            category: "Arrays & Hashing",
+            difficulty: "Easy",
+            metadataType: "Class",
+            triggerSObject: "",
+            sampleCode: "public class Solution {\n    public List<Integer> twoSum(List<Integer> nums, Integer target) {\n        // Your code here\n    }\n}",
+            testcases: "@isTest\nprivate class SolutionTest {\n    @isTest\n    static void testTwoSum_basic() {\n        Solution s = new Solution();\n        List<Integer> result = s.twoSum(new List<Integer>{2, 7, 11, 15}, 9);\n        System.assertEquals(new List<Integer>{0, 1}, result);\n    }\n}",
+            examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }, { input: "nums = [3,2,4], target = 6", output: "[1,2]", explanation: "" }],
+            hints: [{ value: "A really simple way to solve this is using a HashMap to store the numbers you've seen and their indices." }],
+            company: "Google",
+            companyLogoUrl: "https://logo.clearbit.com/google.com",
+            isPremium: false,
+            imageUrl: "",
+            mermaidDiagram: "",
+            displayOrder: ["description", "image", "mermaid"],
+        };
+    };
+
+    const handleDownloadSampleJson = () => {
+        const sampleData = [getSampleData()];
         const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(sampleData, null, 2))}`;
         const link = document.createElement("a");
         link.href = jsonString;
         link.download = "problem_sample.json";
         link.click();
     };
+
+    const handleDownloadSampleCsv = () => {
+        const sample = getSampleData();
+        const headers = Object.keys(sample);
+        const values = headers.map(header => {
+            const value = (sample as any)[header];
+            if (typeof value === 'object' && value !== null) {
+                // Wrap JSON strings in quotes to handle commas within them
+                return `"${JSON.stringify(value)}"`;
+            }
+            return `"${value}"`; // Also quote simple values
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + values.join(',');
+        const link = document.createElement("a");
+        link.href = encodeURI(csvContent);
+        link.download = "problem_sample.csv";
+        link.click();
+    };
+
 
     const filteredProblems = useMemo(() => {
         return problems
@@ -231,7 +296,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                         View, edit, or add new Apex coding challenges to the platform.
                     </CardDescription>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
                      <Button onClick={() => setIsManageModalOpen(true)} variant="secondary">
                         <Edit className="mr-2 h-4 w-4" />
                         Manage Categories
@@ -240,9 +305,18 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Category
                     </Button>
-                    <Button onClick={handleDownloadSample} variant="outline">
-                        Download Sample JSON
-                    </Button>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <Download className="mr-2 h-4 w-4"/>
+                                Download Sample
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onClick={handleDownloadSampleJson}>Sample.json</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleDownloadSampleCsv}>Sample.csv</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button onClick={handleBulkUploadClick} variant="outline" disabled={isUploading}>
                         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                         Bulk Upload
@@ -254,7 +328,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 </div>
             </CardHeader>
             <CardContent>
-                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" disabled={isUploading} />
+                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json,.csv" className="hidden" disabled={isUploading} />
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
                 <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
                 <AlertDialog open={!!problemToDelete} onOpenChange={(open) => !open && setProblemToDelete(null)}>
