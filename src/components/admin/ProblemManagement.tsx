@@ -83,36 +83,78 @@ const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySug
 };
 
 const parseCsvToJson = (csv: string): any[] => {
-    const lines = csv.trim().split(/\r\n|\n/);
-    if (lines.length < 2) return [];
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuotedField = false;
 
-    const headers = lines[0].split(',').map(h => h.trim());
+    for (let i = 0; i < csv.length; i++) {
+        const char = csv[i];
+
+        if (inQuotedField) {
+            if (char === '"') {
+                if (i + 1 < csv.length && csv[i + 1] === '"') {
+                    // It's an escaped quote
+                    currentField += '"';
+                    i++; // Skip the next quote
+                } else {
+                    // It's the end of the quoted field
+                    inQuotedField = false;
+                }
+            } else {
+                currentField += char;
+            }
+        } else {
+            if (char === '"') {
+                inQuotedField = true;
+            } else if (char === ',') {
+                currentRow.push(currentField);
+                currentField = '';
+            } else if (char === '\n' || char === '\r') {
+                if (i > 0 && csv[i-1] !== '\n' && csv[i-1] !== '\r') {
+                    currentRow.push(currentField);
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentField = '';
+                }
+                 if (char === '\r' && i + 1 < csv.length && csv[i + 1] === '\n') {
+                    i++; // Handle CRLF
+                }
+            } else {
+                currentField += char;
+            }
+        }
+    }
+    // Add the last field and row
+    if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+    }
+    
+    if (rows.length < 2) return [];
+
+    const headers = rows[0].map(h => h.trim());
     const result = [];
 
-    for (let i = 1; i < lines.length; i++) {
-        const obj: any = {};
-        const currentline = lines[i].split(',');
+    for (let i = 1; i < rows.length; i++) {
+        const line = rows[i];
+        if (line.length !== headers.length) continue;
 
+        const obj: any = {};
         for (let j = 0; j < headers.length; j++) {
             const header = headers[j];
-            let value: any = currentline[j]?.trim() || '';
+            let value: any = line[j]?.trim() || '';
 
-            if (value.startsWith('"') && value.endsWith('"')) {
-                value = value.slice(1, -1);
-            }
-            value = value.replace(/""/g, '"');
-
+            // Auto-detect and parse complex fields
             try {
-                if (['examples', 'hints', 'displayOrder'].includes(header)) {
-                    value = JSON.parse(value || '[]');
-                } else if (header === 'isPremium') {
+                if ((value.startsWith('[') && value.endsWith(']')) || (value.startsWith('{') && value.endsWith('}'))) {
+                    value = JSON.parse(value);
+                } else if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') {
                     value = value.toLowerCase() === 'true';
                 }
             } catch (e) {
-                console.warn(`CSV parsing warning for field '${header}' on line ${i+1}: Could not parse value. Using default. Value:`, value, e);
-                value = (header === 'isPremium') ? false : [];
+                // Keep as string if JSON.parse fails
             }
-            
             obj[header] = value;
         }
         result.push(obj);
@@ -222,7 +264,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
 
       const baseData = {
           title: "Sample Problem: Two Sum",
-          description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\\n\\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\\n\\nYou can return the answer in any order.",
+          description: "Given an array of integers `nums` and an integer `target`,\nreturn indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.",
           category: "Arrays & Hashing",
           difficulty: "Easy",
           metadataType: "Class",
@@ -240,9 +282,9 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
       if (forCSV) {
           return {
               ...baseData,
-              examples: JSON.stringify(examples).replace(/"/g, '""'),
-              hints: JSON.stringify(hints).replace(/"/g, '""'),
-              displayOrder: JSON.stringify(baseData.displayOrder).replace(/"/g, '""')
+              examples: JSON.stringify(examples),
+              hints: JSON.stringify(hints),
+              displayOrder: JSON.stringify(baseData.displayOrder)
           }
       }
 
@@ -261,7 +303,14 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     const handleDownloadSampleCsv = () => {
         const sample = getSampleData(true);
         const headers = Object.keys(sample);
-        const values = headers.map(header => `"${(sample as any)[header]}"`);
+        const values = headers.map(header => {
+            const value = (sample as any)[header];
+            // Enclose in quotes if it contains commas, quotes, or newlines
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+                return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+        });
         
         const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + values.join(',');
         const link = document.createElement("a");
