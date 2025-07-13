@@ -83,7 +83,9 @@ const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySug
 };
 
 const parseCsvToJson = (csv: string): any[] => {
-    const lines = csv.trim().split('\n');
+    const lines = csv.trim().split(/\r\n|\n/);
+    if (lines.length < 2) return [];
+
     const headers = lines[0].split(',').map(h => h.trim());
     const result = [];
 
@@ -94,23 +96,21 @@ const parseCsvToJson = (csv: string): any[] => {
         for (let j = 0; j < headers.length; j++) {
             const header = headers[j];
             let value: any = currentline[j]?.trim() || '';
-            
-            // Handle complex fields that are stringified JSON
-            if (['examples', 'hints', 'displayOrder'].includes(header)) {
-                try {
-                    // Remove starting/ending quotes if they exist before parsing
-                    if (value.startsWith('"') && value.endsWith('"')) {
-                        value = value.substring(1, value.length - 1);
-                    }
-                    // Replace double double-quotes with single double-quotes
-                    value = value.replace(/""/g, '"');
-                    value = JSON.parse(value);
-                } catch (e) {
-                    console.warn(`CSV parsing warning for field '${header}': Could not parse JSON. Treating as empty. Value:`, value, e);
-                    value = [];
+
+            if (value.startsWith('"') && value.endsWith('"')) {
+                value = value.slice(1, -1);
+            }
+            value = value.replace(/""/g, '"');
+
+            try {
+                if (['examples', 'hints', 'displayOrder'].includes(header)) {
+                    value = JSON.parse(value || '[]');
+                } else if (header === 'isPremium') {
+                    value = value.toLowerCase() === 'true';
                 }
-            } else if (header === 'isPremium') {
-                value = value.toLowerCase() === 'true';
+            } catch (e) {
+                console.warn(`CSV parsing warning for field '${header}' on line ${i+1}: Could not parse value. Using default. Value:`, value, e);
+                value = (header === 'isPremium') ? false : [];
             }
             
             obj[header] = value;
@@ -216,29 +216,41 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         }
     };
 
-    const getSampleData = () => {
-        return {
-            title: "Sample Problem: Two Sum",
-            description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.",
-            category: "Arrays & Hashing",
-            difficulty: "Easy",
-            metadataType: "Class",
-            triggerSObject: "",
-            sampleCode: "public class Solution {\n    public List<Integer> twoSum(List<Integer> nums, Integer target) {\n        // Your code here\n    }\n}",
-            testcases: "@isTest\nprivate class SolutionTest {\n    @isTest\n    static void testTwoSum_basic() {\n        Solution s = new Solution();\n        List<Integer> result = s.twoSum(new List<Integer>{2, 7, 11, 15}, 9);\n        System.assertEquals(new List<Integer>{0, 1}, result);\n    }\n}",
-            examples: [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }, { input: "nums = [3,2,4], target = 6", output: "[1,2]", explanation: "" }],
-            hints: [{ value: "A really simple way to solve this is using a HashMap to store the numbers you've seen and their indices." }],
-            company: "Google",
-            companyLogoUrl: "https://logo.clearbit.com/google.com",
-            isPremium: false,
-            imageUrl: "",
-            mermaidDiagram: "",
-            displayOrder: ["description", "image", "mermaid"],
-        };
+    const getSampleData = (forCSV = false) => {
+      const examples = [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }];
+      const hints = ["A really simple way to solve this is using a HashMap to store the numbers you've seen and their indices."];
+
+      const baseData = {
+          title: "Sample Problem: Two Sum",
+          description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\\n\\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\\n\\nYou can return the answer in any order.",
+          category: "Arrays & Hashing",
+          difficulty: "Easy",
+          metadataType: "Class",
+          triggerSObject: "",
+          sampleCode: "public class Solution {\\n    public List<Integer> twoSum(List<Integer> nums, Integer target) {\\n        // Your code here\\n    }\\n}",
+          testcases: "@isTest\\nprivate class SolutionTest {\\n    @isTest\\n    static void testTwoSum_basic() {\\n        Solution s = new Solution();\\n        List<Integer> result = s.twoSum(new List<Integer>{2, 7, 11, 15}, 9);\\n        System.assertEquals(new List<Integer>{0, 1}, result);\\n    }\\n}",
+          company: "Google",
+          companyLogoUrl: "https://logo.clearbit.com/google.com",
+          isPremium: false,
+          imageUrl: "",
+          mermaidDiagram: "",
+          displayOrder: ["description", "image", "mermaid"],
+      };
+
+      if (forCSV) {
+          return {
+              ...baseData,
+              examples: JSON.stringify(examples).replace(/"/g, '""'),
+              hints: JSON.stringify(hints).replace(/"/g, '""'),
+              displayOrder: JSON.stringify(baseData.displayOrder).replace(/"/g, '""')
+          }
+      }
+
+      return { ...baseData, examples, hints };
     };
 
     const handleDownloadSampleJson = () => {
-        const sampleData = [getSampleData()];
+        const sampleData = [getSampleData(false)];
         const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(sampleData, null, 2))}`;
         const link = document.createElement("a");
         link.href = jsonString;
@@ -247,18 +259,10 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     };
 
     const handleDownloadSampleCsv = () => {
-        const sample = getSampleData();
+        const sample = getSampleData(true);
         const headers = Object.keys(sample);
-        const values = headers.map(header => {
-            const value = (sample as any)[header];
-            if (typeof value === 'object' && value !== null) {
-                // Wrap JSON strings in quotes to handle commas within them
-                // Also escape any double-quotes inside the JSON string itself
-                return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
-            }
-            return `"${value}"`; // Also quote simple values
-        });
-
+        const values = headers.map(header => `"${(sample as any)[header]}"`);
+        
         const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + values.join(',');
         const link = document.createElement("a");
         link.href = encodeURI(csvContent);

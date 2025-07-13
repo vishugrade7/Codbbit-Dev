@@ -175,17 +175,17 @@ export async function bulkUpsertProblemsFromJSON(jsonData: any[]) {
       category: z.string().min(1, "Category is required."),
       difficulty: z.enum(["Easy", "Medium", "Hard"]),
       metadataType: z.enum(["Class", "Trigger"]),
-      triggerSObject: z.string().optional(),
+      triggerSObject: z.string().optional().default(""),
       sampleCode: z.string().min(1, "Sample code is required."),
       testcases: z.string().min(1, "Test cases is required."),
       examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
-      hints: z.array(z.string()).optional(),
-      company: z.string().optional(),
-      companyLogoUrl: z.string().url().or(z.literal("")).optional(),
+      hints: z.array(z.string()).optional().default([]),
+      company: z.string().optional().default(""),
+      companyLogoUrl: z.string().url().or(z.literal("")).optional().default(""),
       isPremium: z.boolean().optional().default(false),
-      imageUrl: z.string().url().or(z.literal("")).optional(),
-      mermaidDiagram: z.string().optional(),
-      displayOrder: z.array(z.enum(['description', 'image', 'mermaid'])).optional(),
+      imageUrl: z.string().url().or(z.literal("")).optional().default(""),
+      mermaidDiagram: z.string().optional().default(""),
+      displayOrder: z.array(z.enum(['description', 'image', 'mermaid'])).optional().default(['description', 'image', 'mermaid']),
     });
 
     const triggerRefinement = (data: z.infer<typeof baseProblemObjectSchema>) => {
@@ -240,10 +240,10 @@ export async function bulkUpsertProblemsFromJSON(jsonData: any[]) {
                 sampleCode: data.sampleCode,
                 testcases: data.testcases,
                 examples: data.examples,
-                hints: data.hints || [],
+                hints: data.hints,
                 company: data.company,
                 companyLogoUrl: data.companyLogoUrl,
-                isPremium: data.isPremium || false,
+                isPremium: data.isPremium,
                 imageUrl: data.imageUrl,
                 mermaidDiagram: data.mermaidDiagram,
                 displayOrder: data.displayOrder,
@@ -797,4 +797,5 @@ export async function deleteVoucher(voucherId: string) {
 }
 
 // #endregion
+
 

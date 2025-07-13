@@ -22,7 +22,7 @@ const baseProblemObjectSchema = z.object({
   sampleCode: z.string().min(1, "Sample code is required."),
   testcases: z.string().min(1, "Test cases is required."),
   examples: z.array(problemExampleSchema).min(1, "At least one example is required."),
-  hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
+  hints: z.array(z.string()).optional(),
   company: z.string().optional(),
   companyLogoUrl: z.string().url().or(z.literal('')).optional(),
   isPremium: z.boolean().optional().default(false),
@@ -44,7 +44,10 @@ const triggerRefinementOptions = {
 };
 
 export const problemFormSchema = baseProblemObjectSchema
-    .extend({ id: z.string().optional() })
+    .extend({ 
+      id: z.string().optional(),
+      hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
+    })
     .refine(triggerRefinement, triggerRefinementOptions);
 
 export const bulkUploadSchema = z.array(
