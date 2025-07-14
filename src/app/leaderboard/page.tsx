@@ -1,6 +1,7 @@
 
 "use client";
 
+import type { Metadata } from 'next';
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -279,267 +280,268 @@ export default function Leaderboard() {
   }
 
   return (
-    <main className="flex-1 container py-8">
-      <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
-          <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              See how you rank against the top developers. Keep solving problems to climb up the ranks!
-          </p>
-      </div>
-
-       {currentUserEntry && (
-        <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-             <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
-              <CardContent className="p-6 flex flex-col flex-grow">
-                  <div className="flex justify-between items-start flex-grow">
-                      <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
-                           <div className="relative">
-                               <Avatar className={cn(
-                                    "h-20 w-20 border-4", 
-                                    isUserPro(currentUserEntry) 
-                                        ? "border-yellow-400 shadow-lg" 
-                                        : "border-primary/50"
-                                )}>
-                                  <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                                  <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              {isUserPro(currentUserEntry) && <ProIconOverlay />}
-                           </div>
-                          <div>
-                               <div className="flex items-center gap-2">
-                                <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
-                                {currentUserEntry.emailVerified && <VerifiedIcon />}
-                            </div>
-                              <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                               {currentUserEntry.company && (
-                                <Badge variant="secondary" className="mt-1">
-                                    {currentUserEntry.companyLogoUrl && <Image src={currentUserEntry.companyLogoUrl} alt={`${currentUserEntry.company} logo`} width={16} height={16} className="mr-1.5 rounded-sm object-contain"/>}
-                                    <span className="truncate">{currentUserEntry.company}</span>
-                                </Badge>
-                              )}
-                          </div>
-                      </Link>
-                      <div className="text-right">
-                          <div className="flex items-center gap-2 font-bold text-2xl">
-                              <Trophy className="h-7 w-7 text-yellow-400" />
-                              <span>{currentUserEntry.rank}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">Global Rank</p>
-                      </div>
-                  </div>
-                   {currentUserEntry.rank > 1 && leaderboardData.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-primary/20 text-center">
-                          <p className="text-sm text-muted-foreground">
-                              You are <span className="font-bold text-foreground">{(leaderboardData[0].points - currentUserEntry.points).toLocaleString()}</span> points away from rank 1!
-                          </p>
-                      </div>
-                  )}
-              </CardContent>
-            </Card>
-          </div>
-          <div className="lg:col-span-2">
-            {suggestedProblem ? (
-                <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
-                  <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6 h-full">
-                      <div className="flex-grow">
-                          <div className="flex items-center gap-3 mb-2">
-                              <div className="p-2 bg-primary/10 rounded-lg">
-                                  <BookOpen className="h-5 w-5 text-primary" />
-                              </div>
-                              <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
-                          </div>
-                          <p className="text-muted-foreground text-sm mb-3">
-                              Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
-                          </p>
-                          <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
-                              <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
-                              {suggestedProblem.difficulty}
-                              </Badge>
-                          </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                          <Button asChild size="sm" className="text-primary-foreground dark:text-white">
-                            <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
-                              Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                          </Button>
-                      </div>
-                  </CardContent>
-                </Card>
-            ) : (
-              <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed h-full">
-                  <CardContent className="p-0">
-                      <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold">You're a Champion!</h3>
-                      <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
-                  </CardContent>
-              </Card>
-            )}
-          </div>
+    <>
+      <title>Leaderboard</title>
+      <main className="flex-1 container py-8">
+        <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
+            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
+                See how you rank against the top developers. Keep solving problems to climb up the ranks!
+            </p>
         </div>
-      )}
-      
-      <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
-          <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
-              <TabsList>
-                  <TabsTrigger value="Global" layoutId="leaderboard-filter-tabs">Global</TabsTrigger>
-                  <TabsTrigger value="Country" layoutId="leaderboard-filter-tabs">By Country</TabsTrigger>
-                  <TabsTrigger value="Company" layoutId="leaderboard-filter-tabs">By Company</TabsTrigger>
-              </TabsList>
-          </Tabs>
-          
-           {filterType === "Country" && (
-              <Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
+
+         {currentUserEntry && (
+          <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+               <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
+                <CardContent className="p-6 flex flex-col flex-grow">
+                    <div className="flex justify-between items-start flex-grow">
+                        <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
+                             <div className="relative">
+                                 <Avatar className={cn(
+                                      "h-20 w-20 border-4", 
+                                      isUserPro(currentUserEntry) 
+                                          ? "border-yellow-400 shadow-lg" 
+                                          : "border-primary/50"
+                                  )}>
+                                    <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                                    <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {isUserPro(currentUserEntry) && <ProIconOverlay />}
+                             </div>
+                            <div>
+                                 <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
+                                  {currentUserEntry.emailVerified && <VerifiedIcon />}
+                              </div>
+                                <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
+                                 {currentUserEntry.company && (
+                                  <Badge variant="secondary" className="mt-1">
+                                      {currentUserEntry.companyLogoUrl && <Image src={currentUserEntry.companyLogoUrl} alt={`${currentUserEntry.company} logo`} width={16} height={16} className="mr-1.5 rounded-sm object-contain"/>}
+                                      <span className="truncate">{currentUserEntry.company}</span>
+                                  </Badge>
+                                )}
+                            </div>
+                        </Link>
+                        <div className="text-right">
+                            <div className="flex items-center gap-2 font-bold text-2xl">
+                                <Trophy className="h-7 w-7 text-yellow-400" />
+                                <span>{currentUserEntry.rank}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Global Rank</p>
+                        </div>
+                    </div>
+                     {currentUserEntry.rank > 1 && leaderboardData.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-primary/20 text-center">
+                            <p className="text-sm text-muted-foreground">
+                                You are <span className="font-bold text-foreground">{(leaderboardData[0].points - currentUserEntry.points).toLocaleString()}</span> points away from rank 1!
+                            </p>
+                        </div>
+                    )}
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-2">
+              {suggestedProblem ? (
+                  <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
+                    <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6 h-full">
+                        <div className="flex-grow">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-primary/10 rounded-lg">
+                                    <BookOpen className="h-5 w-5 text-primary" />
+                                </div>
+                                <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
+                            </div>
+                            <p className="text-muted-foreground text-sm mb-3">
+                                Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
+                                <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
+                                {suggestedProblem.difficulty}
+                                </Badge>
+                            </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                            <Button asChild size="sm" className="text-primary-foreground dark:text-white">
+                              <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
+                                Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
+                              </Link>
+                            </Button>
+                        </div>
+                    </CardContent>
+                  </Card>
+              ) : (
+                <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed h-full">
+                    <CardContent className="p-0">
+                        <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold">You're a Champion!</h3>
+                        <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
+                    </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
+        
+        <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
+            <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
+                <TabsList>
+                    <TabsTrigger value="Global" layoutId="leaderboard-filter-tabs">Global</TabsTrigger>
+                    <TabsTrigger value="Country" layoutId="leaderboard-filter-tabs">By Country</TabsTrigger>
+                    <TabsTrigger value="Company" layoutId="leaderboard-filter-tabs">By Company</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            
+             {filterType === "Country" && (
+                <Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full md:w-[220px] justify-between">
+                      {filterValue || "Select a country..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[220px] p-0">
+                    <div className="p-2">
+                      <Input placeholder="Search country..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} />
+                    </div>
+                    <ScrollArea className="h-auto max-h-[200px]">
+                      {filteredCountries.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No country found.</p>}
+                      {filteredCountries.map(country => (
+                        <Button
+                          key={country}
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            handleFilterValueChange(country);
+                            setCountryPopoverOpen(false);
+                            setCountrySearch('');
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", filterValue === country ? "opacity-100" : "opacity-0")} />
+                          {country}
+                        </Button>
+                      ))}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+            )}
+
+            {filterType === "Company" && (
+              <Popover open={companyPopoverOpen} onOpenChange={setCompanyPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" role="combobox" className="w-full md:w-[220px] justify-between">
-                    {filterValue || "Select a country..."}
+                    {filterValue || "Select a company..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[220px] p-0">
                   <div className="p-2">
-                    <Input placeholder="Search country..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} />
+                    <Input placeholder="Search company..." value={companySearch} onChange={(e) => setCompanySearch(e.target.value)} />
                   </div>
                   <ScrollArea className="h-auto max-h-[200px]">
-                    {filteredCountries.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No country found.</p>}
-                    {filteredCountries.map(country => (
+                    {filteredCompanies.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No company found.</p>}
+                    {filteredCompanies.map(company => (
                       <Button
-                        key={country}
+                        key={company}
                         variant="ghost"
                         className="w-full justify-start"
                         onClick={() => {
-                          handleFilterValueChange(country);
-                          setCountryPopoverOpen(false);
-                          setCountrySearch('');
+                          handleFilterValueChange(company);
+                          setCompanyPopoverOpen(false);
+                          setCompanySearch('');
                         }}
                       >
-                        <Check className={cn("mr-2 h-4 w-4", filterValue === country ? "opacity-100" : "opacity-0")} />
-                        {country}
+                        <Check className={cn("mr-2 h-4 w-4", filterValue === company ? "opacity-100" : "opacity-0")} />
+                        {company}
                       </Button>
                     ))}
                   </ScrollArea>
                 </PopoverContent>
               </Popover>
-          )}
+            )}
+        </div>
 
-          {filterType === "Company" && (
-            <Popover open={companyPopoverOpen} onOpenChange={setCompanyPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-full md:w-[220px] justify-between">
-                  {filterValue || "Select a company..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[220px] p-0">
-                <div className="p-2">
-                  <Input placeholder="Search company..." value={companySearch} onChange={(e) => setCompanySearch(e.target.value)} />
-                </div>
-                <ScrollArea className="h-auto max-h-[200px]">
-                  {filteredCompanies.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No company found.</p>}
-                  {filteredCompanies.map(company => (
-                    <Button
-                      key={company}
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        handleFilterValueChange(company);
-                        setCompanyPopoverOpen(false);
-                        setCompanySearch('');
-                      }}
-                    >
-                      <Check className={cn("mr-2 h-4 w-4", filterValue === company ? "opacity-100" : "opacity-0")} />
-                      {company}
-                    </Button>
-                  ))}
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
-          )}
-      </div>
-
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px] text-center">Rank</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead className="text-right">Points</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((user) => (
-                <TableRow
-                  key={user.id}
-                  className={cn("cursor-pointer", getMedalColor(user.rank))}
-                  onClick={() => router.push(`/profile/${user.username}`)}
-                >
-                  <TableCell className="text-center">
-                    <span className="font-bold text-lg">{user.rank}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                       <div className="relative">
-                          <Avatar className={cn(
-                              "h-10 w-10 border-2", 
-                              isUserPro(user) ? "border-yellow-400" : "border-transparent"
-                          )}>
-                            <AvatarImage src={user.avatarUrl} alt={user.name} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          {isUserPro(user) && <ProIconOverlay />}
-                       </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                            <p className="font-semibold">{user.name}</p>
-                             {user.emailVerified && <VerifiedIcon />}
-                        </div>
-                        <p className="text-sm text-muted-foreground">@{user.username}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                     {user.company ? (
-                         <Badge variant="secondary">
-                             {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
-                             <span className="truncate">{user.company}</span>
-                         </Badge>
-                     ) : null}
-                  </TableCell>
-                  <TableCell>{user.country === 'N/A' ? '' : user.country}</TableCell>
-                  <TableCell className="text-right font-bold text-lg font-mono">{user.points.toLocaleString()}</TableCell>
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px] text-center">Rank</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead className="text-right">Points</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-      {totalPages > 1 && (
-          <div className="flex items-center justify-center space-x-4 mt-8">
-              <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline">
-                  Previous
-              </Button>
-              <span className="text-sm font-medium text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-              </span>
-              <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline">
-                  Next
-              </Button>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className={cn("cursor-pointer", getMedalColor(user.rank))}
+                    onClick={() => router.push(`/profile/${user.username}`)}
+                  >
+                    <TableCell className="text-center">
+                      <span className="font-bold text-lg">{user.rank}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                         <div className="relative">
+                            <Avatar className={cn(
+                                "h-10 w-10 border-2", 
+                                isUserPro(user) ? "border-yellow-400" : "border-transparent"
+                            )}>
+                              <AvatarImage src={user.avatarUrl} alt={user.name} />
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            {isUserPro(user) && <ProIconOverlay />}
+                         </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                              <p className="font-semibold">{user.name}</p>
+                               {user.emailVerified && <VerifiedIcon />}
+                          </div>
+                          <p className="text-sm text-muted-foreground">@{user.username}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                       {user.company ? (
+                           <Badge variant="secondary">
+                               {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
+                               <span className="truncate">{user.company}</span>
+                           </Badge>
+                       ) : null}
+                    </TableCell>
+                    <TableCell>{user.country === 'N/A' ? '' : user.country}</TableCell>
+                    <TableCell className="text-right font-bold text-lg font-mono">{user.points.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-      )}
 
-      {paginatedData.length === 0 && (
-         <div className="text-center py-16">
-            <h3 className="text-lg font-semibold">No users found</h3>
-            <p className="text-muted-foreground mt-1">Try adjusting your filters.</p>
-        </div>
-      )}
+        {totalPages > 1 && (
+            <div className="flex items-center justify-center space-x-4 mt-8">
+                <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline">
+                    Previous
+                </Button>
+                <span className="text-sm font-medium text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                </span>
+                <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline">
+                    Next
+                </Button>
+            </div>
+        )}
 
-    </main>
+        {paginatedData.length === 0 && (
+           <div className="text-center py-16">
+              <h3 className="text-lg font-semibold">No users found</h3>
+              <p className="text-muted-foreground mt-1">Try adjusting your filters.</p>
+          </div>
+        )}
+
+      </main>
+    </>
   );
 }
-
-    

@@ -1,6 +1,7 @@
 
 "use client";
 
+import type { Metadata } from 'next';
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { collection, query, getDocs, orderBy } from "firebase/firestore";
@@ -147,6 +148,8 @@ export default function ProblemSheetsListPage() {
   }, [sheets, filterMode, userData, authUser, searchTerm]);
 
   return (
+    <>
+    <title>Problem Sheets</title>
     <main className="flex-1 container py-8">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
           <div>
@@ -303,7 +306,6 @@ export default function ProblemSheetsListPage() {
           </div>
       )}
     </main>
+    </>
   );
 }
-
-    

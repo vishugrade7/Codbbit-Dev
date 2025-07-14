@@ -1,6 +1,7 @@
 
 "use client";
 
+import type { Metadata } from 'next';
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation';
@@ -93,101 +94,104 @@ export default function Settings() {
   }
 
   return (
-    <main className="flex-1 container py-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold font-headline">Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your account and app settings.</p>
+    <>
+      <title>Settings</title>
+      <main className="flex-1 container py-8">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold font-headline">Settings</h1>
+          <p className="text-muted-foreground mt-2">Manage your account and app settings.</p>
 
-        <div className="mt-8 space-y-8">
+          <div className="mt-8 space-y-8">
 
-          <Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Subscription</CardTitle>
+                    <CardDescription>
+                    {isPro
+                        ? "Manage your subscription details."
+                        : "Upgrade to unlock premium features."}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div>
+                            <p className="font-semibold">{isPro ? "Pro Plan" : "Free Plan"}</p>
+                            <p className="text-sm text-muted-foreground">
+                            {isPro && userData?.subscriptionEndDate
+                                ? `Your plan renews on ${format(userData.subscriptionEndDate.toDate(), "PPP")}.`
+                                : "Access to free problems and core features."}
+                            </p>
+                        </div>
+                        {isPro ? (
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline">Manage Plan</Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. You will immediately lose access to all Pro features and your plan will not auto-renew.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleCancelSubscription} disabled={isCancelling}>
+                                    {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Cancel Subscription
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        ) : (
+                           <Button asChild>
+                              <Link href="/pricing">Upgrade</Link>
+                           </Button>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
               <CardHeader>
-                  <CardTitle>Subscription</CardTitle>
-                  <CardDescription>
-                  {isPro
-                      ? "Manage your subscription details."
-                      : "Upgrade to unlock premium features."}
-                  </CardDescription>
+                <CardTitle>Account</CardTitle>
+                <CardDescription>Manage your account settings.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                 <div className="flex items-center justify-between gap-4">
+                   <div className="flex flex-col flex-1 min-w-0">
+                      <Label>Salesforce Connection</Label>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {userData?.sfdcAuth?.connected 
+                          ? `Connected to: ${userData.sfdcAuth.instanceUrl}`
+                          : "Connect your Salesforce org to run code."
+                        }
+                      </p>
+                   </div>
+                    <Button variant="outline" onClick={handleConnect} disabled={isConnecting} className="shrink-0">
+                       {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                       {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
+                    </Button>
+                 </div>
+              </CardContent>
+            </Card>
+
+             <Card>
+              <CardHeader>
+                <CardTitle>Appearance</CardTitle>
+                <CardDescription>Customize the look and feel of the application.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div>
-                          <p className="font-semibold">{isPro ? "Pro Plan" : "Free Plan"}</p>
-                          <p className="text-sm text-muted-foreground">
-                          {isPro && userData?.subscriptionEndDate
-                              ? `Your plan renews on ${format(userData.subscriptionEndDate.toDate(), "PPP")}.`
-                              : "Access to free problems and core features."}
-                          </p>
-                      </div>
-                      {isPro ? (
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline">Manage Plan</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. You will immediately lose access to all Pro features and your plan will not auto-renew.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleCancelSubscription} disabled={isCancelling}>
-                                  {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                  Cancel Subscription
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                      ) : (
-                         <Button asChild>
-                            <Link href="/pricing">Upgrade</Link>
-                         </Button>
-                      )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="theme">Theme</Label>
+                  <ThemeToggle />
+                </div>
               </CardContent>
-          </Card>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Account</CardTitle>
-              <CardDescription>Manage your account settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-               <div className="flex items-center justify-between gap-4">
-                 <div className="flex flex-col flex-1 min-w-0">
-                    <Label>Salesforce Connection</Label>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {userData?.sfdcAuth?.connected 
-                        ? `Connected to: ${userData.sfdcAuth.instanceUrl}`
-                        : "Connect your Salesforce org to run code."
-                      }
-                    </p>
-                 </div>
-                  <Button variant="outline" onClick={handleConnect} disabled={isConnecting} className="shrink-0">
-                     {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                     {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
-                  </Button>
-               </div>
-            </CardContent>
-          </Card>
-
-           <Card>
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>Customize the look and feel of the application.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="theme">Theme</Label>
-                <ThemeToggle />
-              </div>
-            </CardContent>
-          </Card>
-
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -2,6 +2,7 @@
 
 "use client";
 
+import type { Metadata } from 'next';
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -258,6 +259,8 @@ export default function SignupPage() {
   }
 
   return (
+    <>
+    <title>Sign Up</title>
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
@@ -463,5 +466,6 @@ export default function SignupPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

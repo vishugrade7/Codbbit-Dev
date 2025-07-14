@@ -18,7 +18,10 @@ const sourceCodePro = Source_Code_Pro({
 })
 
 export const metadata: Metadata = {
-  title: 'Codbbit: Master Apex, LWC & Salesforce Development',
+  title: {
+    default: 'Codbbit: Master Apex, LWC & Salesforce Development',
+    template: '%s | Codbbit',
+  },
   description: 'Accelerate your career with our interactive courses and practice problems in Apex, LWC, and SOQL. The ultimate playground for Salesforce developers.',
   keywords: ['codbbit', 'apex coding', 'lwc learn', 'lwc course', 'learn salesforce', 'salesforce developer', 'soql practice', 'salesforce interview'],
 };
