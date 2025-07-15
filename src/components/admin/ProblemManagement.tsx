@@ -38,6 +38,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "../ui/checkbox";
 
 type ProblemWithCategory = Problem & { categoryName: string };
 type CompanySuggestion = {
@@ -176,6 +177,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     const [isPasteJsonModalOpen, setIsPasteJsonModalOpen] = useState(false);
     const [problemToDelete, setProblemToDelete] = useState<ProblemWithCategory | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const fetchProblems = useCallback(async () => {
         setLoading(true);
@@ -208,12 +210,44 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         if (result.success) {
             toast({ title: 'Success!', description: result.message });
             fetchProblems();
+            setSelectedIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(problemToDelete.id);
+                return newSet;
+            });
         } else {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: result.error });
         }
         setIsDeleting(false);
         setProblemToDelete(null);
     };
+
+    const handleBulkDelete = async () => {
+        setIsDeleting(true);
+        const promises = Array.from(selectedIds).map(id => {
+            const problem = problems.find(p => p.id === id);
+            if (problem) {
+                return deleteProblemFromFirestore(problem.id, problem.categoryName);
+            }
+            return Promise.resolve({ success: false, error: `Problem with ID ${id} not found.` });
+        });
+
+        const results = await Promise.all(promises);
+        const successfulDeletes = results.filter(r => r.success).length;
+        const failedDeletes = results.length - successfulDeletes;
+
+        if (successfulDeletes > 0) {
+            toast({ title: "Success!", description: `${successfulDeletes} problem(s) deleted.` });
+            fetchProblems();
+            setSelectedIds(new Set());
+        }
+
+        if (failedDeletes > 0) {
+            toast({ variant: 'destructive', title: "Some Deletions Failed", description: `${failedDeletes} problem(s) could not be deleted.` });
+        }
+        setIsDeleting(false);
+    };
+
 
     const handleBulkUploadClick = () => {
         fileInputRef.current?.click();
@@ -327,6 +361,27 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
           .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [problems, searchTerm, difficultyFilter]);
 
+    const isAllFilteredSelected = useMemo(() => {
+        if (filteredProblems.length === 0) return false;
+        const filteredIds = new Set(filteredProblems.map(p => p.id));
+        const selectedFilteredCount = Array.from(selectedIds).filter(id => filteredIds.has(id)).length;
+
+        if (selectedFilteredCount === 0) return false;
+        if (selectedFilteredCount === filteredProblems.length) return true;
+        return 'indeterminate';
+    }, [filteredProblems, selectedIds]);
+
+    const handleToggleAll = useCallback((checked: boolean | 'indeterminate') => {
+        const newSet = new Set(selectedIds);
+        if (checked === true) {
+            filteredProblems.forEach(p => newSet.add(p.id));
+        } else {
+            filteredProblems.forEach(p => newSet.delete(p.id));
+        }
+        setSelectedIds(newSet);
+    }, [selectedIds, filteredProblems]);
+
+
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
           case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
@@ -427,6 +482,33 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                         ))}
                     </div>
                 </div>
+
+                 {selectedIds.size > 0 && (
+                    <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
+                        <span className="text-sm font-medium">{selectedIds.size} problem(s) selected</span>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={isDeleting}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Selected
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will permanently delete {selectedIds.size} problem(s). This action cannot be undone.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
+                                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Confirm Delete
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                )}
                 
                 <div className="mt-4">
                     {loading ? (
@@ -436,6 +518,13 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-12">
+                                            <Checkbox
+                                                checked={isAllFilteredSelected}
+                                                onCheckedChange={handleToggleAll}
+                                                aria-label="Select all"
+                                            />
+                                        </TableHead>
                                         <TableHead>Title</TableHead>
                                         <TableHead>Category</TableHead>
                                         <TableHead>Difficulty</TableHead>
@@ -444,7 +533,24 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                                 </TableHeader>
                                 <TableBody>
                                     {filteredProblems.map((problem) => (
-                                        <TableRow key={problem.id}>
+                                        <TableRow key={problem.id} data-state={selectedIds.has(problem.id) && "selected"}>
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedIds.has(problem.id)}
+                                                    onCheckedChange={(checked) => {
+                                                        setSelectedIds(prev => {
+                                                            const newSet = new Set(prev);
+                                                            if (checked) {
+                                                                newSet.add(problem.id);
+                                                            } else {
+                                                                newSet.delete(problem.id);
+                                                            }
+                                                            return newSet;
+                                                        });
+                                                    }}
+                                                    aria-label={`Select row ${problem.title}`}
+                                                />
+                                            </TableCell>
                                             <TableCell className="font-medium">{problem.title}</TableCell>
                                             <TableCell>{problem.categoryName}</TableCell>
                                             <TableCell>
