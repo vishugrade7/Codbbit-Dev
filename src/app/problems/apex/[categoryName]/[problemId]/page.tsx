@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
@@ -184,11 +184,140 @@ const MermaidRenderer = ({ chart }: { chart: string }) => {
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
+const EditorAndResults = ({
+    code,
+    setCode,
+    problem,
+    handleSubmit,
+    isSubmitting,
+    fontSize,
+    setFontSize,
+    isFullScreen,
+    toggleFullScreen,
+    resultsPanelRef,
+    isResultsCollapsed,
+    toggleResultsPanel,
+    results,
+    submissionSuccess,
+    submissionStep,
+}: {
+    code: string,
+    setCode: (code: string) => void,
+    problem: Problem,
+    handleSubmit: () => void,
+    isSubmitting: boolean,
+    fontSize: number,
+    setFontSize: (size: number) => void,
+    isFullScreen: boolean,
+    toggleFullScreen: () => void,
+    resultsPanelRef: React.RefObject<ImperativePanelHandle>,
+    isResultsCollapsed: boolean,
+    toggleResultsPanel: () => void,
+    results: string,
+    submissionSuccess: boolean,
+    submissionStep: SubmissionStep
+}) => {
+    const { resolvedTheme } = useTheme();
+
+    return (
+        <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={60} minSize={20}>
+                <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between p-2 border-b">
+                        <div className="flex items-center gap-2 font-semibold">
+                            <Code className="h-5 w-5" />
+                            <span>Apex Code</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Reset Code</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <Select value={String(fontSize)} onValueChange={(value) => setFontSize(Number(value))}>
+                                <SelectTrigger className="w-[85px] h-8 text-xs">
+                                    <SelectValue placeholder="Font Size" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="12">12px</SelectItem>
+                                    <SelectItem value="14">14px</SelectItem>
+                                    <SelectItem value="16">16px</SelectItem>
+                                    <SelectItem value="18">18px</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={toggleFullScreen}>
+                                            {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                                            <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                Run
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="editor-container flex-1 w-full h-full overflow-auto">
+                        <MonacoEditor
+                            height="100%"
+                            language="java"
+                            value={code}
+                            onChange={(newValue) => setCode(newValue || "")}
+                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                            options={{
+                                fontSize: fontSize,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                padding: {
+                                    top: 16,
+                                    bottom: 16,
+                                },
+                                fontFamily: 'var(--font-source-code-pro)',
+                            }}
+                        />
+                    </div>
+                </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel
+                ref={resultsPanelRef}
+                collapsible
+                collapsedSize={8}
+                defaultSize={40}
+                minSize={8}
+                onCollapse={() => (resultsPanelRef.current as any)?.setIsCollapsed(true)}
+                onExpand={() => (resultsPanelRef.current as any)?.setIsCollapsed(false)}
+            >
+                <div className="flex flex-col h-full">
+                     <div className="p-2 border-b flex items-center justify-between h-[48px] flex-shrink-0">
+                        <h3 className="font-semibold text-sm">Test Results</h3>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleResultsPanel}>
+                           {isResultsCollapsed ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                        </Button>
+                    </div>
+                    <div className="flex-1 p-4 overflow-auto">
+                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
+                    </div>
+                </div>
+            </ResizablePanel>
+        </ResizablePanelGroup>
+    );
+};
+
 export default function ProblemWorkspacePage() {
     const router = useRouter();
     const params = useParams();
-    const { resolvedTheme } = useTheme();
-
+    
     const { categoryName, problemId } = useMemo(() => ({
         categoryName: params?.categoryName ? decodeURIComponent(params.categoryName as string) : null,
         problemId: params?.problemId ? (params.problemId as string) : null
@@ -213,7 +342,7 @@ export default function ProblemWorkspacePage() {
 
     const [isFullScreen, setIsFullScreen] = useState(false);
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
-    const resultsPanelRef = useRef<ImperativePanelHandle>(null);
+    const resultsPanelRef = useRef<ImperativePanelHandle & { setIsCollapsed: (isCollapsed: boolean) => void }>(null);
     const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
     const [fontSize, setFontSize] = useState<number>(16);
 
@@ -226,6 +355,7 @@ export default function ProblemWorkspacePage() {
         // Collapse panel on initial mount
         if (resultsPanelRef.current) {
             resultsPanelRef.current.collapse();
+            (resultsPanelRef.current as any).setIsCollapsed = (isCollapsed: boolean) => setIsResultsCollapsed(isCollapsed);
         }
     }, []);
 
@@ -249,11 +379,12 @@ export default function ProblemWorkspacePage() {
     const toggleResultsPanel = () => {
         const panel = resultsPanelRef.current;
         if (panel) {
-            if (panel.isCollapsed()) {
+            if (isResultsCollapsed) {
                 panel.expand();
             } else {
                 panel.collapse();
             }
+            setIsResultsCollapsed(!isResultsCollapsed)
         }
     };
 
@@ -367,8 +498,8 @@ export default function ProblemWorkspacePage() {
 
         // Auto-expand results panel
         const panel = resultsPanelRef.current;
-        if (panel && panel.isCollapsed()) {
-            panel.expand();
+        if (panel && isResultsCollapsed) {
+            toggleResultsPanel();
         }
         
         const onProgress = (step: 'testing' | 'done') => {
@@ -512,101 +643,6 @@ export default function ProblemWorkspacePage() {
         );
     }
 
-
-    const EditorAndResults = () => (
-        <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={60} minSize={20}>
-                <div className="flex flex-col h-full">
-                    <div className="flex items-center justify-between p-2 border-b">
-                        <div className="flex items-center gap-2 font-semibold">
-                            <Code className="h-5 w-5" />
-                            <span>Apex Code</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>Reset Code</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <Select value={String(fontSize)} onValueChange={(value) => setFontSize(Number(value))}>
-                                <SelectTrigger className="w-[85px] h-8 text-xs">
-                                    <SelectValue placeholder="Font Size" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="12">12px</SelectItem>
-                                    <SelectItem value="14">14px</SelectItem>
-                                    <SelectItem value="16">16px</SelectItem>
-                                    <SelectItem value="18">18px</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={toggleFullScreen}>
-                                            {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                                            <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                Run
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="editor-container flex-1 w-full h-full overflow-auto">
-                        <MonacoEditor
-                            height="100%"
-                            language="java"
-                            value={code}
-                            onChange={(newValue) => setCode(newValue || "")}
-                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                            options={{
-                                fontSize: fontSize,
-                                minimap: { enabled: false },
-                                scrollBeyondLastLine: false,
-                                padding: {
-                                    top: 16,
-                                    bottom: 16,
-                                },
-                                fontFamily: 'var(--font-source-code-pro)',
-                            }}
-                        />
-                    </div>
-                </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel
-                ref={resultsPanelRef}
-                collapsible
-                collapsedSize={8}
-                defaultSize={40}
-                minSize={8}
-                onCollapse={() => setIsResultsCollapsed(true)}
-                onExpand={() => setIsResultsCollapsed(false)}
-            >
-                <div className="flex flex-col h-full">
-                     <div className="p-2 border-b flex items-center justify-between h-[48px] flex-shrink-0">
-                        <h3 className="font-semibold text-sm">Test Results</h3>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleResultsPanel}>
-                           {isResultsCollapsed ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                        </Button>
-                    </div>
-                    <div className="flex-1 p-4 overflow-auto">
-                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
-                    </div>
-                </div>
-            </ResizablePanel>
-        </ResizablePanelGroup>
-    );
-
     return (
     <div className="w-full h-screen flex flex-col bg-background text-foreground">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
@@ -746,7 +782,23 @@ export default function ProblemWorkspacePage() {
                         <ProblemDetails />
                     </TabsContent>
                     <TabsContent value="code" className="flex-auto flex flex-col m-0 overflow-hidden">
-                        <EditorAndResults />
+                        <EditorAndResults 
+                            code={code}
+                            setCode={setCode}
+                            problem={problem}
+                            handleSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            fontSize={fontSize}
+                            setFontSize={setFontSize}
+                            isFullScreen={isFullScreen}
+                            toggleFullScreen={toggleFullScreen}
+                            resultsPanelRef={resultsPanelRef}
+                            isResultsCollapsed={isResultsCollapsed}
+                            toggleResultsPanel={toggleResultsPanel}
+                            results={results}
+                            submissionSuccess={submissionSuccess}
+                            submissionStep={submissionStep}
+                        />
                     </TabsContent>
                 </Tabs>
             </div>
@@ -767,7 +819,23 @@ export default function ProblemWorkspacePage() {
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={75} minSize={30}>
-                         <EditorAndResults />
+                         <EditorAndResults 
+                            code={code}
+                            setCode={setCode}
+                            problem={problem}
+                            handleSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            fontSize={fontSize}
+                            setFontSize={setFontSize}
+                            isFullScreen={isFullScreen}
+                            toggleFullScreen={toggleFullScreen}
+                            resultsPanelRef={resultsPanelRef}
+                            isResultsCollapsed={isResultsCollapsed}
+                            toggleResultsPanel={toggleResultsPanel}
+                            results={results}
+                            submissionSuccess={submissionSuccess}
+                            submissionStep={submissionStep}
+                         />
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>
