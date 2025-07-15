@@ -17,7 +17,7 @@ export default function FeatureGrid() {
               </div>
               <h2 className="text-3xl font-semibold tracking-tight max-w-2xl">Sharpen Your Salesforce Skills</h2>
               <p className="mt-4 text-muted-foreground max-w-2xl">
-                Challenge yourself on small Salesforce coding exercises. Each problem is crafted by the community to help you
+                Challenge yourself on small Salesforce coding exercises. Each problem is crafted to help you
                 strengthen different coding techniques. Master Apex, SOQL, and LWC, or quickly pick up any of the
                 supported technologies.
               </p>
@@ -41,9 +41,8 @@ export default function FeatureGrid() {
                 </div>
                 <h3 className="text-2xl font-semibold">Get Instant Feedback</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
-                  Solve problems with your coding style right in the browser and use test cases (TDD) to check it as
-                  you progress. Retrain with new, creative, and optimized approaches. Find all of the bugs in your
-                  programming practice.
+                  Solve Apex & LWC problems right in the browser and use test cases (TDD) to check your work as
+                  you progress. Retrain with new, creative, and optimized approaches.
                 </p>
               </CardContent>
             </Card>
@@ -57,7 +56,7 @@ export default function FeatureGrid() {
                 <h3 className="text-2xl font-semibold">Earn Ranks and Honor</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
                   Code challenges are ranked from beginner to expert level. As you complete higher-ranked problems, you
-                  level up your profile and push your software development skills to your highest potential.
+                  level up your profile and push your software development skills to their highest potential.
                 </p>
               </CardContent>
             </Card>
