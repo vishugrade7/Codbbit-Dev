@@ -85,11 +85,14 @@
   body {
     @apply bg-background text-foreground;
     min-height: 100vh;
-    background-color: hsl(var(--background));
-    background-image: 
-      linear-gradient(hsl(var(--primary) / 0.05) 1px, transparent 1px),
-      linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
+  }
+
+  .home-hero-gradient {
+    background: linear-gradient(180deg, hsl(220, 100%, 95%), hsl(0, 0%, 100%));
+  }
+
+  .dark .home-hero-gradient {
+    background: linear-gradient(180deg, hsl(220, 20%, 15%), hsl(var(--background)));
   }
 }
 
