@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -173,6 +173,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+    const [isPasteJsonModalOpen, setIsPasteJsonModalOpen] = useState(false);
     const [problemToDelete, setProblemToDelete] = useState<ProblemWithCategory | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -365,6 +366,10 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                             <DropdownMenuItem onClick={handleDownloadSampleCsv}>Sample.csv</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    <Button onClick={() => setIsPasteJsonModalOpen(true)} variant="outline">
+                        <ClipboardPaste className="mr-2 h-4 w-4" />
+                        Paste JSON
+                    </Button>
                     <Button onClick={handleBulkUploadClick} variant="outline" disabled={isUploading}>
                         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                         Bulk Upload
@@ -379,6 +384,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json,.csv" className="hidden" disabled={isUploading} />
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
                 <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
+                <PasteJsonModal isOpen={isPasteJsonModalOpen} onOpenChange={setIsPasteJsonModalOpen} onUploadComplete={fetchProblems} />
                 <AlertDialog open={!!problemToDelete} onOpenChange={(open) => !open && setProblemToDelete(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -478,6 +484,69 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function PasteJsonModal({ isOpen, onOpenChange, onUploadComplete }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onUploadComplete: () => void }) {
+    const { toast } = useToast();
+    const [jsonContent, setJsonContent] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleUpload = async () => {
+        if (!jsonContent.trim()) {
+            toast({ variant: 'destructive', title: 'Error', description: 'JSON content cannot be empty.' });
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const jsonData = JSON.parse(jsonContent);
+            const result = await bulkUpsertProblemsFromJSON(jsonData);
+
+            if (result.success) {
+                toast({ title: 'Success!', description: result.message });
+                onUploadComplete();
+                onOpenChange(false);
+                setJsonContent("");
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Upload Failed',
+                description: error.message || 'Could not process the JSON data.',
+                duration: 9000,
+            });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>Paste and Upload JSON</DialogTitle>
+                    <DialogDescription>Paste an array of problem objects in JSON format below.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Textarea
+                        value={jsonContent}
+                        onChange={(e) => setJsonContent(e.target.value)}
+                        placeholder='[{"title": "My Problem", ...}]'
+                        className="h-64 font-mono"
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleUpload} disabled={isUploading}>
+                        {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Upload JSON
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
