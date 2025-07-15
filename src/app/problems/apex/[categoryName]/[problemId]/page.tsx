@@ -196,6 +196,7 @@ const EditorAndResults = ({
     toggleFullScreen,
     resultsPanelRef,
     isResultsCollapsed,
+    setIsResultsCollapsed,
     toggleResultsPanel,
     results,
     submissionSuccess,
@@ -212,6 +213,7 @@ const EditorAndResults = ({
     toggleFullScreen: () => void,
     resultsPanelRef: React.RefObject<ImperativePanelHandle>,
     isResultsCollapsed: boolean,
+    setIsResultsCollapsed: (isCollapsed: boolean) => void,
     toggleResultsPanel: () => void,
     results: string,
     submissionSuccess: boolean,
@@ -295,8 +297,8 @@ const EditorAndResults = ({
                 collapsedSize={8}
                 defaultSize={40}
                 minSize={8}
-                onCollapse={() => (resultsPanelRef.current as any)?.setIsCollapsed(true)}
-                onExpand={() => (resultsPanelRef.current as any)?.setIsCollapsed(false)}
+                onCollapse={() => setIsResultsCollapsed(true)}
+                onExpand={() => setIsResultsCollapsed(false)}
             >
                 <div className="flex flex-col h-full">
                      <div className="p-2 border-b flex items-center justify-between h-[48px] flex-shrink-0">
@@ -342,7 +344,7 @@ export default function ProblemWorkspacePage() {
 
     const [isFullScreen, setIsFullScreen] = useState(false);
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
-    const resultsPanelRef = useRef<ImperativePanelHandle & { setIsCollapsed: (isCollapsed: boolean) => void }>(null);
+    const resultsPanelRef = useRef<ImperativePanelHandle>(null);
     const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
     const [fontSize, setFontSize] = useState<number>(16);
 
@@ -355,7 +357,7 @@ export default function ProblemWorkspacePage() {
         // Collapse panel on initial mount
         if (resultsPanelRef.current) {
             resultsPanelRef.current.collapse();
-            (resultsPanelRef.current as any).setIsCollapsed = (isCollapsed: boolean) => setIsResultsCollapsed(isCollapsed);
+            setIsResultsCollapsed(true);
         }
     }, []);
 
@@ -376,7 +378,7 @@ export default function ProblemWorkspacePage() {
         }
     };
     
-    const toggleResultsPanel = () => {
+    const toggleResultsPanel = useCallback(() => {
         const panel = resultsPanelRef.current;
         if (panel) {
             if (isResultsCollapsed) {
@@ -384,9 +386,8 @@ export default function ProblemWorkspacePage() {
             } else {
                 panel.collapse();
             }
-            setIsResultsCollapsed(!isResultsCollapsed)
         }
-    };
+    }, [isResultsCollapsed]);
 
 
     useEffect(() => {
@@ -794,6 +795,7 @@ export default function ProblemWorkspacePage() {
                             toggleFullScreen={toggleFullScreen}
                             resultsPanelRef={resultsPanelRef}
                             isResultsCollapsed={isResultsCollapsed}
+                            setIsResultsCollapsed={setIsResultsCollapsed}
                             toggleResultsPanel={toggleResultsPanel}
                             results={results}
                             submissionSuccess={submissionSuccess}
@@ -831,6 +833,7 @@ export default function ProblemWorkspacePage() {
                             toggleFullScreen={toggleFullScreen}
                             resultsPanelRef={resultsPanelRef}
                             isResultsCollapsed={isResultsCollapsed}
+                            setIsResultsCollapsed={setIsResultsCollapsed}
                             toggleResultsPanel={toggleResultsPanel}
                             results={results}
                             submissionSuccess={submissionSuccess}
