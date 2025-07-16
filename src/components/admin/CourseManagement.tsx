@@ -164,7 +164,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     const [textColor, setTextColor] = useState('#000000');
     const [backgroundColor, setBackgroundColor] = useState('#ffffff');
     
-    const [selection, setSelection] = useState<Range | null>(null);
+    const selectionRef = useRef<Range | null>(null);
 
     // Sync external value changes to the editor
     useEffect(() => {
@@ -179,18 +179,18 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
         if (sel && sel.rangeCount > 0) {
             const range = sel.getRangeAt(0);
             if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
-                setSelection(range);
+                selectionRef.current = range;
             }
         }
     }, []);
 
     const restoreSelection = useCallback(() => {
-        if (selection) {
+        if (selectionRef.current) {
             const sel = window.getSelection();
             sel?.removeAllRanges();
-            sel?.addRange(selection);
+            sel?.addRange(selectionRef.current);
         }
-    }, [selection]);
+    }, []);
 
     const handleSelect = useCallback(() => {
         const sel = window.getSelection();
@@ -208,7 +208,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     
     const applyStyle = (command: string, valueArg: string | null = null) => {
         restoreSelection();
-        if (selection && editorRef.current?.contains(selection.commonAncestorContainer)) {
+        if (selectionRef.current && editorRef.current?.contains(selectionRef.current.commonAncestorContainer)) {
             document.execCommand(command, false, valueArg);
             if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
             setIsToolbarOpen(false);
@@ -216,19 +216,16 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     };
     
     const handleLinkButtonClick = () => {
-        saveSelection();
         setIsToolbarOpen(false);
         setIsLinkDialogOpen(true);
     };
 
     const handleCommentButtonClick = () => {
-        saveSelection();
         setIsToolbarOpen(false);
         setIsCommentDialogOpen(true);
     };
 
     const handleColorButtonClick = () => {
-        saveSelection();
         setIsToolbarOpen(false);
         setIsColorDialogOpen(true);
     };
@@ -243,17 +240,17 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
 
     const applyComment = () => {
         restoreSelection();
-        if (commentText && selection && editorRef.current?.contains(selection.commonAncestorContainer)) {
+        if (commentText && selectionRef.current && editorRef.current?.contains(selectionRef.current.commonAncestorContainer)) {
             const encodedComment = commentText.replace(/"/g, '&quot;');
             const span = document.createElement('span');
             span.setAttribute('data-comment', encodedComment);
-            span.className = 'comment-highlight'; // Add class for styling
+            span.className = 'comment-highlight';
             try {
-                selection.surroundContents(span);
+                selectionRef.current.surroundContents(span);
             } catch (e) {
                 // Fallback for complex selections
-                span.appendChild(selection.extractContents());
-                selection.insertNode(span);
+                span.appendChild(selectionRef.current.extractContents());
+                selectionRef.current.insertNode(span);
             }
             if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
         }
@@ -263,7 +260,7 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
 
     const applyColorStyle = () => {
         restoreSelection();
-        if (selection && editorRef.current?.contains(selection.commonAncestorContainer)) {
+        if (selectionRef.current && editorRef.current?.contains(selectionRef.current.commonAncestorContainer)) {
             const span = document.createElement('span');
             let styles = '';
             // Only add style if it's not the default color
@@ -273,10 +270,10 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
             if (styles) {
                 span.setAttribute('style', styles);
                 try {
-                    selection.surroundContents(span);
+                    selectionRef.current.surroundContents(span);
                 } catch (e) {
-                    span.appendChild(selection.extractContents());
-                    selection.insertNode(span);
+                    span.appendChild(selectionRef.current.extractContents());
+                    selectionRef.current.insertNode(span);
                 }
                 if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
             }
@@ -297,7 +294,8 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
             <PopoverTrigger asChild>
                 <div
                     ref={editorRef}
-                    onSelect={handleSelect}
+                    onKeyUp={saveSelection}
+                    onMouseUp={saveSelection}
                     onInput={handleInput}
                     onBlur={() => setIsToolbarOpen(false)}
                     contentEditable
