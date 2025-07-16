@@ -207,8 +207,8 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     }, [saveSelection]);
     
     const applyStyle = (command: string, valueArg: string | null = null) => {
-        if (selection) {
-            restoreSelection();
+        restoreSelection();
+        if (selection && editorRef.current?.contains(selection.commonAncestorContainer)) {
             document.execCommand(command, false, valueArg);
             if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
             setIsToolbarOpen(false);
@@ -242,8 +242,8 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     };
 
     const applyComment = () => {
-        if (commentText && selection) {
-            restoreSelection();
+        restoreSelection();
+        if (commentText && selection && editorRef.current?.contains(selection.commonAncestorContainer)) {
             const encodedComment = commentText.replace(/"/g, '&quot;');
             const span = document.createElement('span');
             span.setAttribute('data-comment', encodedComment);
@@ -262,20 +262,24 @@ function TextareaWithToolbar({ value, onChange, ...props }: { value: string, onC
     };
 
     const applyColorStyle = () => {
-        if (selection) {
-            restoreSelection();
+        restoreSelection();
+        if (selection && editorRef.current?.contains(selection.commonAncestorContainer)) {
             const span = document.createElement('span');
             let styles = '';
+            // Only add style if it's not the default color
             if (textColor !== '#000000') styles += `color: ${textColor};`;
-            if (backgroundColor !== '#ffffff') styles += `background-color: ${backgroundColor}; padding: 2px 5px; border-radius: 4px;`;
-            span.setAttribute('style', styles);
-            try {
-                selection.surroundContents(span);
-            } catch (e) {
-                span.appendChild(selection.extractContents());
-                selection.insertNode(span);
+            if (backgroundColor !== '#ffffff') styles += `background-color: ${backgroundColor}; padding: 2px 4px; border-radius: 3px;`;
+            
+            if (styles) {
+                span.setAttribute('style', styles);
+                try {
+                    selection.surroundContents(span);
+                } catch (e) {
+                    span.appendChild(selection.extractContents());
+                    selection.insertNode(span);
+                }
+                if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
             }
-             if(editorRef.current && onChange) onChange(editorRef.current.innerHTML);
         }
         setIsColorDialogOpen(false);
     };
