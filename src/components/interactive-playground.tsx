@@ -7,9 +7,9 @@ import { Button } from "./ui/button";
 
 export default function InteractivePlayground() {
     const features = [
-        "Code, Test & Debug Instantly in any Language.",
-        "Build web applications with our HTML and React online compilers.",
-        "Optimize your code using AI-driven debugging."
+        "Execute Apex code snippets and SOQL queries instantly.",
+        "Build and deploy Lightning Web Components right from your browser.",
+        "Connect directly to your Salesforce org for real-world practice."
     ];
 
     return (
@@ -28,8 +28,8 @@ export default function InteractivePlayground() {
                     </div>
                     <div className="flex flex-col justify-center space-y-6">
                         <div className="space-y-2">
-                            <div className="text-primary font-semibold tracking-wide">Online Compiler</div>
-                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Your Interactive Coding Playground</h2>
+                            <div className="text-primary font-semibold tracking-wide">LWC & APEX PLAYGROUND</div>
+                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Your Interactive Salesforce Playground</h2>
                         </div>
                         <ul className="grid gap-4">
                             {features.map((feature, index) => (
@@ -43,7 +43,7 @@ export default function InteractivePlayground() {
                         </ul>
                         <div className="pt-4">
                             <Button asChild size="lg">
-                                <Link href="/lwc-playground">Explore Compiler</Link>
+                                <Link href="/lwc-playground">Explore Playground</Link>
                             </Button>
                         </div>
                     </div>
