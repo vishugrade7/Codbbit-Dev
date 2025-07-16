@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import FeatureGrid from "@/components/feature-grid";
 import Testimonials from "@/components/testimonials";
+import InteractivePlayground from "@/components/interactive-playground";
 
 export default function Home() {
   return (
@@ -43,6 +44,9 @@ export default function Home() {
 
       {/* Feature Grid Section */}
       <FeatureGrid />
+
+      {/* Interactive Playground Section */}
+      <InteractivePlayground />
 
       {/* Testimonials Section */}
       <Testimonials />
