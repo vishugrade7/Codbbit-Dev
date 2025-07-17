@@ -17,21 +17,22 @@ export default function Home() {
     { name: 'Test', description: 'Instant Feedback', icon: FlaskConical },
     { name: 'Deploy', description: 'Real-world Scenarios', icon: Rocket },
   ];
+  
+  const heroBackgroundImage = "https://images.unsplash.com/photo-1555421689-d68471e189f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxN3x8c2FsZXNmb3JjZXxlbnwwfHx8fDE3NTI3MTc5OTF8MA&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <main className="w-full flex flex-col items-center justify-center overflow-x-hidden">
       {/* Hero Section */}
-      <section className="w-full home-hero-gradient">
+      <section 
+        className="w-full home-hero-gradient"
+        style={{
+          backgroundImage: `url(${heroBackgroundImage})`,
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'contain',
+        }}
+      >
         <div className="container min-h-screen flex flex-col items-center justify-center text-center gap-8 py-12 md:py-24">
-            <div className="relative w-full h-64 md:h-96">
-                <Image
-                    src="https://images.unsplash.com/photo-1555421689-d68471e189f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxN3x8c2FsZXNmb3JjZXxlbnwwfHx8fDE3NTI3MTc5OTF8MA&ixlib=rb-4.1.0&q=80&w=1080"
-                    alt="Illustration of a developer coding"
-                    fill
-                    className="object-contain"
-                    data-ai-hint="developer coding"
-                />
-            </div>
             <div className="flex flex-col items-center text-center gap-6">
                  <div className="inline-block rounded-full bg-primary/20 px-4 py-2 text-sm font-semibold text-primary">
                     A NEW WAY TO
