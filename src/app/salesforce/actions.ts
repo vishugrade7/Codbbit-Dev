@@ -286,13 +286,13 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
             // Re-fetch solved problems inside transaction to count categories correctly
             const currentSolvedProblems = userData.solvedProblems || {};
             const allProblemsDoc = await getDoc(doc(db, "problems", "Apex"));
-            const allProblemsData = allProblemsDoc.data()?.Category as ApexProblemsData;
+            const allProblemsData = allProblemsDoc.data()?.Category as any;
             
             if (allProblemsData) {
                 Object.values(currentSolvedProblems).forEach((p: SolvedProblemDetail) => {
                     // Find the original problem to get its category
                     for (const catName in allProblemsData) {
-                        const foundProblem = allProblemsData[catName].Questions.find(q => q.title === p.title);
+                        const foundProblem = allProblemsData[catName].Questions.find((q: Problem) => q.title === p.title);
                         if (foundProblem) {
                             categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
                             break;
@@ -468,6 +468,65 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         log.push(`\n--- ERROR ---`);
         log.push(errorMessage);
         return { success: false, message: 'An error occurred during submission.', details: log.join('\n') };
+    }
+}
+
+export async function testApexProblem(userId: string, problem: Partial<Problem>): Promise<{ success: boolean; message: string; }> {
+    if (!userId || !problem || !problem.sampleCode || !problem.testcases || !problem.metadataType) {
+        return { success: false, message: "Missing required problem data for testing." };
+    }
+
+    try {
+        const auth = await getSfdcConnection(userId);
+        
+        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
+            return { success: false, message: "Trigger SObject is required." };
+        }
+        
+        const mainObjectName = getClassName(problem.sampleCode);
+        const testObjectName = getClassName(problem.testcases);
+        
+        if (!mainObjectName || !testObjectName) {
+            return { success: false, message: "Could not determine class/trigger names from code." };
+        }
+
+        await deployMetadata([], auth, objectType, mainObjectName, problem.sampleCode, problem.triggerSObject);
+        const testClassId = await deployMetadata([], auth, 'ApexClass', testObjectName, problem.testcases);
+
+        const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
+            method: 'POST',
+            body: JSON.stringify({ classids: testClassId })
+        });
+        const apexTestRunId = testRunResult;
+
+        let jobStatus;
+        for (let i = 0; i < 30; i++) {
+            await sleep(1000);
+            const jobResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=SELECT Status FROM AsyncApexJob WHERE Id = '${apexTestRunId}'`);
+            if (jobResult.records.length > 0) {
+                jobStatus = jobResult.records[0].Status;
+                if (['Completed', 'Failed', 'Aborted'].includes(jobStatus)) break;
+            }
+        }
+        
+        if (jobStatus !== 'Completed') {
+            return { success: false, message: `Test run failed. Final status: ${jobStatus || 'Timed Out'}` };
+        }
+
+        const resultQuery = `SELECT MethodName, Outcome, Message, StackTrace FROM ApexTestResult WHERE AsyncApexJobId = '${apexTestRunId}'`;
+        const testResultData = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(resultQuery)}`);
+        
+        const failedTest = testResultData.records.find((r: any) => r.Outcome !== 'Pass');
+        if (failedTest) {
+            return { success: false, message: `Test Failed: ${failedTest.MethodName} - ${failedTest.Message}` };
+        }
+
+        return { success: true, message: "All test cases passed." };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, message: errorMessage };
     }
 }
 
