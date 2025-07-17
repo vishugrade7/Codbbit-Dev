@@ -7,37 +7,63 @@ import Image from "next/image";
 import FeatureGrid from "@/components/feature-grid";
 import Testimonials from "@/components/testimonials";
 import InteractivePlayground from "@/components/interactive-playground";
+import { ArrowRight, BookOpen, Code, FlaskConical, Play, Rocket } from "lucide-react";
+import Rive from '@rive-app/react-canvas';
 
 export default function Home() {
+  const features = [
+    { name: 'Practice', description: 'Hands-on Problems', icon: Code },
+    { name: 'Learn', description: 'Interactive Courses', icon: BookOpen },
+    { name: 'Test', description: 'Instant Feedback', icon: FlaskConical },
+    { name: 'Deploy', description: 'Real-world Scenarios', icon: Rocket },
+  ];
+
   return (
     <main className="w-full flex flex-col items-center justify-center overflow-x-hidden">
       {/* Hero Section */}
       <section className="w-full home-hero-gradient">
-        <div className="container min-h-screen grid grid-cols-1 md:grid-cols-2 items-center gap-8 py-12 md:py-24">
-            <div className="flex flex-col items-start text-left">
+        <div className="container min-h-screen flex flex-col items-center justify-center text-center gap-8 py-12 md:py-24">
+            <div className="relative w-full h-64 md:h-96">
+                <Rive
+                    src="coder_guy.riv"
+                    className="absolute inset-0 w-full h-full animate-float"
+                />
+            </div>
+            <div className="flex flex-col items-center text-center gap-6">
+                 <div className="inline-block rounded-full bg-primary/20 px-4 py-2 text-sm font-semibold text-primary">
+                    A NEW WAY TO
+                </div>
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-                    Master Salesforce with Apex, LWC & SOQL
+                    MASTER APEX, LWC, AND SOQL
                 </h1>
-                <p className="mx-auto mt-6 max-w-[700px] text-lg text-muted-foreground md:text-xl">
-                    Accelerate your career with our interactive courses and hands-on practice problems. The ultimate playground for Salesforce developers.
+                <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-muted-foreground">
+                  {features.map((feature, index) => (
+                    <React.Fragment key={feature.name}>
+                      <div className="flex flex-col items-center gap-1">
+                        <feature.icon className="h-5 w-5 text-foreground" />
+                        <span className="font-bold text-foreground">{feature.name}</span>
+                        <span className="text-xs">{feature.description}</span>
+                      </div>
+                      {index < features.length - 1 && <ArrowRight className="h-4 w-4 hidden md:block" />}
+                    </React.Fragment>
+                  ))}
+                </div>
+                <p className="mx-auto mt-4 max-w-[700px] text-lg text-muted-foreground md:text-xl">
+                    Codbbit combines an interactive editor, a new stateful learning format, and a blazing-fast Salesforce integration. This end-to-end pipeline guarantees that what you build in our editor is exactly what ships in your orgs.
                 </p>
-                <div className="mt-8 flex justify-center gap-4">
+                <div className="mt-6 flex justify-center gap-4">
                     <Button asChild size="lg">
-                    <Link href="/apex-problems">
-                        Explore Practice Problems
-                    </Link>
+                      <Link href="/signup">
+                        Get Started
+                      </Link>
+                    </Button>
+                     <Button asChild size="lg" variant="outline">
+                      <Link href="/apex-problems">
+                        <Play className="mr-2 h-4 w-4" />
+                        Explore Problems
+                      </Link>
                     </Button>
                 </div>
-            </div>
-            <div className="hidden md:flex items-center justify-center">
-                <Image 
-                    src="https://placehold.co/500x500.png" 
-                    alt="Developer coding on a laptop" 
-                    width={500}
-                    height={500}
-                    data-ai-hint="developer illustration"
-                    className="object-contain"
-                />
             </div>
         </div>
       </section>
