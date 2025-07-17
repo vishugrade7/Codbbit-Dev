@@ -471,7 +471,19 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     }
 }
 
-export async function testApexProblem(userId: string, problem: Partial<Problem>): Promise<{ success: boolean; message: string; }> {
+type TestFailureDetails = {
+    methodName: string;
+    message: string;
+    stackTrace: string;
+};
+
+type TestProblemResult = {
+    success: boolean;
+    message: string;
+    failureDetails?: TestFailureDetails;
+};
+
+export async function testApexProblem(userId: string, problem: Partial<Problem>): Promise<TestProblemResult> {
     if (!userId || !problem || !problem.sampleCode || !problem.testcases || !problem.metadataType) {
         return { success: false, message: "Missing required problem data for testing." };
     }
@@ -519,7 +531,15 @@ export async function testApexProblem(userId: string, problem: Partial<Problem>)
         
         const failedTest = testResultData.records.find((r: any) => r.Outcome !== 'Pass');
         if (failedTest) {
-            return { success: false, message: `Test Failed: ${failedTest.MethodName} - ${failedTest.Message}` };
+            return {
+                success: false,
+                message: `Test Failed: ${failedTest.MethodName}`,
+                failureDetails: {
+                    methodName: failedTest.MethodName,
+                    message: failedTest.Message,
+                    stackTrace: failedTest.StackTrace || 'No stack trace available.',
+                }
+            };
         }
 
         return { success: true, message: "All test cases passed." };
@@ -658,7 +678,7 @@ export async function executeSalesforceCode(
             }
         }
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return {
             success: false,
             result: `An unexpected error occurred: ${errorMessage}`,

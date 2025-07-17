@@ -32,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2 } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -48,6 +48,12 @@ type CompanySuggestion = {
   domain: string;
   logo: string;
 };
+type TestFailureDetails = {
+    methodName: string;
+    message: string;
+    stackTrace: string;
+};
+
 
 const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySuggestion, onClick: (suggestion: CompanySuggestion) => void }) => {
   const [logoError, setLogoError] = useState(false);
@@ -182,6 +188,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     const [isDeleting, setIsDeleting] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [testingId, setTestingId] = useState<string | null>(null);
+    const [failureDetails, setFailureDetails] = useState<TestFailureDetails | null>(null);
 
     const fetchProblems = useCallback(async () => {
         setLoading(true);
@@ -288,7 +295,11 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                     }
                 } else {
                     failures++;
-                    toast({ variant: 'destructive', title: 'Test Failed', description: `"${problem.title}": ${testResult.message}`, duration: 9000 });
+                    setFailureDetails({
+                        methodName: testResult.failureDetails?.methodName || 'Unknown Method',
+                        message: testResult.message,
+                        stackTrace: testResult.failureDetails?.stackTrace || 'No stack trace provided.'
+                    });
                 }
             } catch (error: any) {
                 failures++;
@@ -433,7 +444,11 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 toast({ variant: 'destructive', title: `Test Passed, but Save Failed`, description: updateResult.error });
             }
         } else {
-            toast({ variant: 'destructive', title: `Test Failed for "${problem.title}"`, description: result.message, duration: 9000 });
+            setFailureDetails({
+                methodName: result.failureDetails?.methodName || 'Unknown Method',
+                message: result.message,
+                stackTrace: result.failureDetails?.stackTrace || 'No stack trace provided.'
+            });
         }
         setTestingId(null);
     };
@@ -496,6 +511,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
                 <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
                 <PasteJsonModal isOpen={isPasteJsonModalOpen} onOpenChange={setIsPasteJsonModalOpen} onUploadAndTest={processAndTestProblems} />
+                 <TestFailureDialog failureDetails={failureDetails} onOpenChange={() => setFailureDetails(null)} />
                 <AlertDialog open={!!problemToDelete} onOpenChange={(open) => !open && setProblemToDelete(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -654,6 +670,43 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function TestFailureDialog({ failureDetails, onOpenChange }: { failureDetails: TestFailureDetails | null, onOpenChange: () => void }) {
+    if (!failureDetails) return null;
+
+    return (
+        <Dialog open={!!failureDetails} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-6 w-6 text-destructive" />
+                        Test Execution Failed
+                    </DialogTitle>
+                    <DialogDescription>
+                        The sample code failed to pass the provided test cases.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                    <div>
+                        <h4 className="font-semibold text-sm">Failing Method</h4>
+                        <p className="mt-1 text-sm font-mono p-2 bg-muted rounded-md">{failureDetails.methodName}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-sm">Error Message</h4>
+                        <p className="mt-1 text-sm font-mono p-2 bg-muted rounded-md">{failureDetails.message}</p>
+                    </div>
+                     <div>
+                        <h4 className="font-semibold text-sm">Stack Trace</h4>
+                        <pre className="mt-1 text-xs font-mono p-2 bg-muted rounded-md whitespace-pre-wrap">{failureDetails.stackTrace}</pre>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={onOpenChange}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
