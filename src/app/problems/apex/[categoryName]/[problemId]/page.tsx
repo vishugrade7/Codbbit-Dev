@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -316,6 +316,39 @@ const EditorAndResults = ({
     );
 };
 
+const NextProblemOverlay = ({ nextProblem, onCancel, onNext }: { nextProblem: Problem, onCancel: () => void, onNext: () => void }) => {
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setProgress(prev => {
+                const nextVal = prev + 1;
+                if (nextVal >= 100) {
+                    clearInterval(interval);
+                    onNext();
+                }
+                return nextVal;
+            });
+        }, 50); // 50ms interval for 5 second duration (100 * 50ms = 5000ms)
+
+        return () => clearInterval(interval);
+    }, [onNext]);
+
+    return (
+        <div className="fixed bottom-4 right-4 z-50 p-4 rounded-lg bg-neutral-900/80 backdrop-blur-sm text-white shadow-2xl animate-fade-in-up">
+            <div className="text-sm text-neutral-300 mb-2">Up next</div>
+            <h4 className="font-bold text-lg mb-4">{nextProblem.title}</h4>
+            <div className="flex gap-2">
+                <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+                <Button onClick={onNext} className="relative overflow-hidden bg-white text-black hover:bg-neutral-200">
+                    <div className="absolute left-0 top-0 h-full bg-neutral-400/50" style={{ width: `${progress}%` }} />
+                    <span className="relative z-10 flex items-center"><PlayIcon className="mr-2 h-4 w-4" /> Next Problem</span>
+                </Button>
+            </div>
+        </div>
+    );
+};
+
 export default function ProblemWorkspacePage() {
     const router = useRouter();
     const params = useParams();
@@ -351,6 +384,7 @@ export default function ProblemWorkspacePage() {
     const [isClient, setIsClient] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [awardedPoints, setAwardedPoints] = useState(0);
+    const [nextProblem, setNextProblem] = useState<Problem | null>(null);
 
     useEffect(() => {
         setIsClient(true);
@@ -389,6 +423,10 @@ export default function ProblemWorkspacePage() {
         }
     }, [isResultsCollapsed]);
 
+    // Reset overlay when problem changes
+    useEffect(() => {
+        setNextProblem(null);
+    }, [problemId]);
 
     useEffect(() => {
         if (!categoryName || !problemId) return;
@@ -522,6 +560,17 @@ export default function ProblemWorkspacePage() {
                 setTimeout(() => {
                     setShowSuccess(false);
                 }, 5000);
+            }
+            
+            // Find next problem
+            const currentIndex = allProblems.findIndex(p => p.id === problem.id);
+            if (currentIndex !== -1) {
+                const solvedIds = new Set(Object.keys(userData?.solvedProblems || {}));
+                solvedIds.add(problem.id); // Add newly solved problem
+                const nextUnsolved = allProblems.slice(currentIndex + 1).find(p => !solvedIds.has(p.id) && (!p.isPremium || isPro));
+                if (nextUnsolved) {
+                    setNextProblem(nextUnsolved);
+                }
             }
         } else {
             toast({ variant: "destructive", title: "Submission Failed", description: response.message, duration: 9000 });
@@ -843,6 +892,16 @@ export default function ProblemWorkspacePage() {
                 </ResizablePanelGroup>
             </div>
         </main>
+        {nextProblem && (
+            <NextProblemOverlay
+                nextProblem={nextProblem}
+                onCancel={() => setNextProblem(null)}
+                onNext={() => {
+                    setNextProblem(null);
+                    router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${nextProblem.id}`);
+                }}
+            />
+        )}
     </div>
     )
 }
