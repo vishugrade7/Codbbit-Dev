@@ -25,7 +25,7 @@ export default function Home() {
         <div className="container min-h-screen flex flex-col items-center justify-center text-center gap-8 py-12 md:py-24">
             <div className="relative w-full h-64 md:h-96">
                 <Image
-                    src="https://placehold.co/800x600.png"
+                    src="https://images.unsplash.com/photo-1555421689-d68471e189f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxN3x8c2FsZXNmb3JjZXxlbnwwfHx8fDE3NTI3MTc5OTF8MA&ixlib=rb-4.1.0&q=80&w=1080"
                     alt="Illustration of a developer coding"
                     fill
                     className="object-contain"
