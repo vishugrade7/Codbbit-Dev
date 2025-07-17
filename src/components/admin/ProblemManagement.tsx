@@ -264,11 +264,13 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         fileInputRef.current?.click();
     };
 
-    const processAndTestProblems = async (problemsData: any[]) => {
+    const processAndTestProblems = async (data: any) => {
         if (!authUser) {
             toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to test problems.' });
             return;
         }
+
+        const problemsData = Array.isArray(data) ? data : [data];
 
         setIsUploading(true);
         let successes = 0;
@@ -710,7 +712,7 @@ function TestFailureDialog({ failureDetails, onOpenChange }: { failureDetails: T
     );
 }
 
-function PasteJsonModal({ isOpen, onOpenChange, onUploadAndTest }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onUploadAndTest: (data: any[]) => Promise<void> }) {
+function PasteJsonModal({ isOpen, onOpenChange, onUploadAndTest }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onUploadAndTest: (data: any) => Promise<void> }) {
     const [jsonContent, setJsonContent] = useState("");
 
     const handleUpload = async () => {
