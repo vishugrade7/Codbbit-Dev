@@ -9,7 +9,6 @@ import FeatureGrid from "@/components/feature-grid";
 import Testimonials from "@/components/testimonials";
 import InteractivePlayground from "@/components/interactive-playground";
 import { ArrowRight, BookOpen, Code, FlaskConical, Play, Rocket } from "lucide-react";
-import Rive from '@rive-app/react-canvas';
 
 export default function Home() {
   const features = [
@@ -25,9 +24,12 @@ export default function Home() {
       <section className="w-full home-hero-gradient">
         <div className="container min-h-screen flex flex-col items-center justify-center text-center gap-8 py-12 md:py-24">
             <div className="relative w-full h-64 md:h-96">
-                <Rive
-                    src="coder_guy.riv"
-                    className="absolute inset-0 w-full h-full animate-float"
+                <Image
+                    src="https://placehold.co/800x600.png"
+                    alt="Illustration of a developer coding"
+                    fill
+                    className="object-contain"
+                    data-ai-hint="developer coding"
                 />
             </div>
             <div className="flex flex-col items-center text-center gap-6">

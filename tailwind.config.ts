@@ -155,13 +155,6 @@ export default {
             '0%, 100%': { transform: 'translateY(0)' },
             '50%': { transform: 'translateY(-4px) scale(1.1)' },
         },
-        'float': {
-          '0%': { transform: 'translateY(0px) rotate(0deg)' },
-          '25%': { transform: 'translateY(-15px) rotate(5deg)' },
-          '50%': { transform: 'translateY(0px) rotate(0deg)' },
-          '75%': { transform: 'translateY(15px) rotate(-5deg)' },
-          '100%': { transform: 'translateY(0px) rotate(0deg)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -175,7 +168,6 @@ export default {
         'icon-pulse': 'icon-pulse 0.5s ease-in-out',
         'icon-shake': 'icon-shake 0.4s ease-in-out',
         'icon-bounce': 'icon-bounce 0.5s ease-in-out',
-        'float': 'float 15s ease-in-out infinite',
       },
     },
   },
