@@ -23,17 +23,16 @@ export default function Home() {
   return (
     <main className="w-full flex flex-col items-center justify-center overflow-x-hidden">
       {/* Hero Section */}
-      <section 
-        className="w-full home-hero-gradient"
-        style={{
-          backgroundImage: `url(${heroBackgroundImage})`,
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'contain',
-        }}
-      >
+      <section className="w-full home-hero-gradient">
         <div className="container min-h-screen flex flex-col items-center justify-center text-center gap-8 py-12 md:py-24">
-            <div className="flex flex-col items-center text-center gap-6">
+            <div 
+              className="w-full h-80 bg-no-repeat bg-contain bg-top"
+              style={{
+                backgroundImage: `url(${heroBackgroundImage})`,
+              }}
+            >
+            </div>
+            <div className="flex flex-col items-center text-center gap-6 -mt-48 z-10">
                  <div className="inline-block rounded-full bg-primary/20 px-4 py-2 text-sm font-semibold text-primary">
                     A NEW WAY TO
                 </div>
