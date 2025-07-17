@@ -88,17 +88,17 @@
   }
 
   .home-hero-gradient {
-    background: linear-gradient(180deg, hsl(220, 100%, 95%), hsl(0, 0%, 100%));
+    background-color: #000;
   }
 
   .dark .home-hero-gradient {
-    background: linear-gradient(180deg, hsl(220, 20%, 15%), hsl(var(--background)));
+    background-color: #000;
   }
 }
 
 @layer components {
     .comment-highlight {
-        @apply bg-primary/10 rounded-[3px] px-[2px] py-[1px] cursor-pointer border-b border-dashed border-primary/50;
+        @apply bg-primary/20 dark:bg-primary/30 rounded-[3px] px-[3px] py-[1px] cursor-pointer border-b border-dashed border-primary/50;
     }
 }
 
