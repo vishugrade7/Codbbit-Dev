@@ -17,8 +17,10 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 import mermaid from "mermaid";
 
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore } from "@/app/upload-problem/actions";
+import { testApexProblem } from "@/app/salesforce/actions";
 import { problemFormSchema } from "@/lib/admin-schemas";
 import { z } from "zod";
 
@@ -30,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2 } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -166,6 +168,7 @@ const parseCsvToJson = (csv: string): any[] => {
 
 export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) => void, onAddNew: () => void }) {
     const { toast } = useToast();
+    const { user: authUser } = useAuth();
     const [problems, setProblems] = useState<ProblemWithCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -178,6 +181,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     const [problemToDelete, setProblemToDelete] = useState<ProblemWithCategory | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [testingId, setTestingId] = useState<string | null>(null);
 
     const fetchProblems = useCallback(async () => {
         setLoading(true);
@@ -253,11 +257,54 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         fileInputRef.current?.click();
     };
 
+    const processAndTestProblems = async (problemsData: any[]) => {
+        if (!authUser) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to test problems.' });
+            return;
+        }
+
+        setIsUploading(true);
+        let successes = 0;
+        let failures = 0;
+        
+        for (const problem of problemsData) {
+            try {
+                toast({ title: `Testing "${problem.title}"...`, description: 'This may take a moment.' });
+                const testResult = await testApexProblem(authUser.uid, problem);
+                
+                if (testResult.success) {
+                    const upsertData: z.infer<typeof problemFormSchema> = {
+                        ...problem,
+                        hints: problem.hints?.map((h: string) => ({ value: h })) || [],
+                        isTested: true,
+                    };
+                    const upsertResult = await upsertProblemToFirestore(upsertData);
+                    if (upsertResult.success) {
+                        successes++;
+                        toast({ title: 'Test Passed & Saved', description: `"${problem.title}" was added successfully.` });
+                    } else {
+                        failures++;
+                        toast({ variant: 'destructive', title: 'Save Failed', description: `"${problem.title}" passed tests but failed to save: ${upsertResult.error}` });
+                    }
+                } else {
+                    failures++;
+                    toast({ variant: 'destructive', title: 'Test Failed', description: `"${problem.title}": ${testResult.message}`, duration: 9000 });
+                }
+            } catch (error: any) {
+                failures++;
+                toast({ variant: 'destructive', title: `Error processing "${problem.title}"`, description: error.message, duration: 9000 });
+            }
+        }
+        
+        toast({ title: 'Upload Complete', description: `${successes} succeeded, ${failures} failed.` });
+        fetchProblems();
+        setIsUploading(false);
+    };
+    
     const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        setIsUploading(true);
         try {
             const content = await file.text();
             let jsonData;
@@ -270,29 +317,17 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 throw new Error("Unsupported file type. Please upload a .json or .csv file.");
             }
             
-            const result = await bulkUpsertProblemsFromJSON(jsonData);
+            await processAndTestProblems(jsonData);
 
-            if (result.success) {
-                toast({ title: 'Success!', description: result.message });
-                fetchProblems();
-            } else {
-                throw new Error(result.error);
-            }
         } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Upload Failed',
-                description: error.message || 'Could not process the file.',
-                duration: 9000,
-            });
+            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not process the file.', duration: 9000 });
         } finally {
-            setIsUploading(false);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
         }
     };
-
+    
     const getSampleData = (forCSV = false) => {
       const examples = [{ input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]." }];
       const hints = ["A really simple way to solve this is using a HashMap to store the numbers you've seen and their indices."];
@@ -312,6 +347,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
           imageUrl: "",
           mermaidDiagram: "",
           displayOrder: ["description", "image", "mermaid"],
+          isTested: false,
       };
 
       if (forCSV) {
@@ -381,6 +417,26 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         setSelectedIds(newSet);
     }, [selectedIds, filteredProblems]);
 
+    const handleTestProblem = async (problem: ProblemWithCategory) => {
+        if (!authUser) {
+            toast({ variant: 'destructive', title: 'Not Authenticated' });
+            return;
+        }
+        setTestingId(problem.id);
+        const result = await testApexProblem(authUser.uid, problem);
+        if (result.success) {
+            const updateResult = await upsertProblemToFirestore({ ...problem, hints: problem.hints?.map(h => ({ value: h })), isTested: true });
+            if (updateResult.success) {
+                toast({ title: `Test Passed for "${problem.title}"`, description: "Problem marked as tested." });
+                fetchProblems();
+            } else {
+                toast({ variant: 'destructive', title: `Test Passed, but Save Failed`, description: updateResult.error });
+            }
+        } else {
+            toast({ variant: 'destructive', title: `Test Failed for "${problem.title}"`, description: result.message, duration: 9000 });
+        }
+        setTestingId(null);
+    };
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
@@ -439,7 +495,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json,.csv" className="hidden" disabled={isUploading} />
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
                 <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
-                <PasteJsonModal isOpen={isPasteJsonModalOpen} onOpenChange={setIsPasteJsonModalOpen} onUploadComplete={fetchProblems} />
+                <PasteJsonModal isOpen={isPasteJsonModalOpen} onOpenChange={setIsPasteJsonModalOpen} onUploadAndTest={processAndTestProblems} />
                 <AlertDialog open={!!problemToDelete} onOpenChange={(open) => !open && setProblemToDelete(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -528,6 +584,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                                         <TableHead>Title</TableHead>
                                         <TableHead>Category</TableHead>
                                         <TableHead>Difficulty</TableHead>
+                                        <TableHead>Tested</TableHead>
                                         <TableHead className="w-[100px] text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -558,6 +615,9 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                                                     {problem.difficulty}
                                                 </UiBadge>
                                             </TableCell>
+                                            <TableCell>
+                                                {problem.isTested && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -566,6 +626,10 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => handleTestProblem(problem)} disabled={testingId === problem.id}>
+                                                            {testingId === problem.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TestTube2 className="mr-2 h-4 w-4" />}
+                                                            <span>Test</span>
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => onEdit(problem)}>
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             <span>Edit</span>
@@ -593,39 +657,20 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     );
 }
 
-function PasteJsonModal({ isOpen, onOpenChange, onUploadComplete }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onUploadComplete: () => void }) {
-    const { toast } = useToast();
+function PasteJsonModal({ isOpen, onOpenChange, onUploadAndTest }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onUploadAndTest: (data: any[]) => Promise<void> }) {
     const [jsonContent, setJsonContent] = useState("");
-    const [isUploading, setIsUploading] = useState(false);
 
     const handleUpload = async () => {
         if (!jsonContent.trim()) {
-            toast({ variant: 'destructive', title: 'Error', description: 'JSON content cannot be empty.' });
             return;
         }
-
-        setIsUploading(true);
         try {
             const jsonData = JSON.parse(jsonContent);
-            const result = await bulkUpsertProblemsFromJSON(jsonData);
-
-            if (result.success) {
-                toast({ title: 'Success!', description: result.message });
-                onUploadComplete();
-                onOpenChange(false);
-                setJsonContent("");
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Upload Failed',
-                description: error.message || 'Could not process the JSON data.',
-                duration: 9000,
-            });
-        } finally {
-            setIsUploading(false);
+            await onUploadAndTest(jsonData);
+            onOpenChange(false);
+            setJsonContent("");
+        } catch (error) {
+            console.error("Invalid JSON:", error);
         }
     };
     
@@ -646,9 +691,8 @@ function PasteJsonModal({ isOpen, onOpenChange, onUploadComplete }: { isOpen: bo
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleUpload} disabled={isUploading}>
-                        {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Upload JSON
+                    <Button onClick={handleUpload}>
+                        Test & Upload
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -862,7 +906,7 @@ function ManageCategoriesModal({ isOpen, onOpenChange, onCategoriesUpdated }: { 
     );
 }
 
-function DisplayOrderManager({ control }: { control: any }) {
+const DisplayOrderManager = ({ control }: { control: any }) => {
     const { fields, move } = useFieldArray({
         control,
         name: "displayOrder",
@@ -1007,7 +1051,8 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
             isPremium: problem?.isPremium || false,
             imageUrl: problem?.imageUrl || "",
             mermaidDiagram: problem?.mermaidDiagram || "",
-            displayOrder: problem?.displayOrder || ['description', 'image', 'mermaid']
+            displayOrder: problem?.displayOrder || ['description', 'image', 'mermaid'],
+            isTested: problem?.isTested || false,
         };
         form.reset(defaultValues);
         

@@ -187,6 +187,7 @@ export type Problem = {
   imageUrl?: string;
   mermaidDiagram?: string;
   displayOrder?: ProblemLayoutComponent[];
+  isTested?: boolean;
 };
 
 // This represents the structure of the data fetched from the `problems/Apex` document
