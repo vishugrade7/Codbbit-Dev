@@ -48,7 +48,7 @@ export default function RootLayout({
         height="0" width="0" style={{display:"none",visibility:"hidden"}}></iframe></noscript>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
