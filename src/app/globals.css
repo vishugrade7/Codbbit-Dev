@@ -42,7 +42,7 @@
   }
  
   .dark {
-    --background: 0 0% 0%;
+    --background: 240 4% 12%;
     --foreground: 0 0% 98%;
  
     --card: 240 4% 12%;
@@ -88,11 +88,11 @@
   }
 
   .home-hero-gradient {
-    background-color: #000;
+    background-color: hsl(var(--secondary));
   }
 
   .dark .home-hero-gradient {
-    background-color: #000;
+    background-color: hsl(var(--secondary));
   }
 }
 
