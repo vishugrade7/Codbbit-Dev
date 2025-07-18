@@ -1350,7 +1350,7 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                     <FormItem><FormLabel>Difficulty</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="metadataType" render={({ field }) => (
-                                    <FormItem><FormLabel>Metadata Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Class">Class</SelectItem><SelectItem value="Trigger">Trigger</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Metadata Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Class">Class</SelectItem><SelectItem value="Trigger">Trigger</SelectItem><SelectItem value="Test Class">Test Class</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                 )} />
                                 {metadataTypeValue === 'Trigger' && (
                                      <FormField control={form.control} name="triggerSObject" render={({ field }) => (

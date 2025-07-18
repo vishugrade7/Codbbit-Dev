@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
@@ -450,9 +451,10 @@ export default function ProblemWorkspacePage() {
                             return;
                         }
                         setProblem({...currentProblem, categoryName});
-                        // For "Test classes" problems, the user starts with the (usually empty) test case file.
+                        // For "Test Class" problems, the user starts with the (usually empty) test case file.
                         // For other problems, they start with the sample code.
-                        setCode(currentProblem.categoryName === "Test classes" ? currentProblem.testcases : currentProblem.sampleCode);
+                        const initialCode = currentProblem.metadataType === "Test Class" ? currentProblem.testcases : currentProblem.sampleCode;
+                        setCode(initialCode);
                     } else {
                         setProblem(null);
                     }
@@ -696,7 +698,7 @@ export default function ProblemWorkspacePage() {
         );
     }
     
-    const isTestClassProblem = problem.categoryName === "Test classes";
+    const isTestClassProblem = problem.metadataType === "Test Class";
 
     const TestClassEditor = () => (
         <ResizablePanelGroup direction="horizontal" className="h-full">

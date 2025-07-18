@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -379,35 +380,40 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
         }
 
-        const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
-        const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
-        const problemTypeKeyword = problem.metadataType.toLowerCase();
+        const isTestClassProblem = problem.metadataType === 'Test Class';
 
-        if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
-            const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
-            const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
-            log.push(`\n--- ERROR ---`);
-            log.push(errorMessage);
-            return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+        // For regular problems, ensure user code matches expected metadata type
+        if (!isTestClassProblem) {
+            const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
+            const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
+            const problemTypeKeyword = problem.metadataType.toLowerCase();
+
+            if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
+                const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
+                const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
+                log.push(`\n--- ERROR ---`);
+                log.push(errorMessage);
+                return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+            }
         }
         
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
-        if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
-            const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
-            return { success: false, message: 'Problem Configuration Error', details: msg };
-        }
-        
-        const auth = await getSfdcConnection(userId);
-        
-        const mainObjectName = getClassName(userCode);
-        const testObjectName = getClassName(problem.testcases);
+        const mainObjectName = getClassName(problem.sampleCode);
+        const testObjectName = getClassName(isTestClassProblem ? userCode : problem.testcases);
         
         if (!mainObjectName || !testObjectName) {
             throw new Error('Could not determine class/trigger names from the provided code.');
         }
 
-        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, userCode, problem.triggerSObject);
-        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
+        const auth = await getSfdcConnection(userId);
+        
+        const objectType = problem.metadataType === 'Class' || problem.metadataType === 'Test Class' ? 'ApexClass' : 'ApexTrigger';
+        if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
+            const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
+            return { success: false, message: 'Problem Configuration Error', details: msg };
+        }
+        
+        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, problem.sampleCode, problem.triggerSObject);
+        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, isTestClassProblem ? userCode : problem.testcases);
 
         log.push("\n--- Running Tests ---");
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
@@ -440,7 +446,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
 
         const failedTest = testResults.find((r: any) => r.Outcome !== 'Pass');
-        if (failedTest) {
+        if (failedTest && !isTestClassProblem) { // For regular problems, any failure is an error
              throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
 
@@ -452,10 +458,20 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             const coverage = coverageResult.records[0];
             const covered = coverage.NumLinesCovered;
             const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
-            const percentage = total > 0 ? ((covered / total) * 100).toFixed(2) : '100.00';
-            log.push(`> Coverage: ${percentage}% (${covered}/${total} lines covered).`);
+            const percentage = total > 0 ? ((covered / total) * 100) : 100;
+            log.push(`> Coverage: ${percentage.toFixed(2)}% (${covered}/${total} lines covered).`);
+            
+            if (isTestClassProblem) {
+                if (percentage < 75) {
+                    throw new Error(`Test Coverage Failed: Required coverage is 75%, but you only achieved ${percentage.toFixed(2)}%.`);
+                }
+                log.push("> Coverage goal of 75% met!");
+            }
         } else {
             log.push("> Could not retrieve code coverage information.");
+            if (isTestClassProblem) {
+                 throw new Error("Could not retrieve code coverage. Unable to verify solution.");
+            }
         }
 
         const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
@@ -470,7 +486,19 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     }
 }
 
-export async function testApexProblem(userId: string, problem: Partial<Problem>): Promise<{ success: boolean; message: string; }> {
+type TestFailureDetails = {
+    methodName: string;
+    message: string;
+    stackTrace: string;
+};
+
+type TestProblemResult = {
+    success: boolean;
+    message: string;
+    failureDetails?: TestFailureDetails;
+};
+
+export async function testApexProblem(userId: string, problem: Partial<Problem>): Promise<TestProblemResult> {
     if (!userId || !problem || !problem.sampleCode || !problem.testcases || !problem.metadataType) {
         return { success: false, message: "Missing required problem data for testing." };
     }
@@ -478,7 +506,7 @@ export async function testApexProblem(userId: string, problem: Partial<Problem>)
     try {
         const auth = await getSfdcConnection(userId);
         
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        const objectType = problem.metadataType === 'Class' || problem.metadataType === 'Test Class' ? 'ApexClass' : 'ApexTrigger';
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
             return { success: false, message: "Trigger SObject is required." };
         }
@@ -518,7 +546,15 @@ export async function testApexProblem(userId: string, problem: Partial<Problem>)
         
         const failedTest = testResultData.records.find((r: any) => r.Outcome !== 'Pass');
         if (failedTest) {
-            return { success: false, message: `Test Failed: ${failedTest.MethodName} - ${failedTest.Message}` };
+            return {
+                success: false,
+                message: `Test Failed: ${failedTest.MethodName}`,
+                failureDetails: {
+                    methodName: failedTest.MethodName,
+                    message: failedTest.Message,
+                    stackTrace: failedTest.StackTrace || 'No stack trace available.',
+                }
+            };
         }
 
         return { success: true, message: "All test cases passed." };

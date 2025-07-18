@@ -178,7 +178,7 @@ export type Problem = {
   hints: string[];
   sampleCode: string;
   testcases: string;
-  metadataType: 'Class' | 'Trigger';
+  metadataType: 'Class' | 'Trigger' | 'Test Class';
   triggerSObject?: string;
   categoryName?: string;
   company?: string;
