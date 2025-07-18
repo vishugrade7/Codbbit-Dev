@@ -1268,7 +1268,7 @@ function ContentBlockList({ path }: { path: string }) {
                 <SortableContext items={fields.map((f) => f.rhfId!)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-4">
                         {fields.map((blockItem, blockIndex) => (
-                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} />
+                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} onRemove={() => remove(blockIndex)} />
                         ))}
                     </div>
                 </SortableContext>
@@ -1288,9 +1288,8 @@ function ContentBlockList({ path }: { path: string }) {
     );
 }
 
-function ContentBlockItem({ path, rhfId, blockIndex }: { path: string; rhfId: string; blockIndex: number; }) {
+function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string; rhfId: string; blockIndex: number; onRemove: () => void; }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { remove } = useFieldArray({ control, name: path as any });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const block = useWatch({ control, name: `${path}.${blockIndex}` as any });
@@ -1418,7 +1417,7 @@ function ContentBlockItem({ path, rhfId, blockIndex }: { path: string; rhfId: st
                         </div>
                     </PopoverContent>
                 </Popover>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => remove(blockIndex)}>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={onRemove}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
