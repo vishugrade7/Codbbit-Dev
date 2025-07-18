@@ -1425,9 +1425,8 @@ function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string;
     );
 }
 
-function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, lessonIndex: number, rhfId: string }) {
+function LessonItem({ moduleIndex, lessonIndex, rhfId, onRemove }: { moduleIndex: number, lessonIndex: number, rhfId: string, onRemove: () => void }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
@@ -1467,7 +1466,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => removeLesson(lessonIndex)}>
+                            <AlertDialogAction onClick={onRemove}>
                                 Delete Lesson
                             </AlertDialogAction>
                         </AlertDialogFooter>
@@ -1496,7 +1495,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId }: { moduleIndex: number, 
 function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { remove: removeModule } = useFieldArray({ name: `modules` });
-    const { fields: lessonFields, append: appendLesson, move: moveLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
+    const { fields: lessonFields, append: appendLesson, move: moveLesson, remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
@@ -1553,7 +1552,7 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
                     <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-4 pt-4 pl-6 border-l-2">
                             {lessonFields.map((lessonItem, lessonIndex) => (
-                                <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} />
+                                <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} onRemove={() => removeLesson(lessonIndex)} />
                             ))}
                             <FormField control={control} name={`modules.${moduleIndex}.lessons`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
                         </div>
