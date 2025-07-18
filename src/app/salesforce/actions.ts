@@ -453,20 +453,20 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         let coverageData;
         if (isTestClassProblem) {
             log.push("\n--- Checking Code Coverage ---");
-            const coverageQuery = `SELECT CoveredLines, UncoveredLines FROM ApexCodeCoverage WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
+            const coverageQuery = `SELECT ApexTestClassId, Coverage FROM ApexCodeCoverage WHERE ApexClassOrTriggerId = '${mainObjectId}' AND ApexTestClassId = '${testClassId}'`;
             const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
             
             if (coverageResult.records && coverageResult.records.length > 0) {
-                const coverage = coverageResult.records[0];
-                const coveredCount = coverage.CoveredLines?.length || 0;
-                const uncoveredCount = coverage.UncoveredLines?.length || 0;
+                const coverage = coverageResult.records[0].Coverage;
+                const coveredCount = coverage.coveredLines?.length || 0;
+                const uncoveredCount = coverage.uncoveredLines?.length || 0;
                 const total = coveredCount + uncoveredCount;
                 const percentage = total > 0 ? (coveredCount / total) * 100 : 100;
                 log.push(`> Coverage: ${percentage.toFixed(2)}% (${coveredCount}/${total} lines covered).`);
                 
                 coverageData = {
-                    covered: coverage.CoveredLines || [],
-                    uncovered: coverage.UncoveredLines || []
+                    covered: coverage.coveredLines || [],
+                    uncovered: coverage.uncoveredLines || []
                 };
 
                 if (percentage < 75) {
