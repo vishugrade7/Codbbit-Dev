@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -1268,7 +1267,7 @@ function ContentBlockList({ path }: { path: string }) {
                 <SortableContext items={fields.map((f) => f.rhfId!)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-4">
                         {fields.map((blockItem, blockIndex) => (
-                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} onRemove={() => remove(blockIndex)} />
+                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} />
                         ))}
                     </div>
                 </SortableContext>
@@ -1288,13 +1287,13 @@ function ContentBlockList({ path }: { path: string }) {
     );
 }
 
-function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string; rhfId: string; blockIndex: number; onRemove: () => void; }) {
+function ContentBlockItem({ path, rhfId, blockIndex }: { path: string; rhfId: string; blockIndex: number; }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { remove } = useFieldArray({ control, name: path as any });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const block = useWatch({ control, name: `${path}.${blockIndex}` as any });
     
-    // Early return if block is not ready
     if (!block) {
         return null;
     }
@@ -1417,7 +1416,7 @@ function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string;
                         </div>
                     </PopoverContent>
                 </Popover>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={onRemove}>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => remove(blockIndex)}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
@@ -1492,9 +1491,8 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId, onRemove }: { moduleIndex
     );
 }
 
-function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string }) {
+function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhfId: string, onRemove: () => void }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { remove: removeModule } = useFieldArray({ name: `modules` });
     const { fields: lessonFields, append: appendLesson, move: moveLesson, remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
@@ -1540,7 +1538,7 @@ function ModuleItem({ moduleIndex, rhfId }: { moduleIndex: number, rhfId: string
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => removeModule(moduleIndex)}>
+                            <AlertDialogAction onClick={onRemove}>
                                 Delete Module
                             </AlertDialogAction>
                         </AlertDialogFooter>
@@ -1621,7 +1619,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
         });
     }
 
-    const { fields: moduleFields, append: appendModule, move: moveModule } = useFieldArray({ control: form.control, name: "modules" });
+    const { fields: moduleFields, append: appendModule, move: moveModule, remove: removeModule } = useFieldArray({ control: form.control, name: "modules" });
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
     const handleModuleDragEnd = (event: DragEndEvent) => {
@@ -1679,7 +1677,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                         <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
-                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} />
+                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} onRemove={() => removeModule(moduleIndex)} />
                             ))}
                         </SortableContext>
                     </DndContext>
@@ -1783,3 +1781,5 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
+    
