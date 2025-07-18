@@ -380,17 +380,31 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
         }
 
-        const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
-        const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
-        const problemTypeKeyword = problem.metadataType.toLowerCase();
+        const isTestClassProblem = problem.categoryName === "Test classes";
 
-        if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
-            const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
-            const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
-            log.push(`\n--- ERROR ---`);
-            log.push(errorMessage);
-            return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+        // For regular problems, ensure user code matches expected metadata type
+        if (!isTestClassProblem) {
+            const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
+            const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
+            const problemTypeKeyword = problem.metadataType.toLowerCase();
+
+            if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
+                const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
+                const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
+                log.push(`\n--- ERROR ---`);
+                log.push(errorMessage);
+                return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+            }
         }
+        
+        const mainObjectName = getClassName(problem.sampleCode);
+        const testObjectName = getClassName(isTestClassProblem ? userCode : problem.testcases);
+        
+        if (!mainObjectName || !testObjectName) {
+            throw new Error('Could not determine class/trigger names from the provided code.');
+        }
+
+        const auth = await getSfdcConnection(userId);
         
         const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
@@ -398,17 +412,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Problem Configuration Error', details: msg };
         }
         
-        const auth = await getSfdcConnection(userId);
-        
-        const mainObjectName = getClassName(userCode);
-        const testObjectName = getClassName(problem.testcases);
-        
-        if (!mainObjectName || !testObjectName) {
-            throw new Error('Could not determine class/trigger names from the provided code.');
-        }
-
-        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, userCode, problem.triggerSObject);
-        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
+        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, problem.sampleCode, problem.triggerSObject);
+        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, isTestClassProblem ? userCode : problem.testcases);
 
         log.push("\n--- Running Tests ---");
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
@@ -441,7 +446,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
 
         const failedTest = testResults.find((r: any) => r.Outcome !== 'Pass');
-        if (failedTest) {
+        if (failedTest && !isTestClassProblem) { // For regular problems, any failure is an error
              throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
 
@@ -453,10 +458,20 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             const coverage = coverageResult.records[0];
             const covered = coverage.NumLinesCovered;
             const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
-            const percentage = total > 0 ? ((covered / total) * 100).toFixed(2) : '100.00';
-            log.push(`> Coverage: ${percentage}% (${covered}/${total} lines covered).`);
+            const percentage = total > 0 ? ((covered / total) * 100) : 100;
+            log.push(`> Coverage: ${percentage.toFixed(2)}% (${covered}/${total} lines covered).`);
+            
+            if (isTestClassProblem) {
+                if (percentage < 75) {
+                    throw new Error(`Test Coverage Failed: Required coverage is 75%, but you only achieved ${percentage.toFixed(2)}%.`);
+                }
+                log.push("> Coverage goal of 75% met!");
+            }
         } else {
             log.push("> Could not retrieve code coverage information.");
+            if (isTestClassProblem) {
+                 throw new Error("Could not retrieve code coverage. Unable to verify solution.");
+            }
         }
 
         const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
@@ -678,7 +693,7 @@ export async function executeSalesforceCode(
             }
         }
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
         return {
             success: false,
             result: `An unexpected error occurred: ${errorMessage}`,
