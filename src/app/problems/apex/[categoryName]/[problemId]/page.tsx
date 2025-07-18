@@ -317,6 +317,66 @@ const EditorAndResults = ({
     );
 };
 
+const TestClassEditor = ({ problem, code, setCode, handleSubmit, isSubmitting, fontSize }: {
+    problem: Problem,
+    code: string,
+    setCode: (v: string) => void,
+    handleSubmit: () => void,
+    isSubmitting: boolean,
+    fontSize: number,
+}) => {
+    const { resolvedTheme } = useTheme();
+    return (
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+            <ResizablePanel defaultSize={50} minSize={30}>
+                 <div className="flex flex-col h-full bg-background">
+                    <div className="flex items-center justify-between p-2 border-b">
+                        <div className="flex items-center gap-2 font-semibold">
+                           <span>Apex Class</span>
+                        </div>
+                    </div>
+                     <MonacoEditor
+                        height="100%"
+                        language="java"
+                        value={problem.sampleCode}
+                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                        options={{
+                            readOnly: true,
+                            fontSize: fontSize,
+                            minimap: { enabled: false },
+                        }}
+                    />
+                 </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+             <ResizablePanel defaultSize={50} minSize={30}>
+                 <div className="flex flex-col h-full bg-background">
+                    <div className="flex items-center justify-between p-2 border-b">
+                        <div className="flex items-center gap-2 font-semibold">
+                           <span>Test Class</span>
+                        </div>
+                         <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                            Run Test
+                        </Button>
+                    </div>
+                     <MonacoEditor
+                        height="100%"
+                        language="java"
+                        value={code}
+                        onChange={(newValue) => setCode(newValue || "")}
+                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                        options={{
+                            fontSize: fontSize,
+                            minimap: { enabled: false },
+                        }}
+                    />
+                 </div>
+            </ResizablePanel>
+        </ResizablePanelGroup>
+    );
+};
+
 const NextProblemOverlay = ({ nextProblem, onCancel, onNext }: { nextProblem: Problem, onCancel: () => void, onNext: () => void }) => {
     const [progress, setProgress] = useState(0);
 
@@ -386,7 +446,6 @@ export default function ProblemWorkspacePage() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [awardedPoints, setAwardedPoints] = useState(0);
     const [nextProblem, setNextProblem] = useState<Problem | null>(null);
-    const { resolvedTheme } = useTheme();
 
     useEffect(() => {
         setIsClient(true);
@@ -700,56 +759,6 @@ export default function ProblemWorkspacePage() {
     
     const isTestClassProblem = problem.metadataType === "Test Class";
 
-    const TestClassEditor = () => (
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-            <ResizablePanel defaultSize={50} minSize={30}>
-                 <div className="flex flex-col h-full bg-background">
-                    <div className="flex items-center justify-between p-2 border-b">
-                        <div className="flex items-center gap-2 font-semibold">
-                           <span>Apex Class</span>
-                        </div>
-                    </div>
-                     <MonacoEditor
-                        height="100%"
-                        language="java"
-                        value={problem.sampleCode}
-                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                        options={{
-                            readOnly: true,
-                            fontSize: fontSize,
-                            minimap: { enabled: false },
-                        }}
-                    />
-                 </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-             <ResizablePanel defaultSize={50} minSize={30}>
-                 <div className="flex flex-col h-full bg-background">
-                    <div className="flex items-center justify-between p-2 border-b">
-                        <div className="flex items-center gap-2 font-semibold">
-                           <span>Test Class</span>
-                        </div>
-                         <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                            Run Test
-                        </Button>
-                    </div>
-                     <MonacoEditor
-                        height="100%"
-                        language="java"
-                        value={code}
-                        onChange={(newValue) => setCode(newValue || "")}
-                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                        options={{
-                            fontSize: fontSize,
-                            minimap: { enabled: false },
-                        }}
-                    />
-                 </div>
-            </ResizablePanel>
-        </ResizablePanelGroup>
-    );
-
     return (
     <div className="w-full h-screen flex flex-col bg-background text-foreground">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
@@ -882,10 +891,24 @@ export default function ProblemWorkspacePage() {
             {isTestClassProblem ? (
                 <>
                     <div className="md:hidden h-full">
-                         <TestClassEditor />
+                         <TestClassEditor 
+                            problem={problem}
+                            code={code}
+                            setCode={setCode}
+                            handleSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            fontSize={fontSize}
+                         />
                     </div>
                     <div className="hidden md:flex h-full">
-                        <TestClassEditor />
+                         <TestClassEditor 
+                            problem={problem}
+                            code={code}
+                            setCode={setCode}
+                            handleSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            fontSize={fontSize}
+                         />
                     </div>
                      <div className="p-4 border-t">
                         <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
