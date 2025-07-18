@@ -680,7 +680,7 @@ export default function ProblemWorkspacePage() {
                 }
             }
         } else {
-            toast({ variant: "destructive", title: "Submission Failed", description: response.message, duration: 9000 });
+            toast({ variant: "destructive", title: "Submission Failed", description: response.details || response.message, duration: 9000 });
         }
         
         setIsSubmitting(false);
