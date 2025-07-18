@@ -1226,7 +1226,7 @@ function ImageBlockEditor({ path }: { path: string }) {
 
 function ContentBlockList({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { fields, append, move } = useFieldArray({ name: path as any });
+    const { fields, append, move, remove } = useFieldArray({ name: path as any });
 
     const addContentBlock = (type: ContentBlock['type']) => {
         let newBlock: ContentBlock;
@@ -1268,7 +1268,7 @@ function ContentBlockList({ path }: { path: string }) {
                 <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-4">
                         {fields.map((blockItem, blockIndex) => (
-                            <ContentBlockItem key={blockItem.id} path={`${path}.${blockIndex}`} rhfId={blockItem.id} />
+                            <ContentBlockItem key={blockItem.id} path={`${path}.${blockIndex}`} rhfId={blockItem.id} onRemove={() => remove(blockIndex)} />
                         ))}
                     </div>
                 </SortableContext>
@@ -1288,13 +1288,8 @@ function ContentBlockList({ path }: { path: string }) {
     );
 }
 
-function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
+function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: string; onRemove: () => void; }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const parentPath = path.substring(0, path.lastIndexOf('.'));
-    const blockIndex = parseInt(path.substring(path.lastIndexOf('.') + 1));
-    
-    // Call hooks unconditionally
-    const { remove: removeBlock } = useFieldArray({ name: parentPath as any });
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const block = useWatch({ control, name: path as any });
     
@@ -1420,7 +1415,7 @@ function ContentBlockItem({ path, rhfId }: { path: string; rhfId: string }) {
                         </div>
                     </PopoverContent>
                 </Popover>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => removeBlock(blockIndex)}>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={onRemove}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
@@ -1726,7 +1721,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
                 setProblems(allProblems.sort((a,b) => a.title.localeCompare(b.title)));
             };
 
-            const cachedData = getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            const cachedData = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
             if (cachedData) {
                 processData(cachedData);
                 setLoading(false);
@@ -1738,7 +1733,7 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
                 const docSnap = await getDoc(apexDocRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data().Category as ApexProblemsData;
-                    setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    await setCache(APEX_PROBLEMS_CACHE_KEY, data);
                     processData(data);
                 }
             } catch (error) {
