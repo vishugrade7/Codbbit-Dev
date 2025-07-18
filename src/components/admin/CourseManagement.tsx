@@ -1226,7 +1226,7 @@ function ImageBlockEditor({ path }: { path: string }) {
 
 function ContentBlockList({ path }: { path: string }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { fields, append, move, remove } = useFieldArray({ name: path as any });
+    const { fields, append, move, remove } = useFieldArray({ name: path as any, keyName: "rhfId" });
 
     const addContentBlock = (type: ContentBlock['type']) => {
         let newBlock: ContentBlock;
@@ -1256,8 +1256,8 @@ function ContentBlockList({ path }: { path: string }) {
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (over && active.id !== over.id) {
-            const oldIndex = fields.findIndex(b => b.id === active.id);
-            const newIndex = fields.findIndex(b => b.id === over.id);
+            const oldIndex = fields.findIndex(b => b.rhfId === active.id);
+            const newIndex = fields.findIndex(b => b.rhfId === over.id);
             if (oldIndex !== -1 && newIndex !== -1) { move(oldIndex, newIndex); }
         }
     };
@@ -1265,10 +1265,10 @@ function ContentBlockList({ path }: { path: string }) {
     return (
         <div className="space-y-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={fields.map((f) => f.rhfId!)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-4">
                         {fields.map((blockItem, blockIndex) => (
-                            <ContentBlockItem key={blockItem.id} path={`${path}.${blockIndex}`} rhfId={blockItem.id} onRemove={() => remove(blockIndex)} />
+                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} />
                         ))}
                     </div>
                 </SortableContext>
@@ -1288,10 +1288,12 @@ function ContentBlockList({ path }: { path: string }) {
     );
 }
 
-function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: string; onRemove: () => void; }) {
+function ContentBlockItem({ path, rhfId, blockIndex }: { path: string; rhfId: string; blockIndex: number; }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { remove } = useFieldArray({ control, name: path as any });
+    
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
-    const block = useWatch({ control, name: path as any });
+    const block = useWatch({ control, name: `${path}.${blockIndex}` as any });
     
     // Early return if block is not ready
     if (!block) {
@@ -1306,33 +1308,34 @@ function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: stri
     };
 
     const renderBlockEditor = () => {
+        const currentPath = `${path}.${blockIndex}`;
         switch (block.type) {
-            case 'text': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} /></FormControl><FormMessage/></FormItem>)}/>
-            case 'code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
-            case 'heading1': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'heading2': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'heading3': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'quote': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
-            case 'callout': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextEditorWithPreview value={field.value.text} onChange={(v) => field.onChange({...field.value, text: v})} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'text': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'code': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><CodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)}/>
+            case 'heading1': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 1" {...field} className="text-3xl font-bold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'heading2': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 2" {...field} className="text-2xl font-semibold h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'heading3': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Heading 3" {...field} className="text-xl font-medium h-auto p-0 border-none shadow-none focus-visible:ring-0" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'quote': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><div className="border-l-4 pl-4"><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="Enter quote..."/></div></FormControl><FormMessage/></FormItem>)}/>
+            case 'callout': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><div className="flex items-start gap-3 p-4 bg-muted rounded-lg"><Input value={field.value.icon} onChange={(e) => field.onChange({...field.value, icon: e.target.value})} className="w-12 text-2xl p-0 h-auto border-none shadow-none focus-visible:ring-0" maxLength={2}/><div className="flex-1"><TextEditorWithPreview value={field.value.text} onChange={(v) => field.onChange({...field.value, text: v})} placeholder="Enter callout text..."/></div></div></FormControl><FormMessage/></FormItem>)}/>
             case 'divider': return <hr className="my-4"/>
-            case 'bulleted-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'numbered-list': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
-            case 'todo-list': return <TodoListBlock path={path} />;
-            case 'toggle-list': return <ToggleListBlock path={path} />;
-            case 'problem': return <ProblemBlock path={path} />;
-            case 'image': return <ImageBlockEditor path={path} />;
-            case 'video': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Video Block</FormLabel><FormControl><Input placeholder="Video URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
-            case 'audio': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Audio Block</FormLabel><FormControl><Input placeholder="Audio URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
-            case 'table': return <TableBlockEditor path={path} />;
-            case 'mcq': return <McqBlockEditor path={path} />;
-            case 'breadcrumb': return <BreadcrumbBlockEditor path={path} />;
-            case 'mermaid': return <MermaidBlockEditor path={path} />;
-            case 'mindmap': return <MindmapBlockEditor path={path} />;
-            case 'stepper': return <StepperBlockEditor path={path} />;
-            case 'interactive-code': return <InteractiveCodeBlockEditor path={path} />;
-            case 'live-code': return <FormField control={control} name={`${path}.content`} render={({ field }) => (<FormItem><FormControl><LiveCodeBlockEditor field={field} /></FormControl><FormMessage /></FormItem>)} />;
-            case 'two-column': return <ColumnLayoutEditor path={path} numColumns={2} />;
-            case 'three-column': return <ColumnLayoutEditor path={path} numColumns={3} />;
+            case 'bulleted-list': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="<ul><li>Item 1</li></ul>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'numbered-list': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><TextEditorWithPreview value={field.value} onChange={field.onChange} placeholder="<ol><li>Item 1</li></ol>" /></FormControl><FormMessage/></FormItem>)}/>
+            case 'todo-list': return <TodoListBlock path={currentPath} />;
+            case 'toggle-list': return <ToggleListBlock path={currentPath} />;
+            case 'problem': return <ProblemBlock path={currentPath} />;
+            case 'image': return <ImageBlockEditor path={currentPath} />;
+            case 'video': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Video Block</FormLabel><FormControl><Input placeholder="Video URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
+            case 'audio': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground">Audio Block</FormLabel><FormControl><Input placeholder="Audio URL..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
+            case 'table': return <TableBlockEditor path={currentPath} />;
+            case 'mcq': return <McqBlockEditor path={currentPath} />;
+            case 'breadcrumb': return <BreadcrumbBlockEditor path={currentPath} />;
+            case 'mermaid': return <MermaidBlockEditor path={currentPath} />;
+            case 'mindmap': return <MindmapBlockEditor path={currentPath} />;
+            case 'stepper': return <StepperBlockEditor path={currentPath} />;
+            case 'interactive-code': return <InteractiveCodeBlockEditor path={currentPath} />;
+            case 'live-code': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><LiveCodeBlockEditor field={field} /></FormControl><FormMessage /></FormItem>)} />;
+            case 'two-column': return <ColumnLayoutEditor path={currentPath} numColumns={2} />;
+            case 'three-column': return <ColumnLayoutEditor path={currentPath} numColumns={3} />;
             default: const _exhaustiveCheck: never = block.type; return null;
         }
     }
@@ -1356,7 +1359,7 @@ function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: stri
                          <div className="space-y-1">
                             <Label className="text-xs">Layout</Label>
                             <div className="flex items-center gap-2">
-                                <Select value={block.align || 'left'} onValueChange={(value) => setValue(`${path}.align`, value === 'left' ? undefined : value)}>
+                                <Select value={block.align || 'left'} onValueChange={(value) => setValue(`${path}.${blockIndex}.align`, value === 'left' ? undefined : value)}>
                                     <SelectTrigger className="h-8 w-auto">
                                         <SelectValue placeholder="Align" />
                                     </SelectTrigger>
@@ -1366,7 +1369,7 @@ function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: stri
                                         <SelectItem value="right"><AlignRight className="h-4 w-4"/></SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Select value={block.width || '100%'} onValueChange={(value) => setValue(`${path}.width`, value === '100%' ? undefined : value)}>
+                                <Select value={block.width || '100%'} onValueChange={(value) => setValue(`${path}.${blockIndex}.width`, value === '100%' ? undefined : value)}>
                                     <SelectTrigger className="h-8 w-[80px]">
                                         <SelectValue placeholder="Width" />
                                     </SelectTrigger>
@@ -1389,10 +1392,10 @@ function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: stri
                                         type="color"
                                         className="h-8 w-8 p-1 cursor-pointer"
                                         value={block.backgroundColor || '#ffffff'}
-                                        onChange={(e) => setValue(`${path}.backgroundColor`, e.target.value)}
+                                        onChange={(e) => setValue(`${path}.${blockIndex}.backgroundColor`, e.target.value)}
                                     />
                                     {block.backgroundColor && (
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setValue(`${path}.backgroundColor`, undefined)}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setValue(`${path}.${blockIndex}.backgroundColor`, undefined)}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     )}
@@ -1403,10 +1406,10 @@ function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: stri
                                         type="color"
                                         className="h-8 w-8 p-1 cursor-pointer"
                                         value={block.textColor || '#000000'}
-                                        onChange={(e) => setValue(`${path}.textColor`, e.target.value)}
+                                        onChange={(e) => setValue(`${path}.${blockIndex}.textColor`, e.target.value)}
                                     />
                                     {block.textColor && (
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setValue(`${path}.textColor`, undefined)}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setValue(`${path}.${blockIndex}.textColor`, undefined)}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     )}
@@ -1415,7 +1418,7 @@ function ContentBlockItem({ path, rhfId, onRemove }: { path: string; rhfId: stri
                         </div>
                     </PopoverContent>
                 </Popover>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={onRemove}>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => remove(blockIndex)}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
