@@ -1055,7 +1055,7 @@ function ContentBlockList({ path }: { path: string }) {
                 <SortableContext items={fields.map((f) => f.rhfId!)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-4">
                         {fields.map((blockItem, blockIndex) => (
-                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} onRemove={() => remove(blockIndex)} />
+                            <ContentBlockItem key={blockItem.rhfId} blockIndex={blockIndex} path={path} rhfId={blockItem.rhfId!} removeBlock={() => remove(blockIndex)} />
                         ))}
                     </div>
                 </SortableContext>
@@ -1075,7 +1075,7 @@ function ContentBlockList({ path }: { path: string }) {
     );
 }
 
-function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string; rhfId: string; blockIndex: number; onRemove: () => void; }) {
+function ContentBlockItem({ path, rhfId, blockIndex, removeBlock }: { path: string; rhfId: string; blockIndex: number; removeBlock: () => void; }) {
     const { control, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
@@ -1218,7 +1218,7 @@ function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string;
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={onRemove}>Delete</AlertDialogAction>
+                            <AlertDialogAction onClick={removeBlock}>Delete</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
@@ -1292,7 +1292,7 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId, onRemove }: { moduleIndex
     );
 }
 
-function ModuleItem({ moduleIndex, rhfId, removeModule }: { moduleIndex: number, rhfId: string, removeModule: () => void }) {
+function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhfId: string, onRemove: () => void }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { fields: lessonFields, append: appendLesson, move: moveLesson, remove: removeLesson } = useFieldArray({ control: control, name: `modules.${moduleIndex}.lessons`, keyName: 'rhfId' });
     
@@ -1339,7 +1339,7 @@ function ModuleItem({ moduleIndex, rhfId, removeModule }: { moduleIndex: number,
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={removeModule}>
+                            <AlertDialogAction onClick={onRemove}>
                                 Delete Module
                             </AlertDialogAction>
                         </AlertDialogFooter>
@@ -1478,7 +1478,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                         <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
-                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} removeModule={() => removeModule(moduleIndex)} />
+                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} onRemove={() => removeModule(moduleIndex)} />
                             ))}
                         </SortableContext>
                     </DndContext>
@@ -1582,3 +1582,4 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
+
