@@ -20,7 +20,7 @@ type SalesforceTokenResponse = {
 };
 
 type SfdcAuth = NonNullable<User['sfdcAuth']>;
-type SubmissionResult = { success: boolean, message: string, details?: string };
+type SubmissionResult = { success: boolean, message: string, details?: string, coverage?: { covered: number[], uncovered: number[] } };
 const POINTS_MAP: { [key: string]: number } = { Easy: 5, Medium: 10, Hard: 15 };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/i)?.[1];
@@ -446,37 +446,42 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
 
         const failedTest = testResults.find((r: any) => r.Outcome !== 'Pass');
-        if (failedTest && !isTestClassProblem) { // For regular problems, any failure is an error
+        if (failedTest) {
              throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
 
-        log.push("\n--- Checking Code Coverage ---");
-        const coverageQuery = `SELECT NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
-        const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
-        
-        if (coverageResult.records && coverageResult.records.length > 0) {
-            const coverage = coverageResult.records[0];
-            const covered = coverage.NumLinesCovered;
-            const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
-            const percentage = total > 0 ? ((covered / total) * 100) : 100;
-            log.push(`> Coverage: ${percentage.toFixed(2)}% (${covered}/${total} lines covered).`);
+        let coverageData;
+        if (isTestClassProblem) {
+            log.push("\n--- Checking Code Coverage ---");
+            const coverageQuery = `SELECT CoveredLines, UncoveredLines FROM ApexCodeCoverage WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
+            const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
             
-            if (isTestClassProblem) {
+            if (coverageResult.records && coverageResult.records.length > 0) {
+                const coverage = coverageResult.records[0];
+                const coveredCount = coverage.CoveredLines?.length || 0;
+                const uncoveredCount = coverage.UncoveredLines?.length || 0;
+                const total = coveredCount + uncoveredCount;
+                const percentage = total > 0 ? (coveredCount / total) * 100 : 100;
+                log.push(`> Coverage: ${percentage.toFixed(2)}% (${coveredCount}/${total} lines covered).`);
+                
+                coverageData = {
+                    covered: coverage.CoveredLines || [],
+                    uncovered: coverage.UncoveredLines || []
+                };
+
                 if (percentage < 75) {
                     throw new Error(`Test Coverage Failed: Required coverage is 75%, but you only achieved ${percentage.toFixed(2)}%.`);
                 }
                 log.push("> Coverage goal of 75% met!");
-            }
-        } else {
-            log.push("> Could not retrieve code coverage information.");
-            if (isTestClassProblem) {
-                 throw new Error("Could not retrieve code coverage. Unable to verify solution.");
+            } else {
+                log.push("> Could not retrieve code coverage information.");
+                throw new Error("Could not retrieve code coverage. Unable to verify solution.");
             }
         }
 
         const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
         
-        return { success: true, message: successMessage, details: log.join('\n') };
+        return { success: true, message: successMessage, details: log.join('\n'), coverage: coverageData };
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

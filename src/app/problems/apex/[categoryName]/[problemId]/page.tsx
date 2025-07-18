@@ -10,7 +10,7 @@ import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData, ProblemLayoutComponent } from "@/types";
 import type { ImperativePanelHandle } from "react-resizable-panels";
-import MonacoEditor from "@monaco-editor/react";
+import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 import Image from "next/image";
@@ -317,13 +317,15 @@ const EditorAndResults = ({
     );
 };
 
-const TestClassEditor = ({ problem, code, setCode, handleSubmit, isSubmitting, fontSize }: {
+const TestClassEditor = ({ problem, code, setCode, handleSubmit, isSubmitting, fontSize, coverageLines, onEditorMount }: {
     problem: Problem,
     code: string,
     setCode: (v: string) => void,
     handleSubmit: () => void,
     isSubmitting: boolean,
     fontSize: number,
+    coverageLines?: { covered: number[], uncovered: number[] },
+    onEditorMount: OnMount
 }) => {
     const { resolvedTheme } = useTheme();
     return (
@@ -340,6 +342,7 @@ const TestClassEditor = ({ problem, code, setCode, handleSubmit, isSubmitting, f
                         language="java"
                         value={problem.sampleCode}
                         theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                        onMount={onEditorMount}
                         options={{
                             readOnly: true,
                             fontSize: fontSize,
@@ -447,6 +450,38 @@ export default function ProblemWorkspacePage() {
     const [awardedPoints, setAwardedPoints] = useState(0);
     const [nextProblem, setNextProblem] = useState<Problem | null>(null);
 
+    const editorRef = useRef<any>(null);
+    const decorationIdsRef = useRef<string[]>([]);
+    const [coverageLines, setCoverageLines] = useState<{ covered: number[], uncovered: number[] } | null>(null);
+
+    const handleEditorDidMount: OnMount = (editor, monaco) => {
+        editorRef.current = editor;
+    };
+
+    useEffect(() => {
+        if (editorRef.current && coverageLines) {
+            const decorations = [
+                ...coverageLines.covered.map(line => ({
+                    range: new monaco.Range(line, 1, line, 1),
+                    options: { isWholeLine: true, className: 'coverage-covered' }
+                })),
+                ...coverageLines.uncovered.map(line => ({
+                    range: new monaco.Range(line, 1, line, 1),
+                    options: { isWholeLine: true, className: 'coverage-uncovered' }
+                }))
+            ];
+            
+            // The deltaDecorations method is used to add, change, or remove decorations.
+            // It takes two arguments: an array of old decoration ids to remove, and an array of new decorations to add.
+            // It returns an array of the new decoration ids.
+            decorationIdsRef.current = editorRef.current.deltaDecorations(decorationIdsRef.current, decorations);
+
+        } else if (editorRef.current) {
+            // Clear decorations if no coverage data
+            decorationIdsRef.current = editorRef.current.deltaDecorations(decorationIdsRef.current, []);
+        }
+    }, [coverageLines, editorRef.current]);
+
     useEffect(() => {
         setIsClient(true);
         // Collapse panel on initial mount
@@ -487,6 +522,7 @@ export default function ProblemWorkspacePage() {
     // Reset overlay when problem changes
     useEffect(() => {
         setNextProblem(null);
+        setCoverageLines(null);
     }, [problemId]);
 
     useEffect(() => {
@@ -598,11 +634,14 @@ export default function ProblemWorkspacePage() {
         setSubmissionSuccess(false);
         setResults("");
         setSubmissionStep('saving');
+        setCoverageLines(null); // Clear previous coverage highlights
 
-        // Auto-expand results panel
-        const panel = resultsPanelRef.current;
-        if (panel && isResultsCollapsed) {
-            toggleResultsPanel();
+        // Auto-expand results panel if it's a regular problem
+        if (problem.metadataType !== "Test Class") {
+            const panel = resultsPanelRef.current;
+            if (panel && isResultsCollapsed) {
+                toggleResultsPanel();
+            }
         }
         
         const onProgress = (step: 'testing' | 'done') => {
@@ -613,6 +652,10 @@ export default function ProblemWorkspacePage() {
         
         setResults(response.details || response.message);
         setSubmissionSuccess(response.success);
+        
+        if (response.coverage) {
+            setCoverageLines(response.coverage);
+        }
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
@@ -898,6 +941,8 @@ export default function ProblemWorkspacePage() {
                             handleSubmit={handleSubmit}
                             isSubmitting={isSubmitting}
                             fontSize={fontSize}
+                            onEditorMount={handleEditorDidMount}
+                            coverageLines={coverageLines ?? undefined}
                          />
                     </div>
                     <div className="hidden md:flex h-full">
@@ -908,6 +953,8 @@ export default function ProblemWorkspacePage() {
                             handleSubmit={handleSubmit}
                             isSubmitting={isSubmitting}
                             fontSize={fontSize}
+                            onEditorMount={handleEditorDidMount}
+                            coverageLines={coverageLines ?? undefined}
                          />
                     </div>
                      <div className="p-4 border-t">
