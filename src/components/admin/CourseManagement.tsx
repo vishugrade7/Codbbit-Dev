@@ -1,5 +1,6 @@
 
-'use client';
+
+"use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useForm, useFieldArray, FormProvider, useFormContext, useWatch } from "react-hook-form";
@@ -151,7 +152,7 @@ export function CourseList({ onEdit, onAddNew }: { onEdit: (c: Course) => void, 
 
 function TextEditorWithPreview({ value, onChange, placeholder, className }: { value: string, onChange: (newValue: string) => void; placeholder?: string; className?: string }) {
     return (
-        <ResizablePanelGroup direction="vertical" className={cn("rounded-lg border", className)}>
+        <ResizablePanelGroup direction="vertical" className={cn("rounded-lg border min-h-[250px]", className)}>
             <ResizablePanel defaultSize={50} minSize={30}>
                  <Textarea
                     value={value}
@@ -1202,9 +1203,25 @@ function ContentBlockItem({ path, rhfId, blockIndex, onRemove }: { path: string;
                         </div>
                     </PopoverContent>
                 </Popover>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={onRemove}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete this content block.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={onRemove}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     );
@@ -1216,10 +1233,8 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId, onRemove }: { moduleIndex
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
     
-    // Call hooks unconditionally
     const block = useWatch({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}` as any });
     
-    // Early return if block is not ready
     if (!block) {
         return null;
     }
@@ -1277,9 +1292,9 @@ function LessonItem({ moduleIndex, lessonIndex, rhfId, onRemove }: { moduleIndex
     );
 }
 
-function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhfId: string, onRemove: () => void }) {
+function ModuleItem({ moduleIndex, rhfId, removeModule }: { moduleIndex: number, rhfId: string, removeModule: () => void }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { fields: lessonFields, append: appendLesson, move: moveLesson, remove: removeLesson } = useFieldArray({ name: `modules.${moduleIndex}.lessons` });
+    const { fields: lessonFields, append: appendLesson, move: moveLesson, remove: removeLesson } = useFieldArray({ control: control, name: `modules.${moduleIndex}.lessons`, keyName: 'rhfId' });
     
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: rhfId });
     const style = { transform: CSS.Transform.toString(transform), transition };
@@ -1289,8 +1304,8 @@ function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhf
     const handleLessonDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (over && active.id !== over.id) {
-            const oldIndex = lessonFields.findIndex(l => l.id === active.id);
-            const newIndex = lessonFields.findIndex(l => l.id === over.id);
+            const oldIndex = lessonFields.findIndex(l => l.rhfId === active.id);
+            const newIndex = lessonFields.findIndex(l => l.rhfId === over.id);
             if (oldIndex !== -1 && newIndex !== -1) {
                 moveLesson(oldIndex, newIndex);
             }
@@ -1324,7 +1339,7 @@ function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhf
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={onRemove}>
+                            <AlertDialogAction onClick={removeModule}>
                                 Delete Module
                             </AlertDialogAction>
                         </AlertDialogFooter>
@@ -1333,17 +1348,17 @@ function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhf
             </CardHeader>
              <CardContent className="p-4 pt-0">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-                    <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={lessonFields.map(f => f.rhfId!)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-4 pt-4 pl-6 border-l-2">
                             {lessonFields.map((lessonItem, lessonIndex) => (
-                                <LessonItem key={lessonItem.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.id} onRemove={() => removeLesson(lessonIndex)} />
+                                <LessonItem key={lessonItem.rhfId} moduleIndex={moduleIndex} lessonIndex={lessonIndex} rhfId={lessonItem.rhfId!} onRemove={() => removeLesson(lessonIndex)} />
                             ))}
                             <FormField control={control} name={`modules.${moduleIndex}.lessons`} render={({ fieldState }) => <FormMessage>{fieldState.error?.root?.message}</FormMessage>} />
                         </div>
                     </SortableContext>
                 </DndContext>
                 <div className="flex justify-between items-center mt-4 ml-6">
-                    <Button type="button" variant="outline" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] })}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: true, contentBlocks: [{ id: uuidv4(), type: 'text', content: '' }] }] })}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
                     </Button>
                 </div>
@@ -1463,7 +1478,7 @@ export function CourseForm({ course, onBack }: { course: Course | null, onBack: 
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                         <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             {moduleFields.map((moduleItem, moduleIndex) => (
-                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} onRemove={() => removeModule(moduleIndex)} />
+                                <ModuleItem key={moduleItem.id} moduleIndex={moduleIndex} rhfId={moduleItem.id} removeModule={() => removeModule(moduleIndex)} />
                             ))}
                         </SortableContext>
                     </DndContext>
@@ -1567,5 +1582,3 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-
-    
