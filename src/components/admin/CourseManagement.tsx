@@ -1313,7 +1313,8 @@ function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhf
     };
     
     return (
-        <Card ref={setNodeRef} style={style}>
+        <div ref={setNodeRef} style={style}>
+        <Card>
             <CardHeader className="flex flex-row items-center gap-2 p-3 bg-muted/50 rounded-t-lg">
                 <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
                 <div className="flex-1">
@@ -1364,6 +1365,7 @@ function ModuleItem({ moduleIndex, rhfId, onRemove }: { moduleIndex: number, rhf
                 </div>
             </CardContent>
         </Card>
+        </div>
     );
 }
 
