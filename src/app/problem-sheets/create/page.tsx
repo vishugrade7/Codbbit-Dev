@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc, collection, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -10,6 +10,10 @@ import type { Problem, ApexProblemsData, ProblemSheet } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { getCache, setCache } from "@/lib/cache";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,12 +24,45 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, ClipboardList, X, ArrowLeft, PlusCircle } from "lucide-react";
+import { Loader2, Search, ClipboardList, X, ArrowLeft, PlusCircle, GripVertical } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 type ProblemWithCategory = Problem & { categoryName: string };
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
+
+function SortableProblemItem({ problem, onRemove }: { problem: ProblemWithCategory, onRemove: () => void }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+    } = useSortable({ id: problem.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-7 w-7 cursor-grab" {...attributes} {...listeners}>
+                    <GripVertical className="h-4 w-4" />
+                </Button>
+                <div className="flex flex-col">
+                    <span className="font-medium text-sm">{problem.title}</span>
+                    <span className="text-xs text-muted-foreground">{problem.categoryName}</span>
+                </div>
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onRemove}>
+                <X className="h-4 w-4" />
+            </Button>
+        </div>
+    );
+}
+
 
 function CreateProblemSheetClient() {
     const { toast } = useToast();
@@ -42,10 +79,19 @@ function CreateProblemSheetClient() {
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [categoryFilter, setCategoryFilter] = useState("All");
 
-    const [selectedProblemIds, setSelectedProblemIds] = useState<Set<string>>(new Set());
+    const [selectedProblems, setSelectedProblems] = useState<ProblemWithCategory[]>([]);
     const [sheetName, setSheetName] = useState("");
     const [sheetDescription, setSheetDescription] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    const selectedProblemIds = useMemo(() => new Set(selectedProblems.map(p => p.id)), [selectedProblems]);
+
+    useEffect(() => {
+        if (scrollAreaRef.current) {
+            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        }
+    }, [selectedProblems.length]);
     
     useEffect(() => {
         const fetchProblemsAndSheet = async () => {
@@ -58,18 +104,20 @@ function CreateProblemSheetClient() {
                         (categoryData.Questions || []).map(problem => ({ ...problem, categoryName }))
                     );
                     setAllProblems(problems);
+                    return problems;
                 };
 
+                let fetchedProblems: ProblemWithCategory[] = [];
                 const cachedProblems = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
                 if (cachedProblems) {
-                    processProblems(cachedProblems);
+                    fetchedProblems = processProblems(cachedProblems) || [];
                 } else {
                     const apexDocRef = doc(db, "problems", "Apex");
                     const problemsSnap = await getDoc(apexDocRef);
                     if (problemsSnap.exists()) {
                         const data = problemsSnap.data().Category as ApexProblemsData;
                         await setCache(APEX_PROBLEMS_CACHE_KEY, data);
-                        processProblems(data);
+                        fetchedProblems = processProblems(data) || [];
                     }
                 }
 
@@ -86,7 +134,12 @@ function CreateProblemSheetClient() {
                         }
                         setSheetName(sheetData.name);
                         setSheetDescription(sheetData.description || "");
-                        setSelectedProblemIds(new Set(sheetData.problemIds));
+                        
+                        const orderedSelectedProblems = sheetData.problemIds
+                            .map(id => fetchedProblems.find(p => p.id === id))
+                            .filter((p): p is ProblemWithCategory => !!p);
+                        setSelectedProblems(orderedSelectedProblems);
+
                     } else {
                         toast({ variant: 'destructive', title: 'Sheet not found' });
                         router.push('/problem-sheets');
@@ -114,40 +167,40 @@ function CreateProblemSheetClient() {
           .filter((p) => categoryFilter === "All" || p.categoryName === categoryFilter)
           .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [allProblems, searchTerm, difficultyFilter, categoryFilter]);
-
-    const selectedProblems = useMemo(() => {
-        return Array.from(selectedProblemIds).map(id => allProblems.find(p => p.id === id)).filter(Boolean) as ProblemWithCategory[];
-    }, [selectedProblemIds, allProblems]);
     
-    const handleToggleProblem = (problemId: string) => {
-        const newSet = new Set(selectedProblemIds);
-        if (newSet.has(problemId)) {
-            newSet.delete(problemId);
-        } else {
-            newSet.add(problemId);
-        }
-        setSelectedProblemIds(newSet);
+    const handleToggleProblem = (problem: ProblemWithCategory) => {
+        setSelectedProblems(prev => {
+            const isSelected = prev.some(p => p.id === problem.id);
+            if (isSelected) {
+                return prev.filter(p => p.id !== problem.id);
+            } else {
+                return [...prev, problem];
+            }
+        });
     };
 
     const handleSelectAllFiltered = (checked: boolean | 'indeterminate') => {
-        const newSet = new Set(selectedProblemIds);
-        if (checked) {
-            filteredProblems.forEach(p => newSet.add(p.id));
-        } else {
-            filteredProblems.forEach(p => newSet.delete(p.id));
-        }
-        setSelectedProblemIds(newSet);
+        const filteredIds = new Set(filteredProblems.map(p => p.id));
+        setSelectedProblems(prev => {
+            const newSelected = [...prev];
+            if (checked) {
+                const problemsToAdd = filteredProblems.filter(p => !newSelected.some(sp => sp.id === p.id));
+                return [...newSelected, ...problemsToAdd];
+            } else {
+                return newSelected.filter(p => !filteredIds.has(p.id));
+            }
+        });
     };
     
     const isAllFilteredSelected = useMemo(() => {
         if (filteredProblems.length === 0) return false;
         const filteredIds = new Set(filteredProblems.map(p => p.id));
-        const selectedFilteredCount = Array.from(selectedProblemIds).filter(id => filteredIds.has(id)).length;
+        const selectedFilteredCount = selectedProblems.filter(p => filteredIds.has(p.id)).length;
 
         if (selectedFilteredCount === 0) return false;
         if (selectedFilteredCount === filteredProblems.length) return true;
         return 'indeterminate';
-    }, [filteredProblems, selectedProblemIds]);
+    }, [filteredProblems, selectedProblems]);
 
 
     const getDifficultyBadgeClass = (difficulty: string) => {
@@ -217,6 +270,19 @@ function CreateProblemSheetClient() {
     };
 
     const backUrl = formMode === 'edit' && sheetId ? `/sheets/${sheetId}` : '/problem-sheets';
+
+    const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+    
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            setSelectedProblems((items) => {
+                const oldIndex = items.findIndex((item) => item.id === active.id);
+                const newIndex = items.findIndex((item) => item.id === over.id);
+                return arrayMove(items, oldIndex, newIndex);
+            });
+        }
+    }
 
     return (
         <main className="flex-1 container py-8 flex flex-col h-[calc(100vh-4rem)]">
@@ -298,7 +364,7 @@ function CreateProblemSheetClient() {
                                             <TableCell>
                                                 <Checkbox
                                                     checked={selectedProblemIds.has(problem.id)}
-                                                    onCheckedChange={() => handleToggleProblem(problem.id)}
+                                                    onCheckedChange={() => handleToggleProblem(problem)}
                                                     aria-label={`Select ${problem.title}`}
                                                 />
                                             </TableCell>
@@ -345,21 +411,21 @@ function CreateProblemSheetClient() {
                             <p className="text-sm font-medium text-muted-foreground">
                                 Selected Problems ({selectedProblems.length})
                             </p>
-                            <ScrollArea className="flex-1 border rounded-md p-2">
+                            <ScrollArea className="flex-1 border rounded-md p-2" viewportRef={scrollAreaRef}>
                                 {selectedProblems.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {selectedProblems.map(problem => (
-                                            <div key={problem.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-sm">{problem.title}</span>
-                                                    <span className="text-xs text-muted-foreground">{problem.categoryName}</span>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleProblem(problem.id)}>
-                                                    <X className="h-4 w-4"/>
-                                                </Button>
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                        <SortableContext items={selectedProblems.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                                            <div className="space-y-2">
+                                                {selectedProblems.map(problem => (
+                                                    <SortableProblemItem
+                                                        key={problem.id}
+                                                        problem={problem}
+                                                        onRemove={() => handleToggleProblem(problem)}
+                                                    />
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </SortableContext>
+                                    </DndContext>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
                                         <ClipboardList className="h-10 w-10 mb-4" />
@@ -393,5 +459,3 @@ export default function CreateProblemSheetPage() {
         </Suspense>
     );
 }
-
-    
