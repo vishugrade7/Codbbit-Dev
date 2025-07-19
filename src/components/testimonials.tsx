@@ -61,28 +61,28 @@ export default function Testimonials() {
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
         >
-          <CarouselContent className="-ml-4">
+          <CarouselContent className="-ml-8">
             {testimonials.map((testimonial, index) => (
-              <CarouselItem key={index} className="pl-4 md:basis-1/2">
-                <Card className="h-full bg-card/50">
-                  <CardContent className="p-6 md:p-8 flex flex-col items-center text-center gap-6">
-                     <Image
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        width={100}
-                        height={100}
-                        data-ai-hint={testimonial['data-ai-hint']}
-                        className="rounded-full border-4 border-primary/50"
-                    />
-                    <blockquote className="text-lg md:text-xl font-medium">
+              <CarouselItem key={index} className="pl-8 md:basis-1/2 lg:basis-1/3">
+                <div className="h-full bg-card/50 rounded-2xl p-8 flex flex-col justify-center">
+                    <blockquote className="text-lg font-medium">
                       “{testimonial.quote}”
                     </blockquote>
-                    <div className="flex flex-col items-center">
-                        <p className="font-semibold">{testimonial.name}</p>
-                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    <div className="flex items-center gap-4 mt-6">
+                        <Image
+                            src={testimonial.image}
+                            alt={testimonial.name}
+                            width={48}
+                            height={48}
+                            data-ai-hint={testimonial['data-ai-hint']}
+                            className="rounded-full border-2 border-primary/50"
+                        />
+                        <div>
+                            <p className="font-semibold">{testimonial.name}</p>
+                            <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        </div>
                     </div>
-                  </CardContent>
-                </Card>
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>
