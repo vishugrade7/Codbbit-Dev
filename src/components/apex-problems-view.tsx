@@ -8,12 +8,11 @@ import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getCache, setCache } from "@/lib/cache";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Code, BookOpen, ChevronRight, Puzzle, Album, Anchor, AppWindow, Award, Axe, Baby, Badge, BaggageClaim, Binary } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Code, BookOpen, ChevronRight, Puzzle, Album, GitFork, Database, TestTube2, Clock, Replace } from "lucide-react";
 import type { ApexProblemsData } from "@/types";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -24,7 +23,6 @@ type CategoryInfo = {
   imageUrl?: string;
 };
 
-const icons = [Puzzle, Album, Anchor, AppWindow, Award, Axe, Baby, Badge, BaggageClaim, Binary];
 const bgColors = [
     "bg-blue-200 dark:bg-blue-900/30",
     "bg-orange-200 dark:bg-orange-900/30",
@@ -49,6 +47,19 @@ const iconColors = [
     "text-indigo-800 dark:text-indigo-200",
     "text-gray-800 dark:text-gray-200",
 ];
+
+const getIconForCategory = (categoryName: string) => {
+    const lowerCaseName = categoryName.toLowerCase();
+    if (lowerCaseName.includes('array')) return Puzzle;
+    if (lowerCaseName.includes('collection')) return Album;
+    if (lowerCaseName.includes('trigger')) return GitFork;
+    if (lowerCaseName.includes('soql')) return Database;
+    if (lowerCaseName.includes('test')) return TestTube2;
+    if (lowerCaseName.includes('async')) return Clock;
+    if (lowerCaseName.includes('dynamic')) return Replace;
+    return Code; // Default icon
+};
+
 
 export default function ApexProblemsView() {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
@@ -119,7 +130,7 @@ export default function ApexProblemsView() {
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {categories.map((category, index) => {
-              const Icon = icons[index % icons.length];
+              const Icon = getIconForCategory(category.name);
               const bgColor = bgColors[index % bgColors.length];
               const iconColor = iconColors[index % iconColors.length];
               return (
