@@ -40,6 +40,7 @@ function CreateProblemSheetClient() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState("All");
+    const [categoryFilter, setCategoryFilter] = useState("All");
 
     const [selectedProblemIds, setSelectedProblemIds] = useState<Set<string>>(new Set());
     const [sheetName, setSheetName] = useState("");
@@ -100,12 +101,19 @@ function CreateProblemSheetClient() {
         };
         fetchProblemsAndSheet();
     }, [toast, formMode, sheetId, authUser, router]);
+
+    const uniqueCategories = useMemo(() => {
+        if (!allProblems || allProblems.length === 0) return [];
+        const categorySet = new Set(allProblems.map(p => p.categoryName));
+        return Array.from(categorySet).sort();
+    }, [allProblems]);
     
     const filteredProblems = useMemo(() => {
         return allProblems
           .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
+          .filter((p) => categoryFilter === "All" || p.categoryName === categoryFilter)
           .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [allProblems, searchTerm, difficultyFilter]);
+    }, [allProblems, searchTerm, difficultyFilter, categoryFilter]);
 
     const selectedProblems = useMemo(() => {
         return Array.from(selectedProblemIds).map(id => allProblems.find(p => p.id === id)).filter(Boolean) as ProblemWithCategory[];
@@ -239,8 +247,19 @@ function CreateProblemSheetClient() {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
+                                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                    <SelectTrigger className="w-full md:w-[180px] rounded-full">
+                                        <SelectValue placeholder="Category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Categories</SelectItem>
+                                        {uniqueCategories.map(cat => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                                    <SelectTrigger className="w-full md:w-[180px]">
+                                    <SelectTrigger className="w-full md:w-[180px] rounded-full">
                                         <SelectValue placeholder="Difficulty" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -313,6 +332,7 @@ function CreateProblemSheetClient() {
                                 placeholder="Enter sheet name..."
                                 value={sheetName}
                                 onChange={(e) => setSheetName(e.target.value)}
+                                className="rounded-full"
                             />
                             <Textarea
                                 placeholder="Enter a short description..."
