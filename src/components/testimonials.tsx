@@ -34,6 +34,20 @@ const testimonials = [
         role: "Technical Architect",
         image: "https://placehold.co/150x150.png",
         "data-ai-hint": "man at computer"
+    },
+    {
+        quote: "A must-have tool for any developer in the Salesforce ecosystem. The leaderboard adds a fun, competitive edge to learning.",
+        name: "Emily Rodriguez",
+        role: "Salesforce Admin",
+        image: "https://placehold.co/150x150.png",
+        "data-ai-hint": "woman professional"
+    },
+    {
+        quote: "The 'Test Class' problems are unique and incredibly helpful for mastering test-driven development in Apex. I haven't seen this anywhere else.",
+        name: "David Kim",
+        role: "Lead Developer",
+        image: "https://placehold.co/150x150.png",
+        "data-ai-hint": "man coding"
     }
 ];
 
@@ -55,7 +69,7 @@ export default function Testimonials() {
           plugins={[plugin.current]}
           opts={{
             align: "start",
-            loop: true,
+            loop: false,
           }}
           className="w-full"
           onMouseEnter={plugin.current.stop}
