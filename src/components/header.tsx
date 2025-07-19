@@ -100,11 +100,96 @@ export default function Header() {
 
 
   return (
-    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/70 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50", user && "md:hidden")}>
+    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
-           {/* Mobile Menu Trigger */}
-          <div className="md:hidden">
+          <Link href="/" className="flex items-center gap-2">
+            {loadingBranding ? (
+              <Skeleton className="h-6 w-6 rounded-full" />
+            ) : (
+              <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
+            )}
+            <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit' : 'Codbbit'}</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+             {(loadingNav || authLoading) ? (
+                <>
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-5 w-28" />
+                </>
+            ) : (
+                visibleNavLinks.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                    "transition-colors hover:text-foreground/80",
+                    pathname === link.href ? "text-foreground" : "text-foreground/60",
+                    !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
+                    )}
+                >
+                    {link.label}
+                </Link>
+                ))
+            )}
+            {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
+                 <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                    "transition-colors hover:text-foreground/80 flex items-center gap-1",
+                    pathname === link.href ? "text-foreground" : "text-foreground/60"
+                    )}
+                >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {authLoading ? (
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-8 w-16 rounded-md" />
+                <Skeleton className="h-10 w-10 rounded-full" />
+            </div>
+          ) : user ? (
+            <div className="flex items-center gap-2">
+                 <div className="hidden sm:flex items-center gap-1.5 font-semibold">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </div>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Logged-out Buttons */}
+              <div className="hidden md:flex items-center gap-2">
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </div>
+            </>
+          )}
+
+           {/* Mobile Menu Trigger & Buttons */}
+          <div className={cn("flex items-center gap-2", user ? "md:hidden" : "md:hidden")}>
+            {!user && !authLoading && (
+                <>
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/login" aria-label="Login">
+                           <UserIcon className="h-5 w-5" />
+                        </Link>
+                    </Button>
+                     <Button asChild size="sm">
+                        <Link href="/signup">Try for Free</Link>
+                    </Button>
+                </>
+            )}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -207,85 +292,7 @@ export default function Header() {
                 </div>
               </SheetContent>
             </Sheet>
-          </div>
-          <Link href="/" className="flex items-center gap-2">
-            {loadingBranding ? (
-              <Skeleton className="h-6 w-6 rounded-full" />
-            ) : (
-              <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
-            )}
-            <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
-             {(loadingNav || authLoading) ? (
-                <>
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-5 w-28" />
-                </>
-            ) : (
-                visibleNavLinks.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                    "transition-colors hover:text-foreground/80",
-                    pathname === link.href ? "text-foreground" : "text-foreground/60",
-                    !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
-                    )}
-                >
-                    {link.label}
-                </Link>
-                ))
-            )}
-            {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
-                 <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                    "transition-colors hover:text-foreground/80 flex items-center gap-1",
-                    pathname === link.href ? "text-foreground" : "text-foreground/60"
-                    )}
-                >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          {authLoading ? (
-            <div className="flex items-center gap-4">
-                <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
-                <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
-            </div>
-          ) : user ? (
-            <div className="flex items-center gap-2">
-                 <div className="flex items-center gap-1.5 font-semibold">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                </div>
-            </div>
-          ) : (
-            <>
-              {/* Desktop Logged-out Buttons */}
-              <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </div>
-
-              {/* Mobile login button */}
-              <div className="md:hidden">
-                <Button asChild size="sm">
-                  <Link href="/login">Login</Link>
-                </Button>
-              </div>
-            </>
-          )}
+           </div>
         </div>
       </div>
     </header>
