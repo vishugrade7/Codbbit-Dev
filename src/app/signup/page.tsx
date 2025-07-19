@@ -261,8 +261,8 @@ export default function SignupPage() {
   return (
     <>
     <title>Sign Up</title>
-    <div className="flex min-h-screen items-center justify-center bg-black p-4">
-      <Card className="w-full max-w-lg bg-neutral-900/50 border-neutral-800 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
                 {loadingBranding ? (
@@ -274,7 +274,7 @@ export default function SignupPage() {
                 )}
            </div>
           <CardTitle className="text-2xl font-headline">Create an account</CardTitle>
-          <CardDescription className="text-neutral-400">
+          <CardDescription>
              Already have an account?{" "}
             <Link href="/login" className="underline text-primary hover:text-primary/80">
               Login
@@ -293,8 +293,8 @@ export default function SignupPage() {
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
-                            <Input placeholder="e.g. Tim Cook" {...field} className="pl-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="e.g. Tim Cook" {...field} className="pl-10" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -309,11 +309,11 @@ export default function SignupPage() {
                       <FormLabel>Username</FormLabel>
                       <FormControl>
                         <div className="relative">
-                            <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
-                            <Input placeholder="e.g. tim_cook" {...field} className="pl-10 pr-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900" />
+                            <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="e.g. tim_cook" {...field} className="pl-10 pr-10" />
                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                 {form.formState.isValidating && field.value.length >= 3 && (
-                                    <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                                 )}
                                 {!form.formState.isValidating && !form.formState.errors.username && field.value.length >= 3 && (
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -331,7 +331,7 @@ export default function SignupPage() {
                 name="company"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company / College <span className="text-neutral-400">(Optional)</span></FormLabel>
+                    <FormLabel>Company / College <span className="text-muted-foreground">(Optional)</span></FormLabel>
                     <div className="relative">
                       <FormControl>
                           <div className="relative">
@@ -345,13 +345,13 @@ export default function SignupPage() {
                                       onError={() => setLogoError(true)}
                                     />
                                 ) : (
-                                    <Building className="h-5 w-5 text-neutral-400" />
+                                    <Building className="h-5 w-5 text-muted-foreground" />
                                 )}
                               </div>
                               <Input 
                                 placeholder="e.g. Apple" 
                                 {...field} 
-                                className="pl-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900"
+                                className="pl-10"
                                 autoComplete="off"
                                 onFocus={() => companyValue && suggestions.length > 0 && setIsSuggestionsOpen(true)}
                                 onBlur={() => setIsSuggestionsOpen(false)}
@@ -381,10 +381,10 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Country</FormLabel>
                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400 z-10" />
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="pl-10 bg-neutral-800/50 border-neutral-700 focus:ring-primary focus:ring-offset-neutral-900">
+                            <SelectTrigger className="pl-10">
                               <SelectValue placeholder="Select your country" />
                             </SelectTrigger>
                           </FormControl>
@@ -407,8 +407,8 @@ export default function SignupPage() {
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
-                        <Input placeholder="user@example.com" {...field} className="pl-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="user@example.com" {...field} className="pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -423,11 +423,11 @@ export default function SignupPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input 
                             type={showPassword ? "text" : "password"} 
                             {...field}
-                            className="pl-10 pr-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900"
+                            className="pl-10 pr-10"
                             placeholder="min 6 chars"
                         />
                          <Button
@@ -435,7 +435,7 @@ export default function SignupPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-neutral-400 hover:bg-transparent hover:text-white"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-primary"
                             aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -446,13 +446,13 @@ export default function SignupPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full !rounded-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 text-base" disabled={isLoading}>
+              <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Account
               </Button>
             </form>
           </Form>
-          <p className="mt-6 px-8 text-center text-xs text-neutral-400">
+          <p className="mt-6 px-8 text-center text-xs text-muted-foreground">
             By creating an account, you agree to our{" "}
             <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
               Terms of Service

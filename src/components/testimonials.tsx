@@ -64,8 +64,8 @@ export default function Testimonials() {
           <CarouselContent className="-ml-8">
             {testimonials.map((testimonial, index) => (
               <CarouselItem key={index} className="pl-8 md:basis-1/2 lg:basis-1/3">
-                <div className="h-full bg-black rounded-[60px] p-8 flex flex-col justify-center">
-                    <blockquote className="text-lg font-medium">
+                <div className="h-full bg-card border rounded-[60px] p-8 flex flex-col justify-center">
+                    <blockquote className="text-lg font-medium text-card-foreground">
                       “{testimonial.quote}”
                     </blockquote>
                     <div className="flex items-center gap-4 mt-6">
@@ -78,7 +78,7 @@ export default function Testimonials() {
                             className="rounded-full border-2 border-primary/50"
                         />
                         <div>
-                            <p className="font-semibold">{testimonial.name}</p>
+                            <p className="font-semibold text-card-foreground">{testimonial.name}</p>
                             <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                         </div>
                     </div>

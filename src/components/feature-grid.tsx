@@ -6,7 +6,7 @@ import { Card, CardContent } from "./ui/card";
 
 export default function FeatureGrid() {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-background text-white">
+    <section className="w-full py-12 md:py-24 lg:py-32 bg-card">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center gap-4 mb-12">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
@@ -14,7 +14,7 @@ export default function FeatureGrid() {
             </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            <Card className="flex flex-col bg-neutral-900/80">
+            <Card className="flex flex-col bg-background">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-primary p-3 text-primary-foreground mb-4 w-fit">
                   <Code2 className="h-6 w-6" />
@@ -34,9 +34,9 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col bg-neutral-900/80">
+            <Card className="flex flex-col bg-background">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-white p-3 text-black mb-4 w-fit">
+                <div className="inline-block rounded-lg bg-secondary p-3 text-secondary-foreground mb-4 w-fit">
                   <BookOpenCheck className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-semibold">Interactive Courses</h3>
@@ -54,7 +54,7 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col bg-neutral-900/80">
+            <Card className="flex flex-col bg-background">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-secondary p-3 text-secondary-foreground mb-4 w-fit">
                   <Award className="h-6 w-6" />
