@@ -23,7 +23,7 @@ const SkillCard = ({
   <div
     className={`flex items-center justify-between p-4 rounded-full border transition-all duration-300 hover:scale-105 hover:border-white/80 ${borderColor}`}
   >
-    <span className="text-xl font-medium text-white">{title}</span>
+    <span className="text-lg font-medium text-white">{title}</span>
     <div
       className={`flex h-12 w-12 items-center justify-center rounded-full ${bgColor}`}
     >
