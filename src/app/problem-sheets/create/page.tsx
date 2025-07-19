@@ -220,11 +220,17 @@ function CreateProblemSheetClient() {
 
     return (
         <main className="flex-1 container py-8 flex flex-col">
-            <div className="mb-8">
-                <Button variant="outline" onClick={() => router.push(backUrl)} className="mb-4">
+            <div className="flex justify-between items-center mb-4">
+                 <Button variant="outline" onClick={() => router.push(backUrl)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {formMode === 'edit' ? 'Back to Sheet' : 'Back to All Sheets'}
                 </Button>
+                 <Button onClick={handleSaveSheet} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
+                </Button>
+            </div>
+            <div className="mb-8">
                 <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
                     {formMode === 'edit' ? 'Edit Problem Sheet' : 'Create New Problem Sheet'}
                 </h1>
@@ -367,12 +373,6 @@ function CreateProblemSheetClient() {
                                 )}
                             </ScrollArea>
                         </CardContent>
-                        <CardFooter>
-                            <Button className="w-full" onClick={handleSaveSheet} disabled={isSaving}>
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
-                            </Button>
-                        </CardFooter>
                    </Card>
                 </ResizablePanel>
             </ResizablePanelGroup>
