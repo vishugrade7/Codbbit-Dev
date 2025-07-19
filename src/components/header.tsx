@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import type { NavLink } from "@/types";
@@ -19,6 +19,7 @@ import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
+import { ThemeToggle } from "./theme-toggle";
 
 
 export default function Header() {
@@ -125,7 +126,7 @@ export default function Header() {
                     href={link.href}
                     className={cn(
                       "px-3 py-1.5 rounded-full transition-colors",
-                      "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black",
+                      "hover:bg-white hover:text-black dark:hover:bg-white dark:hover:text-black",
                       pathname === link.href ? "text-foreground" : "text-foreground/60",
                       !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
                     )}
@@ -167,6 +168,7 @@ export default function Header() {
             <>
               {/* Desktop Logged-out Buttons */}
               <div className="hidden md:flex items-center gap-2">
+                <ThemeToggle />
                 <Button variant="ghost" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
@@ -280,6 +282,9 @@ export default function Header() {
                       </Button>
                     ) : (
                       <div className="flex flex-col gap-4">
+                        <div className="flex justify-center">
+                            <ThemeToggle />
+                        </div>
                          <Button variant="ghost" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
                          <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
                       </div>
