@@ -4,7 +4,6 @@
 import * as React from "react";
 import Autoplay from "embla-carousel-autoplay";
 import { Card, CardContent } from "@/components/ui/card";
-import { Target, Users } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -12,95 +11,84 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import Image from "next/image";
 
 const testimonials = [
     {
         quote: "Accidentally got addicted to Codbbit, oops. The problems are the perfect mix of challenging and fun for any Salesforce developer.",
         name: "Alex Johnson",
         role: "Salesforce Developer",
+        image: "https://placehold.co/150x150.png",
+        "data-ai-hint": "smiling developer"
     },
     {
         quote: "The best platform for practicing Apex. My coding speed and quality have improved dramatically. Highly recommended for interview prep!",
         name: "Samantha Lee",
         role: "Senior Salesforce Consultant",
+        image: "https://placehold.co/150x150.png",
+        "data-ai-hint": "woman architect"
     },
     {
         quote: "Codbbit's interactive courses are a game-changer. I finally understood complex LWC concepts that I struggled with for months.",
         name: "Michael Chen",
         role: "Technical Architect",
-    }
-];
-
-const features = [
-    {
-        icon: Target,
-        title: "Build Self-Confidence",
-        description: "Not sure if you are progressing well as a programmer? Push yourself to your limits and show what you are really made of with our targeted Apex and LWC challenges."
-    },
-    {
-        icon: Users,
-        title: "Become a Mentor",
-        description: "Lend your expertise to others by contributing great solutions, or directly by creating your own problem sets and reviewing code."
+        image: "https://placehold.co/150x150.png",
+        "data-ai-hint": "man at computer"
     }
 ];
 
 export default function Testimonials() {
   const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 5000, stopOnInteraction: true })
   );
 
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
+    <section className="w-full py-12 md:py-24 lg:py-32 bg-background text-foreground">
       <div className="container px-4 md:px-6">
-        <div className="grid gap-6 lg:gap-8">
-          {/* Testimonial Card */}
-           <Carousel
-              plugins={[plugin.current]}
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-              onMouseEnter={plugin.current.stop}
-              onMouseLeave={plugin.current.reset}
-            >
-              <CarouselContent>
-                {testimonials.map((testimonial, index) => (
-                  <CarouselItem key={index}>
-                    <Card className="border-0 shadow-none">
-                      <CardContent className="p-6 md:p-8 lg:p-12 flex flex-col items-center text-center gap-4">
-                        <h2 className="text-2xl md:text-3xl font-semibold max-w-xl md:max-w-3xl">
-                          {testimonial.quote}
-                        </h2>
-                        <div className="flex flex-col items-center">
-                            <p className="font-semibold">{testimonial.name}</p>
-                            <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden lg:flex" />
-              <CarouselNext className="hidden lg:flex" />
-            </Carousel>
-
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            {features.map((feature, index) => (
-                 <Card key={index}>
-                    <CardContent className="p-6 md:p-8 lg:p-12">
-                        <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
-                            <feature.icon className="h-6 w-6" />
-                        </div>
-                        <h3 className="text-2xl font-semibold">{feature.title}</h3>
-                        <p className="mt-4 text-muted-foreground">{feature.description}</p>
-                    </CardContent>
-                 </Card>
-            ))}
-          </div>
+        <div className="flex flex-col items-center text-center gap-4 mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Why developers love {'{Codbbit}'}?</h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl">
+              See why developers choose to level up their Salesforce skills with our platform.
+            </p>
         </div>
+        <Carousel
+          plugins={[plugin.current]}
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full"
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
+        >
+          <CarouselContent className="-ml-4">
+            {testimonials.map((testimonial, index) => (
+              <CarouselItem key={index} className="pl-4 md:basis-1/2">
+                <Card className="h-full bg-card/50">
+                  <CardContent className="p-6 md:p-8 flex flex-col items-center text-center gap-6">
+                     <Image
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        width={100}
+                        height={100}
+                        data-ai-hint={testimonial['data-ai-hint']}
+                        className="rounded-full border-4 border-primary/50"
+                    />
+                    <blockquote className="text-lg md:text-xl font-medium">
+                      “{testimonial.quote}”
+                    </blockquote>
+                    <div className="flex flex-col items-center">
+                        <p className="font-semibold">{testimonial.name}</p>
+                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden lg:flex" />
+          <CarouselNext className="hidden lg:flex" />
+        </Carousel>
       </div>
     </section>
   )

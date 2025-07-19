@@ -13,7 +13,7 @@ export default function InteractivePlayground() {
     ];
 
     return (
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-card/50">
             <div className="container px-4 md:px-6">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     <div className="bg-primary/10 p-8 rounded-2xl flex items-center justify-center">

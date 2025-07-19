@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import FeatureGrid from '@/components/feature-grid';
+import Testimonials from '@/components/testimonials';
+import InteractivePlayground from '@/components/interactive-playground';
 
 const SkillCard = ({
   title,
@@ -156,39 +158,43 @@ export default function Home() {
   ];
 
   return (
-    <main className="w-full min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
-      <div className="container mx-auto flex flex-col items-center text-center gap-12 max-w-4xl">
-        <div className="flex flex-col gap-6">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-            <span className="text-primary">{'{Master}'}</span> Salesforce Skills
-            for Today's Developer
-          </h1>
-          <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto">
-            Unlock higher levels of mastery with our interactive courses,
-            hands-on practice problems, and AI-powered learning experiences.
-          </p>
-        </div>
+    <main>
+      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
+        <div className="container mx-auto flex flex-col items-center text-center gap-12 max-w-4xl">
+          <div className="flex flex-col gap-6">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+              <span className="text-primary">{'{Master}'}</span> Salesforce Skills
+              for Today's Developer
+            </h1>
+            <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto">
+              Unlock higher levels of mastery with our interactive courses,
+              hands-on practice problems, and AI-powered learning experiences.
+            </p>
+          </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Button
-            asChild
-            variant="outline"
-            className="bg-transparent border-neutral-600 text-white hover:bg-neutral-800 hover:text-white w-full sm:w-auto"
-          >
-            <Link href="/apex-problems">Explore Problems</Link>
-          </Button>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/signup">Try for Free</Link>
-          </Button>
-        </div>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Button
+              asChild
+              variant="outline"
+              className="bg-transparent border-neutral-600 text-white hover:bg-neutral-800 hover:text-white w-full sm:w-auto"
+            >
+              <Link href="/apex-problems">Explore Problems</Link>
+            </Button>
+            <Button asChild className="w-full sm:w-auto">
+              <Link href="/signup">Try for Free</Link>
+            </Button>
+          </div>
 
-        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 pt-8">
-          {skills.map((skill) => (
-            <SkillCard key={skill.title} {...skill} />
-          ))}
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 pt-8">
+            {skills.map((skill) => (
+              <SkillCard key={skill.title} {...skill} />
+            ))}
+          </div>
         </div>
       </div>
       <FeatureGrid />
+      <Testimonials />
+      <InteractivePlayground />
     </main>
   );
 }
