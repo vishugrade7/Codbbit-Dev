@@ -19,7 +19,7 @@ import mermaid from "mermaid";
 
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore } from "@/app/upload-problem/actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, getProblemCategories, updateCategoryDetails, deleteCategory, deleteProblemFromFirestore, bulkUpdateProblemCategory } from "@/app/upload-problem/actions";
 import { testApexProblem } from "@/app/salesforce/actions";
 import { problemFormSchema } from "@/lib/admin-schemas";
 import { z } from "zod";
@@ -32,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2, AlertTriangle, Replace } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -189,6 +189,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [testingId, setTestingId] = useState<string | null>(null);
     const [failureDetails, setFailureDetails] = useState<TestFailureDetails | null>(null);
+    const [isChangeCategoryOpen, setIsChangeCategoryOpen] = useState(false);
 
     const fetchProblems = useCallback(async () => {
         setLoading(true);
@@ -513,7 +514,16 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 <AddCategoryModal isOpen={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen} onCategoryAdded={fetchProblems} />
                 <ManageCategoriesModal isOpen={isManageModalOpen} onOpenChange={setIsManageModalOpen} onCategoriesUpdated={fetchProblems} />
                 <PasteJsonModal isOpen={isPasteJsonModalOpen} onOpenChange={setIsPasteJsonModalOpen} onUploadAndTest={processAndTestProblems} />
-                 <TestFailureDialog failureDetails={failureDetails} onOpenChange={() => setFailureDetails(null)} />
+                <TestFailureDialog failureDetails={failureDetails} onOpenChange={() => setFailureDetails(null)} />
+                <ChangeCategoryDialog
+                    isOpen={isChangeCategoryOpen}
+                    onOpenChange={setIsChangeCategoryOpen}
+                    selectedProblemIds={Array.from(selectedIds)}
+                    onSuccess={() => {
+                        fetchProblems();
+                        setSelectedIds(new Set());
+                    }}
+                />
                 <AlertDialog open={!!problemToDelete} onOpenChange={(open) => !open && setProblemToDelete(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -560,27 +570,32 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                  {selectedIds.size > 0 && (
                     <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
                         <span className="text-sm font-medium">{selectedIds.size} problem(s) selected</span>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm" disabled={isDeleting}>
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Selected
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>This will permanently delete {selectedIds.size} problem(s). This action cannot be undone.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
-                                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Confirm Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setIsChangeCategoryOpen(true)}>
+                                <Replace className="mr-2 h-4 w-4" /> Change Category
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm" disabled={isDeleting}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Selected
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>This will permanently delete {selectedIds.size} problem(s). This action cannot be undone.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
+                                            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Confirm Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
                 )}
                 
@@ -672,6 +687,79 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function ChangeCategoryDialog({ isOpen, onOpenChange, selectedProblemIds, onSuccess }: { isOpen: boolean, onOpenChange: (open: boolean) => void, selectedProblemIds: string[], onSuccess: () => void }) {
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    const [newCategory, setNewCategory] = useState("");
+    const [categories, setCategories] = useState<string[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+
+    useEffect(() => {
+        if (isOpen) {
+            const fetchCats = async () => {
+                setLoadingCategories(true);
+                try {
+                    const data = await getProblemCategories();
+                    setCategories(data.map(c => c.name));
+                } catch {
+                    toast({ variant: 'destructive', title: "Could not load categories" });
+                }
+                setLoadingCategories(false);
+            };
+            fetchCats();
+        }
+    }, [isOpen, toast]);
+    
+    const handleSave = async () => {
+        if (!newCategory) {
+            toast({ variant: 'destructive', title: "Please select a category." });
+            return;
+        }
+        setIsSaving(true);
+        const result = await bulkUpdateProblemCategory(selectedProblemIds, newCategory);
+        if (result.success) {
+            toast({ title: "Success!", description: result.message });
+            onSuccess();
+            onOpenChange(false);
+        } else {
+            toast({ variant: 'destructive', title: "Error", description: result.error });
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Change Category</DialogTitle>
+                    <DialogDescription>
+                        Move {selectedProblemIds.length} selected problem(s) to a new category.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                     <Select value={newCategory} onValueChange={setNewCategory} disabled={loadingCategories}>
+                        <SelectTrigger>
+                            <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a new category"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isSaving || !newCategory}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Move Problems
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

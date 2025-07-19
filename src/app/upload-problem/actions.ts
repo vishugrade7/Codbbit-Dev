@@ -306,6 +306,61 @@ export async function deleteProblemFromFirestore(problemId: string, categoryName
     }
 }
 
+export async function bulkUpdateProblemCategory(problemIds: string[], newCategoryName: string) {
+    if (!problemIds || problemIds.length === 0) {
+        return { success: false, error: 'At least one problem ID is required.' };
+    }
+    if (!newCategoryName) {
+        return { success: false, error: 'New category name is required.' };
+    }
+
+    const apexDocRef = doc(db, 'problems', 'Apex');
+    try {
+        const docSnap = await getDoc(apexDocRef);
+        if (!docSnap.exists()) {
+            throw new Error("Critical: Apex problems document not found in Firestore.");
+        }
+
+        const currentData = docSnap.data();
+        const categories = currentData.Category as ApexProblemsData;
+        
+        if (!categories[newCategoryName]) {
+            // This case should be handled by the UI, but as a safeguard:
+            categories[newCategoryName] = { Questions: [], imageUrl: '' };
+        }
+
+        const problemsToMove: Problem[] = [];
+        const problemIdsSet = new Set(problemIds);
+
+        // Find and remove problems from their old categories
+        for (const categoryName in categories) {
+            const originalProblems = categories[categoryName].Questions;
+            const problemsToKeep: Problem[] = [];
+            
+            for (const problem of originalProblems) {
+                if (problemIdsSet.has(problem.id)) {
+                    problemsToMove.push(problem);
+                } else {
+                    problemsToKeep.push(problem);
+                }
+            }
+            categories[categoryName].Questions = problemsToKeep;
+        }
+
+        // Add problems to the new category
+        categories[newCategoryName].Questions.push(...problemsToMove);
+        
+        await updateDoc(apexDocRef, { Category: categories });
+
+        return { success: true, message: `${problemsToMove.length} problem(s) moved to '${newCategoryName}' successfully.` };
+
+    } catch (error) {
+        console.error("Error bulk updating problem category:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
 export async function addCategory(categoryName: string, imageUrl: string) {
     if (!categoryName || categoryName.trim().length === 0) {
         return { success: false, error: 'Category name cannot be empty.' };
@@ -797,5 +852,6 @@ export async function deleteVoucher(voucherId: string) {
 }
 
 // #endregion
+
 
 
