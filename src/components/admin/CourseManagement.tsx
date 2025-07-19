@@ -342,10 +342,10 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
 
 // #region Module Item
 function ModuleItem({ moduleIndex, onRemove }: { moduleIndex: number, onRemove: () => void }) {
-    const { control, register } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { control, register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons` });
 
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}`) as Module).id });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (getValues(`modules.${moduleIndex}`) as Module).id });
     const style = { transform: CSS.Transform.toString(transform), transition };
 
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -388,8 +388,8 @@ function ModuleItem({ moduleIndex, onRemove }: { moduleIndex: number, onRemove: 
 
 // #region Lesson Item
 function LessonItem({ moduleIndex, lessonIndex, onRemove }: { moduleIndex: number, lessonIndex: number, onRemove: () => void }) {
-    const { control, register } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson).id });
+    const { control, register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson).id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const [isOpen, setIsOpen] = useState(false);
 
@@ -482,8 +482,8 @@ function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number,
 }
 
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { moduleIndex: number, lessonIndex: number, blockIndex: number, onRemove: () => void }) {
-    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const block = control.getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`);
+    const { control, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const block = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`);
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const { resolvedTheme } = useTheme();
