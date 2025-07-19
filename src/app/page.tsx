@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import FeatureGrid from '@/components/feature-grid';
 import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
+import CallToAction from '@/components/call-to-action';
 
 const SkillCard = ({
   title,
@@ -195,6 +196,7 @@ export default function Home() {
       <FeatureGrid />
       <Testimonials />
       <InteractivePlayground />
+      <CallToAction />
     </main>
   );
 }
