@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Code, BookOpen, ChevronRight } from "lucide-react";
+import { Loader2, Code, BookOpen, ChevronRight, Puzzle, Album, Anchor, AppWindow, Award, Axe, Baby, Badge, BaggageClaim, Binary } from "lucide-react";
 import type { ApexProblemsData } from "@/types";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -23,6 +23,32 @@ type CategoryInfo = {
   problemCount: number;
   imageUrl?: string;
 };
+
+const icons = [Puzzle, Album, Anchor, AppWindow, Award, Axe, Baby, Badge, BaggageClaim, Binary];
+const bgColors = [
+    "bg-blue-200 dark:bg-blue-900/30",
+    "bg-orange-200 dark:bg-orange-900/30",
+    "bg-green-200 dark:bg-green-900/30",
+    "bg-purple-200 dark:bg-purple-900/30",
+    "bg-teal-200 dark:bg-teal-900/30",
+    "bg-red-200 dark:bg-red-900/30",
+    "bg-yellow-200 dark:bg-yellow-900/30",
+    "bg-pink-200 dark:bg-pink-900/30",
+    "bg-indigo-200 dark:bg-indigo-900/30",
+    "bg-gray-200 dark:bg-gray-900/30",
+];
+const iconColors = [
+    "text-blue-800 dark:text-blue-200",
+    "text-orange-800 dark:text-orange-200",
+    "text-green-800 dark:text-green-200",
+    "text-purple-800 dark:text-purple-200",
+    "text-teal-800 dark:text-teal-200",
+    "text-red-800 dark:text-red-200",
+    "text-yellow-800 dark:text-yellow-200",
+    "text-pink-800 dark:text-pink-200",
+    "text-indigo-800 dark:text-indigo-200",
+    "text-gray-800 dark:text-gray-200",
+];
 
 export default function ApexProblemsView() {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
@@ -92,7 +118,11 @@ export default function ApexProblemsView() {
           </div>
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
+            {categories.map((category, index) => {
+              const Icon = icons[index % icons.length];
+              const bgColor = bgColors[index % bgColors.length];
+              const iconColor = iconColors[index % iconColors.length];
+              return (
               <motion.div
                 key={category.name}
                 initial={{ opacity: 0, y: 20 }}
@@ -103,14 +133,8 @@ export default function ApexProblemsView() {
               >
                 <Card className="overflow-hidden h-full flex flex-col group">
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                      <div className="aspect-video relative">
-                          <Image 
-                             src={category.imageUrl || 'https://placehold.co/600x400.png'} 
-                             alt={category.name}
-                             fill
-                             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                             className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
+                      <div className={cn("aspect-video relative flex items-center justify-center", bgColor)}>
+                           <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
                            <div className="absolute bottom-2 right-2">
                                 <Button size="icon" className="rounded-full h-10 w-10 bg-background/20 backdrop-blur border border-white/20 text-white group-hover:bg-background/40 transition-colors">
                                     <ChevronRight className="h-5 w-5" />
@@ -131,7 +155,7 @@ export default function ApexProblemsView() {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+            )})}
           </div>
         ) : (
             <div className="text-center py-12">
