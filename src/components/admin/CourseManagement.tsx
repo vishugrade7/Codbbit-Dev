@@ -5,10 +5,11 @@ import { useCallback, useEffect, useState, useRef, useMemo, createContext, useCo
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { collection, getDocs, query, orderBy, Timestamp, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, Timestamp, doc, getDoc, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from "@/types";
@@ -44,32 +45,20 @@ type ProblemWithCategory = Problem & { categoryName: string };
 
 // #region Main View
 export function CourseManagementView() {
-    const [view, setView] = useState<'list' | 'form'>('list');
-    const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+    const router = useRouter();
 
-    const handleEditCourse = (course: Course) => {
-        setSelectedCourse(course);
-        setView('form');
+    const handleAddNewCourse = async () => {
+        router.push(`/upload-problem?view=course-form`);
     };
 
-    const handleAddNewCourse = () => {
-        setSelectedCourse(null);
-        setView('form');
+    const handleEditCourse = (courseId: string) => {
+        router.push(`/upload-problem?view=course-form&courseId=${courseId}`);
     };
-
-    const handleBackToList = () => {
-        setView('list');
-        setSelectedCourse(null);
-    };
-
-    if (view === 'form') {
-        return <CourseForm course={selectedCourse} onBack={handleBackToList} />;
-    }
 
     return <CourseList onEdit={handleEditCourse} onAdd={handleAddNewCourse} />;
 }
 
-function CourseList({ onEdit, onAdd }: { onEdit: (c: Course) => void, onAdd: () => void }) {
+function CourseList({ onEdit, onAdd }: { onEdit: (id: string) => void, onAdd: () => void }) {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -83,7 +72,6 @@ function CourseList({ onEdit, onAdd }: { onEdit: (c: Course) => void, onAdd: () 
                 const querySnapshot = await getDocs(q);
                 const coursesData = querySnapshot.docs.map(doc => {
                     const data = doc.data();
-                    // Ensure createdAt is a Date object, defaulting if needed
                     const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date();
                     return { id: doc.id, ...data, createdAt } as Course;
                 });
@@ -133,7 +121,7 @@ function CourseList({ onEdit, onAdd }: { onEdit: (c: Course) => void, onAdd: () 
                                             <TableCell>{course.modules.length}</TableCell>
                                             <TableCell>{course.createdAt ? format(course.createdAt, "PPP") : 'N/A'}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" onClick={() => onEdit(course)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+                                                <Button variant="outline" size="sm" onClick={() => onEdit(course.id)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -149,80 +137,106 @@ function CourseList({ onEdit, onAdd }: { onEdit: (c: Course) => void, onAdd: () 
 // #endregion
 
 // #region Course Form & Context
-type FormContextType = {
+type CourseFormContextType = {
   problems: ProblemWithCategory[];
   loadingProblems: boolean;
 };
-const CourseFormContext = createContext<FormContextType | null>(null);
+
+let FormContext: React.Context<CourseFormContextType | null> = null;
+
+export function CourseFormContext({ children }: { children: React.ReactNode }) {
+    const [problems, setProblems] = useState<ProblemWithCategory[]>([]);
+    const [loadingProblems, setLoadingProblems] = useState(true);
+
+    useEffect(() => {
+        const fetchProblems = async () => {
+            setLoadingProblems(true);
+            const processData = (data: ApexProblemsData | null) => {
+                if (!data) return;
+                const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
+                    (categoryData.Questions || []).map(p => ({ ...p, categoryName }))
+                );
+                setProblems(allProblems);
+            };
+            const cached = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
+            if (cached) {
+                processData(cached);
+            } else {
+                const docRef = doc(db, "problems", "Apex");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data().Category as ApexProblemsData;
+                    await setCache(APEX_PROBLEMS_CACHE_KEY, data);
+                    processData(data);
+                }
+            }
+            setLoadingProblems(false);
+        };
+        fetchProblems();
+    }, []);
+
+    if (!FormContext) {
+        FormContext = createContext<CourseFormContextType | null>(null);
+    }
+    
+    const contextValue = useMemo(() => ({ problems, loadingProblems }), [problems, loadingProblems]);
+
+    return (
+        <FormContext.Provider value={contextValue}>
+            {children}
+        </FormContext.Provider>
+    );
+};
+
 const useCourseFormContext = () => {
-    const context = useContext(CourseFormContext);
-    if (!context) throw new Error("useCourseFormContext must be used within a CourseFormContextProvider");
+    if (!FormContext) {
+      throw new Error("CourseFormContext has not been initialized");
+    }
+    const context = useContext(FormContext);
+    if (!context) throw new Error("useCourseFormContext must be used within a CourseFormContext Provider");
     return context;
 };
 
-function CourseForm({ course, onBack }: { course: Course | null, onBack: () => void }) {
+export function CourseForm({ courseId, onBack }: { courseId: string | null, onBack: () => void }) {
     const { toast } = useToast();
+    const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
-    const [problems, setProblems] = useState<ProblemWithCategory[]>([]);
-    const [loadingProblems, setLoadingProblems] = useState(true);
+    const [currentCourseId, setCurrentCourseId] = useState(courseId);
 
     const form = useForm<z.infer<typeof courseFormSchema>>({
         resolver: zodResolver(courseFormSchema),
         defaultValues: {
-            title: '',
-            description: '',
-            category: '',
-            thumbnailUrl: '',
-            modules: [],
-            isPublished: false,
-            isPremium: false,
+            title: '', description: '', category: '', thumbnailUrl: '',
+            modules: [], isPublished: false, isPremium: false,
         }
     });
 
-    const { control, setValue, watch } = form;
+    const { control, setValue, watch, handleSubmit, reset } = form;
     const { fields: moduleFields, append: appendModule, remove: removeModule, move: moveModule } = useFieldArray({ control, name: "modules" });
     const thumbnailUrl = watch("thumbnailUrl");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (course) {
-            form.reset({
-                ...course,
-                isPremium: course.isPremium || false,
+        if (currentCourseId) {
+            const fetchCourse = async () => {
+                const docRef = doc(db, 'courses', currentCourseId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    reset(docSnap.data() as z.infer<typeof courseFormSchema>);
+                }
+            }
+            fetchCourse();
+        } else {
+            reset({
+              title: '', description: '', category: '', thumbnailUrl: '',
+              modules: [], isPublished: false, isPremium: false,
             });
         }
-    }, [course, form]);
-
-    useEffect(() => {
-      const fetchProblems = async () => {
-          setLoadingProblems(true);
-          const processData = (data: ApexProblemsData | null) => {
-              if (!data) return;
-              const allProblems = Object.entries(data).flatMap(([categoryName, categoryData]) => 
-                  (categoryData.Questions || []).map(p => ({ ...p, categoryName }))
-              );
-              setProblems(allProblems);
-          };
-          const cached = await getCache<ApexProblemsData>(APEX_PROBLEMS_CACHE_KEY);
-          if (cached) {
-              processData(cached);
-          } else {
-              const docRef = doc(db, "problems", "Apex");
-              const docSnap = await getDoc(docRef);
-              if (docSnap.exists()) {
-                  const data = docSnap.data().Category as ApexProblemsData;
-                  await setCache(APEX_PROBLEMS_CACHE_KEY, data);
-                  processData(data);
-              }
-          }
-          setLoadingProblems(false);
-      };
-      fetchProblems();
-    }, []);
+    }, [currentCourseId, reset]);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !course?.id) {
+        if (!file || !currentCourseId) {
             toast({ variant: 'destructive', title: 'Error', description: 'Please save the course first to get a Course ID for uploads.'});
             return;
         };
@@ -230,7 +244,7 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
-            const result = await uploadCourseImage(reader.result as string, course.id);
+            const result = await uploadCourseImage(reader.result as string, currentCourseId);
             if (result.success && result.url) {
                 setValue("thumbnailUrl", result.url, { shouldDirty: true });
                 toast({ title: 'Image uploaded successfully!' });
@@ -244,18 +258,15 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
     const onSubmit = async (data: z.infer<typeof courseFormSchema>) => {
         setIsSaving(true);
         const result = await upsertCourseToFirestore({
-          ...(course?.id && { id: course.id }),
+          ...(currentCourseId && { id: currentCourseId }),
           ...data,
         });
         if (result.success) {
             toast({ title: 'Success!', description: 'Course saved successfully.' });
-            if (result.courseId && !course?.id) {
-                 // This is a new course, we should probably update the URL or state
-                 // For now, just stay on the page. A real app might redirect.
-                 console.log("New course created with ID:", result.courseId);
+            if (result.courseId && !currentCourseId) {
+                 setCurrentCourseId(result.courseId);
+                 router.replace(`/upload-problem?view=course-form&courseId=${result.courseId}`, { scroll: false });
             }
-            // A full back navigation might be too disruptive, consider just re-fetching
-            onBack();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
@@ -273,80 +284,103 @@ function CourseForm({ course, onBack }: { course: Course | null, onBack: () => v
     };
 
     return (
-        <CourseFormContext.Provider value={{ problems, loadingProblems }}>
-            <FormProvider {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div className="flex justify-between items-center mb-6">
-                        <Button type="button" variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Courses</Button>
-                        <Button type="submit" disabled={isSaving}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Course
-                        </Button>
-                    </div>
+        <FormProvider {...form}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="flex justify-between items-center mb-6">
+                    <Button type="button" variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Courses</Button>
+                    <Button type="submit" disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Course
+                    </Button>
+                </div>
+                
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader><CardTitle>Course Details</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <FormField control={control} name="title" render={({ field }) => (<FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={control} name="category" render={({ field }) => (<FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                           </div>
+                           <FormField control={control} name="description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                           <FormField control={control} name="thumbnailUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Thumbnail URL</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <FormControl><Input {...field} /></FormControl>
+                                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={!currentCourseId || isSaving}>
+                                            <UploadCloud className="mr-2 h-4 w-4" /> Upload
+                                        </Button>
+                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                                    </div>
+                                    {thumbnailUrl && <Image src={thumbnailUrl} alt="Thumbnail preview" width={200} height={100} className="rounded-md object-cover mt-2" />}
+                                    <FormMessage />
+                                </FormItem>
+                           )}/>
+                           <div className="flex gap-4">
+                            <FormField control={control} name="isPublished" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5 mr-4"><FormLabel>Published</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={control} name="isPremium" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5 mr-4"><FormLabel>Premium</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                           </div>
+                        </CardContent>
+                    </Card>
                     
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader><CardTitle>Course Details</CardTitle></CardHeader>
-                            <CardContent className="space-y-4">
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 <FormField control={control} name="title" render={({ field }) => (<FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                 <FormField control={control} name="category" render={({ field }) => (<FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                               </div>
-                               <FormField control={control} name="description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                               <FormField control={control} name="thumbnailUrl" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Thumbnail URL</FormLabel>
-                                        <div className="flex items-center gap-2">
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={!course?.id || isSaving}>
-                                                <UploadCloud className="mr-2 h-4 w-4" /> Upload
-                                            </Button>
-                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                                        </div>
-                                        {thumbnailUrl && <Image src={thumbnailUrl} alt="Thumbnail preview" width={200} height={100} className="rounded-md object-cover mt-2" />}
-                                        <FormMessage />
-                                    </FormItem>
-                                )}/>
-                               <div className="flex gap-4">
-                                <FormField control={control} name="isPublished" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5 mr-4"><FormLabel>Published</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                                <FormField control={control} name="isPremium" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5 mr-4"><FormLabel>Premium</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                               </div>
-                            </CardContent>
-                        </Card>
-                        
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Modules & Lessons</CardTitle>
-                                <CardDescription>Drag to reorder modules.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                    <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                                      <div className="space-y-4">
-                                        {moduleFields.map((field, index) => (
-                                            <ModuleItem key={field.id} moduleIndex={index} onRemove={() => removeModule(index)} />
-                                        ))}
-                                      </div>
-                                    </SortableContext>
-                                </DndContext>
-                                <Button type="button" variant="outline" className="mt-4" onClick={() => appendModule({ id: uuidv4(), title: '', lessons: [] })}><PlusCircle className="mr-2 h-4 w-4"/> Add Module</Button>
-                            </CardContent>
-                        </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Modules</CardTitle>
+                            <CardDescription>Add and reorder course modules. Click a module to edit its lessons.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                <SortableContext items={moduleFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                                  <div className="space-y-4">
+                                    {moduleFields.map((field, index) => (
+                                        <ModuleItem key={field.id} moduleIndex={index} courseId={currentCourseId!} onRemove={() => removeModule(index)} />
+                                    ))}
+                                  </div>
+                                </SortableContext>
+                            </DndContext>
+                            <Button type="button" variant="outline" className="mt-4" onClick={() => appendModule({ id: uuidv4(), title: 'New Module', lessons: [] })}><PlusCircle className="mr-2 h-4 w-4"/> Add Module</Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </form>
+        </FormProvider>
+    );
+}
+
+// #endregion
+
+// #region Module Item
+function ModuleItem({ moduleIndex, courseId, onRemove }: { moduleIndex: number, courseId: string, onRemove: () => void }) {
+    const { register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const router = useRouter();
+    const module = getValues(`modules.${moduleIndex}`) as Module;
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: module.id });
+    const style = { transform: CSS.Transform.toString(transform), transition };
+    
+    return (
+        <div ref={setNodeRef} style={style}>
+            <Card className="bg-muted/50">
+                <CardHeader className="flex flex-row items-center gap-2 p-3">
+                    <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
+                    <div className="flex-1">
+                        <Input placeholder="Module Title" {...register(`modules.${moduleIndex}.title`)} />
                     </div>
-                </form>
-            </FormProvider>
-        </CourseFormContext.Provider>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => router.push(`/upload-problem/module/${module.id}?courseId=${courseId}`)}>
+                        <Edit className="mr-2 h-4 w-4" /> Edit Lessons ({module.lessons.length})
+                    </Button>
+                    <Button type="button" variant="destructive" size="icon" className="h-8 w-8" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
+                </CardHeader>
+            </Card>
+        </div>
     );
 }
 // #endregion
 
-// #region Module Item
-function ModuleItem({ moduleIndex, onRemove }: { moduleIndex: number, onRemove: () => void }) {
-    const { control, register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+// #region Module Lessons Editor
+export function ModuleLessonsEditor({ moduleIndex }: { moduleIndex: number }) {
+    const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
     const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons` });
-
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (getValues(`modules.${moduleIndex}`) as Module).id });
-    const style = { transform: CSS.Transform.toString(transform), transition };
 
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
     const handleDragEnd = (event: DragEndEvent) => {
@@ -359,37 +393,34 @@ function ModuleItem({ moduleIndex, onRemove }: { moduleIndex: number, onRemove: 
     };
     
     return (
-        <div ref={setNodeRef} style={style}>
-            <Card>
-                <CardHeader className="flex flex-row items-center gap-2 p-3 bg-muted/50 rounded-t-lg">
-                    <button type="button" {...attributes} {...listeners} className="cursor-grab p-1"><GripVertical className="h-5 w-5 text-muted-foreground" /></button>
-                    <div className="flex-1">
-                        <Input placeholder="Module Title" {...register(`modules.${moduleIndex}.title`)} />
-                    </div>
-                    <Button type="button" variant="destructive" size="icon" className="h-8 w-8" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
-                </CardHeader>
-                <CardContent className="p-4 space-y-3">
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                            {lessonFields.map((field, index) => (
-                                <LessonItem key={field.id} moduleIndex={moduleIndex} lessonIndex={index} onRemove={() => removeLesson(index)} />
-                            ))}
-                        </SortableContext>
-                    </DndContext>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: false, contentBlocks: [{ id: uuidv4(), type: 'text', content: 'New lesson content...' }] })}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Lessons</CardTitle>
+                <CardDescription>Add, edit, and reorder lessons for this module.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={lessonFields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                        {lessonFields.map((field, index) => (
+                            <LessonItem key={field.id} moduleIndex={moduleIndex} lessonIndex={index} onRemove={() => removeLesson(index)} />
+                        ))}
+                    </SortableContext>
+                </DndContext>
+                <Button type="button" variant="secondary" size="sm" onClick={() => appendLesson({ id: uuidv4(), title: '', isFree: false, contentBlocks: [{ id: uuidv4(), type: 'text', content: 'New lesson content...' }] })}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Lesson
+                </Button>
+            </CardContent>
+        </Card>
     );
 }
+
 // #endregion
 
 // #region Lesson Item
 function LessonItem({ moduleIndex, lessonIndex, onRemove }: { moduleIndex: number, lessonIndex: number, onRemove: () => void }) {
     const { control, register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson).id });
+    const lesson = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson;
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const [isOpen, setIsOpen] = useState(false);
 
@@ -502,14 +533,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     const style = { transform: CSS.Transform.toString(transform), transition };
     const { resolvedTheme } = useTheme();
     const { problems, loadingProblems } = useCourseFormContext();
-
-    const { fields: todoFields, append: appendTodo, remove: removeTodo } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.items` });
-    const { fields: mcqOptions, append: appendMcqOption, remove: removeMcqOption } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.options` });
-    const { fields: stepperSteps, append: appendStepperStep, remove: removeStepperStep } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.steps` });
-    const { fields: tableHeaders, append: appendHeader, remove: removeHeader } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.headers` });
-    const { fields: tableRows, append: appendRow, remove: removeRow } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.rows` });
     
-
     const renderBlockEditor = () => {
         switch (block.type) {
             case 'text': case 'quote': case 'bulleted-list': case 'numbered-list':
@@ -532,7 +556,8 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
             case 'mermaid': case 'mindmap':
               return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Mermaid/JSON definition" className="font-mono" /></FormControl>)} />;
             case 'mcq':
-              return (
+                const { fields: mcqOptions, append: appendMcqOption, remove: removeMcqOption } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.options` });
+                return (
                   <div className="space-y-3">
                       <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.question`} render={({ field }) => (<FormControl><Input {...field} placeholder="Question" /></FormControl>)} />
                       {mcqOptions.map((option, optIndex) => (
@@ -551,6 +576,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
              case 'three-column':
               return <div className="grid grid-cols-3 gap-4"><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div></div>;
             case 'stepper':
+                const { fields: stepperSteps, append: appendStepperStep, remove: removeStepperStep } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.steps` });
                 return (
                     <div className="space-y-3">
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.title`} render={({ field }) => (<FormControl><Input {...field} placeholder="Stepper Title" /></FormControl>)} />

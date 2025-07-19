@@ -1,11 +1,8 @@
 
-
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, UserCog, MenuIcon, Award, Palette, CreditCard } from "lucide-react";
 
 import { ProblemList, ProblemForm } from "@/components/admin/ProblemManagement";
-import { CourseManagementView } from "@/components/admin/CourseManagement";
+import { CourseManagementView, CourseForm } from "@/components/admin/CourseManagement";
 import { AllUsersList } from "@/components/admin/UserManagement";
 import { NavigationManagementView } from "@/components/admin/NavigationManagement";
 import { BadgeManagementView } from "@/components/admin/BadgeManagement";
@@ -26,23 +23,20 @@ type ProblemWithCategory = Problem & { categoryName: string };
 
 function UploadProblemContent() {
     const { user: authUser, userData, loading: authLoading } = useAuth();
-    const router = useRouter();
-    const { toast } = useToast();
-
-    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management' | 'pricing-management' | 'course-management';
-    const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+    const searchParams = useSearchParams();
     
+    const initialView = searchParams.get('view') || 'dashboard';
+    const courseId = searchParams.get('courseId');
+
+    const [viewMode, setViewMode] = useState(initialView);
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
 
     const isAuthorized = userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
 
-    useEffect(() => {
-        if (!authLoading && !isAuthorized) {
-            toast({ variant: "destructive", title: "Access Denied", description: "You do not have permission to view this page." });
-            router.push('/');
-        }
-    }, [userData, authLoading, authUser, isAuthorized, router, toast]);
-
+    if (authLoading || !isAuthorized) {
+        return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+    }
+    
     const handleAddNewProblem = () => {
         setCurrentProblem(null);
         setViewMode('problem-form');
@@ -53,10 +47,6 @@ function UploadProblemContent() {
         setViewMode('problem-form');
     }
 
-    if (authLoading || !isAuthorized) {
-        return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
-    }
-    
     const renderContent = () => {
         switch (viewMode) {
             case 'problem-form':
@@ -65,6 +55,8 @@ function UploadProblemContent() {
                 return <ProblemList onEdit={handleEditProblem} onAddNew={handleAddNewProblem} />;
             case 'course-management':
                 return <CourseManagementView />;
+            case 'course-form':
+                return <CourseForm courseId={courseId} onBack={() => setViewMode('course-management')} />;
             case 'user-management':
                 return <AllUsersList />;
             case 'navigation-management':

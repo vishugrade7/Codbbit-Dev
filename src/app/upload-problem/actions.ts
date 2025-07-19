@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
@@ -405,7 +406,7 @@ export async function upsertCourseToFirestore(data: z.infer<typeof courseFormSch
             // Edit mode
             const courseDocRef = doc(db, 'courses', data.id);
             await updateDoc(courseDocRef, { ...data });
-            return { success: true, message: `Course updated successfully!` };
+            return { success: true, message: `Course updated successfully!`, courseId: data.id };
         } else {
             // Add mode
             const newCourseData = {
