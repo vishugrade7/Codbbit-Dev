@@ -6,36 +6,36 @@ import { Card, CardContent } from "./ui/card";
 
 export default function FeatureGrid() {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
+    <section className="w-full py-12 md:py-24 lg:py-32 bg-background text-white">
       <div className="container px-4 md:px-6">
-        <div className="grid gap-6 lg:gap-8">
-          {/* Top Card */}
-          <Card className="overflow-hidden">
-            <CardContent className="p-6 md:p-12 flex flex-col items-center text-center justify-center">
-              <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
-                <Code2 className="h-6 w-6" />
-              </div>
-              <h2 className="text-3xl font-semibold tracking-tight max-w-2xl">Sharpen Your Salesforce Skills</h2>
-              <p className="mt-4 text-muted-foreground max-w-2xl">
-                Challenge yourself on small Salesforce coding exercises. Each problem is crafted to help you
-                strengthen different coding techniques. Master Apex, SOQL, and LWC, or quickly pick up any of the
-                supported technologies.
-              </p>
-              <div className="mt-6">
-                <Button asChild variant="outline">
-                  <Link href="/apex-problems">
-                    Explore Problems
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-col items-center text-center gap-4 mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+              {'{Sharpen}'} Your Salesforce Skills
+            </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            <Card className="flex flex-col bg-card/50">
+              <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
+                <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
+                  <Code2 className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-semibold">Practice Problems</h3>
+                <p className="mt-4 text-muted-foreground flex-1">
+                  Challenge yourself with small Salesforce coding exercises crafted to strengthen different coding techniques and master Apex, SOQL, and LWC.
+                </p>
+                 <div className="mt-6">
+                    <Button asChild variant="outline">
+                    <Link href="/apex-problems">
+                        Explore Problems
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                    </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            {/* Bottom Left Card */}
-            <Card className="flex flex-col">
-              <CardContent className="p-6 md:p-12 flex-1 flex flex-col">
+            <Card className="flex flex-col bg-card/50">
+              <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                   <ThumbsUp className="h-6 w-6" />
                 </div>
@@ -47,9 +47,8 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            {/* Bottom Right Card */}
-            <Card className="flex flex-col">
-              <CardContent className="p-6 md:p-12 flex-1 flex flex-col">
+            <Card className="flex flex-col md:col-span-2 bg-card/50">
+              <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
                   <Award className="h-6 w-6" />
                 </div>
@@ -60,7 +59,6 @@ export default function FeatureGrid() {
                 </p>
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
     </section>
