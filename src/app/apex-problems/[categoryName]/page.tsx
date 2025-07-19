@@ -170,7 +170,7 @@ export default function CategoryProblemsPage() {
         
         <div className="hidden md:flex items-center gap-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[180px] rounded-full">
                     <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -180,7 +180,7 @@ export default function CategoryProblemsPage() {
                 </SelectContent>
             </Select>
             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[180px] rounded-full">
                     <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
                 <SelectContent>

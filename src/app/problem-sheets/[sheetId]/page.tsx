@@ -389,7 +389,7 @@ export default function SheetDisplayPage() {
                         />
                     </div>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger className="w-full md:w-[180px] rounded-full">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -399,7 +399,7 @@ export default function SheetDisplayPage() {
                         </SelectContent>
                     </Select>
                     <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger className="w-full md:w-[180px] rounded-full">
                             <SelectValue placeholder="Difficulty" />
                         </SelectTrigger>
                         <SelectContent>
