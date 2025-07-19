@@ -19,7 +19,7 @@ import mermaid from "mermaid";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, GitBranch } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link2, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, GitBranch } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -460,7 +460,7 @@ const BLOCKS = {
     table: { label: 'Table', icon: <Table size={18} /> },
     'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
     'three-column': { label: 'Three Columns', icon: <Columns size={18} /> },
-    breadcrumb: { label: 'Breadcrumb', icon: <LinkIcon size={18} /> },
+    breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
     problem: { label: 'Problem', icon: <Puzzle size={18} /> },
     mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
     'toggle-list': { label: 'Toggle List', icon: <ToggleRight size={18} /> },
