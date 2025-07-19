@@ -197,7 +197,7 @@ export default function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-background/80 backdrop-blur-sm">
+              <SheetContent side="top" className="bg-background/80 backdrop-blur-sm">
                 <div className="grid gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                     {loadingBranding ? (
