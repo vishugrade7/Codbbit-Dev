@@ -122,5 +122,5 @@ export default function ModuleEditorPage() {
                 </form>
             </FormProvider>
         </CourseFormContext>
-    )
+    );
 }
