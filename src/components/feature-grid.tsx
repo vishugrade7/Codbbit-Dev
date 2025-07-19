@@ -1,5 +1,5 @@
 
-import { Code2, ThumbsUp, Award, ArrowRight } from "lucide-react";
+import { Code2, BookOpenCheck, Award, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -13,20 +13,20 @@ export default function FeatureGrid() {
               {'{Sharpen}'} Your Salesforce Skills
             </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             <Card className="flex flex-col bg-neutral-900/80">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary/20 p-3 text-primary mb-4 w-fit">
+                <div className="inline-block rounded-lg bg-primary p-3 text-primary-foreground mb-4 w-fit">
                   <Code2 className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-semibold">Practice Problems</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
-                  Challenge yourself with small Salesforce coding exercises crafted to strengthen different coding techniques and master Apex, SOQL, and LWC.
+                  Challenge yourself with exercises crafted to strengthen different coding techniques and master Apex, SOQL, and LWC.
                 </p>
                  <div className="mt-6">
                     <Button asChild variant="outline">
                     <Link href="/apex-problems">
-                        Explore Problems
+                        Start Solving
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                     </Button>
@@ -36,27 +36,42 @@ export default function FeatureGrid() {
 
             <Card className="flex flex-col bg-neutral-900/80">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary/20 p-3 text-primary mb-4 w-fit">
-                  <ThumbsUp className="h-6 w-6" />
+                <div className="inline-block rounded-lg bg-white p-3 text-black mb-4 w-fit">
+                  <BookOpenCheck className="h-6 w-6" />
                 </div>
-                <h3 className="text-2xl font-semibold">Get Instant Feedback</h3>
+                <h3 className="text-2xl font-semibold">Interactive Courses</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
-                  Solve Apex & LWC problems right in the browser and use test cases (TDD) to check your work as
-                  you progress. Retrain with new, creative, and optimized approaches.
+                 Solve Apex & LWC problems right in the browser and use test cases (TDD) to check your work as you progress.
                 </p>
+                 <div className="mt-6">
+                    <Button asChild variant="outline">
+                    <Link href="/courses">
+                        Explore Courses
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                    </Button>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col md:col-span-2 bg-neutral-900/80">
+            <Card className="flex flex-col bg-neutral-900/80">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary/20 p-3 text-primary mb-4 w-fit">
+                <div className="inline-block rounded-lg bg-secondary p-3 text-secondary-foreground mb-4 w-fit">
                   <Award className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-semibold">Earn Ranks and Honor</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
-                  Code challenges are ranked from beginner to expert level. As you complete higher-ranked problems, you
+                  As you complete higher-ranked problems, you
                   level up your profile and push your software development skills to their highest potential.
                 </p>
+                 <div className="mt-6">
+                    <Button asChild variant="outline">
+                    <Link href="/leaderboard">
+                        View Leaderboard
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                    </Button>
+                </div>
               </CardContent>
             </Card>
         </div>
