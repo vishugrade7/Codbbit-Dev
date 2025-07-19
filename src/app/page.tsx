@@ -185,7 +185,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 pt-8">
+          <div className="w-full grid grid-cols-2 gap-6 pt-8">
             {skills.map((skill) => (
               <SkillCard key={skill.title} {...skill} />
             ))}
