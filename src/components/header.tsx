@@ -124,9 +124,10 @@ export default function Header() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                    "transition-colors hover:text-foreground/80",
-                    pathname === link.href ? "text-foreground" : "text-foreground/60",
-                    !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
+                      "px-3 py-1.5 rounded-full transition-colors",
+                      "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black",
+                      pathname === link.href ? "text-foreground" : "text-foreground/60",
+                      !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
                     )}
                 >
                     {link.label}
