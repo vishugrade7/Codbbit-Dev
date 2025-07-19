@@ -10,9 +10,10 @@ import { db } from "@/lib/firebase";
 import { getCache, setCache } from "@/lib/cache";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Code, BookOpen } from "lucide-react";
+import { Loader2, Code, BookOpen, ChevronRight } from "lucide-react";
 import type { ApexProblemsData } from "@/types";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -91,36 +92,45 @@ export default function ApexProblemsView() {
           </div>
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <Card key={category.name} className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col group">
-                <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                    <div className="aspect-video relative">
-                        <Image 
-                           src={category.imageUrl || 'https://placehold.co/600x400.png'} 
-                           alt={category.name}
-                           fill
-                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                           className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                    </div>
-                </Link>
-                <CardContent className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-semibold text-base leading-snug flex-grow">
-                        <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="hover:underline">
-                            {category.name}
-                        </Link>
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                        <BookOpen className="h-3.5 w-3.5"/>
-                        <span>{category.problemCount} {category.problemCount === 1 ? 'problem' : 'problems'}</span>
-                    </div>
-                </CardContent>
-                <div className="p-4 pt-0 mt-auto">
-                    <Button asChild className="w-full" size="sm">
-                        <Link href={`/apex-problems/${encodeURIComponent(category.name)}`}>View Problems</Link>
-                    </Button>
-                </div>
-              </Card>
+            {categories.map((category, index) => (
+              <motion.div
+                key={category.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="overflow-hidden h-full flex flex-col group">
+                  <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
+                      <div className="aspect-video relative">
+                          <Image 
+                             src={category.imageUrl || 'https://placehold.co/600x400.png'} 
+                             alt={category.name}
+                             fill
+                             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                             className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                           <div className="absolute bottom-2 right-2">
+                                <Button size="icon" className="rounded-full h-10 w-10 bg-primary/80 backdrop-blur-sm group-hover:bg-primary transition-colors">
+                                    <ChevronRight className="h-5 w-5" />
+                                </Button>
+                            </div>
+                      </div>
+                  </Link>
+                  <CardContent className="p-4 flex flex-col flex-grow">
+                      <h3 className="font-semibold text-base leading-snug flex-grow">
+                          <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="hover:underline">
+                              {category.name}
+                          </Link>
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                          <BookOpen className="h-3.5 w-3.5"/>
+                          <span>{category.problemCount} {category.problemCount === 1 ? 'problem' : 'problems'}</span>
+                      </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         ) : (
