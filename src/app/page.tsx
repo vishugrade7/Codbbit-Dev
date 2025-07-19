@@ -5,6 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import FeatureGrid from '@/components/feature-grid';
 
 const SkillCard = ({
   title,
@@ -187,6 +188,7 @@ export default function Home() {
           ))}
         </div>
       </div>
+      <FeatureGrid />
     </main>
   );
 }
