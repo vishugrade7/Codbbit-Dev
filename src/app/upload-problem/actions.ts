@@ -431,7 +431,7 @@ export async function uploadCourseImage(dataUrl: string, courseId: string): Prom
     }
 
     try {
-        const bucket = adminStorage.bucket('showcase-canvas-rx61p.firebasestorage.app');
+        const bucket = adminStorage.bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
         const fileName = `${uuidv4()}`; 
         const filePath = `course-images/${courseId}/${fileName}`;
         const file = bucket.file(filePath);
@@ -739,7 +739,7 @@ export async function uploadBrandingImage(logoType: LogoType, dataUrl: string) {
     }
 
     try {
-        const bucket = adminStorage.bucket('showcase-canvas-rx61p.firebasestorage.app');
+        const bucket = adminStorage.bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
         const filePath = `branding/${logoType}`;
         const file = bucket.file(filePath);
 
@@ -852,6 +852,3 @@ export async function deleteVoucher(voucherId: string) {
 }
 
 // #endregion
-
-
-
