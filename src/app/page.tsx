@@ -2,83 +2,191 @@
 'use client';
 
 import * as React from 'react';
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import Image from "next/image";
-import FeatureGrid from "@/components/feature-grid";
-import Testimonials from "@/components/testimonials";
-import InteractivePlayground from "@/components/interactive-playground";
-import { ArrowRight, BookOpen, Code, FlaskConical, Play, Rocket } from "lucide-react";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+
+const SkillCard = ({
+  title,
+  icon,
+  bgColor,
+  borderColor,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  bgColor: string;
+  borderColor: string;
+}) => (
+  <div
+    className={`flex items-center justify-between p-6 rounded-full border transition-all duration-300 hover:scale-105 hover:border-white/80 ${borderColor}`}
+  >
+    <span className="text-xl font-medium text-white">{title}</span>
+    <div
+      className={`flex h-16 w-16 items-center justify-center rounded-full ${bgColor}`}
+    >
+      {icon}
+    </div>
+  </div>
+);
 
 export default function Home() {
-  const features = [
-    { name: 'Practice', description: 'Hands-on Problems', icon: Code },
-    { name: 'Learn', description: 'Interactive Courses', icon: BookOpen },
-    { name: 'Test', description: 'Instant Feedback', icon: FlaskConical },
-    { name: 'Deploy', description: 'Real-world Scenarios', icon: Rocket },
+  const skills = [
+    {
+      title: 'Apex',
+      icon: (
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
+            stroke="black"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M2 7L12 12L22 7"
+            stroke="black"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M12 12V22"
+            stroke="black"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+      bgColor: 'bg-white',
+      borderColor: 'border-white/20',
+    },
+    {
+      title: 'LWC',
+      icon: (
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M17.25 6.75L19.25 12L17.25 17.25"
+            stroke="#000"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          ></path>
+          <path
+            d="M6.75 6.75L4.75 12L6.75 17.25"
+            stroke="#000"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          ></path>
+          <path
+            d="M14 17.25H10"
+            stroke="#000"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          ></path>
+        </svg>
+      ),
+      bgColor: 'bg-[#00A1E0]',
+      borderColor: 'border-[#00A1E0]/50',
+    },
+    {
+      title: 'SOQL',
+      icon: (
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 8.5C21 10.7091 16.9706 12.5 12 12.5C7.02944 12.5 3 10.7091 3 8.5C3 6.29086 7.02944 4.5 12 4.5C16.9706 4.5 21 6.29086 21 8.5Z"
+            stroke="#000"
+            strokeWidth="2"
+          ></path>
+          <path
+            d="M21 12C21 14.2091 16.9706 16 12 16C7.02944 16 3 14.2091 3 12"
+            stroke="#000"
+            strokeWidth="2"
+          ></path>
+          <path
+            d="M21 15.5C21 17.7091 16.9706 19.5 12 19.5C7.02944 19.5 3 17.7091 3 15.5"
+            stroke="#000"
+            strokeWidth="2"
+          ></path>
+        </svg>
+      ),
+      bgColor: 'bg-[#7F00FF]',
+      borderColor: 'border-[#7F00FF]/50',
+    },
+    {
+      title: 'Triggers',
+      icon: (
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M13 3L5 12H11L11 21L19 12H13L13 3Z"
+            stroke="#000"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          ></path>
+        </svg>
+      ),
+      bgColor: 'bg-[#666666]',
+      borderColor: 'border-[#666666]/50',
+    },
   ];
-  
-  const heroBackgroundImage = "https://images.unsplash.com/photo-1555421689-d68471e189f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxN3x8c2FsZXNmb3JjZXxlbnwwfHx8fDE3NTI3MTc5OTF8MA&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
-    <main className="w-full flex flex-col items-center justify-center overflow-x-hidden">
-      {/* Hero Section */}
-      <section className="w-full home-hero-gradient">
-        <div className="container min-h-screen flex flex-col items-center justify-center text-center gap-8 py-12 md:py-24">
-            <div 
-              className="w-full h-80 bg-no-repeat bg-contain bg-top"
-              style={{
-                backgroundImage: `url(${heroBackgroundImage})`,
-              }}
-            >
-            </div>
-            <div className="flex flex-col items-center text-center gap-6 -mt-48 z-10">
-                 <div className="inline-block rounded-full bg-primary/20 px-4 py-2 text-sm font-semibold text-primary">
-                    A NEW WAY TO
-                </div>
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-                    MASTER APEX, LWC, AND SOQL
-                </h1>
-                <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-muted-foreground">
-                  {features.map((feature, index) => (
-                    <React.Fragment key={feature.name}>
-                      <div className="flex flex-col items-center gap-1">
-                        <feature.icon className="h-5 w-5 text-foreground" />
-                        <span className="font-bold text-foreground">{feature.name}</span>
-                        <span className="text-xs">{feature.description}</span>
-                      </div>
-                      {index < features.length - 1 && <ArrowRight className="h-4 w-4 hidden md:block" />}
-                    </React.Fragment>
-                  ))}
-                </div>
-                <p className="mx-auto mt-4 max-w-[700px] text-lg text-muted-foreground md:text-xl">
-                    Codbbit combines an interactive editor, a new stateful learning format, and a blazing-fast Salesforce integration. This end-to-end pipeline guarantees that what you build in our editor is exactly what ships in your orgs.
-                </p>
-                <div className="mt-6 flex justify-center gap-4">
-                    <Button asChild size="lg">
-                      <Link href="/signup">
-                        Get Started
-                      </Link>
-                    </Button>
-                     <Button asChild size="lg" variant="outline">
-                      <Link href="/apex-problems">
-                        <Play className="mr-2 h-4 w-4" />
-                        Explore Problems
-                      </Link>
-                    </Button>
-                </div>
-            </div>
+    <main className="w-full min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
+      <div className="container mx-auto flex flex-col items-center text-center gap-12 max-w-4xl">
+        <div className="flex flex-col gap-6">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+            <span className="text-primary">{'{Master}'}</span> Salesforce Skills
+            for Today's Developer
+          </h1>
+          <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto">
+            Unlock higher levels of mastery with our interactive courses,
+            hands-on practice problems, and AI-powered learning experiences.
+          </p>
         </div>
-      </section>
 
-      {/* Feature Grid Section */}
-      <FeatureGrid />
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Button
+            asChild
+            variant="outline"
+            className="bg-transparent border-neutral-600 text-white hover:bg-neutral-800 hover:text-white w-full sm:w-auto"
+          >
+            <Link href="/apex-problems">Explore Problems</Link>
+          </Button>
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/signup">Try for Free</Link>
+          </Button>
+        </div>
 
-      {/* Interactive Playground Section */}
-      <InteractivePlayground />
-
-      {/* Testimonials Section */}
-      <Testimonials />
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 pt-8">
+          {skills.map((skill) => (
+            <SkillCard key={skill.title} {...skill} />
+          ))}
+        </div>
+      </div>
     </main>
   );
 }

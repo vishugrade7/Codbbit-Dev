@@ -13,6 +13,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isCallbackPage = pathname === '/salesforce-callback';
+  const isHomePage = pathname === '/';
   
   // Don't render any layout on auth or callback pages
   if (isAuthPage || isCallbackPage) {
@@ -46,7 +47,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <div className="flex-1">{children}</div>
-      <Footer />
+      {/* Hide footer on the new homepage */}
+      {!isHomePage && <Footer />}
     </div>
   );
 }
