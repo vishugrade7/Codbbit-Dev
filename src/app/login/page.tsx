@@ -39,11 +39,6 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-// This can't be static metadata because we use client components.
-// We can use a client component to set the title dynamically if needed,
-// but for simplicity, we'll just let the root layout handle it.
-// Or, create a layout for this page if we want a static title.
-
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -179,12 +174,12 @@ export default function LoginPage() {
   return (
     <>
       <title>Login</title>
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="flex min-h-screen items-center justify-center bg-black p-4">
+        <Card className="w-full max-w-md bg-neutral-900/50 border-neutral-800 text-white">
           <CardHeader className="text-center">
              <div className="flex justify-center mb-4">
               {loadingBranding ? (
-                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <Skeleton className="h-10 w-10 rounded-lg bg-neutral-700" />
               ) : (
                   <Link href="/" className="flex items-center gap-2">
                       <Image src={logoSrc} alt="Codbbit logo" width={40} height={40} />
@@ -192,7 +187,7 @@ export default function LoginPage() {
               )}
              </div>
             <CardTitle className="text-2xl font-headline">Welcome back</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-neutral-400">
               Don't have an account?{" "}
               <Link href="/signup" className="underline text-primary hover:text-primary/80">
                 Sign up
@@ -210,8 +205,12 @@ export default function LoginPage() {
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="user@example.com" {...field} className="pl-10" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
+                          <Input
+                            placeholder="user@example.com"
+                            {...field}
+                            className="pl-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900"
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -230,15 +229,15 @@ export default function LoginPage() {
                                   <Button
                                       type="button"
                                       variant="link"
-                                      className="p-0 h-auto text-sm font-medium"
+                                      className="p-0 h-auto text-sm font-medium text-primary hover:text-primary/80"
                                   >
                                       Forgot password?
                                   </Button>
                               </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
+                              <DialogContent className="sm:max-w-[425px] bg-neutral-900 border-neutral-800 text-white">
                                   <DialogHeader>
                                   <DialogTitle>Reset Password</DialogTitle>
-                                  <DialogDescription>
+                                  <DialogDescription className="text-neutral-400">
                                       Enter your email address and we'll send you a link to reset your password.
                                   </DialogDescription>
                                   </DialogHeader>
@@ -251,7 +250,7 @@ export default function LoginPage() {
                                       id="reset-email"
                                       value={resetEmail}
                                       onChange={(e) => setResetEmail(e.target.value)}
-                                      className="col-span-3"
+                                      className="col-span-3 bg-neutral-800/50 border-neutral-700"
                                       placeholder="your@email.com"
                                       />
                                   </div>
@@ -267,11 +266,11 @@ export default function LoginPage() {
                       </div>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
                           <Input 
                               type={showPassword ? "text" : "password"} 
                               {...field}
-                              className="pl-10 pr-10"
+                              className="pl-10 pr-10 bg-neutral-800/50 border-neutral-700 focus-visible:ring-primary focus-visible:ring-offset-neutral-900"
                               placeholder="Your password"
                           />
                            <Button
@@ -279,7 +278,7 @@ export default function LoginPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:bg-transparent"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-neutral-400 hover:bg-transparent hover:text-white"
                               aria-label={showPassword ? "Hide password" : "Show password"}
                           >
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -290,7 +289,7 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full !rounded-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 text-base" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Login
                 </Button>
