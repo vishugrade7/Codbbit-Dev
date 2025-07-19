@@ -159,8 +159,8 @@ export default function Home() {
 
   return (
     <main>
-      <div className="w-full flex flex-col items-center justify-center bg-black text-white p-4 py-24 md:py-32">
-        <div className="container mx-auto flex flex-col items-center text-center gap-12 max-w-4xl">
+      <div className="w-full flex flex-col items-center justify-center bg-black text-white p-4 py-16 md:py-24">
+        <div className="container mx-auto flex flex-col items-center text-center gap-8 max-w-4xl">
           <div className="flex flex-col gap-6">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
               <span className="text-primary">{'{Master}'}</span> Salesforce Skills
@@ -185,7 +185,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="w-full grid grid-cols-2 gap-6 pt-8">
+          <div className="w-full grid grid-cols-2 gap-6 pt-4">
             {skills.map((skill) => (
               <SkillCard key={skill.title} {...skill} />
             ))}
