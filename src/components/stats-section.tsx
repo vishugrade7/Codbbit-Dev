@@ -6,26 +6,23 @@ const stats = [
         value: "15%",
         label: "Skill Improvement",
         icon: <Check className="h-5 w-5" />,
-        widthValue: 15,
     },
     {
         value: "70%",
         label: "Faster Time-to-Solution",
         icon: <Settings className="h-5 w-5" />,
-        widthValue: 70,
     },
     {
         value: "2X",
         label: "Higher Completion Rates",
         icon: <Code2 className="h-5 w-5" />,
-        widthValue: 100, // Using 100 for "2X" to represent a full-width equivalent
     }
 ]
 
-const StatCard = ({ value, label, icon, widthValue }: { value: string, label: string, icon: React.ReactNode, widthValue: number }) => (
+const StatCard = ({ value, label, icon }: { value: string, label: string, icon: React.ReactNode }) => (
     <div className="grid grid-cols-3 items-center gap-2 sm:gap-4">
         <div 
-            className="col-span-1 bg-primary text-primary-foreground rounded-full flex items-center justify-center p-4 sm:p-6 transition-all duration-500 ease-out"
+            className="col-span-1 bg-primary text-primary-foreground rounded-full flex items-center justify-center p-4 sm:p-6 h-full"
         >
             <span className="text-2xl sm:text-4xl font-bold">{value}</span>
         </div>
