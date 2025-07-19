@@ -20,8 +20,8 @@ export default {
       fontFamily: {
         sans: ["Helvetica", "Arial", "sans-serif"],
         mono: ["var(--font-source-code-pro)"],
-        headline: ["Helvetica", "Arial", "sans-serif"],
-        body: ["Helvetica", "Arial", "sans-serif"],
+        headline: ["Poppins", "sans-serif"],
+        body: ["PT Sans", "sans-serif"],
         code: ["var(--font-source-code-pro)"],
       },
       fontSize: {
@@ -150,6 +150,9 @@ export default {
             '0%, 100%': { transform: 'translateY(0)' },
             '50%': { transform: 'translateY(-4px) scale(1.1)' },
         },
+        'bg-shine': {
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -162,6 +165,7 @@ export default {
         'icon-pulse': 'icon-pulse 0.5s ease-in-out',
         'icon-shake': 'icon-shake 0.4s ease-in-out',
         'icon-bounce': 'icon-bounce 0.5s ease-in-out',
+        'bg-shine': 'bg-shine 2s linear infinite',
       },
     },
   },

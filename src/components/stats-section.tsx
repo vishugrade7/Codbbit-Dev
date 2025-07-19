@@ -22,8 +22,11 @@ const stats = [
 const StatCard = ({ value, label, icon }: { value: string, label: string, icon: React.ReactNode }) => (
     <div className="grid grid-cols-3 items-center gap-2 sm:gap-4">
         <div 
-            className="col-span-1 bg-primary text-primary-foreground rounded-full flex items-center justify-center p-4 sm:p-6 h-full"
+            className="relative col-span-1 overflow-hidden rounded-full p-4 sm:p-6 flex h-full items-center justify-center text-primary-foreground bg-primary"
         >
+            <div
+                className="absolute inset-0 -translate-x-full animate-[bg-shine_2s_linear_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            />
             <span className="text-2xl sm:text-4xl font-bold">{value}</span>
         </div>
         <div className="col-span-2 flex items-center justify-between border border-border rounded-full p-4 sm:p-6 h-full">
