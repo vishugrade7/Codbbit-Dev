@@ -9,6 +9,7 @@ import FeatureGrid from '@/components/feature-grid';
 import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
+import StatsSection from '@/components/stats-section';
 
 const SkillCard = ({
   title,
@@ -194,6 +195,7 @@ export default function Home() {
         </div>
       </div>
       <FeatureGrid />
+      <StatsSection />
       <Testimonials />
       <InteractivePlayground />
       <CallToAction />
