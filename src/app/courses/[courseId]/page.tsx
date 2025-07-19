@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Course, Module, Lesson } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -48,8 +48,14 @@ export default function CourseDetailPage() {
                 const docSnap = await getDoc(courseDocRef);
 
                 if (docSnap.exists()) {
-                    const courseData = { id: docSnap.id, ...docSnap.data() } as Course;
-                    setCourse(courseData);
+                    const courseData = docSnap.data();
+
+                    // Convert Firestore Timestamps to Dates
+                    if (courseData.createdAt instanceof Timestamp) {
+                        courseData.createdAt = courseData.createdAt.toDate();
+                    }
+
+                    setCourse({ id: docSnap.id, ...courseData } as Course);
                 } else {
                     console.log("No such course!");
                     router.push('/courses');

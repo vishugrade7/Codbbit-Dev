@@ -20,7 +20,7 @@ type SalesforceTokenResponse = {
 };
 
 type SfdcAuth = NonNullable<User['sfdcAuth']>;
-type SubmissionResult = { success: boolean, message: string, details?: string };
+type SubmissionResult = { success: boolean, message: string, details?: string, coverage?: { covered: number[], uncovered: number[] } };
 const POINTS_MAP: { [key: string]: number } = { Easy: 5, Medium: 10, Hard: 15 };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/i)?.[1];
@@ -380,7 +380,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
         }
 
-        const isTestClassProblem = problem.categoryName === "Test classes";
+        const isTestClassProblem = problem.metadataType === 'Test Class';
 
         // For regular problems, ensure user code matches expected metadata type
         if (!isTestClassProblem) {
@@ -406,7 +406,7 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 
         const auth = await getSfdcConnection(userId);
         
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        const objectType = problem.metadataType === 'Class' || problem.metadataType === 'Test Class' ? 'ApexClass' : 'ApexTrigger';
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
             const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
             return { success: false, message: 'Problem Configuration Error', details: msg };
@@ -446,37 +446,42 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
 
         const failedTest = testResults.find((r: any) => r.Outcome !== 'Pass');
-        if (failedTest && !isTestClassProblem) { // For regular problems, any failure is an error
+        if (failedTest) {
              throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
 
-        log.push("\n--- Checking Code Coverage ---");
-        const coverageQuery = `SELECT NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
-        const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
-        
-        if (coverageResult.records && coverageResult.records.length > 0) {
-            const coverage = coverageResult.records[0];
-            const covered = coverage.NumLinesCovered;
-            const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
-            const percentage = total > 0 ? ((covered / total) * 100) : 100;
-            log.push(`> Coverage: ${percentage.toFixed(2)}% (${covered}/${total} lines covered).`);
+        let coverageData;
+        if (isTestClassProblem) {
+            log.push("\n--- Checking Code Coverage ---");
+            const coverageQuery = `SELECT ApexTestClassId, Coverage FROM ApexCodeCoverage WHERE ApexClassOrTriggerId = '${mainObjectId}' AND ApexTestClassId = '${testClassId}'`;
+            const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
             
-            if (isTestClassProblem) {
+            if (coverageResult.records && coverageResult.records.length > 0) {
+                const coverage = coverageResult.records[0].Coverage;
+                const coveredCount = coverage.coveredLines?.length || 0;
+                const uncoveredCount = coverage.uncoveredLines?.length || 0;
+                const total = coveredCount + uncoveredCount;
+                const percentage = total > 0 ? (coveredCount / total) * 100 : 100;
+                log.push(`> Coverage: ${percentage.toFixed(2)}% (${coveredCount}/${total} lines covered).`);
+                
+                coverageData = {
+                    covered: coverage.coveredLines || [],
+                    uncovered: coverage.uncoveredLines || []
+                };
+
                 if (percentage < 75) {
                     throw new Error(`Test Coverage Failed: Required coverage is 75%, but you only achieved ${percentage.toFixed(2)}%.`);
                 }
                 log.push("> Coverage goal of 75% met!");
-            }
-        } else {
-            log.push("> Could not retrieve code coverage information.");
-            if (isTestClassProblem) {
-                 throw new Error("Could not retrieve code coverage. Unable to verify solution.");
+            } else {
+                log.push("> Could not retrieve code coverage information.");
+                throw new Error("Could not retrieve code coverage. Unable to verify solution.");
             }
         }
 
         const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
         
-        return { success: true, message: successMessage, details: log.join('\n') };
+        return { success: true, message: successMessage, details: log.join('\n'), coverage: coverageData };
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -506,7 +511,7 @@ export async function testApexProblem(userId: string, problem: Partial<Problem>)
     try {
         const auth = await getSfdcConnection(userId);
         
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        const objectType = problem.metadataType === 'Class' || problem.metadataType === 'Test Class' ? 'ApexClass' : 'ApexTrigger';
         if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
             return { success: false, message: "Trigger SObject is required." };
         }

@@ -1121,7 +1121,7 @@ function ContentBlockItem({ path, rhfId, blockIndex, removeBlock }: { path: stri
             case 'live-code': return <FormField control={control} name={`${currentPath}.content`} render={({ field }) => (<FormItem><FormControl><LiveCodeBlockEditor field={field} /></FormControl><FormMessage/></FormItem>)} />;
             case 'two-column': return <ColumnLayoutEditor path={currentPath} numColumns={2} />;
             case 'three-column': return <ColumnLayoutEditor path={currentPath} numColumns={3} />;
-            default: const _exhaustiveCheck: never = block.type; return null;
+            default: return null;
         }
     }
 
@@ -1582,4 +1582,3 @@ function ProblemSelectorDialog({ isOpen, onOpenChange, onSelect }: { isOpen: boo
     );
 }
 // #endregion
-

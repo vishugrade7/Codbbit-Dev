@@ -11,7 +11,7 @@ import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, onSnapshot, limit, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
@@ -163,7 +163,28 @@ export default function UserProfilePage() {
                 setProfileUser(null);
             } else {
                 const userDoc = querySnapshot.docs[0];
-                setProfileUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+                const data = userDoc.data();
+                
+                // Manually convert Timestamps
+                if (data.subscriptionEndDate instanceof Timestamp) {
+                  data.subscriptionEndDate = data.subscriptionEndDate.toDate();
+                }
+                if (data.solvedProblems) {
+                  for (const key in data.solvedProblems) {
+                    if (data.solvedProblems[key].solvedAt instanceof Timestamp) {
+                      data.solvedProblems[key].solvedAt = data.solvedProblems[key].solvedAt.toDate();
+                    }
+                  }
+                }
+                if (data.achievements) {
+                    for (const key in data.achievements) {
+                        if (data.achievements[key].date instanceof Timestamp) {
+                            data.achievements[key].date = data.achievements[key].date.toDate();
+                        }
+                    }
+                }
+
+                setProfileUser({ id: userDoc.id, ...data } as AppUser);
                 setError(null);
             }
         }, (err) => {
@@ -187,7 +208,7 @@ export default function UserProfilePage() {
         );
 
         return Array.from(recentlySolvedMap.values())
-            .sort((a, b) => b.solvedAt.toDate().getTime() - a.solvedAt.toDate().getTime())
+            .sort((a, b) => b.solvedAt.getTime() - a.solvedAt.getTime())
             .slice(0, 5);
     
     }, [profileUser?.solvedProblems, allProblems, loadingProblems]);
@@ -513,7 +534,7 @@ export default function UserProfilePage() {
                   <CardContent>
                       {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
                           <div className="grid grid-cols-3 gap-4">
-                              {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
+                              {Object.values(profileUser.achievements).sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 9).map((achievement: Achievement) => (
                                   <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
                                       <div className="p-3 bg-amber-400/10 rounded-full">
                                           <Award className="h-6 w-6 text-amber-500" />
@@ -557,7 +578,7 @@ export default function UserProfilePage() {
                                             <div className="flex-1">
                                                 <p className="font-medium">{problem.title}</p>
                                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                                    <span>Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</span>
+                                                    <span>Solved {formatDistanceToNow(problem.solvedAt, { addSuffix: true })}</span>
                                                     <span className="text-muted-foreground/50">•</span>
                                                     <Badge variant="secondary">{problem.categoryName}</Badge>
                                                 </div>
