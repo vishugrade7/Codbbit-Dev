@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from "@/types";
 import { courseFormSchema } from "@/lib/admin-schemas";
 import { upsertCourseToFirestore, uploadCourseImage } from "@/app/upload-problem/actions";
+import mermaid from "mermaid";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCache, setCache } from "@/lib/cache";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../ui/resizable";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -442,31 +444,32 @@ function LessonItem({ moduleIndex, lessonIndex, onRemove }: { moduleIndex: numbe
 
 // #region Content Block Editor
 const BLOCKS = {
-  text: { label: 'Text', icon: <Type size={18} /> },
-  heading1: { label: 'Heading 1', icon: <h1 className="font-bold text-lg">H1</h1> },
-  heading2: { label: 'Heading 2', icon: <h2 className="font-bold text-base">H2</h2> },
-  heading3: { label: 'Heading 3', icon: <h3 className="font-bold text-sm">H3</h3> },
-  'bulleted-list': { label: 'Bulleted List', icon: <List size={18} /> },
-  'numbered-list': { label: 'Numbered List', icon: <ListOrdered size={18} /> },
-  'todo-list': { label: 'Todo List', icon: <CheckSquare size={18} /> },
-  quote: { label: 'Quote', icon: <MessageSquare size={18} /> },
-  code: { label: 'Code', icon: <Code size={18} /> },
-  image: { label: 'Image', icon: <ImageIcon size={18} /> },
-  video: { label: 'Video', icon: <Video size={18} /> },
-  audio: { label: 'Audio', icon: <Mic size={18} /> },
-  table: { label: 'Table', icon: <Table size={18} /> },
-  'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
-  breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
-  problem: { label: 'Problem', icon: <Puzzle size={18} /> },
-  mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
-  'toggle-list': { label: 'Toggle List', icon: <ToggleRight size={18} /> },
-  divider: { label: 'Divider', icon: <Divide size={18} /> },
-  'interactive-code': { label: 'Interactive Code', icon: <Play size={18} /> },
-  'live-code': { label: 'Live Code', icon: <PlayCircle size={18} /> },
-  stepper: { label: 'Stepper', icon: <ListOrdered size={18} /> },
-  mermaid: { label: 'Mermaid Diagram', icon: <GitBranch size={18} /> },
-  mindmap: { label: 'Mindmap', icon: <BrainCircuit size={18} /> },
-};
+    text: { label: 'Text', icon: <Type size={18} /> },
+    heading1: { label: 'Heading 1', icon: <h1 className="font-bold text-lg">H1</h1> },
+    heading2: { label: 'Heading 2', icon: <h2 className="font-bold text-base">H2</h2> },
+    heading3: { label: 'Heading 3', icon: <h3 className="font-bold text-sm">H3</h3> },
+    'bulleted-list': { label: 'Bulleted List', icon: <List size={18} /> },
+    'numbered-list': { label: 'Numbered List', icon: <ListOrdered size={18} /> },
+    'todo-list': { label: 'Todo List', icon: <CheckSquare size={18} /> },
+    quote: { label: 'Quote', icon: <MessageSquare size={18} /> },
+    code: { label: 'Code', icon: <Code size={18} /> },
+    image: { label: 'Image', icon: <ImageIcon size={18} /> },
+    video: { label: 'Video', icon: <Video size={18} /> },
+    audio: { label: 'Audio', icon: <Mic size={18} /> },
+    table: { label: 'Table', icon: <Table size={18} /> },
+    'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
+    'three-column': { label: 'Three Columns', icon: <Columns size={18} /> },
+    breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
+    problem: { label: 'Problem', icon: <Puzzle size={18} /> },
+    mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
+    'toggle-list': { label: 'Toggle List', icon: <ToggleRight size={18} /> },
+    divider: { label: 'Divider', icon: <Divide size={18} /> },
+    'interactive-code': { label: 'Interactive Code', icon: <Play size={18} /> },
+    'live-code': { label: 'Live Code', icon: <PlayCircle size={18} /> },
+    stepper: { label: 'Stepper', icon: <ListOrdered size={18} /> },
+    mermaid: { label: 'Mermaid Diagram', icon: <GitBranch size={18} /> },
+    mindmap: { label: 'Mindmap', icon: <BrainCircuit size={18} /> },
+  };
 
 const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
   const baseBlock = { id: uuidv4(), type };
@@ -541,6 +544,7 @@ const BlockSelector = ({ onSelect, close }: { onSelect: (type: keyof typeof BLOC
         {Object.entries(BLOCKS).map(([type, { label, icon }]) => (
           <button
             key={type}
+            type="button"
             onClick={() => onSelect(type as keyof typeof BLOCKS)}
             className="w-full text-left flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-accent"
           >
@@ -621,6 +625,57 @@ function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number,
     );
 }
 
+const LiveMermaidPreview = ({ chart }: { chart: string }) => {
+    const { theme } = useTheme();
+    const [svg, setSvg] = useState('');
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+        });
+    }, [theme]);
+
+    useEffect(() => {
+        if (!chart) {
+            setSvg('');
+            setError('');
+            return;
+        }
+
+        const renderMermaid = async () => {
+            try {
+                const id = `live-mermaid-${Math.random().toString(36).substr(2, 9)}`;
+                const { svg: renderedSvg } = await mermaid.render(id, chart);
+                setSvg(renderedSvg);
+                setError('');
+            } catch (e: any) {
+                setError(e.message);
+                setSvg('');
+            }
+        };
+
+        const timer = setTimeout(renderMermaid, 300);
+        return () => clearTimeout(timer);
+
+    }, [chart, theme]);
+
+
+    return (
+        <div className="w-full h-full flex items-center justify-center">
+            {error ? (
+                <div className="p-4 text-destructive bg-destructive/10 rounded-md text-xs font-mono whitespace-pre-wrap w-full">
+                    {error}
+                </div>
+            ) : (
+                <div dangerouslySetInnerHTML={{ __html: svg }} className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full" />
+            )}
+        </div>
+    );
+};
+
+
 function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { moduleIndex: number, lessonIndex: number, blockIndex: number, onRemove: () => void }) {
     const { control, getValues, setValue } = useFormContext<z.infer<typeof courseFormSchema>>();
     const block = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`);
@@ -628,6 +683,8 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     const style = { transform: CSS.Transform.toString(transform), transition };
     const { resolvedTheme } = useTheme();
     const { problems, loadingProblems } = useCourseFormContext();
+    const { fields: todoFields, append: appendTodo, remove: removeTodo } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content` as any});
+    const { fields: tableRows, append: appendRow, remove: removeRow } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.rows` as any });
     
     const BlockContainer = ({ children }: { children: React.ReactNode }) => (
         <div ref={setNodeRef} style={style} className="group relative my-2">
@@ -663,6 +720,53 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
                 return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.problemId`} render={({ field }) => ( <Select onValueChange={(val) => { const selectedProblem = problems.find(p => p.id === val); if (selectedProblem) { setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`, { problemId: selectedProblem.id, title: selectedProblem.title, categoryName: selectedProblem.categoryName, metadataType: selectedProblem.metadataType, }); } }} value={field.value}> <FormControl><SelectTrigger><SelectValue placeholder={loadingProblems ? "Loading..." : "Select a problem"} /></SelectTrigger></FormControl><SelectContent>{problems.map(p => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select> )}/></BlockContainer>;
             case 'live-code':
               return <BlockContainer><div className="space-y-2 p-2 border rounded-md"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.html`} render={({ field }) => (<FormItem><FormLabel>HTML</FormLabel><FormControl><Textarea {...field} placeholder="HTML" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.css`} render={({ field }) => (<FormItem><FormLabel>CSS</FormLabel><FormControl><Textarea {...field} placeholder="CSS" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.js`} render={({ field }) => (<FormItem><FormLabel>JS</FormLabel><FormControl><Textarea {...field} placeholder="JavaScript" className="font-mono text-xs" /></FormControl></FormItem>)} /></div></BlockContainer>;
+            case 'interactive-code':
+                return (
+                    <BlockContainer>
+                        <div className="space-y-2 p-2 border rounded-md">
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.title`} render={({ field }) => (<FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} placeholder="e.g. Anonymous Apex Test" /></FormControl></FormItem>)} />
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.description`} render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} placeholder="Instructions for the user" /></FormControl></FormItem>)} />
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.executionType`} render={({ field }) => (<FormItem><FormLabel>Execution Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="anonymous">Anonymous Apex</SelectItem><SelectItem value="soql">SOQL Query</SelectItem><SelectItem value="class">Apex Class</SelectItem></SelectContent></Select></FormItem>)} />
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.defaultCode`} render={({ field }) => (<FormItem><FormLabel>Default Code</FormLabel><FormControl><div className="h-48 border rounded-md"><MonacoEditor height="100%" language="java" value={field.value} onChange={field.onChange} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></FormControl></FormItem>)} />
+                            {(getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.executionType`) === 'class') && (
+                                <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.testClassCode`} render={({ field }) => (<FormItem><FormLabel>Test Class Code</FormLabel><FormControl><div className="h-48 border rounded-md"><MonacoEditor height="100%" language="java" value={field.value} onChange={field.onChange} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></FormControl></FormItem>)} />
+                            )}
+                        </div>
+                    </BlockContainer>
+                );
+            case 'mermaid':
+                 return (
+                    <BlockContainer>
+                        <ResizablePanelGroup direction="horizontal" className="min-h-[200px] rounded-lg border">
+                            <ResizablePanel defaultSize={50}><FormControl><Textarea {...control.register(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`)} className="h-full resize-none border-0 font-mono" /></FormControl></ResizablePanel>
+                            <ResizableHandle withHandle />
+                            <ResizablePanel defaultSize={50}><div className="p-2 h-full bg-muted/30"><LiveMermaidPreview chart={block.content} /></div></ResizablePanel>
+                        </ResizablePanelGroup>
+                    </BlockContainer>
+                 );
+            case 'mindmap':
+                return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormItem><FormLabel>Mindmap JSON</FormLabel><FormControl><Textarea {...field} className="font-mono" rows={10} /></FormControl></FormItem>)} /></BlockContainer>;
+            case 'table':
+                const headers = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.headers`) || [];
+                return <BlockContainer>
+                    <div className="border rounded-md p-2 space-y-2">
+                        <div className="flex gap-2">
+                            {headers.map((h: string, i: number) => (
+                                <Input key={i} {...control.register(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.headers.${i}`)} className="font-semibold"/>
+                            ))}
+                        </div>
+                        {tableRows.map((row, rowIndex) => (
+                            <div key={row.id} className="flex gap-2 items-center">
+                                {headers.map((h: string, colIndex: number) => (
+                                    <Input key={colIndex} {...control.register(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.rows.${rowIndex}.values.${colIndex}`)} />
+                                ))}
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeRow(rowIndex)}><Trash2 size={16} /></Button>
+                            </div>
+                        ))}
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ values: headers.map(() => '') })}><PlusCircle size={16} className="mr-2" />Add Row</Button>
+                    </div>
+                </BlockContainer>
+
             default: return <BlockContainer><p className="text-red-500">Unimplemented block: {block.type}</p></BlockContainer>;
         }
     }
