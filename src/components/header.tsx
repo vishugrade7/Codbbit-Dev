@@ -180,11 +180,6 @@ export default function Header() {
           <div className={cn("flex items-center gap-2", user ? "md:hidden" : "md:hidden")}>
             {!user && !authLoading && (
                 <>
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/login" aria-label="Login">
-                           <UserIcon className="h-5 w-5" />
-                        </Link>
-                    </Button>
                      <Button asChild size="sm">
                         <Link href="/signup">Try for Free</Link>
                     </Button>
