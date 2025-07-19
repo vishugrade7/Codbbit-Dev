@@ -14,13 +14,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, UserCog, MenuIcon, Award, Palette, CreditCard } from "lucide-react";
 
 import { ProblemList, ProblemForm } from "@/components/admin/ProblemManagement";
-import { CourseList, CourseForm } from "@/components/admin/CourseManagement";
 import { AllUsersList } from "@/components/admin/UserManagement";
 import { NavigationManagementView } from "@/components/admin/NavigationManagement";
 import { BadgeManagementView } from "@/components/admin/BadgeManagement";
 import { BrandManagementView } from "@/components/admin/BrandManagement";
 import { PricingManagementView } from "@/components/admin/PricingManagement";
-import type { Problem, Course } from "@/types";
+import type { Problem } from "@/types";
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -29,11 +28,10 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'course-list' | 'course-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management' | 'pricing-management';
+    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management' | 'pricing-management';
     const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
     
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
-    const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
 
     const isAuthorized = userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
 
@@ -54,16 +52,6 @@ function UploadProblemContent() {
         setViewMode('problem-form');
     }
 
-    const handleAddNewCourse = () => {
-        setCurrentCourse(null);
-        setViewMode('course-form');
-    }
-
-    const handleEditCourse = (course: Course) => {
-        setCurrentCourse(course);
-        setViewMode('course-form');
-    }
-
     if (authLoading || !isAuthorized) {
         return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
@@ -74,10 +62,6 @@ function UploadProblemContent() {
                 return <ProblemForm problem={currentProblem} onClose={() => setViewMode('problem-list')} />;
             case 'problem-list':
                 return <ProblemList onEdit={handleEditProblem} onAddNew={handleAddNewProblem} />;
-            case 'course-list':
-                return <CourseList onEdit={handleEditCourse} onAddNew={handleAddNewCourse} />;
-            case 'course-form':
-                return <CourseForm course={currentCourse} onBack={() => setViewMode('course-list')} />;
             case 'user-management':
                 return <AllUsersList />;
             case 'navigation-management':
@@ -107,25 +91,6 @@ function UploadProblemContent() {
                             <CardFooter>
                                 <div className="text-sm text-primary font-semibold flex items-center gap-2">
                                     Manage Problems <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                                </div>
-                            </CardFooter>
-                        </Card>
-                        <Card 
-                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
-                            onClick={() => setViewMode('course-list')}
-                        >
-                            <CardHeader>
-                                <CardTitle>Course Management</CardTitle>
-                                <CardDescription>Add, edit, or remove courses from the platform.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow flex items-center justify-center">
-                                <div className="text-muted-foreground/20">
-                                    <BookOpenCheck className="h-24 w-24" />
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <div className="text-sm text-primary font-semibold flex items-center gap-2">
-                                    Manage Courses <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
                                 </div>
                             </CardFooter>
                         </Card>
