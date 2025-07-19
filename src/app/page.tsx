@@ -172,15 +172,15 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-row items-center gap-4">
             <Button
               asChild
               variant="outline"
-              className="bg-transparent border-neutral-600 text-white hover:bg-neutral-800 hover:text-white w-full sm:w-auto"
+              className="bg-transparent border-neutral-600 text-white hover:bg-neutral-800 hover:text-white"
             >
               <Link href="/apex-problems">Explore Problems</Link>
             </Button>
-            <Button asChild className="w-full sm:w-auto">
+            <Button asChild>
               <Link href="/signup">Try for Free</Link>
             </Button>
           </div>
