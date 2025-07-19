@@ -2,13 +2,13 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef, useMemo, createContext, useContext } from "react";
-import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, Timestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData } from "@/types";
