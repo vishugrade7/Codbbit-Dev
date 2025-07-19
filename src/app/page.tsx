@@ -176,7 +176,7 @@ export default function Home() {
             <Button
               asChild
               variant="outline"
-              className="bg-transparent border-neutral-600 text-white hover:bg-neutral-800 hover:text-white"
+              className="bg-white text-black hover:bg-neutral-200 dark:bg-black dark:text-white dark:hover:bg-neutral-800"
             >
               <Link href="/apex-problems">Explore Problems</Link>
             </Button>
