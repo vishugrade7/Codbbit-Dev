@@ -18,14 +18,13 @@ import { upsertCourseToFirestore, uploadCourseImage } from "@/app/upload-problem
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { v4 as uuidv4 } from 'uuid';
@@ -347,14 +346,13 @@ export function CourseForm({ courseId, onBack }: { courseId: string | null, onBa
         </FormProvider>
     );
 }
-
 // #endregion
 
 // #region Module Item
 function ModuleItem({ moduleIndex, courseId, onRemove }: { moduleIndex: number, courseId: string, onRemove: () => void }) {
-    const { register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
+    const { getValues, register } = useFormContext<z.infer<typeof courseFormSchema>>();
     const router = useRouter();
-    const module = getValues(`modules.${moduleIndex}`) as Module;
+    const module = getValues(`modules.${moduleIndex}`);
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: module.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     
@@ -413,13 +411,12 @@ export function ModuleLessonsEditor({ moduleIndex }: { moduleIndex: number }) {
         </Card>
     );
 }
-
 // #endregion
 
 // #region Lesson Item
 function LessonItem({ moduleIndex, lessonIndex, onRemove }: { moduleIndex: number, lessonIndex: number, onRemove: () => void }) {
     const { control, register, getValues } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const lesson = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson;
+    const lesson = getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`);
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const [isOpen, setIsOpen] = useState(false);
@@ -444,13 +441,128 @@ function LessonItem({ moduleIndex, lessonIndex, onRemove }: { moduleIndex: numbe
 // #endregion
 
 // #region Content Block Editor
-const BLOCK_ICONS: { [key in ContentBlock['type']]: React.ElementType } = {
-    'text': Type, 'code': Code, 'heading1': Type, 'heading2': Type, 'heading3': Type,
-    'quote': MessageSquare, 'callout': AlertCircle, 'divider': Divide, 'image': ImageIcon,
-    'video': Video, 'audio': Mic, 'table': List, 'todo-list': CheckSquare, 'problem': Puzzle,
-    'breadcrumb': LinkIcon, 'mcq': List, 'numbered-list': List, 'bulleted-list': List,
-    'toggle-list': List, 'interactive-code': Play, 'stepper': List, 'mermaid': BrainCircuit,
-    'two-column': List, 'three-column': List, 'live-code': Play, 'mindmap': BrainCircuit,
+const BLOCKS = {
+  text: { label: 'Text', icon: <Type size={18} /> },
+  heading1: { label: 'Heading 1', icon: <h1 className="font-bold text-lg">H1</h1> },
+  heading2: { label: 'Heading 2', icon: <h2 className="font-bold text-base">H2</h2> },
+  heading3: { label: 'Heading 3', icon: <h3 className="font-bold text-sm">H3</h3> },
+  'bulleted-list': { label: 'Bulleted List', icon: <List size={18} /> },
+  'numbered-list': { label: 'Numbered List', icon: <ListOrdered size={18} /> },
+  'todo-list': { label: 'Todo List', icon: <CheckSquare size={18} /> },
+  quote: { label: 'Quote', icon: <MessageSquare size={18} /> },
+  code: { label: 'Code', icon: <Code size={18} /> },
+  image: { label: 'Image', icon: <ImageIcon size={18} /> },
+  video: { label: 'Video', icon: <Video size={18} /> },
+  audio: { label: 'Audio', icon: <Mic size={18} /> },
+  table: { label: 'Table', icon: <Table size={18} /> },
+  'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
+  breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
+  problem: { label: 'Problem', icon: <Puzzle size={18} /> },
+  mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
+  'toggle-list': { label: 'Toggle List', icon: <ToggleRight size={18} /> },
+  divider: { label: 'Divider', icon: <Divide size={18} /> },
+  'live-code': { label: 'Live Code', icon: <PlayCircle size={18} /> },
+};
+
+const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
+  const baseBlock = { id: uuidv4(), type };
+  switch (type) {
+    case 'text':
+    case 'heading1':
+    case 'heading2':
+    case 'heading3':
+    case 'quote':
+      return { ...baseBlock, content: `This is a ${type}` };
+    case 'bulleted-list':
+    case 'numbered-list':
+      return { ...baseBlock, content: '- List item' };
+    case 'todo-list':
+      return { ...baseBlock, content: [{ id: uuidv4(), text: 'Todo item', checked: false }] };
+    case 'code':
+      return { ...baseBlock, content: { code: 'console.log("Hello, World!");', language: 'javascript' } };
+    case 'image':
+      return { ...baseBlock, content: 'https://placehold.co/600x400' };
+    case 'video':
+       return { ...baseBlock, content: 'https://www.youtube.com/embed/dQw4w9WgXcQ' };
+    case 'audio':
+        return { ...baseBlock, content: 'https://example.com/audio.mp3' };
+    case 'table':
+        return { ...baseBlock, content: { headers: ['Header 1', 'Header 2'], rows: [{ id: uuidv4(), values: ['Cell 1', 'Cell 2']}]} };
+    case 'two-column':
+        return { ...baseBlock, content: { column1: [], column2: [] } };
+    case 'breadcrumb':
+        return { ...baseBlock, content: [{id: uuidv4(), text: 'Home', href: '/'}] };
+    case 'problem':
+        return { ...baseBlock, content: { problemId: '', title: '', categoryName: '' } };
+    case 'mcq':
+        return { ...baseBlock, content: { id: uuidv4(), question: 'What is 2+2?', options: [{id: uuidv4(), text: '3'}, {id: uuidv4(), text: '4'}, {id: uuidv4(), text: '5'}], correctAnswerIndex: 1, explanation: '' } };
+    case 'toggle-list':
+        return { ...baseBlock, content: { title: 'Toggle Title', text: 'Hidden content' } };
+    case 'divider':
+        return { ...baseBlock, content: "" };
+    case 'live-code':
+        return { ...baseBlock, content: { html: '<h1>Hello</h1>', css: 'h1 { color: blue; }', js: '/* JS here */' } };
+    default:
+      return { ...baseBlock, content: 'New Block' };
+  }
+};
+
+const BlockSelector = ({ onSelect, close }: { onSelect: (type: keyof typeof BLOCKS) => void, close: () => void }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        close();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [close]);
+
+   return (
+    <div ref={ref} className="absolute z-10 w-72 bg-popover rounded-md shadow-lg border max-h-96 overflow-y-auto">
+      <div className="p-2">
+        <p className="text-xs font-semibold text-muted-foreground px-2 py-1">BLOCKS</p>
+        {Object.entries(BLOCKS).map(([type, { label, icon }]) => (
+          <button
+            key={type}
+            onClick={() => onSelect(type as keyof typeof BLOCKS)}
+            className="w-full text-left flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-accent"
+          >
+            <div className="w-8 h-8 flex items-center justify-center border rounded-md bg-background">
+              {icon}
+            </div>
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AddBlockButton = ({ onAdd, isPageLevel = false }: { onAdd: (type: keyof typeof BLOCKS) => void, isPageLevel?: boolean }) => {
+    const [isSelecting, setIsSelecting] = useState(false);
+
+    const handleSelect = (type: keyof typeof BLOCKS) => {
+        onAdd(type);
+        setIsSelecting(false);
+    };
+
+    return (
+        <div className="relative flex items-center justify-center my-4">
+            {isPageLevel && <div className="flex-grow border-t"></div>}
+            <button
+                 onClick={() => setIsSelecting(true)}
+                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${isPageLevel ? 'mx-4 bg-background border hover:bg-accent' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+                <PlusCircle size={16} />
+                <span>Add Block</span>
+            </button>
+            {isPageLevel && <div className="flex-grow border-t"></div>}
+            {isSelecting && <BlockSelector onSelect={handleSelect} close={() => setIsSelecting(false)} />}
+        </div>
+    );
 };
 
 function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number, lessonIndex: number }) {
@@ -467,38 +579,9 @@ function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number,
       }
     };
     
-    const addBlock = (type: ContentBlock['type']) => {
-        let content: any;
-        switch (type) {
-            case 'text': content = 'New text block...'; break;
-            case 'code': content = { code: '// Your code here', language: 'javascript' }; break;
-            case 'heading1': content = 'Heading 1'; break;
-            case 'heading2': content = 'Heading 2'; break;
-            case 'heading3': content = 'Heading 3'; break;
-            case 'quote': content = 'A wise quote...'; break;
-            case 'callout': content = { text: 'Important information.', icon: '💡' }; break;
-            case 'divider': content = ''; break;
-            case 'image': content = 'https://placehold.co/600x400'; break;
-            case 'video': content = 'https://www.youtube.com/watch?v=...'; break;
-            case 'audio': content = 'https://placehold.co/audio.mp3'; break;
-            case 'table': content = { headers: ['Header 1', 'Header 2'], rows: [{ values: ['Row 1, Col 1', 'Row 1, Col 2'] }]}; break;
-            case 'todo-list': content = [{ id: uuidv4(), text: 'First to-do', checked: false }]; break;
-            case 'toggle-list': content = { title: 'Toggle Title', text: 'Toggle content...' }; break;
-            case 'mcq': content = { id: uuidv4(), question: 'What is...?', options: [{ id: uuidv4(), text: 'Option 1' }, { id: uuidv4(), text: 'Option 2' }], correctAnswerIndex: 0, explanation: '' }; break;
-            case 'problem': content = { problemId: '', title: 'Select a Problem', categoryName: '' }; break;
-            case 'breadcrumb': content = [{ id: uuidv4(), text: 'Home', href: '/' }]; break;
-            case 'numbered-list': content = '1. First item\n2. Second item'; break;
-            case 'bulleted-list': content = '* First item\n* Second item'; break;
-            case 'interactive-code': content = { title: 'Code Challenge', description: 'Solve this interactive challenge.', defaultCode: `System.debug('Hello, World!');`, executionType: 'anonymous', testClassCode: '' }; break;
-            case 'stepper': content = { title: 'Step-by-Step Guide', steps: [{ id: uuidv4(), title: 'Step 1', content: [{ id: uuidv4(), type: 'text', content: 'First step content...' }] }] }; break;
-            case 'mermaid': content = 'graph TD;\n    A-->B;'; break;
-            case 'two-column': content = { column1: [], column2: [] }; break;
-            case 'three-column': content = { column1: [], column2: [], column3: [] }; break;
-            case 'live-code': content = { html: '<h1>Hello</h1>', css: 'h1 { color: blue; }', js: `console.log('Hello from JS');` }; break;
-            case 'mindmap': content = JSON.stringify({ root: { id: uuidv4(), label: 'Root Node' } }, null, 2); break;
-            default: content = '';
-        }
-        append({ id: uuidv4(), type, content });
+    const addBlock = (type: keyof typeof BLOCKS, index: number) => {
+        const newBlock = createNewBlock(type);
+        append(newBlock, { shouldFocus: true });
     };
 
     return (
@@ -506,22 +589,19 @@ function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number,
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
                     {fields.map((field, index) => (
-                        <ContentBlockItem key={field.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={index} onRemove={() => remove(index)} />
+                      <div key={field.id}>
+                        <ContentBlockItem moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={index} onRemove={() => remove(index)} />
+                        <AddBlockButton onAdd={(type) => addBlock(type, index + 1)} />
+                      </div>
                     ))}
                 </SortableContext>
             </DndContext>
-            <Popover>
-                <PopoverTrigger asChild><Button type="button" variant="ghost" size="sm"><PlusCircle className="mr-2 h-4 w-4"/>Add Content Block</Button></PopoverTrigger>
-                <PopoverContent className="w-64 p-2">
-                    <div className="grid grid-cols-2 gap-1">
-                        {Object.keys(BLOCK_ICONS).map(key => {
-                            const type = key as ContentBlock['type'];
-                            const Icon = BLOCK_ICONS[type];
-                            return <Button key={type} type="button" variant="ghost" className="justify-start" onClick={() => addBlock(type)}><Icon className="mr-2 h-4 w-4"/> {type}</Button>
-                        })}
-                    </div>
-                </PopoverContent>
-            </Popover>
+            {fields.length === 0 && (
+                <div className="text-center py-8">
+                    <p className="text-muted-foreground">Empty lesson. Add your first block!</p>
+                    <AddBlockButton onAdd={(type) => addBlock(type, 0)} isPageLevel={true} />
+                </div>
+            )}
         </div>
     );
 }
@@ -534,77 +614,46 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     const { resolvedTheme } = useTheme();
     const { problems, loadingProblems } = useCourseFormContext();
     
+    const BlockContainer = ({ children, type }: { children: React.ReactNode, type: string }) => (
+        <div ref={setNodeRef} style={style} className="group relative my-2">
+            <button type="button" {...attributes} {...listeners} className="absolute -left-7 top-1/2 -translate-y-1/2 cursor-grab p-1 opacity-0 group-hover:opacity-100 transition-opacity"><GripVertical className="h-4 w-4 text-muted-foreground" /></button>
+            {children}
+            <button type="button" onClick={onRemove} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                X
+            </button>
+        </div>
+    );
+    
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': case 'quote': case 'bulleted-list': case 'numbered-list':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} className="text-sm" /></FormControl>)} />;
-            case 'heading1': return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-3xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} />;
-            case 'heading2': return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-2xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} />;
-            case 'heading3': return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} />;
+            case 'text': return <BlockContainer type="text"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Write something..." className="text-base" /></FormControl>)} /></BlockContainer>;
+            case 'heading1': return <BlockContainer type="heading1"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-4xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
+            case 'heading2': return <BlockContainer type="heading2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-3xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
+            case 'heading3': return <BlockContainer type="heading3"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-2xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
+            case 'quote': return <BlockContainer type="quote"><blockquote className="border-l-4 pl-4 italic"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Quote..." className="border-none focus-visible:ring-0" /></FormControl>)} /></blockquote></BlockContainer>;
+            case 'bulleted-list':
+            case 'numbered-list':
+              return <BlockContainer type={block.type}><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="* Item 1&#10;* Item 2" className="text-base" rows={3} /></FormControl>)} /></BlockContainer>;
             case 'code':
-                return <div className="h-64 border rounded-md overflow-hidden"><MonacoEditor height="100%" language={(block.content as any).language} value={(block.content as any).code} onChange={(val) => setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.code`, val)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div>;
+                return <BlockContainer type="code"><div className="bg-muted p-2 rounded-md"><MonacoEditor height="200px" language={(block.content as any).language} value={(block.content as any).code} onChange={(val) => setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.code`, val)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></BlockContainer>;
+            case 'image':
+                return <BlockContainer type="image"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Image URL" /></FormControl>)} /></BlockContainer>;
+            case 'video':
+                return <BlockContainer type="video"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Video Embed URL" /></FormControl>)} /></BlockContainer>;
+            case 'audio':
+                return <BlockContainer type="audio"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Audio File URL" /></FormControl>)} /></BlockContainer>;
+            case 'divider':
+                return <BlockContainer type="divider"><Separator /></BlockContainer>;
             case 'problem':
-                return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.problemId`} render={({ field }) => ( <Select onValueChange={(val) => { const selectedProblem = problems.find(p => p.id === val); if (selectedProblem) { setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`, { problemId: selectedProblem.id, title: selectedProblem.title, categoryName: selectedProblem.categoryName, metadataType: selectedProblem.metadataType, }); } }} value={field.value}> <FormControl><SelectTrigger><SelectValue placeholder={loadingProblems ? "Loading..." : "Select a problem"} /></SelectTrigger></FormControl><SelectContent>{problems.map(p => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select> )}/>;
-            case 'divider': return <Separator />;
-            case 'image': case 'video': case 'audio': return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Enter URL..." /></FormControl>)} />;
-            case 'callout':
-              return <div className="flex gap-2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.icon`} render={({ field }) => (<FormControl><Input {...field} className="w-16" placeholder="💡" /></FormControl>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.text`} render={({ field }) => (<FormControl><Input {...field} placeholder="Callout text..." /></FormControl>)} /></div>;
-            case 'toggle-list':
-              return <div className="space-y-2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.title`} render={({ field }) => (<FormControl><Input {...field} placeholder="Toggle Title" /></FormControl>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.text`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Toggle Content" /></FormControl>)} /></div>;
+                return <BlockContainer type="problem"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.problemId`} render={({ field }) => ( <Select onValueChange={(val) => { const selectedProblem = problems.find(p => p.id === val); if (selectedProblem) { setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`, { problemId: selectedProblem.id, title: selectedProblem.title, categoryName: selectedProblem.categoryName, metadataType: selectedProblem.metadataType, }); } }} value={field.value}> <FormControl><SelectTrigger><SelectValue placeholder={loadingProblems ? "Loading..." : "Select a problem"} /></SelectTrigger></FormControl><SelectContent>{problems.map(p => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select> )}/></BlockContainer>;
             case 'live-code':
-              return <div className="space-y-2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.html`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="HTML" className="font-mono" /></FormControl>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.css`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="CSS" className="font-mono" /></FormControl>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.js`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="JavaScript" className="font-mono" /></FormControl>)} /></div>;
-            case 'mermaid': case 'mindmap':
-              return <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Mermaid/JSON definition" className="font-mono" /></FormControl>)} />;
-            case 'mcq':
-                const { fields: mcqOptions, append: appendMcqOption, remove: removeMcqOption } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.options` });
-                return (
-                  <div className="space-y-3">
-                      <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.question`} render={({ field }) => (<FormControl><Input {...field} placeholder="Question" /></FormControl>)} />
-                      {mcqOptions.map((option, optIndex) => (
-                          <div key={option.id} className="flex items-center gap-2">
-                              <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.options.${optIndex}.text`} render={({ field }) => (<FormControl><Input {...field} placeholder={`Option ${optIndex + 1}`} /></FormControl>)} />
-                              <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.correctAnswerIndex`} render={({ field }) => (<FormControl><Switch checked={field.value === optIndex} onCheckedChange={(checked) => checked && field.onChange(optIndex)} /></FormControl>)} />
-                              <Button type="button" variant="ghost" size="icon" onClick={() => removeMcqOption(optIndex)}><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                      ))}
-                      <Button type="button" size="sm" variant="outline" onClick={() => appendMcqOption({ id: uuidv4(), text: '' })}><PlusCircle className="mr-2 h-4 w-4"/>Add Option</Button>
-                      <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.explanation`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Explanation (optional)" /></FormControl>)} />
-                  </div>
-              );
-            case 'two-column':
-              return <div className="grid grid-cols-2 gap-4"><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div></div>;
-             case 'three-column':
-              return <div className="grid grid-cols-3 gap-4"><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div><div className="border p-2 rounded-md"><ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} /></div></div>;
-            case 'stepper':
-                const { fields: stepperSteps, append: appendStepperStep, remove: removeStepperStep } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.steps` });
-                return (
-                    <div className="space-y-3">
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.title`} render={({ field }) => (<FormControl><Input {...field} placeholder="Stepper Title" /></FormControl>)} />
-                        {stepperSteps.map((step, stepIndex) => (
-                            <div key={step.id} className="border p-3 rounded-md space-y-2 bg-muted/20">
-                                <div className="flex justify-between items-center">
-                                    <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.steps.${stepIndex}.title`} render={({ field }) => (<FormControl><Input {...field} placeholder={`Step ${stepIndex + 1} Title`} className="font-semibold" /></FormControl>)} />
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeStepperStep(stepIndex)}><Trash2 className="h-4 w-4" /></Button>
-                                </div>
-                                <ContentBlockEditor moduleIndex={moduleIndex} lessonIndex={lessonIndex} />
-                            </div>
-                        ))}
-                        <Button type="button" size="sm" variant="outline" onClick={() => appendStepperStep({ id: uuidv4(), title: 'New Step', content: [{id: uuidv4(), type: 'text', content: '...'}] })}><PlusCircle className="mr-2 h-4 w-4"/>Add Step</Button>
-                    </div>
-                );
-            default: return <div className="text-xs text-muted-foreground p-2 bg-muted rounded-md">Editor for '{block.type}' not implemented yet.</div>;
+              return <BlockContainer type="live-code"><div className="space-y-2 p-2 border rounded-md"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.html`} render={({ field }) => (<FormItem><FormLabel>HTML</FormLabel><FormControl><Textarea {...field} placeholder="HTML" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.css`} render={({ field }) => (<FormItem><FormLabel>CSS</FormLabel><FormControl><Textarea {...field} placeholder="CSS" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.js`} render={({ field }) => (<FormItem><FormLabel>JS</FormLabel><FormControl><Textarea {...field} placeholder="JavaScript" className="font-mono text-xs" /></FormControl></FormItem>)} /></div></BlockContainer>;
+            default: return <BlockContainer type="default"><p className="text-red-500">Unimplemented block: {block.type}</p></BlockContainer>;
         }
     }
     
-    return (
-        <div ref={setNodeRef} style={style} className="flex items-start gap-2 p-2 rounded-md bg-muted/30">
-            <button type="button" {...attributes} {...listeners} className="cursor-grab p-1 mt-1"><GripVertical className="h-4 w-4 text-muted-foreground" /></button>
-            <div className="flex-1 space-y-2">
-                <div className="text-xs font-semibold text-muted-foreground">{block.type}</div>
-                {renderBlockEditor()}
-            </div>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
-        </div>
-    );
+    return renderBlockEditor();
 }
 // #endregion
+
+    
