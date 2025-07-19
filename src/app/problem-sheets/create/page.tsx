@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, ClipboardList, X, ArrowLeft } from "lucide-react";
+import { Loader2, Search, ClipboardList, X, ArrowLeft, PlusCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
@@ -219,26 +219,26 @@ function CreateProblemSheetClient() {
     const backUrl = formMode === 'edit' && sheetId ? `/sheets/${sheetId}` : '/problem-sheets';
 
     return (
-        <main className="flex-1 container py-8 flex flex-col">
-            <div className="flex justify-between items-center mb-8">
+        <main className="flex-1 container py-8 flex flex-col h-[calc(100vh-4rem)]">
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
                  <Button variant="outline" onClick={() => router.push(backUrl)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {formMode === 'edit' ? 'Back to Sheet' : 'Back to All Sheets'}
                 </Button>
             </div>
-            <div className="mb-8">
+            <div className="mb-6 flex-shrink-0">
                 <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
                     {formMode === 'edit' ? 'Edit Problem Sheet' : 'Create New Problem Sheet'}
                 </h1>
-                <p className="text-muted-foreground mt-4 max-w-2xl">
+                <p className="text-muted-foreground mt-2 max-w-2xl">
                     {formMode === 'edit' ? 'Update the details of your problem sheet.' : 'Build a custom problem sheet to share with friends, for interviews, or for targeted practice.'}
                 </p>
             </div>
 
-            <ResizablePanelGroup direction="horizontal" className="rounded-lg border bg-card min-h-[70vh] flex-1">
+            <ResizablePanelGroup direction="horizontal" className="rounded-lg border bg-card min-h-0 flex-1">
                 <ResizablePanel defaultSize={60}>
                     <div className="flex flex-col h-full">
-                        <div className="p-4 border-b">
+                        <div className="p-4 border-b flex-shrink-0">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -278,7 +278,7 @@ function CreateProblemSheetClient() {
                                 <div className="flex justify-center items-center h-full py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
                             ) : (
                             <Table>
-                                <TableHeader>
+                                <TableHeader className="sticky top-0 bg-card z-10">
                                     <TableRow>
                                         <TableHead className="w-12">
                                              <Checkbox 
@@ -329,7 +329,7 @@ function CreateProblemSheetClient() {
                             <CardTitle>{formMode === 'edit' ? 'Editing Sheet' : 'Your New Sheet'}</CardTitle>
                             <CardDescription>Select problems from the list to add them here.</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 flex flex-col gap-4">
+                        <CardContent className="flex-1 flex flex-col gap-4 min-h-0">
                             <Input
                                 placeholder="Enter sheet name..."
                                 value={sheetName}
@@ -393,3 +393,5 @@ export default function CreateProblemSheetPage() {
         </Suspense>
     );
 }
+
+    
