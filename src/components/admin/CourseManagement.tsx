@@ -18,7 +18,7 @@ import { upsertCourseToFirestore, uploadCourseImage } from "@/app/upload-problem
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, Link2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -456,12 +456,17 @@ const BLOCKS = {
   audio: { label: 'Audio', icon: <Mic size={18} /> },
   table: { label: 'Table', icon: <Table size={18} /> },
   'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
+  'three-column': { label: 'Three Columns', icon: <Columns size={18} /> },
   breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
   problem: { label: 'Problem', icon: <Puzzle size={18} /> },
   mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
   'toggle-list': { label: 'Toggle List', icon: <ToggleRight size={18} /> },
   divider: { label: 'Divider', icon: <Divide size={18} /> },
+  'interactive-code': { label: 'Interactive Code', icon: <Play size={18} /> },
   'live-code': { label: 'Live Code', icon: <PlayCircle size={18} /> },
+  stepper: { label: 'Stepper', icon: <ListOrdered size={18} /> },
+  mermaid: { label: 'Mermaid Diagram', icon: <GitBranch size={18} /> },
+  mindmap: { label: 'Mindmap', icon: <BrainCircuit size={18} /> },
 };
 
 const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
@@ -490,6 +495,8 @@ const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
         return { ...baseBlock, content: { headers: ['Header 1', 'Header 2'], rows: [{ id: uuidv4(), values: ['Cell 1', 'Cell 2']}]} };
     case 'two-column':
         return { ...baseBlock, content: { column1: [], column2: [] } };
+    case 'three-column':
+        return { ...baseBlock, content: { column1: [], column2: [], column3: [] } };
     case 'breadcrumb':
         return { ...baseBlock, content: [{id: uuidv4(), text: 'Home', href: '/'}] };
     case 'problem':
@@ -500,6 +507,14 @@ const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
         return { ...baseBlock, content: { title: 'Toggle Title', text: 'Hidden content' } };
     case 'divider':
         return { ...baseBlock, content: "" };
+    case 'interactive-code':
+        return { ...baseBlock, content: { title: 'Assignment', description: 'Solve this code.', defaultCode: 'console.log("hello");', executionType: 'anonymous'} };
+    case 'stepper':
+        return { ...baseBlock, content: { title: 'My Stepper', steps: [{id: uuidv4(), title: 'Step 1', content: [{id: uuidv4(), type: 'text', content: 'Step 1 content'}]}] } };
+    case 'mermaid':
+        return { ...baseBlock, content: 'graph TD;\n    A-->B;' };
+    case 'mindmap':
+        return { ...baseBlock, content: JSON.stringify({ root: { id: 'root', label: 'Central Idea', children: [{ id: 'child1', label: 'Main Topic 1' }] } }, null, 2) };
     case 'live-code':
         return { ...baseBlock, content: { html: '<h1>Hello</h1>', css: 'h1 { color: blue; }', js: '/* JS here */' } };
     default:
@@ -633,7 +648,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
             case 'quote': return <BlockContainer type="quote"><blockquote className="border-l-4 pl-4 italic"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Quote..." className="border-none focus-visible:ring-0" /></FormControl>)} /></blockquote></BlockContainer>;
             case 'bulleted-list':
             case 'numbered-list':
-              return <BlockContainer type={block.type}><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="* Item 1&#10;* Item 2" className="text-base" rows={3} /></FormControl>)} /></BlockContainer>;
+              return <BlockContainer type={block.type}><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="* List item" className="text-base" rows={3} /></FormControl>)} /></BlockContainer>;
             case 'code':
                 return <BlockContainer type="code"><div className="bg-muted p-2 rounded-md"><MonacoEditor height="200px" language={(block.content as any).language} value={(block.content as any).code} onChange={(val) => setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.code`, val)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></BlockContainer>;
             case 'image':
@@ -655,5 +670,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     return renderBlockEditor();
 }
 // #endregion
+
+    
 
     
