@@ -19,7 +19,7 @@ import mermaid from "mermaid";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, Link2, GitBranch } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, GitBranch } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { getCache, setCache } from "@/lib/cache";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../ui/resizable";
+import { Checkbox } from "../ui/checkbox";
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -459,7 +460,7 @@ const BLOCKS = {
     table: { label: 'Table', icon: <Table size={18} /> },
     'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
     'three-column': { label: 'Three Columns', icon: <Columns size={18} /> },
-    breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
+    breadcrumb: { label: 'Breadcrumb', icon: <LinkIcon size={18} /> },
     problem: { label: 'Problem', icon: <Puzzle size={18} /> },
     mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
     'toggle-list': { label: 'Toggle List', icon: <ToggleRight size={18} /> },
@@ -488,7 +489,7 @@ const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
     case 'code':
       return { ...baseBlock, content: { code: 'console.log("Hello, World!");', language: 'javascript' } };
     case 'image':
-      return { ...baseBlock, content: 'https://placehold.co/600x400' };
+      return { ...baseBlock, content: 'https://placehold.co/600x400.png' };
     case 'video':
        return { ...baseBlock, content: 'https://www.youtube.com/embed/dQw4w9WgXcQ' };
     case 'audio':
@@ -514,7 +515,7 @@ const createNewBlock = (type: keyof typeof BLOCKS): ContentBlock => {
     case 'stepper':
         return { ...baseBlock, content: { title: 'My Stepper', steps: [{id: uuidv4(), title: 'Step 1', content: [{id: uuidv4(), type: 'text', content: 'Step 1 content'}]}] } };
     case 'mermaid':
-        return { ...baseBlock, content: 'graph TD;\n    A-->B;' };
+        return { ...baseBlock, content: 'graph TD;\\n    A-->B;' };
     case 'mindmap':
         return { ...baseBlock, content: JSON.stringify({ root: { id: 'root', label: 'Central Idea', children: [{ id: 'child1', label: 'Main Topic 1' }] } }, null, 2) };
     case 'live-code':
@@ -706,6 +707,8 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
             case 'bulleted-list':
             case 'numbered-list':
               return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="* List item" className="text-base" rows={3} /></FormControl>)} /></BlockContainer>;
+            case 'todo-list':
+                return <BlockContainer><div className="space-y-2 p-2 border rounded-md">{todoFields.map((item, index) => (<div key={item.id} className="flex items-center gap-2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${index}.checked`} render={({ field }) => <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>}/><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${index}.text`} render={({ field }) => <FormControl><Input {...field} className="flex-1"/></FormControl>} /><Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeTodo(index)}><Trash2 size={14} /></Button></div>))}<Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendTodo({ id: uuidv4(), text: 'New item', checked: false })}>Add Item</Button></div></BlockContainer>;
             case 'code':
                 return <BlockContainer><div className="bg-muted p-2 rounded-md"><MonacoEditor height="200px" language={(block.content as any).language} value={(block.content as any).code} onChange={(val) => setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.code`, val)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></BlockContainer>;
             case 'image':
@@ -763,9 +766,12 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
                                 <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeRow(rowIndex)}><Trash2 size={16} /></Button>
                             </div>
                         ))}
-                         <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ values: headers.map(() => '') })}><PlusCircle size={16} className="mr-2" />Add Row</Button>
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: uuidv4(), values: headers.map(() => '') })}><PlusCircle size={16} className="mr-2" />Add Row</Button>
                     </div>
                 </BlockContainer>
+            case 'breadcrumb':
+                 const { fields: breadcrumbFields, append: appendCrumb, remove: removeCrumb } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content` as any});
+                 return <BlockContainer><div className="space-y-2 p-2 border rounded-md">{breadcrumbFields.map((item, index) => (<div key={item.id} className="flex items-center gap-2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${index}.text`} render={({ field }) => <FormControl><Input {...field} placeholder="Label"/></FormControl>}/><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.${index}.href`} render={({ field }) => <FormControl><Input {...field} placeholder="URL (optional)"/></FormControl>} /><Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeCrumb(index)}><Trash2 size={14} /></Button></div>))}<Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => appendCrumb({ id: uuidv4(), text: 'New Crumb', href: '/' })}>Add Crumb</Button></div></BlockContainer>
 
             default: return <BlockContainer><p className="text-red-500">Unimplemented block: {block.type}</p></BlockContainer>;
         }
@@ -774,3 +780,4 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     return renderBlockEditor();
 }
 // #endregion
+
