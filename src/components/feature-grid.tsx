@@ -14,9 +14,9 @@ export default function FeatureGrid() {
             </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-            <Card className="flex flex-col bg-card/50">
+            <Card className="flex flex-col bg-neutral-900/80">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
+                <div className="inline-block rounded-lg bg-primary/20 p-3 text-primary mb-4 w-fit">
                   <Code2 className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-semibold">Practice Problems</h3>
@@ -34,9 +34,9 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col bg-card/50">
+            <Card className="flex flex-col bg-neutral-900/80">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
+                <div className="inline-block rounded-lg bg-primary/20 p-3 text-primary mb-4 w-fit">
                   <ThumbsUp className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-semibold">Get Instant Feedback</h3>
@@ -47,9 +47,9 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col md:col-span-2 bg-card/50">
+            <Card className="flex flex-col md:col-span-2 bg-neutral-900/80">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary/10 p-3 text-primary mb-4 w-fit">
+                <div className="inline-block rounded-lg bg-primary/20 p-3 text-primary mb-4 w-fit">
                   <Award className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-semibold">Earn Ranks and Honor</h3>
