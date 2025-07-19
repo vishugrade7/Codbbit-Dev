@@ -21,11 +21,11 @@ const SkillCard = ({
   borderColor: string;
 }) => (
   <div
-    className={`flex items-center justify-between p-6 rounded-full border transition-all duration-300 hover:scale-105 hover:border-white/80 ${borderColor}`}
+    className={`flex items-center justify-between p-4 rounded-full border transition-all duration-300 hover:scale-105 hover:border-white/80 ${borderColor}`}
   >
     <span className="text-xl font-medium text-white">{title}</span>
     <div
-      className={`flex h-16 w-16 items-center justify-center rounded-full ${bgColor}`}
+      className={`flex h-12 w-12 items-center justify-center rounded-full ${bgColor}`}
     >
       {icon}
     </div>
