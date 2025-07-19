@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, ArrowLeft, ArrowRight, BookOpenCheck, FileQuestion, UserCog, MenuIcon, Award, Palette, CreditCard } from "lucide-react";
 
 import { ProblemList, ProblemForm } from "@/components/admin/ProblemManagement";
+import { CourseManagementView } from "@/components/admin/CourseManagement";
 import { AllUsersList } from "@/components/admin/UserManagement";
 import { NavigationManagementView } from "@/components/admin/NavigationManagement";
 import { BadgeManagementView } from "@/components/admin/BadgeManagement";
@@ -28,7 +29,7 @@ function UploadProblemContent() {
     const router = useRouter();
     const { toast } = useToast();
 
-    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management' | 'pricing-management';
+    type ViewMode = 'dashboard' | 'problem-list' | 'problem-form' | 'user-management' | 'navigation-management' | 'badge-management' | 'brand-management' | 'pricing-management' | 'course-management';
     const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
     
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
@@ -62,6 +63,8 @@ function UploadProblemContent() {
                 return <ProblemForm problem={currentProblem} onClose={() => setViewMode('problem-list')} />;
             case 'problem-list':
                 return <ProblemList onEdit={handleEditProblem} onAddNew={handleAddNewProblem} />;
+            case 'course-management':
+                return <CourseManagementView />;
             case 'user-management':
                 return <AllUsersList />;
             case 'navigation-management':
@@ -92,6 +95,25 @@ function UploadProblemContent() {
                                 <div className="text-sm text-primary font-semibold flex items-center gap-2">
                                     Manage Problems <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
                                 </div>
+                            </CardFooter>
+                        </Card>
+                        <Card 
+                            className="flex flex-col group cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.03]"
+                            onClick={() => setViewMode('course-management')}
+                        >
+                            <CardHeader>
+                                <CardTitle>Course Management</CardTitle>
+                                <CardDescription>Create, structure, and publish interactive learning courses.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-center justify-center">
+                                <div className="text-muted-foreground/20">
+                                   <BookOpenCheck className="h-24 w-24" />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                               <div className="text-sm text-primary font-semibold flex items-center gap-2">
+                                   Manage Courses <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                               </div>
                             </CardFooter>
                         </Card>
                          <Card 
