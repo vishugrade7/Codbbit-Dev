@@ -10,6 +10,7 @@ import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import StatsSection from '@/components/stats-section';
+import { motion } from 'framer-motion';
 
 const SkillCard = ({
   title,
@@ -159,22 +160,57 @@ export default function Home() {
     },
   ];
 
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+  
+  const heroVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i:number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.15,
+        duration: 0.5,
+      },
+    }),
+  };
+
   return (
     <main>
       <div className="w-full flex flex-col items-center justify-center bg-background p-4 py-16 md:py-24">
         <div className="container mx-auto flex flex-col items-center text-center gap-8 max-w-4xl">
           <div className="flex flex-col gap-6">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+            <motion.h1
+              custom={0}
+              variants={heroVariants}
+              initial="hidden"
+              animate="visible"
+              className="text-5xl md:text-7xl font-bold tracking-tight"
+            >
               <span className="text-primary">{'{Master}'}</span> Salesforce Skills
               for Today's Developer
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            </motion.h1>
+            <motion.p
+              custom={1}
+              variants={heroVariants}
+              initial="hidden"
+              animate="visible"
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+            >
               Unlock higher levels of mastery with our interactive courses,
               hands-on practice problems, and AI-powered learning experiences.
-            </p>
+            </motion.p>
           </div>
 
-          <div className="flex flex-row items-center gap-4">
+          <motion.div
+            custom={2}
+            variants={heroVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-row items-center gap-4"
+          >
             <Button
               asChild
               variant="outline"
@@ -185,20 +221,36 @@ export default function Home() {
             <Button asChild>
               <Link href="/signup">Try for Free</Link>
             </Button>
-          </div>
+          </motion.div>
 
-          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+          <motion.div
+            custom={3}
+            variants={heroVariants}
+            initial="hidden"
+            animate="visible"
+            className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4"
+          >
             {skills.map((skill) => (
               <SkillCard key={skill.title} {...skill} />
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
-      <FeatureGrid />
-      <StatsSection />
-      <Testimonials />
-      <InteractivePlayground />
-      <CallToAction />
+       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
+        <FeatureGrid />
+      </motion.div>
+      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
+        <StatsSection />
+      </motion.div>
+      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
+        <Testimonials />
+      </motion.div>
+      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
+        <InteractivePlayground />
+      </motion.div>
+      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
+        <CallToAction />
+      </motion.div>
     </main>
   );
 }
