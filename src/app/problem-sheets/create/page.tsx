@@ -220,14 +220,10 @@ function CreateProblemSheetClient() {
 
     return (
         <main className="flex-1 container py-8 flex flex-col">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-8">
                  <Button variant="outline" onClick={() => router.push(backUrl)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {formMode === 'edit' ? 'Back to Sheet' : 'Back to All Sheets'}
-                </Button>
-                 <Button onClick={handleSaveSheet} disabled={isSaving}>
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
                 </Button>
             </div>
             <div className="mb-8">
@@ -344,7 +340,7 @@ function CreateProblemSheetClient() {
                                 placeholder="Enter a short description..."
                                 value={sheetDescription}
                                 onChange={(e) => setSheetDescription(e.target.value)}
-                                className="h-24"
+                                className="h-24 rounded-lg"
                             />
                             <p className="text-sm font-medium text-muted-foreground">
                                 Selected Problems ({selectedProblems.length})
@@ -373,6 +369,12 @@ function CreateProblemSheetClient() {
                                 )}
                             </ScrollArea>
                         </CardContent>
+                        <CardFooter>
+                            <Button onClick={handleSaveSheet} disabled={isSaving} className="w-full">
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
+                            </Button>
+                        </CardFooter>
                    </Card>
                 </ResizablePanel>
             </ResizablePanelGroup>
