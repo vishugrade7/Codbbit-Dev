@@ -159,7 +159,7 @@ export default function Home() {
 
   return (
     <main>
-      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
+      <div className="w-full flex flex-col items-center justify-center bg-black text-white p-4 py-24 md:py-32">
         <div className="container mx-auto flex flex-col items-center text-center gap-12 max-w-4xl">
           <div className="flex flex-col gap-6">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
