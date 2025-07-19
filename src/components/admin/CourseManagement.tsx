@@ -18,7 +18,7 @@ import { upsertCourseToFirestore, uploadCourseImage } from "@/app/upload-problem
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, Link2 } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Edit, GripVertical, ArrowLeft, UploadCloud, ChevronDown, Code, Type, Image as ImageIcon, Video, Mic, List, CheckSquare, MessageSquare, AlertCircle, Divide, Link as LinkIcon, Puzzle, Play, BrainCircuit, Columns, ListOrdered, PlayCircle, ToggleRight, Link2, GitBranch } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -456,7 +456,6 @@ const BLOCKS = {
   audio: { label: 'Audio', icon: <Mic size={18} /> },
   table: { label: 'Table', icon: <Table size={18} /> },
   'two-column': { label: 'Two Columns', icon: <Columns size={18} /> },
-  'three-column': { label: 'Three Columns', icon: <Columns size={18} /> },
   breadcrumb: { label: 'Breadcrumb', icon: <Link2 size={18} /> },
   problem: { label: 'Problem', icon: <Puzzle size={18} /> },
   mcq: { label: 'MCQ', icon: <BrainCircuit size={18} /> },
@@ -568,6 +567,7 @@ const AddBlockButton = ({ onAdd, isPageLevel = false }: { onAdd: (type: keyof ty
         <div className="relative flex items-center justify-center my-4">
             {isPageLevel && <div className="flex-grow border-t"></div>}
             <button
+                 type="button"
                  onClick={() => setIsSelecting(true)}
                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${isPageLevel ? 'mx-4 bg-background border hover:bg-accent' : 'text-muted-foreground hover:text-foreground'}`}
             >
@@ -582,7 +582,7 @@ const AddBlockButton = ({ onAdd, isPageLevel = false }: { onAdd: (type: keyof ty
 
 function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number, lessonIndex: number }) {
     const { control } = useFormContext<z.infer<typeof courseFormSchema>>();
-    const { fields, append, remove, move } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
+    const { fields, append, remove, move, insert } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
     
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
     const handleDragEnd = (event: DragEndEvent) => {
@@ -596,7 +596,7 @@ function ContentBlockEditor({ moduleIndex, lessonIndex }: { moduleIndex: number,
     
     const addBlock = (type: keyof typeof BLOCKS, index: number) => {
         const newBlock = createNewBlock(type);
-        append(newBlock, { shouldFocus: true });
+        insert(index, newBlock as any);
     };
 
     return (
@@ -629,7 +629,7 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     const { resolvedTheme } = useTheme();
     const { problems, loadingProblems } = useCourseFormContext();
     
-    const BlockContainer = ({ children, type }: { children: React.ReactNode, type: string }) => (
+    const BlockContainer = ({ children }: { children: React.ReactNode }) => (
         <div ref={setNodeRef} style={style} className="group relative my-2">
             <button type="button" {...attributes} {...listeners} className="absolute -left-7 top-1/2 -translate-y-1/2 cursor-grab p-1 opacity-0 group-hover:opacity-100 transition-opacity"><GripVertical className="h-4 w-4 text-muted-foreground" /></button>
             {children}
@@ -641,36 +641,32 @@ function ContentBlockItem({ moduleIndex, lessonIndex, blockIndex, onRemove }: { 
     
     const renderBlockEditor = () => {
         switch (block.type) {
-            case 'text': return <BlockContainer type="text"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Write something..." className="text-base" /></FormControl>)} /></BlockContainer>;
-            case 'heading1': return <BlockContainer type="heading1"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-4xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
-            case 'heading2': return <BlockContainer type="heading2"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-3xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
-            case 'heading3': return <BlockContainer type="heading3"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-2xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
-            case 'quote': return <BlockContainer type="quote"><blockquote className="border-l-4 pl-4 italic"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Quote..." className="border-none focus-visible:ring-0" /></FormControl>)} /></blockquote></BlockContainer>;
+            case 'text': return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Write something..." className="text-base" /></FormControl>)} /></BlockContainer>;
+            case 'heading1': return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-4xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
+            case 'heading2': return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-3xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
+            case 'heading3': return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} className="text-2xl font-bold h-auto p-1 border-transparent focus-visible:border-input focus-visible:ring-0" /></FormControl>)} /></BlockContainer>;
+            case 'quote': return <BlockContainer><blockquote className="border-l-4 pl-4 italic"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="Quote..." className="border-none focus-visible:ring-0" /></FormControl>)} /></blockquote></BlockContainer>;
             case 'bulleted-list':
             case 'numbered-list':
-              return <BlockContainer type={block.type}><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="* List item" className="text-base" rows={3} /></FormControl>)} /></BlockContainer>;
+              return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Textarea {...field} placeholder="* List item" className="text-base" rows={3} /></FormControl>)} /></BlockContainer>;
             case 'code':
-                return <BlockContainer type="code"><div className="bg-muted p-2 rounded-md"><MonacoEditor height="200px" language={(block.content as any).language} value={(block.content as any).code} onChange={(val) => setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.code`, val)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></BlockContainer>;
+                return <BlockContainer><div className="bg-muted p-2 rounded-md"><MonacoEditor height="200px" language={(block.content as any).language} value={(block.content as any).code} onChange={(val) => setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.code`, val)} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} /></div></BlockContainer>;
             case 'image':
-                return <BlockContainer type="image"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Image URL" /></FormControl>)} /></BlockContainer>;
+                return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Image URL" /></FormControl>)} /></BlockContainer>;
             case 'video':
-                return <BlockContainer type="video"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Video Embed URL" /></FormControl>)} /></BlockContainer>;
+                return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Video Embed URL" /></FormControl>)} /></BlockContainer>;
             case 'audio':
-                return <BlockContainer type="audio"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Audio File URL" /></FormControl>)} /></BlockContainer>;
+                return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (<FormControl><Input {...field} placeholder="Audio File URL" /></FormControl>)} /></BlockContainer>;
             case 'divider':
-                return <BlockContainer type="divider"><Separator /></BlockContainer>;
+                return <BlockContainer><Separator /></BlockContainer>;
             case 'problem':
-                return <BlockContainer type="problem"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.problemId`} render={({ field }) => ( <Select onValueChange={(val) => { const selectedProblem = problems.find(p => p.id === val); if (selectedProblem) { setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`, { problemId: selectedProblem.id, title: selectedProblem.title, categoryName: selectedProblem.categoryName, metadataType: selectedProblem.metadataType, }); } }} value={field.value}> <FormControl><SelectTrigger><SelectValue placeholder={loadingProblems ? "Loading..." : "Select a problem"} /></SelectTrigger></FormControl><SelectContent>{problems.map(p => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select> )}/></BlockContainer>;
+                return <BlockContainer><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.problemId`} render={({ field }) => ( <Select onValueChange={(val) => { const selectedProblem = problems.find(p => p.id === val); if (selectedProblem) { setValue(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`, { problemId: selectedProblem.id, title: selectedProblem.title, categoryName: selectedProblem.categoryName, metadataType: selectedProblem.metadataType, }); } }} value={field.value}> <FormControl><SelectTrigger><SelectValue placeholder={loadingProblems ? "Loading..." : "Select a problem"} /></SelectTrigger></FormControl><SelectContent>{problems.map(p => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select> )}/></BlockContainer>;
             case 'live-code':
-              return <BlockContainer type="live-code"><div className="space-y-2 p-2 border rounded-md"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.html`} render={({ field }) => (<FormItem><FormLabel>HTML</FormLabel><FormControl><Textarea {...field} placeholder="HTML" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.css`} render={({ field }) => (<FormItem><FormLabel>CSS</FormLabel><FormControl><Textarea {...field} placeholder="CSS" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.js`} render={({ field }) => (<FormItem><FormLabel>JS</FormLabel><FormControl><Textarea {...field} placeholder="JavaScript" className="font-mono text-xs" /></FormControl></FormItem>)} /></div></BlockContainer>;
-            default: return <BlockContainer type="default"><p className="text-red-500">Unimplemented block: {block.type}</p></BlockContainer>;
+              return <BlockContainer><div className="space-y-2 p-2 border rounded-md"><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.html`} render={({ field }) => (<FormItem><FormLabel>HTML</FormLabel><FormControl><Textarea {...field} placeholder="HTML" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.css`} render={({ field }) => (<FormItem><FormLabel>CSS</FormLabel><FormControl><Textarea {...field} placeholder="CSS" className="font-mono text-xs" /></FormControl></FormItem>)} /><FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content.js`} render={({ field }) => (<FormItem><FormLabel>JS</FormLabel><FormControl><Textarea {...field} placeholder="JavaScript" className="font-mono text-xs" /></FormControl></FormItem>)} /></div></BlockContainer>;
+            default: return <BlockContainer><p className="text-red-500">Unimplemented block: {block.type}</p></BlockContainer>;
         }
     }
     
     return renderBlockEditor();
 }
 // #endregion
-
-    
-
-    
