@@ -9,6 +9,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/app-shell';
 import DynamicFavicon from '@/components/dynamic-favicon';
 import Script from 'next/script';
+import SplashScreen from '@/components/splash-screen';
 
 const sourceCodePro = Source_Code_Pro({
   subsets: ['latin'],
@@ -53,6 +54,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
+            <SplashScreen />
             <DynamicFavicon />
             <AppShell>
               {children}
