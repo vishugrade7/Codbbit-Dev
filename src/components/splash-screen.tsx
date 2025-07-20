@@ -59,8 +59,8 @@ export default function SplashScreen() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{
               type: 'spring',
-              stiffness: 260,
-              damping: 20,
+              stiffness: 300,
+              damping: 15, // Lower damping makes it more bouncy
               delay: 0.2,
             }}
           >
