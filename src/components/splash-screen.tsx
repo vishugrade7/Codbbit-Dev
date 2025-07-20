@@ -40,7 +40,7 @@ export default function SplashScreen() {
     const timer = setTimeout(() => {
       setIsVisible(false);
       sessionStorage.setItem('splashShown', 'true');
-    }, 2000); // Minimum splash time
+    }, 3000); // Minimum splash time
 
     return () => clearTimeout(timer);
   }, [authLoading]);
