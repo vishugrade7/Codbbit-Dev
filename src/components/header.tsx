@@ -95,10 +95,10 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/10 backdrop-blur-lg supports-[backdrop-filter]:bg-background/10">
-      <div className="container flex h-14 items-center justify-between">
-        <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/90 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+             <Link href="/" className="flex items-center gap-2">
               {loadingBranding ? (
                 <Skeleton className="h-6 w-6 rounded-lg" />
               ) : (
@@ -106,7 +106,9 @@ export default function Header() {
               )}
               <span className="text-lg font-bold font-headline hidden sm:inline-block">Codbbit</span>
             </Link>
-             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        </div>
+        <div className="flex w-full items-center justify-between">
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                 {visibleNavLinks.map((link) => (
                   <Link
                       key={link.href}
@@ -138,9 +140,6 @@ export default function Header() {
                   </Link>
                 ))}
               </nav>
-        </div>
-        
-        <div className="flex items-center gap-2">
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
@@ -217,6 +216,15 @@ export default function Header() {
                       <>
                       <Separator/>
                        <div className="grid gap-1 text-sm font-medium">
+                           <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                              <Settings className="h-4 w-4" /> Settings
+                          </Link>
+                          <div className="flex items-center justify-between rounded-lg px-3 py-2 text-muted-foreground">
+                             <div className="flex items-center gap-3">
+                                <ThemeToggle />
+                                <span>Theme</span>
+                             </div>
+                          </div>
                            <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
                               <Bug className="h-4 w-4" /> Report a Bug
                           </Link>
