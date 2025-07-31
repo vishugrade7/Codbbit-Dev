@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
@@ -8,7 +7,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle, CheckCircle2, Instagram } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle, CheckCircle2, Instagram, Mountain } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -375,17 +374,6 @@ export default function UserProfilePage() {
                                 </div>
                             )}
                         </div>
-
-                         <div className="flex items-center gap-2 mt-4">
-                            {profileUser.trailheadUrl && <Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Image src="/trailhead-logo.svg" alt="Trailhead" width={24} height={24}/></Link>}
-                            {profileUser.githubUrl && <Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Github className="h-6 w-6"/></Link>}
-                            {profileUser.linkedinUrl && <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Linkedin className="h-6 w-6"/></Link>}
-                            {profileUser.twitterUrl && <Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Twitter className="h-6 w-6"/></Link>}
-                            {profileUser.isEmailPublic && profileUser.email && (
-                                <a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary"><Mail className="h-6 w-6"/></a>
-                            )}
-                        </div>
-
                     </div>
                 </div>
                  {profileUser.about && (
@@ -393,6 +381,15 @@ export default function UserProfilePage() {
                         <p className="text-sm text-muted-foreground">{profileUser.about}</p>
                     </div>
                 )}
+                 <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                    {profileUser.trailheadUrl && <Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Image src="/trailhead-logo.svg" alt="Trailhead" width={24} height={24}/></Link>}
+                    {profileUser.githubUrl && <Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Github className="h-6 w-6"/></Link>}
+                    {profileUser.linkedinUrl && <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Linkedin className="h-6 w-6"/></Link>}
+                    {profileUser.twitterUrl && <Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Twitter className="h-6 w-6"/></Link>}
+                    {profileUser.isEmailPublic && profileUser.email && (
+                        <a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary"><Mail className="h-6 w-6"/></a>
+                    )}
+                </div>
             </Card>
 
             <Card className="lg:col-span-1 flex flex-col h-full">
@@ -488,7 +485,7 @@ export default function UserProfilePage() {
             <div className="lg:col-span-1">
                  <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
+                        <CardTitle className="flex items-center gap-2 text-base"><Mountain className="h-4 w-4" /> Achievements</CardTitle>
                         <CardDescription>Badges earned from your activity.</CardDescription>
                     </CardHeader>
                     <CardContent>
