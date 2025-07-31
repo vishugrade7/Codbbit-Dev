@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Metadata } from 'next';
@@ -276,16 +275,10 @@ export default function Leaderboard() {
           {rank}<span className="text-3xl font-medium">{rankSuffix}</span>
         </div>
         <CardContent className="relative pt-8 flex flex-col items-center text-center">
-          <div className="relative h-24 w-24">
-            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
-              <defs>
-                <clipPath id="hexagon">
-                  <path d="M 50,0 L 93.3,25 V 75 L 50,100 L 6.7,75 V 25 z" />
-                </clipPath>
-              </defs>
-              <image href={user.avatarUrl} x="0" y="0" height="100%" width="100%" clipPath="url(#hexagon)" />
-            </svg>
-          </div>
+            <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                <AvatarImage src={user.avatarUrl} alt={user.name} />
+                <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
   
           <div className="mt-4 flex items-center gap-2">
             <h3 className="text-xl font-bold">{user.name}</h3>
@@ -488,3 +481,5 @@ export default function Leaderboard() {
     </>
   );
 }
+
+    
