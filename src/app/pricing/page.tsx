@@ -262,7 +262,7 @@ export default function PricingPage() {
   return (
     <>
       <title>Pricing Plans</title>
-      <main className="flex-1 w-full bg-gray-50 dark:bg-gray-900 py-12 md:py-24 text-gray-900 dark:text-white">
+      <main className="flex-1 w-full bg-white dark:bg-black py-12 md:py-24 text-gray-900 dark:text-white">
         <div className="container">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <PricingCard
