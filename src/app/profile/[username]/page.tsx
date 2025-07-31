@@ -587,7 +587,7 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
             
-            <Card className="lg:col-span-1 h-full flex flex-col">
+            <Card className="lg:col-span-1 flex flex-col h-full">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
                     <CardDescription>Badges earned from your activity.</CardDescription>
@@ -635,7 +635,7 @@ export default function UserProfilePage() {
                             <div className="space-y-2 pr-4">
                                 {recentlySolvedProblems.map(problem => (
                                     <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                        <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                        <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
                                             <div className="flex justify-between items-center gap-4">
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold truncate">{problem.title}</p>
@@ -673,7 +673,7 @@ export default function UserProfilePage() {
                             <div className="space-y-2 pr-4">
                                  {starredProblems.map(problem => (
                                     <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
-                                    <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                    <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <p className="font-semibold">{problem.title}</p>
