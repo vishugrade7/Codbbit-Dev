@@ -13,6 +13,7 @@ import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from 
 import { getPricingSettings } from "@/app/upload-problem/actions";
 import type { PricingSettings } from "@/types";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -279,10 +280,12 @@ export default function PricingPage() {
                   </div>
                 </div>
                 <div className="pt-4">
-                  <div className="bg-muted p-1 rounded-full flex text-sm w-fit">
-                    <button onClick={() => setBillingCycle('monthly')} className={cn("px-4 py-1.5 rounded-full transition-colors font-semibold", billingCycle === 'monthly' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}>Monthly</button>
-                    <button onClick={() => setBillingCycle('annually')} className={cn("px-4 py-1.5 rounded-full transition-colors font-semibold", billingCycle === 'annually' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}>Yearly</button>
-                  </div>
+                  <Tabs defaultValue="annually" className="w-fit" onValueChange={(value) => setBillingCycle(value as any)}>
+                      <TabsList>
+                          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                          <TabsTrigger value="annually">Yearly</TabsTrigger>
+                      </TabsList>
+                  </Tabs>
                 </div>
               </CardHeader>
               <CardContent className="p-8 space-y-6 flex-grow">
