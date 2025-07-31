@@ -370,9 +370,9 @@ export default function UserProfilePage() {
                         </TooltipProvider>
                     )}
                 </div>
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <div className="flex items-center gap-4">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                        <Avatar className="h-20 w-20 border-muted">
+                        <Avatar className={cn("h-24 w-24 border-4", isProfileUserPro ? "border-yellow-400" : "border-muted")}>
                             <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                             <AvatarFallback className="text-3xl">
                                 {profileUser.name.split(' ').map(n => n[0]).join('')}
@@ -384,12 +384,15 @@ export default function UserProfilePage() {
                             </div>
                         )}
                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
+                        {isProfileUserPro && <ProIconOverlay />}
                     </div>
-                     <div className="flex-1 text-center sm:text-left">
-                        <h1 className="text-2xl font-bold">{profileUser.name}</h1>
+                     <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold">{profileUser.name}</h1>
+                            {profileUser.emailVerified && <VerifiedIcon />}
+                        </div>
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                        
-                        <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                              {profileUser.company && (
                                 <div className="flex items-center gap-2">
                                      {profileUser.companyLogoUrl ? (
@@ -411,10 +414,10 @@ export default function UserProfilePage() {
                 </div>
                  {profileUser.about && (
                     <div className="mt-4 pt-4 border-t">
-                        <p className="text-sm text-muted-foreground">{profileUser.about}</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{profileUser.about}</p>
                     </div>
                 )}
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                <div className="flex items-center gap-4 mt-4 pt-4 border-t">
                     <TooltipProvider>
                       {profileUser.trailheadUrl && (
                         <Tooltip>
@@ -541,13 +544,9 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
             
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
                  <Card>
-                    <CardHeader>
-                        <CardTitle>Submissions</CardTitle>
-                        <CardDescription>User's coding activity over the past year.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-2">
+                    <CardContent className="pt-6">
                         {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
                             <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
                         ) : (
