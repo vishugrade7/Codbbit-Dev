@@ -360,7 +360,11 @@ export default function UserProfilePage() {
                         <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                             {profileUser.company && (
                                 <div className="flex items-center gap-2">
-                                    <Building className="h-4 w-4" />
+                                     {profileUser.companyLogoUrl ? (
+                                        <Image src={profileUser.companyLogoUrl} alt={`${profileUser.company} logo`} width={16} height={16} className="rounded-sm object-contain"/>
+                                    ) : (
+                                        <Building className="h-4 w-4" />
+                                    )}
                                     <span>{profileUser.company}</span>
                                 </div>
                             )}
