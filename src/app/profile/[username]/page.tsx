@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
@@ -27,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from "next-themes";
 
-type RecentlySolvedProblem = SolvedProblemType & { id: string };
+type RecentlySolvedProblem = SolvedProblemType & { id: string; categoryName?: string };
 type ProblemWithCategory = Problem & { categoryName: string };
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -282,6 +283,28 @@ export default function UserProfilePage() {
         toast({ title: 'Profile link copied to clipboard!' });
     };
 
+    const recentlySolvedProblems: RecentlySolvedProblem[] = useMemo(() => {
+        if (!profileUser?.solvedProblems || allProblems.length === 0) return [];
+        
+        return Object.entries(profileUser.solvedProblems)
+            .map(([id, details]) => {
+                const problemData = allProblems.find(p => p.id === id);
+                return {
+                    id,
+                    ...details,
+                    categoryName: problemData?.categoryName || 'Unknown',
+                };
+            })
+            .sort((a, b) => new Date(b.solvedAt).getTime() - new Date(a.solvedAt).getTime())
+            .slice(0, 5); // Get top 5 most recent
+    }, [profileUser, allProblems]);
+
+    const starredProblems: ProblemWithCategory[] = useMemo(() => {
+        if (!profileUser?.starredProblems || allProblems.length === 0) return [];
+        const starredIds = new Set(profileUser.starredProblems);
+        return allProblems.filter(p => starredIds.has(p.id));
+    }, [profileUser, allProblems]);
+
 
     if (loadingProfile || loadingProblems) {
         return (
@@ -339,6 +362,23 @@ export default function UserProfilePage() {
         hardSolved: profileUser.dsaStats?.Hard || 0,
     };
 
+    const getDifficultyBadgeClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
+          case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+          default: return 'bg-muted';
+        }
+    };
+
+    const getDifficultyRowClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-500/10 hover:bg-green-500/20';
+          case 'medium': return 'bg-yellow-500/10 hover:bg-yellow-500/20';
+          case 'hard': return 'bg-destructive/10 hover:bg-destructive/20';
+          default: return 'hover:bg-muted/50';
+        }
+    };
 
   return (
     <>
@@ -553,7 +593,7 @@ export default function UserProfilePage() {
                     <CardContent className="flex-grow">
                         {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-4">
-                                {Object.values(profileUser.achievements).sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 12).map((achievement: Achievement) => (
+                                {Object.values(profileUser.achievements).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 12).map((achievement: Achievement) => (
                                     <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
                                         <div className="p-3 bg-amber-400/10 rounded-full">
                                             <Award className="h-6 w-6 text-amber-500" />
@@ -585,6 +625,71 @@ export default function UserProfilePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {recentlySolvedProblems.length > 0 ? (
+                        <div className="space-y-2">
+                            {recentlySolvedProblems.map(problem => (
+                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
+                                <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold">{problem.title}</p>
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                                    <span>Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</span>
+                                                    <span className="text-xl leading-none">&middot;</span>
+                                                    <Badge variant="secondary">{problem.categoryName}</Badge>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <Badge variant="outline" className={cn("w-20 justify-center mb-1", getDifficultyBadgeClass(problem.difficulty))}>
+                                                    {problem.difficulty}
+                                                </Badge>
+                                                <p className="text-xs font-semibold text-primary">+{problem.points} pts</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                         <div className="text-center py-8 text-muted-foreground">No problems solved yet.</div>
+                    )}
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    {starredProblems.length > 0 ? (
+                        <div className="space-y-2">
+                             {starredProblems.map(problem => (
+                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
+                                <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="font-semibold">{problem.title}</p>
+                                                <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                                            </div>
+                                            <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                {problem.difficulty}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">No problems starred yet.</div>
+                    )}
+                </CardContent>
+            </Card>
 
         </div>
       </div>
