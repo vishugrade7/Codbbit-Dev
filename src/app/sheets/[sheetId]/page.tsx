@@ -11,7 +11,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { toggleSheetFollow } from '../actions';
 import { getCache, setCache } from '@/lib/cache';
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +33,7 @@ import { Progress } from '@/components/ui/progress';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -511,7 +510,12 @@ export default function SheetDisplayPage() {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="bottom" className="p-0 rounded-t-lg bg-background/80 backdrop-blur-sm">
-                             <div className="p-4"><SheetDetails /></div>
+                            <SheetHeader className="sr-only">
+                                <SheetTitle>{sheet.name} Details</SheetTitle>
+                            </SheetHeader>
+                            <div className="w-full">
+                                <SheetDetails />
+                            </div>
                         </SheetContent>
                     </Sheet>
                 )}
