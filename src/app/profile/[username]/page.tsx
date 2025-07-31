@@ -544,21 +544,6 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
             
-            <div className="lg:col-span-3">
-                 <Card>
-                    <CardContent className="pt-6">
-                        {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                            <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                        ) : (
-                            <div className="text-center py-10">
-                                <h3 className="text-md font-semibold">Start your journey!</h3>
-                                <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
             <div className="lg:col-span-1">
                  <Card>
                     <CardHeader>
@@ -580,6 +565,21 @@ export default function UserProfilePage() {
                         ) : (
                             <div className="flex items-center justify-center h-full min-h-[120px]">
                                 <p className="text-muted-foreground text-center text-sm">No achievements yet. Keep coding!</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+                 <Card>
+                    <CardContent className="pt-6">
+                        {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                            <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                        ) : (
+                            <div className="text-center py-10">
+                                <h3 className="text-md font-semibold">Start your journey!</h3>
+                                <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
                             </div>
                         )}
                     </CardContent>
