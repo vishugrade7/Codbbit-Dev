@@ -1,5 +1,5 @@
 
-'use client';
+"use client";
 
 import CalendarHeatmap from 'react-calendar-heatmap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -126,9 +126,7 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
                 values={activityData}
                 gutterSize={2}
                 monthLabels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
-                monthLabelAttributes={{
-                    className: 'month-label'
-                }}
+                showWeekdayLabels={true}
                 classForValue={(value) => {
                     if (!value || value.count === 0) {
                         return 'color-empty';
@@ -146,7 +144,6 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
                 }}
                 onMouseOver={handleMouseOver}
                 onMouseLeave={handleMouseLeave}
-                showWeekdayLabels={true}
             />
             </div>
             <TooltipContent>

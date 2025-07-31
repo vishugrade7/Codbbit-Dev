@@ -126,7 +126,7 @@
 }
 
 .react-calendar-heatmap .month-label {
-    margin-left: 10px;
+    transform: translateX(4px);
 }
 
 .react-calendar-heatmap rect:hover {
