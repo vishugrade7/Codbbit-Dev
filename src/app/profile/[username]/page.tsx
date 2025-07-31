@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
@@ -17,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { updateUserProfilePicture } from "@/app/profile/actions";
-import { PieChart, Pie, Cell } from "recharts";
+import { PieChart, Pie, Cell, Legend } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
 import { Progress } from "@/components/ui/progress";
@@ -316,6 +317,9 @@ export default function UserProfilePage() {
         ),
     } satisfies ChartConfig;
     
+    const totalPoints = categoryData.reduce((acc, curr) => acc + curr.value, 0);
+
+    
     const { easySolved, mediumSolved, hardSolved } = {
         easySolved: profileUser.dsaStats?.Easy || 0,
         mediumSolved: profileUser.dsaStats?.Medium || 0,
@@ -413,16 +417,32 @@ export default function UserProfilePage() {
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-6">
                     {categoryData.length > 0 ? (
-                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full max-h-[150px]">
-                            <PieChart>
-                                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
-                                    {categoryData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
-                                    ))}
-                                </Pie>
-                            </PieChart>
-                        </ChartContainer>
+                       <div className="w-full flex items-center gap-6">
+                            <ChartContainer config={chartConfig} className="h-28 w-28 shrink-0">
+                                <PieChart>
+                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={40} paddingAngle={2} strokeWidth={0}>
+                                        {categoryData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <p className="text-2xl font-bold">{totalPoints}</p>
+                                    <p className="text-xs text-muted-foreground">Total Points</p>
+                                </div>
+                            </ChartContainer>
+                             <div className="flex-1 space-y-2 text-sm">
+                                {categoryData.map((entry) => (
+                                    <div key={entry.name} className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
+                                            <span>{entry.name}</span>
+                                        </div>
+                                        <span className="font-semibold">{entry.value} pts</span>
+                                    </div>
+                                ))}
+                            </div>
+                       </div>
                     ) : (
                         <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
                     )}
