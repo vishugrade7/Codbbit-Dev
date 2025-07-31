@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -285,9 +286,9 @@ export default function Leaderboard() {
                 <div className="absolute top-4 right-4 text-5xl font-bold text-foreground/20">
                     {rank}<span className="text-3xl font-medium">{rankSuffix}</span>
                 </div>
-                <CardContent className="relative pt-8 flex flex-col items-center text-center">
+                <CardContent className="relative pt-6 pb-4 flex flex-col items-center text-center">
                     <div className="relative">
-                        <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                        <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
                             <AvatarImage src={user.avatarUrl} alt={user.name} />
                             <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
@@ -296,11 +297,11 @@ export default function Leaderboard() {
                         </div>
                     </div>
         
-                    <div className="mt-4 flex items-center gap-2">
+                    <div className="mt-3 flex items-center gap-2">
                     <h3 className="text-xl font-bold">{user.name}</h3>
                     {user.emailVerified && <VerifiedIcon />}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                         {user.company && (
                             <div className="flex items-center gap-1.5">
                             {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="rounded-full object-contain"/>}
@@ -316,7 +317,7 @@ export default function Leaderboard() {
                         )}
                     </div>
         
-                    <div className="mt-6 mb-8 flex items-center justify-center gap-4">
+                    <div className="mt-4 mb-2 flex items-center justify-center gap-4">
                         <div className="text-center">
                             <p className="text-2xl font-bold">{user.points.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground">Points</p>
