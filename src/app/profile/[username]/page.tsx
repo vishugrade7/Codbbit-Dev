@@ -328,9 +328,13 @@ export default function UserProfilePage() {
     <main className="flex-1 relative">
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            
-            <div className="lg:col-span-1">
-                <Card className="p-6 text-center">
+            <Card className="lg:col-span-1 p-6 relative flex flex-col h-full">
+                {isOwnProfile && (
+                    <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setIsEditModalOpen(true)}>
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                )}
+                <div className="flex-grow flex flex-col items-center text-center">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
                         <Avatar className="h-28 w-28 border-4 mx-auto border-muted">
                             <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
@@ -338,15 +342,12 @@ export default function UserProfilePage() {
                                 {profileUser.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                         </Avatar>
-                         {isOwnProfile && (
+                        {isOwnProfile && (
                             <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                 {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
                             </div>
                         )}
                     </div>
-                     {isOwnProfile && (
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
-                    )}
                     <div className="mt-4">
                         <div className="flex items-center justify-center gap-2">
                             <h1 className="text-2xl font-bold">{profileUser.name}</h1>
@@ -372,65 +373,63 @@ export default function UserProfilePage() {
                             )}
                         </div>
                     </div>
-                     {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)} className="mt-6 w-full"><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
-                </Card>
-            </div>
+                </div>
+            </Card>
 
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle>
-                        <CardDescription>Breakdown by difficulty</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4 text-sm">
-                         <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span>Easy</span>
-                                <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
-                            </div>
-                            <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
+            <Card className="lg:col-span-1 flex flex-col h-full">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle>
+                    <CardDescription>Breakdown by difficulty</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4 text-sm flex-grow flex flex-col justify-center">
+                    <div>
+                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                            <span>Easy</span>
+                            <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
                         </div>
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span>Medium</span>
-                                <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
-                            </div>
-                            <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
+                        <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                            <span>Medium</span>
+                            <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
                         </div>
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span>Hard</span>
-                                <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
-                            </div>
-                            <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
+                        <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                            <span>Hard</span>
+                            <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card className="flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle>
-                        <CardDescription>Points earned per problem category.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center p-6">
-                        {categoryData.length > 0 ? (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <ChartContainer config={chartConfig} className="w-full aspect-square max-h-[150px]">
-                                    <PieChart>
-                                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
-                                            {categoryData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ChartContainer>
-                            </div>
-                        ) : (
-                            <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                        <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-1 flex flex-col h-full">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle>
+                    <CardDescription>Points earned per problem category.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow flex items-center justify-center p-6">
+                    {categoryData.length > 0 ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ChartContainer config={chartConfig} className="w-full aspect-square max-h-[150px]">
+                                <PieChart>
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
+                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
+                                        {categoryData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
+                    )}
+                </CardContent>
+            </Card>
             
             <div className="lg:col-span-2">
                  <Card>
