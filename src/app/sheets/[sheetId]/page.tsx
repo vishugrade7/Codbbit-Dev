@@ -510,7 +510,7 @@ export default function SheetDisplayPage() {
                                 <PanelLeft className="mr-2 h-4 w-4" /> View Details
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="p-0">
+                        <SheetContent side="bottom" className="p-0 h-4/5 rounded-t-lg">
                              <div className="p-4 h-full"><SheetDetails /></div>
                         </SheetContent>
                     </Sheet>
