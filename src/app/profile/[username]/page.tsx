@@ -8,7 +8,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle, CheckCircle2 } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle, CheckCircle2, Instagram } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -333,48 +333,37 @@ export default function UserProfilePage() {
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <Card className="lg:col-span-1 p-6 relative flex flex-col h-full">
-                {isOwnProfile && (
+                 {isOwnProfile && (
                     <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setIsEditModalOpen(true)}>
                         <Pencil className="h-4 w-4" />
                     </Button>
                 )}
-                <div className="flex-grow flex flex-col items-center text-center">
+                <div className="flex items-start gap-4">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                        <Avatar className="h-28 w-28 border-4 mx-auto border-muted">
+                        <Avatar className="h-20 w-20 border-muted">
                             <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                            <AvatarFallback className="text-4xl">
+                            <AvatarFallback className="text-3xl">
                                 {profileUser.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                         </Avatar>
-                        {isOwnProfile && (
+                         {isOwnProfile && (
                             <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
+                                {isUploading ? <LoaderCircle className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
                             </div>
                         )}
                     </div>
-                    <div className="mt-4">
-                        <div className="flex items-center justify-center gap-2">
-                            <h1 className="text-2xl font-bold">{profileUser.name}</h1>
-                        </div>
+                     <div className="flex-1">
+                        <h1 className="text-2xl font-bold">{profileUser.name}</h1>
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                        
-                        <div className="mt-4 flex flex-col items-center justify-center gap-1 text-sm text-muted-foreground">
-                            {profileUser.company && (
-                                <div className="flex items-center gap-2">
-                                  <Building className="h-4 w-4" />
-                                  <span>{profileUser.company}</span>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                                <Globe className="h-4 w-4 shrink-0" />
-                                <span>{profileUser.country}</span>
-                            </div>
-                            {profileUser.isEmailPublic && profileUser.email && (
-                                <div className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4 shrink-0" />
-                                    <span>{profileUser.email}</span>
-                                </div>
-                            )}
+                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                            {profileUser.company && <span>{profileUser.company}</span>}
+                            <span>{profileUser.country}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                           <Link href="https://instagram.com/codbbit" target="_blank" className="text-muted-foreground hover:text-foreground">
+                               <Instagram className="h-6 w-6"/>
+                           </Link>
+                           {profileUser.linkedinUrl && <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-6 w-6"/></Link>}
                         </div>
                     </div>
                 </div>
