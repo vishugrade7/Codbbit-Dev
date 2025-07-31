@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { getCache, setCache } from "@/lib/cache";
 import { useRouter } from "next/navigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ export default function Leaderboard() {
   const itemsPerPage = 12;
   const { user: authUser, userData } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const [filterType, setFilterType] = useState<"Global" | "Country" | "Company">("Global");
   const [filterValue, setFilterValue] = useState<string | null>(null);
@@ -462,7 +464,7 @@ export default function Leaderboard() {
             )}
         </div>
 
-          <div className="rounded-lg border">
+          <div className={cn("rounded-lg border", isMobile && "border-x-0 -mx-8 px-[2px]")}>
             <Table>
               <TableHeader>
                 <TableRow>

@@ -10,6 +10,7 @@ import type { Problem, ApexProblemsData } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCache, setCache } from "@/lib/cache";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function CategoryProblemsPage() {
   const params = useParams();
   const router = useRouter();
   const { userData, isPro } = useAuth();
+  const isMobile = useIsMobile();
   
   const categoryName = useMemo(() => params?.categoryName ? decodeURIComponent(params.categoryName as string) : null, [params]);
 
@@ -182,13 +184,14 @@ export default function CategoryProblemsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
+        className={cn(isMobile && "-mx-8 px-[2px]")}
       >
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
         ) : filteredProblems.length > 0 ? (
-          <div className="rounded-lg border">
+          <div className={cn("rounded-lg border", isMobile && "border-x-0")}>
             <Table>
               <TableHeader>
                 <TableRow>
