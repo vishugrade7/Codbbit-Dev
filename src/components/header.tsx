@@ -95,7 +95,7 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/20 backdrop-blur-lg supports-[backdrop-filter]:bg-background/20">
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/10 backdrop-blur-lg supports-[backdrop-filter]:bg-background/10">
       <div className="container flex h-14 items-center justify-between">
         <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
@@ -140,10 +140,7 @@ export default function Header() {
               </nav>
         </div>
         
-        <div className="flex flex-1 items-center justify-end gap-2">
-            
-
-            {/* Mobile Menu */}
+        <div className="flex items-center gap-2">
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
@@ -154,8 +151,7 @@ export default function Header() {
                 </SheetTrigger>
                 <SheetContent side="top" className="h-auto max-h-screen w-full overflow-y-auto bg-background/80 backdrop-blur-sm">
                    <div className="grid gap-6 py-6">
-                    
-                     {user ? (
+                    {user ? (
                       <>
                          <div className="flex flex-col gap-2">
                           <Link href={`/profile/${userData?.username}`} className="flex items-center gap-4 text-left p-2" onClick={() => setIsMobileMenuOpen(false)}>
@@ -170,7 +166,7 @@ export default function Header() {
                                   </p>
                               </div>
                           </Link>
-                          <div className="grid gap-1 text-sm font-medium">
+                           <div className="grid gap-1 text-sm font-medium">
                               {!isPro && (
                                   <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-primary bg-primary/10 transition-all hover:bg-primary/20">
                                       <Rocket className="h-4 w-4" />
@@ -227,7 +223,7 @@ export default function Header() {
                            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
                               <LifeBuoy className="h-4 w-4" /> Support
                           </Link>
-                           <Button variant="secondary" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
+                           <Button variant="secondary" size="sm" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
                               <LogOut className="mr-2 h-4 w-4" /> Logout
                            </Button>
                         </div>
@@ -237,66 +233,68 @@ export default function Header() {
                 </SheetContent>
               </Sheet>
             </div>
-
-            {/* Desktop Menu */}
+            
             <div className="hidden md:flex items-center gap-2">
-              <ThemeToggle />
-              {authLoading ? (
-                <div className="flex items-center gap-4">
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                </div>
-              ) : user ? (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
-                                <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                            </Avatar>
+                {authLoading ? (
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-8 w-16 rounded-md" />
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                    </div>
+                ) : user ? (
+                    <>
+                        <ThemeToggle />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
+                                        <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                                    </Avatar>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel className="font-normal">
+                                    <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                        {user.email}
+                                    </p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
+                                    <UserIcon className="mr-2 h-4 w-4" />
+                                    <span>Profile</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>Settings</span>
+                                </DropdownMenuItem>
+                                {!isPro && (
+                                    <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
+                                        <Rocket className="mr-2 h-4 w-4" />
+                                        <span>Upgrade</span>
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout}>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>Log out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </>
+                ) : (
+                    <>
+                        <ThemeToggle />
+                        <Button variant="ghost" asChild>
+                          <Link href="/login">Login</Link>
                         </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                         <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                                {user.email}
-                            </p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
-                            <UserIcon className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/settings')}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                         {!isPro && (
-                            <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
-                                <Rocket className="mr-2 h-4 w-4" />
-                                <span>Upgrade</span>
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Log out</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" asChild>
-                      <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </Button>
-                </div>
-              )}
+                        <Button asChild>
+                          <Link href="/signup">Sign Up</Link>
+                        </Button>
+                    </>
+                )}
             </div>
         </div>
       </div>
