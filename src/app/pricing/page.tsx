@@ -192,7 +192,7 @@ export default function PricingPage() {
 
   if (loadingPricing || loadingConfig || !plans) {
     return (
-      <main className="flex-1 py-12 flex justify-center items-center bg-gray-900 text-white">
+      <main className="flex-1 py-12 flex justify-center items-center bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
       </main>
     )
@@ -222,23 +222,23 @@ export default function PricingPage() {
     disabled?: boolean;
   }) => (
       <Card className={cn(
-        "flex flex-col rounded-xl p-8 bg-gray-800/50 border-gray-700 text-gray-300 relative overflow-hidden",
-        highlighted && "border-blue-500/50 bg-gray-900"
+        "flex flex-col rounded-xl p-8 bg-white dark:bg-gray-800/50 border dark:border-gray-700 text-gray-800 dark:text-gray-300 relative overflow-hidden",
+        highlighted && "border-blue-500/50 dark:bg-gray-900"
       )}>
           {highlighted && (
-            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-900/40 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-500/10 to-transparent pointer-events-none dark:from-blue-900/40" />
           )}
           <CardHeader className="p-0">
-              <CardTitle className="text-xl font-medium text-white">{title}</CardTitle>
-              <CardDescription>{description}</CardDescription>
+              <CardTitle className="text-xl font-medium text-gray-900 dark:text-white">{title}</CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-400">{description}</CardDescription>
           </CardHeader>
           <CardContent className="p-0 flex-grow">
               <div className="my-8">
-                  <span className="text-5xl font-bold text-white">{price}</span>
+                  <span className="text-5xl font-bold text-gray-900 dark:text-white">{price}</span>
                   {title === 'Pro' && <span className="text-muted-foreground">/month</span>}
               </div>
               <ul className="space-y-4">
-                  {features.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-gray-400" /> {f}</li>)}
+                  {features.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-gray-500 dark:text-gray-400" /> {f}</li>)}
               </ul>
           </CardContent>
           <CardFooter className="p-0 mt-8">
@@ -248,7 +248,7 @@ export default function PricingPage() {
                 size="lg" 
                 className={cn(
                     'w-full text-base',
-                    buttonVariant === 'outline' && "bg-white text-black hover:bg-gray-200",
+                    buttonVariant === 'outline' && "bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200",
                     buttonVariant === 'default' && "bg-blue-600 hover:bg-blue-700 text-white"
                 )}
               >
@@ -262,7 +262,7 @@ export default function PricingPage() {
   return (
     <>
       <title>Pricing Plans</title>
-      <main className="flex-1 w-full bg-gray-900 py-12 md:py-24 text-white">
+      <main className="flex-1 w-full bg-gray-50 dark:bg-gray-900 py-12 md:py-24 text-gray-900 dark:text-white">
         <div className="container">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <PricingCard
