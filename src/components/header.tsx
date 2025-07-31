@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Bug, LifeBuoy } from "lucide-react";
+import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Bug, LifeBuoy, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,7 @@ export default function Header() {
   }, []);
   
   const adminNavLinks = [
-      { href: "/upload-problem", label: "Admin Page", icon: UploadCloud }
+      { href: "/upload-problem", label: "Admin", icon: UploadCloud }
   ]
 
   const handleLogout = async () => {
@@ -125,9 +125,8 @@ export default function Header() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "px-3 py-1.5 rounded-full transition-colors",
-                      "hover:bg-white hover:text-black dark:hover:bg-white dark:hover:text-black",
-                      pathname === link.href ? "text-foreground" : "text-foreground/60",
+                      "transition-colors",
+                      pathname === link.href ? "text-foreground" : "text-foreground/60 hover:text-foreground/80",
                       !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
                     )}
                 >
@@ -159,10 +158,47 @@ export default function Header() {
             </div>
           ) : user ? (
             <div className="flex items-center gap-2">
-                 <div className="hidden sm:flex items-center gap-1.5 font-semibold">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                                <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                         <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                            <p className="text-xs leading-none text-muted-foreground">
+                                {user.email}
+                            </p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
+                            <UserIcon className="mr-2 h-4 w-4" />
+                            <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/settings')}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                        </DropdownMenuItem>
+                         {!isPro && (
+                            <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
+                                <Rocket className="mr-2 h-4 w-4" />
+                                <span>Upgrade</span>
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <ThemeToggle />
             </div>
           ) : (
             <>

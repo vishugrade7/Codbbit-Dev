@@ -46,6 +46,15 @@ export default function Home() {
                 Apex
               </span>
             </motion.h1>
+             <motion.p
+              custom={1}
+              variants={heroVariants}
+              initial="hidden"
+              animate="visible"
+              className="text-lg text-muted-foreground max-w-2xl"
+            >
+              The ultimate platform for Salesforce developers to practice, compete, and improve their coding skills through real-world challenges.
+            </motion.p>
           </div>
 
           <motion.div
@@ -57,13 +66,12 @@ export default function Home() {
           >
             <Button
               asChild
-              variant="outline"
-              className="bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/90"
+              className="bg-white text-black hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
             >
               <Link href="/apex-problems">Explore Problems</Link>
             </Button>
-            <Button asChild>
-              <Link href="/signup">Try for Free</Link>
+            <Button asChild variant="secondary">
+              <Link href="/leaderboard">Leaderboard</Link>
             </Button>
           </motion.div>
         </div>
