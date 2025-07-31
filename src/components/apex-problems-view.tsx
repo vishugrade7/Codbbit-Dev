@@ -195,11 +195,6 @@ export default function ApexProblemsView() {
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
                       <div className={cn("aspect-video relative flex items-center justify-center", bgColor)}>
                            <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
-                           <div className="absolute bottom-2 right-2">
-                                <Button size="icon" className="rounded-full h-10 w-10 bg-background/20 backdrop-blur border border-white/20 text-white group-hover:bg-background/40 transition-colors">
-                                    <ChevronRight className="h-5 w-5" />
-                                </Button>
-                            </div>
                       </div>
                   </Link>
                   <CardContent className="p-4 flex flex-col flex-grow">
