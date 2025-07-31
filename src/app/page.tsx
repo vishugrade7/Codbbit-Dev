@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -10,6 +9,7 @@ import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import PrivacyShowcase from '@/components/privacy-showcase';
+import FeaturedContent from '@/components/featured-content';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -42,7 +42,7 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center bg-background p-4 py-16 md:py-24">
+    <div className="w-full flex flex-col items-center justify-center bg-background p-4 pt-16 md:pt-24">
       <div className="container mx-auto flex flex-col items-center text-center gap-8 max-w-4xl">
         <div className="flex flex-col gap-6">
           <motion.h1
@@ -88,6 +88,7 @@ export default function Home() {
   return (
     <main>
       <HeroSection />
+      <FeaturedContent />
       <Section><FeatureGrid /></Section>
       <Section><Testimonials /></Section>
       <Section><InteractivePlayground /></Section>

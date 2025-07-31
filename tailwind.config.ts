@@ -116,9 +116,9 @@ export default {
           '50%': { transform: 'scale(1.2)', opacity: '1' },
           '100%': { transform: 'scale(1)', opacity: '0' },
         },
-        'marquee': {
-          'from': { transform: 'translateX(0)' },
-          'to': { transform: 'translateX(-100%)' },
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
         },
         'fade-in-up': {
           'from': { opacity: '0', transform: 'translateY(10px)' },
