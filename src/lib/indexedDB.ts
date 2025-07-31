@@ -1,4 +1,3 @@
-// This file is new
 'use client';
 
 import { openDB, type IDBPDatabase } from 'idb';

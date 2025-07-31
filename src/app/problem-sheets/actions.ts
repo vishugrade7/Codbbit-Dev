@@ -12,7 +12,9 @@ const createSheetSchema = z.object({
     uid: z.string(),
     name: z.string(),
     avatarUrl: z.string(),
+    username: z.string(),
   }),
+  description: z.string().optional(),
 });
 
 export async function createProblemSheet(data: z.infer<typeof createSheetSchema>) {
@@ -22,7 +24,7 @@ export async function createProblemSheet(data: z.infer<typeof createSheetSchema>
         return { success: false, error: validation.error.errors.map(e => e.message).join(', ') };
     }
 
-    const { sheetName, problemIds, user } = validation.data;
+    const { sheetName, problemIds, user, description } = validation.data;
     
     if (!db) {
       return { success: false, error: "Database not initialized." };
@@ -32,12 +34,15 @@ export async function createProblemSheet(data: z.infer<typeof createSheetSchema>
         const sheetsCollection = collection(db, 'problem-sheets');
         const newSheetDoc = await addDoc(sheetsCollection, {
             name: sheetName,
+            description: description || "",
             problemIds: problemIds,
             createdBy: user.uid,
             creatorName: user.name,
+            creatorUsername: user.username,
             creatorAvatarUrl: user.avatarUrl,
             createdAt: serverTimestamp(),
             isPublic: true,
+            followers: [],
         });
 
         return { success: true, sheetId: newSheetDoc.id };

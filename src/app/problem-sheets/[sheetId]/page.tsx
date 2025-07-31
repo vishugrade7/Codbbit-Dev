@@ -8,7 +8,7 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
-import { toggleSheetFollow } from '../actions';
+import { toggleSheetFollow } from '@/app/sheets/actions';
 import { getCache, setCache } from '@/lib/cache';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
