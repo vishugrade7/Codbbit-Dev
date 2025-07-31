@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -47,16 +48,16 @@ const HeroSection = () => {
         <div className="flex flex-col items-start text-left gap-6">
             <motion.div custom={0} variants={heroVariants} initial="hidden" animate="visible">
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
-                    Coding Like Never Before 🧐
+                    Showcase Canvas
                 </div>
             </motion.div>
 
             <motion.div custom={1} variants={heroVariants} initial="hidden" animate="visible" className="space-y-4">
                 <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-                    The AI Coding Agent Developers Actually Use
+                  Crafting Digital Experiences, One Pixel at a Time
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-xl">
-                    Tackle everyday development tasks bug fixing, refactoring, or feature building powered by autonomous AI agents built for real-world workflows.
+                  Welcome to my creative space. I design and build beautiful, intuitive, and high-performing web applications. Explore my work and see how I can bring your vision to life.
                 </p>
             </motion.div>
 
@@ -65,9 +66,13 @@ const HeroSection = () => {
                 variants={heroVariants}
                 initial="hidden"
                 animate="visible"
+                className="flex items-center gap-4"
             >
                 <Button asChild size="lg">
-                    <Link href="/signup">Get started <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                    <Link href="#portfolio">View My Work</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                    <Link href="/contact">Get in Touch</Link>
                 </Button>
             </motion.div>
         </div>
@@ -81,10 +86,10 @@ const HeroSection = () => {
         >
             <Image
                 src="https://placehold.co/1024x768.png"
-                alt="AI coding agent interface"
+                alt="Portfolio showcase"
                 width={1024}
                 height={768}
-                data-ai-hint="dark editor user interface"
+                data-ai-hint="design portfolio"
                 className="rounded-lg border shadow-2xl shadow-primary/10"
             />
         </motion.div>
