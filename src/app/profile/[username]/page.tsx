@@ -408,7 +408,7 @@ export default function UserProfilePage() {
                                 </TooltipTrigger>
                                 <TooltipContent><p>Edit Profile</p></TooltipContent>
                             </Tooltip>
-                        </Tooltip>
+                        </TooltipProvider>
                     )}
                 </div>
                 <div className="flex items-center gap-4">
@@ -514,19 +514,6 @@ export default function UserProfilePage() {
                 </div>
             </Card>
 
-            <Card className="lg:col-span-2 h-full flex flex-col">
-                <CardContent className="pt-6 flex-grow flex flex-col justify-center">
-                    {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                        <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                    ) : (
-                        <div className="text-center py-10">
-                            <h3 className="text-md font-semibold">Start your journey!</h3>
-                            <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
             <Card className="lg:col-span-1 h-full flex flex-col">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
@@ -546,6 +533,19 @@ export default function UserProfilePage() {
                     ) : (
                         <div className="flex items-center justify-center h-full min-h-[120px]">
                             <p className="text-muted-foreground text-center text-sm">No achievements yet. Keep coding!</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+            
+            <Card className="lg:col-span-2 h-full flex flex-col">
+                <CardContent className="pt-6 flex-grow flex flex-col justify-center">
+                    {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                        <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                    ) : (
+                        <div className="text-center py-10">
+                            <h3 className="text-md font-semibold">Start your journey!</h3>
+                            <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
                         </div>
                     )}
                 </CardContent>
@@ -695,3 +695,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
