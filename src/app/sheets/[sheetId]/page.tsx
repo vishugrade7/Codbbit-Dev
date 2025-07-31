@@ -16,12 +16,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search, Lock, PanelLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search, Lock, PanelLeft, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Progress } from '@/components/ui/progress';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -356,37 +364,42 @@ export default function SheetDisplayPage() {
     const ProblemList = () => (
         <div className="flex flex-col h-full pl-0 md:pl-4">
             {problems.length > 0 && (
-                <div className="flex flex-col md:flex-row gap-4 mb-4 flex-shrink-0">
+                <div className="flex items-center gap-4 mb-4 flex-shrink-0">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
-                        placeholder="Search problems..."
-                        className="w-full pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search problems..."
+                            className="w-full pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="All">All Statuses</SelectItem>
-                            <SelectItem value="Solved">Solved</SelectItem>
-                            <SelectItem value="Unsolved">Unsolved</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                            <SelectValue placeholder="Difficulty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="All">All Difficulties</SelectItem>
-                            <SelectItem value="Easy">Easy</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Hard">Hard</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="shrink-0">
+                            <Filter className="h-4 w-4" />
+                            <span className="sr-only">Filters</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="end">
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                            <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                            <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             )}
             
