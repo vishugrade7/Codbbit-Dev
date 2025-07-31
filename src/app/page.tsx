@@ -66,7 +66,6 @@ export default function Home() {
           >
             <Button
               asChild
-              className="bg-white text-black hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
             >
               <Link href="/apex-problems">Explore Problems</Link>
             </Button>

@@ -1,10 +1,10 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import Header from './header';
 import Footer from './footer';
-import Sidebar from './sidebar';
 import { Loader2 } from 'lucide-react';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isCallbackPage = pathname === '/salesforce-callback';
-  const isHomePage = pathname === '/';
   
   // Don't render any layout on auth or callback pages
   if (isAuthPage || isCallbackPage) {
@@ -28,27 +27,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Render sidebar layout for logged-in users
-  if (user) {
-    return (
-      <div className="relative min-h-screen md:flex">
-        <Sidebar />
-        {/* Header is now only for mobile navigation in the logged-in state */}
-        <Header />
-        <div className="w-full md:pl-20">
-            {children}
-        </div>
-      </div>
-    );
-  }
-
-  // Render public layout for logged-out users
+  // Render a unified layout with Header and Footer for all other pages
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
-      <div className="flex-1">{children}</div>
-      {/* Hide footer on the new homepage */}
-      {!isHomePage && <Footer />}
+      <div className="flex-1 w-full">{children}</div>
+      <Footer />
     </div>
   );
 }

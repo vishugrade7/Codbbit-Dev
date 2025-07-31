@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Bug, LifeBuoy, Moon } from "lucide-react";
+import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Rocket, Bug, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import type { NavLink } from "@/types";
@@ -80,77 +80,75 @@ export default function Header() {
     if (authLoading || loadingNav) return [];
     
     return navLinks.filter(link => {
-        // Admins can see all links
         if (isAuthorizedAdmin) {
             return true;
         }
-
-        // For regular users, the link must be enabled
         if (!link.isEnabled) {
             return false;
         }
-        
-        // Hide pro links from non-pro users
         if (link.isPro && !isPro) {
             return false;
         }
-
         return true;
     });
   }, [navLinks, authLoading, loadingNav, isPro, isAuthorizedAdmin]);
 
 
   return (
-    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
-      <div className="container flex h-14 items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            {loadingBranding ? (
-              <Skeleton className="h-6 w-6 rounded-full" />
-            ) : (
-              <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
-            )}
-            <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit' : 'Codbbit'}</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
-             {(loadingNav || authLoading) ? (
-                <>
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-5 w-28" />
-                </>
-            ) : (
-                visibleNavLinks.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "transition-colors",
-                      pathname === link.href ? "text-foreground" : "text-foreground/60 hover:text-foreground/80",
-                      !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
-                    )}
-                >
-                    {link.label}
-                </Link>
-                ))
-            )}
-            {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
-                 <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                    "transition-colors hover:text-foreground/80 flex items-center gap-1",
-                    pathname === link.href ? "text-foreground" : "text-foreground/60"
-                    )}
-                >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                </Link>
-            ))}
-          </nav>
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        {/* --- Left Side: Logo (only on public pages for non-logged-in users) --- */}
+        <div className="md:flex-1 md:flex md:items-center md:gap-4">
+          {!user && (
+            <Link href="/" className="flex items-center gap-2">
+              {loadingBranding ? (
+                <Skeleton className="h-6 w-6 rounded-full" />
+              ) : (
+                <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
+              )}
+              <span className="text-lg font-bold font-headline">Codbbit</span>
+            </Link>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* --- Center: Navigation for logged-in users on Desktop --- */}
+        {user && (
+          <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-sm font-medium">
+            {visibleNavLinks.map((link) => (
+              <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "relative transition-colors text-foreground/60 hover:text-foreground",
+                    pathname.startsWith(link.href) && "text-foreground"
+                  )}
+              >
+                  {link.label}
+                  {pathname.startsWith(link.href) && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                  )}
+              </Link>
+            ))}
+            {isAuthorizedAdmin && adminNavLinks.map((link) => (
+              <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                  "relative transition-colors text-foreground/60 hover:text-foreground",
+                  pathname.startsWith(link.href) && "text-foreground"
+                  )}
+              >
+                  {link.label}
+                   {pathname.startsWith(link.href) && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                  )}
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        {/* --- Right Side: Auth buttons and Mobile Menu --- */}
+        <div className="flex flex-1 items-center justify-end gap-2">
           {authLoading ? (
             <div className="flex items-center gap-4">
                 <Skeleton className="h-8 w-16 rounded-md" />
@@ -160,11 +158,8 @@ export default function Header() {
             <div className="flex items-center gap-2">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                                <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                            </Avatar>
+                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
+                            <UserIcon className="h-5 w-5"/>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -201,9 +196,7 @@ export default function Header() {
                 <ThemeToggle />
             </div>
           ) : (
-            <>
-              {/* Desktop Logged-out Buttons */}
-              <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
                 <ThemeToggle />
                 <Button variant="ghost" asChild>
                   <Link href="/login">Login</Link>
@@ -211,19 +204,11 @@ export default function Header() {
                 <Button asChild>
                   <Link href="/signup">Sign Up</Link>
                 </Button>
-              </div>
-            </>
+            </div>
           )}
 
-           {/* Mobile Menu Trigger & Buttons */}
-          <div className={cn("flex items-center gap-2", user ? "md:hidden" : "md:hidden")}>
-            {!user && !authLoading && (
-                <>
-                     <Button asChild size="sm">
-                        <Link href="/signup">Try for Free</Link>
-                    </Button>
-                </>
-            )}
+           {/* Mobile Menu Trigger & Content */}
+          <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -231,8 +216,8 @@ export default function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="top" className="bg-background/80 backdrop-blur-sm">
-                <div className="grid gap-6 py-6">
+              <SheetContent side="left" className="bg-background/80 backdrop-blur-sm">
+                 <div className="grid gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                     {loadingBranding ? (
                       <Skeleton className="h-6 w-6 rounded-full" />
@@ -241,7 +226,7 @@ export default function Header() {
                     )}
                     <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
                   </Link>
-                  {user && (
+                   {user ? (
                     <>
                        <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-4 text-left p-2">
@@ -269,17 +254,15 @@ export default function Header() {
                                     <span>Upgrade</span>
                                 </Link>
                             )}
-                            <Separator className="my-2" />
-                            <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                                <Bug className="h-4 w-4" /> Report a Bug
-                            </Link>
-                             <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                                <LifeBuoy className="h-4 w-4" /> Support
-                            </Link>
                         </div>
                       </div>
                       <Separator />
                     </>
+                  ) : (
+                     <div className="flex flex-col gap-2">
+                       <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
+                       <Button variant="secondary" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
+                    </div>
                   )}
                   <nav className="grid gap-4">
                     {visibleNavLinks.map((link) => (
@@ -289,7 +272,7 @@ export default function Header() {
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           "text-lg font-medium transition-colors hover:text-foreground/80",
-                          pathname === link.href ? "text-foreground" : "text-foreground/60",
+                          pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60",
                           !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
                         )}
                       >
@@ -303,7 +286,7 @@ export default function Header() {
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
                             "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
-                            pathname === link.href ? "text-foreground" : "text-foreground/60"
+                            pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
                             )}
                         >
                             <link.icon className="h-5 w-5" />
@@ -311,21 +294,22 @@ export default function Header() {
                         </Link>
                     ))}
                   </nav>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    {user ? (
-                      <Button variant="secondary" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full">
-                         <LogOut className="mr-2 h-4 w-4" /> Logout
-                      </Button>
-                    ) : (
-                      <div className="flex flex-col gap-4">
-                        <div className="flex justify-center">
-                            <ThemeToggle />
-                        </div>
-                         <Button variant="ghost" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
-                         <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
+                  {user && (
+                    <>
+                    <Separator/>
+                     <div className="grid gap-1 text-sm font-medium">
+                         <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                            <Bug className="h-4 w-4" /> Report a Bug
+                        </Link>
+                         <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                            <LifeBuoy className="h-4 w-4" /> Support
+                        </Link>
+                         <Button variant="secondary" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
+                            <LogOut className="mr-2 h-4 w-4" /> Logout
+                         </Button>
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
