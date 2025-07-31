@@ -9,7 +9,6 @@ import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import PrivacyShowcase from '@/components/privacy-showcase';
-import FeaturedContent from '@/components/featured-content';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -88,7 +87,6 @@ export default function Home() {
   return (
     <main>
       <HeroSection />
-      <FeaturedContent />
       <Section><FeatureGrid /></Section>
       <Section><Testimonials /></Section>
       <Section><InteractivePlayground /></Section>
