@@ -100,7 +100,16 @@ export default function UserProfilePage() {
         if (!profileUser) return false;
         const isAdmin = profileUser.isAdmin || false;
         const status = profileUser.razorpaySubscriptionStatus;
-        const endDate = profileUser.subscriptionEndDate?.toDate();
+
+        let endDate: Date | undefined;
+        if (profileUser.subscriptionEndDate) {
+            if (profileUser.subscriptionEndDate instanceof Timestamp) {
+                endDate = profileUser.subscriptionEndDate.toDate();
+            } else if (typeof profileUser.subscriptionEndDate === 'string' || typeof profileUser.subscriptionEndDate === 'number') {
+                endDate = new Date(profileUser.subscriptionEndDate);
+            }
+        }
+        
         const hasActiveSub = status === 'active' && endDate && new Date() < endDate;
         return isAdmin || hasActiveSub;
     }, [profileUser]);
@@ -357,7 +366,7 @@ export default function UserProfilePage() {
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
                         
                         <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-                            {profileUser.company && (
+                             {profileUser.company && (
                                 <div className="flex items-center gap-2">
                                      {profileUser.companyLogoUrl ? (
                                         <Image src={profileUser.companyLogoUrl} alt={`${profileUser.company} logo`} width={16} height={16} className="rounded-sm object-contain"/>
