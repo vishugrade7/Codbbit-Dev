@@ -6,14 +6,13 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Loader2, IndianRupee, Sparkles, Gem, Building } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
 import { getPricingSettings } from "@/app/upload-problem/actions";
 import type { PricingSettings } from "@/types";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -32,7 +31,6 @@ const loadRazorpayScript = () => {
 
 
 export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>("annually");
   const { user, userData } = useAuth();
   const isIndianUser = userData?.country === 'India';
   const { toast } = useToast();
@@ -72,7 +70,6 @@ export default function PricingPage() {
     fetchPricing();
   }, [toast]);
 
-
   const plans = useMemo(() => {
     if (!pricingSettings || !pricingSettings.inr || !pricingSettings.usd) return null;
 
@@ -86,17 +83,14 @@ export default function PricingPage() {
         price: prices.monthly.price,
         total: prices.monthly.total,
         suffix: "/month",
-        billDesc: "Billed monthly.",
         currency: currency,
         currencyCode,
-        save: null,
       },
       annually: {
         id: 'annually' as const,
         price: prices.annually.price,
         total: prices.annually.total,
         suffix: "/year",
-        save: "Save 33%",
         currency: currency,
         currencyCode,
       },
@@ -106,7 +100,7 @@ export default function PricingPage() {
     };
   }, [isIndianUser, pricingSettings]);
 
-  const currentPlan = plans ? plans[billingCycle] : null;
+  const currentPlan = plans?.monthly; // Defaulting to monthly for the new design
 
   const handleUpgrade = async () => {
     if (!user || !userData) {
@@ -173,7 +167,7 @@ export default function PricingPage() {
             email: userData.email,
         },
         theme: {
-            color: "#1976D2"
+            color: "#0070F3" // Blue color for Razorpay modal
         },
         modal: {
             ondismiss: function() {
@@ -198,132 +192,106 @@ export default function PricingPage() {
 
   if (loadingPricing || loadingConfig || !plans) {
     return (
-      <main className="flex-1 container py-12 flex justify-center items-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <main className="flex-1 py-12 flex justify-center items-center bg-gray-900 text-white">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
       </main>
     )
   }
 
   const freeFeatures = [
-    "Access to free problems",
-    "Access to free courses",
-    "Limited AI Assistant",
-    "Community support"
+    "Up to 3 projects", "5 users", "Kanban & List views", "Real-time collaboration", "Basic integrations"
   ];
-
+  
   const proFeatures = [
-    "Access to all premium content",
-    "Unlimited AI Assistant",
-    "Advanced analytics & insights",
-    "Build real world projects",
-    "Video solutions and hints",
-    "Certificate for each course",
-    "Invite to Pro community",
-    "Priority support",
+    "Unlimited projects", "Kanban & List views", "Time tracking", "File storage (100 GB)", "Advanced integrations (Slack, Google Drive, GitHub)"
   ];
   
   const enterpriseFeatures = [
-      "Everything in Pro",
-      "Customized learning paths",
-      "Team management & dashboards",
-      "Dedicated account manager",
-      "Faculty and Admin dashboard",
-      "Priority support",
+      "Everything in Pro", "SSO & role-based permissions", "Custom workflows & automation", "Unlimited storage", "SLA & onboarding support"
   ];
+
+  const PricingCard = ({ title, description, price, features, buttonText, buttonVariant = 'default', highlighted = false, onClick, disabled = false }: {
+    title: string;
+    description: string;
+    price: string;
+    features: string[];
+    buttonText: string;
+    buttonVariant?: 'default' | 'outline';
+    highlighted?: boolean;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+      <Card className={cn(
+        "flex flex-col rounded-xl p-8 bg-gray-800/50 border-gray-700 text-gray-300 relative overflow-hidden",
+        highlighted && "border-blue-500/50 bg-gray-900"
+      )}>
+          {highlighted && (
+            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-900/40 to-transparent pointer-events-none" />
+          )}
+          <CardHeader className="p-0">
+              <CardTitle className="text-xl font-medium text-white">{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 flex-grow">
+              <div className="my-8">
+                  <span className="text-5xl font-bold text-white">{price}</span>
+                  {title === 'Pro' && <span className="text-muted-foreground">/month</span>}
+              </div>
+              <ul className="space-y-4">
+                  {features.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-gray-400" /> {f}</li>)}
+              </ul>
+          </CardContent>
+          <CardFooter className="p-0 mt-8">
+              <Button 
+                onClick={onClick}
+                disabled={disabled}
+                size="lg" 
+                className={cn(
+                    'w-full text-base',
+                    buttonVariant === 'outline' && "bg-white text-black hover:bg-gray-200",
+                    buttonVariant === 'default' && "bg-blue-600 hover:bg-blue-700 text-white"
+                )}
+              >
+                  {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {buttonText}
+              </Button>
+          </CardFooter>
+      </Card>
+  );
 
   return (
     <>
       <title>Pricing Plans</title>
-      <main className="flex-1 w-full dark:bg-slate-900 bg-slate-50 py-12 md:py-24">
+      <main className="flex-1 w-full bg-gray-900 py-12 md:py-24 text-white">
         <div className="container">
-          <div className="text-center mb-12">
-            <p className="text-primary font-semibold mb-2">Plans made for you</p>
-            <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight dark:text-white">
-              Unlock Premium Learning with Codbbit Pro
-            </h1>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Free Plan */}
-            <Card className="flex flex-col bg-background rounded-2xl shadow-sm">
-              <CardHeader className="p-8">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg"><Sparkles className="h-6 w-6 text-green-500"/></div>
-                    <div>
-                        <CardTitle className="text-xl">Free Plan</CardTitle>
-                        <CardDescription>Limited Access</CardDescription>
-                    </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6 flex-grow">
-                <Button variant="outline" className="w-full text-lg py-6" disabled>Start now</Button>
-                <div className="space-y-3 pt-4">
-                    <h4 className="font-semibold">What's included</h4>
-                    <ul className="space-y-3 text-muted-foreground">
-                        {freeFeatures.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-green-500" /> {f}</li>)}
-                    </ul>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pro Plan */}
-            <Card className="flex flex-col bg-background rounded-2xl shadow-lg border-2 border-primary/50 relative">
-              <div className="absolute top-8 right-8 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold">Most Popular</div>
-              <CardHeader className="p-8">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-4">
-                      <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg"><Gem className="h-6 w-6 text-yellow-500"/></div>
-                      <div>
-                          <CardTitle className="text-xl">Pro Plan</CardTitle>
-                          <CardDescription>All courses + AI Mentor</CardDescription>
-                      </div>
-                  </div>
-                </div>
-                <div className="pt-4">
-                  <Tabs defaultValue="annually" className="w-fit" onValueChange={(value) => setBillingCycle(value as any)}>
-                      <TabsList>
-                          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                          <TabsTrigger value="annually">Yearly</TabsTrigger>
-                      </TabsList>
-                  </Tabs>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6 flex-grow">
-                 <div className="text-5xl font-bold dark:text-white">{currentPlan.currency}{currentPlan.price}<span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span></div>
-                <Button className="w-full text-lg py-6" onClick={handleUpgrade} disabled={isCheckingOut}>
-                    {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Start today
-                </Button>
-                 <div className="space-y-3 pt-4">
-                    <h4 className="font-semibold">What's included</h4>
-                    <ul className="space-y-3 text-muted-foreground">
-                        {proFeatures.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-green-500" /> {f}</li>)}
-                    </ul>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Enterprise Plan */}
-            <Card className="flex flex-col bg-background rounded-2xl shadow-sm">
-              <CardHeader className="p-8">
-                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><Building className="h-6 w-6 text-blue-500"/></div>
-                    <div>
-                        <CardTitle className="text-xl">Enterprise Plan</CardTitle>
-                        <CardDescription>For Colleges & Universities</CardDescription>
-                    </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6 flex-grow">
-                 <Button variant="outline" className="w-full text-lg py-6" onClick={() => router.push('/contact')}>Contact us</Button>
-                  <div className="space-y-3 pt-4">
-                    <h4 className="font-semibold">What's included</h4>
-                    <ul className="space-y-3 text-muted-foreground">
-                        {enterpriseFeatures.map(f => <li key={f} className="flex items-center gap-3"><Check className="h-5 w-5 text-green-500" /> {f}</li>)}
-                    </ul>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <PricingCard
+              title="Basic"
+              description="Perfect for individuals or small teams getting started."
+              price="$0"
+              features={freeFeatures}
+              buttonText="Try Now"
+              onClick={() => router.push('/signup')}
+            />
+             <PricingCard
+              title="Pro"
+              description="Ideal for growing teams that need more power and control."
+              price={currentPlan ? `${currentPlan.currency}${currentPlan.price}` : "..."}
+              features={proFeatures}
+              buttonText="Start 14-Day Free Trial"
+              buttonVariant="outline"
+              highlighted
+              onClick={handleUpgrade}
+              disabled={isCheckingOut}
+            />
+            <PricingCard
+              title="Enterprise (Customized)"
+              description="For large teams and organizations with advanced needs."
+              price="$49,000"
+              features={enterpriseFeatures}
+              buttonText="Try Now"
+              onClick={() => router.push('/contact')}
+            />
           </div>
         </div>
       </main>
