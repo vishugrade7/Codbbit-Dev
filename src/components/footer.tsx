@@ -52,7 +52,6 @@ export default function Footer() {
             <Link href="/contact" className="text-muted-foreground hover:text-foreground">Support & Feedback</Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
             <Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link>
-            <Link href="/theme-comparison" className="text-muted-foreground hover:text-foreground">Theme Comparison</Link>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t text-center">
