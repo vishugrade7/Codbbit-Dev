@@ -252,20 +252,20 @@ export default function SheetDisplayPage() {
     }, [sheet]);
 
     const SheetDetails = () => (
-        <ScrollArea className="h-full pr-4">
-            <Card className="mb-8 overflow-hidden">
-                <CardHeader className="p-4 sm:p-6">
+        <ScrollArea className="h-full">
+            <div className="space-y-6 p-4 sm:p-0 sm:pr-4">
+                <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                         <div className="flex-1">
-                            <CardTitle className="text-xl font-headline">{sheet!.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-2 mt-2">
+                            <h2 className="text-xl font-headline font-semibold">{sheet!.name}</h2>
+                             <div className="flex items-center gap-2 mt-2">
                                 {sheet!.creatorAvatarUrl && (
                                     <Avatar className="h-6 w-6">
                                         <AvatarImage src={sheet!.creatorAvatarUrl} alt={sheet!.creatorName} />
                                         <AvatarFallback>{sheet!.creatorName.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                 )}
-                                <span className="text-sm">
+                                <span className="text-sm text-muted-foreground">
                                     Created by{' '}
                                     {sheet!.creatorUsername ? (
                                         <Link href={`/profile/${sheet!.creatorUsername}`} className="font-semibold text-foreground hover:underline">
@@ -276,24 +276,24 @@ export default function SheetDisplayPage() {
                                     )}{' '}
                                     {timeAgo}
                                 </span>
-                            </CardDescription>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow} size="sm">
+                            <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow} size="sm">
                                 {isTogglingFollow ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : isFollowed ? (<UserCheck className="mr-2 h-4 w-4" />) : (<UserPlus className="mr-2 h-4 w-4" />)}
                                 {isFollowed ? 'Following' : 'Follow'}
                             </Button>
                             <Button onClick={handleCopyLink} variant="outline" size="sm"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
+                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
                         <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
                     </div>
-                </CardHeader>
-                
+                </div>
+
                 {(uniqueCategories.length > 0 || problems.length > 0) && (
-                    <CardContent className="p-4 sm:p-6 border-t">
+                    <div className="space-y-6 pt-6 border-t">
                         <div className="space-y-4">
                             <h4 className="text-sm font-semibold text-muted-foreground">PROGRESS</h4>
                             <div className="relative">
@@ -306,7 +306,7 @@ export default function SheetDisplayPage() {
                             </div>
                             <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
                         </div>
-                        <div className="space-y-2 text-sm mt-4">
+                        <div className="space-y-2 text-sm">
                             <div className="flex items-center gap-2">
                                 <span className="w-16 text-muted-foreground">Easy</span>
                                 <div className="flex-1 bg-muted rounded-full h-2">
@@ -329,7 +329,7 @@ export default function SheetDisplayPage() {
                                 <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
                             </div>
                         </div>
-                        <div className="space-y-4 mt-6">
+                        <div className="space-y-4">
                             <h4 className="text-sm font-semibold text-muted-foreground">TOPICS COVERED</h4>
                             <div className="flex flex-wrap gap-2">
                                 <Badge
@@ -355,9 +355,9 @@ export default function SheetDisplayPage() {
                                 })}
                             </div>
                         </div>
-                    </CardContent>
+                    </div>
                 )}
-            </Card>
+            </div>
         </ScrollArea>
     );
 
