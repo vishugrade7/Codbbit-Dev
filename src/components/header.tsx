@@ -95,7 +95,7 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/40">
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
             <Link href="/" className="flex items-center gap-2">
