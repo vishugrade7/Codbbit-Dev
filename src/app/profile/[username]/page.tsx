@@ -338,7 +338,7 @@ export default function UserProfilePage() {
                         <Pencil className="h-4 w-4" />
                     </Button>
                 )}
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
                         <Avatar className="h-20 w-20 border-muted">
                             <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
@@ -351,22 +351,44 @@ export default function UserProfilePage() {
                                 {isUploading ? <LoaderCircle className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
                             </div>
                         )}
+                        <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
                     </div>
                      <div className="flex-1">
                         <h1 className="text-2xl font-bold">{profileUser.name}</h1>
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                            {profileUser.company && <span>{profileUser.company}</span>}
-                            <span>{profileUser.country}</span>
+                        
+                        <div className="space-y-1 mt-2 text-sm text-muted-foreground">
+                            {profileUser.company && (
+                                <div className="flex items-center gap-2">
+                                    <Building className="h-4 w-4" />
+                                    <span>{profileUser.company}</span>
+                                </div>
+                            )}
+                            {profileUser.country && (
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4" />
+                                    <span>{profileUser.country}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
-                           <Link href="https://instagram.com/codbbit" target="_blank" className="text-muted-foreground hover:text-foreground">
-                               <Instagram className="h-6 w-6"/>
-                           </Link>
-                           {profileUser.linkedinUrl && <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-6 w-6"/></Link>}
+
+                         <div className="flex items-center gap-2 mt-4">
+                            {profileUser.trailheadUrl && <Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Image src="/trailhead-logo.svg" alt="Trailhead" width={24} height={24}/></Link>}
+                            {profileUser.githubUrl && <Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Github className="h-6 w-6"/></Link>}
+                            {profileUser.linkedinUrl && <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Linkedin className="h-6 w-6"/></Link>}
+                            {profileUser.twitterUrl && <Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Twitter className="h-6 w-6"/></Link>}
+                            {profileUser.isEmailPublic && profileUser.email && (
+                                <a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary"><Mail className="h-6 w-6"/></a>
+                            )}
                         </div>
+
                     </div>
                 </div>
+                 {profileUser.about && (
+                    <div className="mt-4 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">{profileUser.about}</p>
+                    </div>
+                )}
             </Card>
 
             <Card className="lg:col-span-1 flex flex-col h-full">
