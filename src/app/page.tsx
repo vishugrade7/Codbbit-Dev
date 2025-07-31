@@ -41,31 +41,29 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center bg-background p-4 pt-16 md:pt-24">
+    <div className="w-full flex flex-col items-center justify-center bg-background p-4 pt-16 md:pt-24 home-hero-gradient">
       <div className="container mx-auto flex flex-col items-center text-center gap-8 max-w-4xl">
-        <div className="flex flex-col gap-6">
-          <motion.h1
-            custom={0}
-            variants={heroVariants}
-            initial="hidden"
-            animate="visible"
+        <motion.div
+          custom={0}
+          variants={heroVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col gap-6"
+        >
+          <h1
             className="text-5xl md:text-7xl font-bold tracking-tight"
           >
             Master Salesforce with Interactive Challenges
-          </motion.h1>
-          <motion.p
-            custom={1}
-            variants={heroVariants}
-            initial="hidden"
-            animate="visible"
-            className="text-lg text-muted-foreground max-w-2xl"
+          </h1>
+          <p
+            className="text-lg text-muted-foreground max-w-2xl mx-auto"
           >
             The ultimate platform for Salesforce developers to practice, compete, and improve their coding skills through real-world challenges.
-          </motion.p>
-        </div>
+          </p>
+        </motion.div>
 
         <motion.div
-          custom={2}
+          custom={1}
           variants={heroVariants}
           initial="hidden"
           animate="visible"
