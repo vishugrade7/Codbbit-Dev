@@ -667,23 +667,25 @@ export default function UserProfilePage() {
                 </CardHeader>
                  <CardContent>
                     {starredProblems.length > 0 ? (
-                        <div className="space-y-2">
-                             {starredProblems.map(problem => (
-                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
-                                <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="font-semibold">{problem.title}</p>
-                                                <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                        <ScrollArea className="h-72">
+                            <div className="space-y-2 pr-4">
+                                 {starredProblems.map(problem => (
+                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
+                                    <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-semibold">{problem.title}</p>
+                                                    <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                                                </div>
+                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                    {problem.difficulty}
+                                                </Badge>
                                             </div>
-                                            <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                {problem.difficulty}
-                                            </Badge>
                                         </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </ScrollArea>
                     ) : (
                         <div className="text-center py-8 text-muted-foreground">No problems starred yet.</div>
                     )}
