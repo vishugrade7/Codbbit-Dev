@@ -776,7 +776,7 @@ export default function ProblemWorkspacePage() {
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search problems..."
-                                        className="w-full pl-9 h-9"
+                                        className="w-full pl-9 h-9 rounded-full"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
@@ -806,17 +806,21 @@ export default function ProblemWorkspacePage() {
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
-                                        "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-muted",
-                                        p.id === problemId && "bg-primary/10 text-primary"
+                                        "block p-2 rounded-md",
+                                        p.id === problemId ? "bg-primary/10" : "hover:bg-muted"
                                     )}
                                 >
-                                    <span className="truncate pr-4">{p.title}</span>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
-                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
+                                    <div className="flex items-center justify-between">
+                                        <p className={cn("font-medium text-sm truncate pr-2", p.id === problemId && "text-primary")}>
+                                            {p.title}
+                                        </p>
+                                        { (userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1">
+                                         <Badge variant="outline" className={cn("text-xs", getDifficultyClass(p.difficulty))}>
                                             {p.difficulty}
                                         </Badge>
-                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                        {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
                                     </div>
                                 </Link>
                             )) : (
