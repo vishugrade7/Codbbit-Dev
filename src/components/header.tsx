@@ -95,7 +95,7 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/40">
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/60 backdrop-blur-lg supports-[backdrop-filter]:bg-background/40">
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
             <Link href="/" className="flex items-center gap-2">
@@ -216,40 +216,41 @@ export default function Header() {
             </Sheet>
         </div>
 
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                {visibleNavLinks.map((link) => (
-                  <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "relative transition-colors text-foreground/60 hover:text-foreground",
-                        pathname.startsWith(link.href) && "text-foreground"
-                      )}
-                  >
-                      {link.label}
-                      {pathname.startsWith(link.href) && (
-                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                      )}
-                  </Link>
-                ))}
-                {isAuthorizedAdmin && adminNavLinks.map((link) => (
-                  <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                      "relative transition-colors text-foreground/60 hover:text-foreground",
-                      pathname.startsWith(link.href) && "text-foreground"
-                      )}
-                  >
-                      {link.label}
-                       {pathname.startsWith(link.href) && (
-                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                      )}
-                  </Link>
-                ))}
-            </nav>
-
+        <div className="flex flex-1 items-center justify-end">
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            {visibleNavLinks.map((link) => (
+              <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "relative transition-colors text-foreground/60 hover:text-foreground",
+                    pathname.startsWith(link.href) && "text-foreground"
+                  )}
+              >
+                  {link.label}
+                  {pathname.startsWith(link.href) && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                  )}
+              </Link>
+            ))}
+            {isAuthorizedAdmin && adminNavLinks.map((link) => (
+              <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                  "relative transition-colors text-foreground/60 hover:text-foreground",
+                  pathname.startsWith(link.href) && "text-foreground"
+                  )}
+              >
+                  {link.label}
+                   {pathname.startsWith(link.href) && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                  )}
+              </Link>
+            ))}
+          </nav>
+          
+          <div className="flex flex-1 items-center justify-end space-x-2">
             <div className="flex items-center gap-2">
               {authLoading ? (
                 <div className="flex items-center gap-4">
@@ -258,6 +259,7 @@ export default function Header() {
                 </div>
               ) : user ? (
                 <>
+                    <ThemeToggle />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
@@ -295,7 +297,6 @@ export default function Header() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <ThemeToggle />
                 </>
               ) : (
                 <div className="hidden md:flex items-center gap-2">
@@ -309,6 +310,7 @@ export default function Header() {
                 </div>
               )}
             </div>
+          </div>
         </div>
       </div>
     </header>
