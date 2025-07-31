@@ -57,7 +57,7 @@ export default function RootLayout({
           })(window,document,'script','dataLayer','GTM-TDJD2HMV');`}
         </Script>
       </head>
-      <body className={cn(inter.variable, poppins.variable, sourceCodePro.variable, "font-sans text-foreground select-none no-print")}>
+      <body className={cn(inter.variable, poppins.variable, sourceCodePro.variable, "font-sans text-foreground no-print")}>
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TDJD2HMV"
         height="0" width="0" style={{display:"none",visibility:"hidden"}}></iframe></noscript>
         <ThemeProvider

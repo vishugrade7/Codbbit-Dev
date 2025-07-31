@@ -97,118 +97,19 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        {/* --- Left Side: Logo (only on public pages for non-logged-in users) --- */}
-        <div className="md:flex-1 md:flex md:items-center md:gap-4">
-          {!user && (
+        <div className="mr-4 hidden md:flex">
             <Link href="/" className="flex items-center gap-2">
               {loadingBranding ? (
-                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-6 w-6 rounded-lg" />
               ) : (
                 <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
               )}
               <span className="text-lg font-bold font-headline">Codbbit</span>
             </Link>
-          )}
         </div>
-
-        {/* --- Center: Navigation for logged-in users on Desktop --- */}
-        {user && (
-          <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-sm font-medium">
-            {visibleNavLinks.map((link) => (
-              <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "relative transition-colors text-foreground/60 hover:text-foreground",
-                    pathname.startsWith(link.href) && "text-foreground"
-                  )}
-              >
-                  {link.label}
-                  {pathname.startsWith(link.href) && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                  )}
-              </Link>
-            ))}
-            {isAuthorizedAdmin && adminNavLinks.map((link) => (
-              <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                  "relative transition-colors text-foreground/60 hover:text-foreground",
-                  pathname.startsWith(link.href) && "text-foreground"
-                  )}
-              >
-                  {link.label}
-                   {pathname.startsWith(link.href) && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                  )}
-              </Link>
-            ))}
-          </nav>
-        )}
-
-        {/* --- Right Side: Auth buttons and Mobile Menu --- */}
-        <div className="flex flex-1 items-center justify-end gap-2">
-          {authLoading ? (
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-8 w-16 rounded-md" />
-                <Skeleton className="h-10 w-10 rounded-full" />
-            </div>
-          ) : user ? (
-            <div className="flex items-center gap-2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
-                            <UserIcon className="h-5 w-5"/>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                         <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                                {user.email}
-                            </p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
-                            <UserIcon className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/settings')}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                         {!isPro && (
-                            <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
-                                <Rocket className="mr-2 h-4 w-4" />
-                                <span>Upgrade</span>
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Log out</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <ThemeToggle />
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center gap-2">
-                <ThemeToggle />
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-            </div>
-          )}
-
-           {/* Mobile Menu Trigger & Content */}
-          <div className="md:hidden">
+        
+        {/* Mobile Menu Trigger & Logo */}
+        <div className="md:hidden flex items-center">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -220,7 +121,7 @@ export default function Header() {
                  <div className="grid gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                     {loadingBranding ? (
-                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-6 w-6 rounded-lg" />
                     ) : (
                       <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
                     )}
@@ -313,7 +214,101 @@ export default function Header() {
                 </div>
               </SheetContent>
             </Sheet>
-           </div>
+        </div>
+
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                {visibleNavLinks.map((link) => (
+                  <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "relative transition-colors text-foreground/60 hover:text-foreground",
+                        pathname.startsWith(link.href) && "text-foreground"
+                      )}
+                  >
+                      {link.label}
+                      {pathname.startsWith(link.href) && (
+                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                      )}
+                  </Link>
+                ))}
+                {isAuthorizedAdmin && adminNavLinks.map((link) => (
+                  <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                      "relative transition-colors text-foreground/60 hover:text-foreground",
+                      pathname.startsWith(link.href) && "text-foreground"
+                      )}
+                  >
+                      {link.label}
+                       {pathname.startsWith(link.href) && (
+                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                      )}
+                  </Link>
+                ))}
+            </nav>
+
+            <div className="flex items-center gap-2">
+              {authLoading ? (
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-8 w-16 rounded-md" />
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                </div>
+              ) : user ? (
+                <>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
+                                <UserIcon className="h-5 w-5"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                             <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                    {user.email}
+                                </p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
+                                <UserIcon className="mr-2 h-4 w-4" />
+                                <span>Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/settings')}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                            </DropdownMenuItem>
+                             {!isPro && (
+                                <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
+                                    <Rocket className="mr-2 h-4 w-4" />
+                                    <span>Upgrade</span>
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Log out</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <ThemeToggle />
+                </>
+              ) : (
+                <div className="hidden md:flex items-center gap-2">
+                    <ThemeToggle />
+                    <Button variant="ghost" asChild>
+                      <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link href="/signup">Sign Up</Link>
+                    </Button>
+                </div>
+              )}
+            </div>
         </div>
       </div>
     </header>
