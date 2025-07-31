@@ -357,7 +357,7 @@ export default function UserProfilePage() {
                         <h1 className="text-2xl font-bold">{profileUser.name}</h1>
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
                         
-                        <div className="space-y-1 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                             {profileUser.company && (
                                 <div className="flex items-center gap-2">
                                     <Building className="h-4 w-4" />
@@ -515,3 +515,5 @@ export default function UserProfilePage() {
     </>
   );
 }
+
+    
