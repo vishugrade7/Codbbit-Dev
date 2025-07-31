@@ -509,9 +509,9 @@ export default function SheetDisplayPage() {
                                 <PanelLeft className="mr-2 h-4 w-4" /> View Details
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="bottom" className="p-0 rounded-t-lg bg-background/80 backdrop-blur-sm">
-                            <SheetHeader className="sr-only">
-                                <SheetTitle>{sheet.name} Details</SheetTitle>
+                        <SheetContent side="bottom" className="p-0 rounded-t-lg bg-background/60 backdrop-blur-lg">
+                             <SheetHeader>
+                                <SheetTitle className="sr-only">{sheet.name} Details</SheetTitle>
                             </SheetHeader>
                             <div className="w-full">
                                 <SheetDetails />
