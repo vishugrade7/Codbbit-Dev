@@ -43,7 +43,7 @@ export default function Footer() {
           </div>
           <div className="grid gap-2 text-sm">
             <h3 className="font-semibold">Community</h3>
-            <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">GitHub</Link>
+            <Link href="https://instagram.com/codbbit" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">Instagram</Link>
             <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">Twitter</Link>
           </div>
           <div className="grid gap-2 text-sm">
