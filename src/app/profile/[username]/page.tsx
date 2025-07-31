@@ -418,19 +418,21 @@ export default function UserProfilePage() {
                 <CardContent className="flex-grow flex items-center justify-center p-6">
                     {categoryData.length > 0 ? (
                        <div className="w-full flex items-center gap-6">
-                            <ChartContainer config={chartConfig} className="h-28 w-28 shrink-0">
-                                <PieChart>
-                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={40} paddingAngle={2} strokeWidth={0}>
-                                        {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
+                            <div className="relative h-28 w-28 shrink-0">
+                                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
+                                    <PieChart>
+                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={40} paddingAngle={2} strokeWidth={0}>
+                                            {categoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
+                                            ))}
+                                        </Pie>
+                                    </PieChart>
+                                </ChartContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <p className="text-2xl font-bold">{totalPoints}</p>
                                     <p className="text-xs text-muted-foreground">Total Points</p>
                                 </div>
-                            </ChartContainer>
+                            </div>
                              <div className="flex-1 space-y-2 text-sm">
                                 {categoryData.map((entry) => (
                                     <div key={entry.name} className="flex justify-between items-center">
