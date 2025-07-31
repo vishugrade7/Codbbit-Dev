@@ -262,29 +262,38 @@ export default function Leaderboard() {
 
   const PodiumCard = ({ user, rank }: { user: LeaderboardUser, rank: number }) => {
      const heightClass = rank === 1 ? 'h-full' : rank === 2 ? 'h-[90%]' : 'h-[80%]';
-     const crownColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-slate-400' : 'text-orange-500';
+     const rankColors = {
+        1: { border: 'border-yellow-400', bg: 'bg-yellow-400/10', text: 'text-yellow-400', crown: 'text-yellow-400' },
+        2: { border: 'border-slate-400', bg: 'bg-slate-400/10', text: 'text-slate-400', crown: 'text-slate-400' },
+        3: { border: 'border-orange-500', bg: 'bg-orange-400/10', text: 'text-orange-500', crown: 'text-orange-500' }
+     }[rank] || { border: 'border-border', bg: 'bg-muted/50', text: 'text-muted-foreground', crown: 'text-muted-foreground' };
 
      return (
         <div className={cn('relative w-full flex flex-col items-center justify-end', heightClass)}>
-            <Card className={cn("w-full text-center p-4 border-2 relative overflow-visible", getPodiumClass(rank))}>
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+            <Card className={cn("w-full text-center p-4 border-2 relative overflow-visible", rankColors.border, rankColors.bg)}>
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2">
                     <div className="relative">
                         <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer">
-                            <Avatar className={cn("h-16 w-16 border-4", rank === 1 ? "border-yellow-400" : rank === 2 ? "border-slate-400" : "border-orange-400")}>
+                            <Avatar className={cn("h-16 w-16 border-4", rankColors.border)}>
                                 <AvatarImage src={user.avatarUrl} alt={user.name} />
                                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </Link>
                         {isUserPro(user) && <ProIconOverlay />}
+                         <div className="absolute -top-3 -right-3">
+                           <Crown className={cn("h-6 w-6 rotate-12", rankColors.crown)} />
+                         </div>
                     </div>
                 </div>
-                 <div className="absolute top-2 right-2">
-                    <Crown className={cn("h-6 w-6", crownColor)} />
+                 <div className="absolute top-2 left-2">
+                    <div className={cn('h-8 w-8 rounded-full flex items-center justify-center font-bold text-lg', rankColors.bg, rankColors.text, 'border-2', rankColors.border)}>
+                        {rank}
+                    </div>
                  </div>
                 <div className="pt-10">
-                    <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">{user.name}</Link>
+                    <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline text-lg">{user.name}</Link>
                     <p className="text-sm text-muted-foreground">@{user.username}</p>
-                    <p className="font-bold text-xl mt-2">{user.points.toLocaleString()} pts</p>
+                    <p className="font-bold text-2xl mt-2">{user.points.toLocaleString()} pts</p>
                 </div>
             </Card>
         </div>
