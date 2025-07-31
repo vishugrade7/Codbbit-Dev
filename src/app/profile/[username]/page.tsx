@@ -164,7 +164,7 @@ export default function UserProfilePage() {
         setError(null);
         
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username), limit(1));
+        const q = query(usersRef, where("username", "==", username.toLowerCase()), limit(1));
         
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             setLoadingProfile(false);
@@ -584,47 +584,43 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
             
-            <div className="lg:col-span-1">
-                 <Card className="h-full flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
-                        <CardDescription>Badges earned from your activity.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                        {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-4">
-                                {Object.values(profileUser.achievements).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 12).map((achievement: Achievement) => (
-                                    <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
-                                        <div className="p-3 bg-amber-400/10 rounded-full">
-                                            <Award className="h-6 w-6 text-amber-500" />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
+            <Card className="lg:col-span-1 h-full flex flex-col">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Mountain className="h-4 w-4" /> Achievements</CardTitle>
+                    <CardDescription>Badges earned from your activity.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-4">
+                            {Object.values(profileUser.achievements).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 12).map((achievement: Achievement) => (
+                                <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
+                                    <div className="p-3 bg-amber-400/10 rounded-full">
+                                        <Award className="h-6 w-6 text-amber-500" />
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-full min-h-[120px]">
-                                <p className="text-muted-foreground text-center text-sm">No achievements yet. Keep coding!</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                                    <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-full min-h-[120px]">
+                            <p className="text-muted-foreground text-center text-sm">No achievements yet. Keep coding!</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
             
-            <div className="lg:col-span-2">
-                 <Card className="h-full flex flex-col">
-                    <CardContent className="pt-6 flex-grow">
-                        {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                            <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                        ) : (
-                            <div className="text-center py-10">
-                                <h3 className="text-md font-semibold">Start your journey!</h3>
-                                <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+            <Card className="lg:col-span-2 h-full flex flex-col">
+                <CardContent className="pt-6 flex-grow flex flex-col justify-center">
+                    {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                        <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                    ) : (
+                        <div className="text-center py-10">
+                            <h3 className="text-md font-semibold">Start your journey!</h3>
+                            <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             <Card className="lg:col-span-2">
                 <CardHeader>
@@ -634,19 +630,19 @@ export default function UserProfilePage() {
                     {recentlySolvedProblems.length > 0 ? (
                         <div className="space-y-2">
                             {recentlySolvedProblems.map(problem => (
-                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
-                                <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-semibold">{problem.title}</p>
+                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                    <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                        <div className="flex justify-between items-center gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold truncate">{problem.title}</p>
                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                                     <span>Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</span>
-                                                    <span className="text-xl leading-none">&middot;</span>
-                                                    <Badge variant="secondary">{problem.categoryName}</Badge>
+                                                    <span className="text-muted-foreground/50">&middot;</span>
+                                                    <Badge variant="secondary" className="truncate">{problem.categoryName}</Badge>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <Badge variant="outline" className={cn("w-20 justify-center mb-1", getDifficultyBadgeClass(problem.difficulty))}>
+                                            <div className="flex-shrink-0 text-right space-y-1">
+                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
                                                     {problem.difficulty}
                                                 </Badge>
                                                 <p className="text-xs font-semibold text-primary">+{problem.points} pts</p>
