@@ -332,12 +332,12 @@ export default function UserProfilePage() {
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <Card className="lg:col-span-1 p-6 relative flex flex-col h-full">
-                 {isOwnProfile && (
+                {isOwnProfile && (
                     <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setIsEditModalOpen(true)}>
                         <Pencil className="h-4 w-4" />
                     </Button>
                 )}
-                <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
                         <Avatar className="h-20 w-20 border-muted">
                             <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
@@ -345,18 +345,18 @@ export default function UserProfilePage() {
                                 {profileUser.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                         </Avatar>
-                         {isOwnProfile && (
+                        {isOwnProfile && (
                             <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                 {isUploading ? <LoaderCircle className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
                             </div>
                         )}
                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
                     </div>
-                     <div className="flex-1">
+                     <div className="flex-1 text-center sm:text-left">
                         <h1 className="text-2xl font-bold">{profileUser.name}</h1>
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
                         
-                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                             {profileUser.company && (
                                 <div className="flex items-center gap-2">
                                      {profileUser.companyLogoUrl ? (
@@ -516,5 +516,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
-    
