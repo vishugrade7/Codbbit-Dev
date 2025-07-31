@@ -7,7 +7,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle, CheckCircle2, Instagram, Mountain } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Circle, CheckCircle2, Instagram, Mountain, Share2 } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -175,19 +175,19 @@ export default function UserProfilePage() {
                 const data = userDoc.data();
                 
                 // Manually convert Timestamps
-                if (data.subscriptionEndDate instanceof Timestamp) {
+                if (data.subscriptionEndDate && typeof data.subscriptionEndDate.toDate === 'function') {
                   data.subscriptionEndDate = data.subscriptionEndDate.toDate();
                 }
                 if (data.solvedProblems) {
                   for (const key in data.solvedProblems) {
-                    if (data.solvedProblems[key].solvedAt instanceof Timestamp) {
+                    if (data.solvedProblems[key].solvedAt && typeof data.solvedProblems[key].solvedAt.toDate === 'function') {
                       data.solvedProblems[key].solvedAt = data.solvedProblems[key].solvedAt.toDate();
                     }
                   }
                 }
                 if (data.achievements) {
                     for (const key in data.achievements) {
-                        if (data.achievements[key].date instanceof Timestamp) {
+                        if (data.achievements[key].date && typeof data.achievements[key].date.toDate === 'function') {
                             data.achievements[key].date = data.achievements[key].date.toDate();
                         }
                     }
@@ -277,6 +277,11 @@ export default function UserProfilePage() {
         }
     };
 
+    const handleShare = () => {
+        navigator.clipboard.writeText(window.location.href);
+        toast({ title: 'Profile link copied to clipboard!' });
+    };
+
 
     if (loadingProfile || loadingProblems) {
         return (
@@ -341,11 +346,30 @@ export default function UserProfilePage() {
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <Card className="lg:col-span-1 p-6 relative flex flex-col h-full">
-                {isOwnProfile && (
-                    <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setIsEditModalOpen(true)}>
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                )}
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleShare}>
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Share Profile</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    {isOwnProfile && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setIsEditModalOpen(true)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Edit Profile</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                </div>
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
                         <Avatar className="h-20 w-20 border-muted">
