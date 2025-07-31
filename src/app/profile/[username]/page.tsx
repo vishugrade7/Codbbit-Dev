@@ -408,7 +408,7 @@ export default function UserProfilePage() {
                                 </TooltipTrigger>
                                 <TooltipContent><p>Edit Profile</p></TooltipContent>
                             </Tooltip>
-                        </TooltipProvider>
+                        </Tooltip>
                     )}
                 </div>
                 <div className="flex items-center gap-4">
@@ -514,7 +514,7 @@ export default function UserProfilePage() {
                 </div>
             </Card>
 
-            <Card className="lg:col-span-2 flex flex-col h-full">
+            <Card className="lg:col-span-2 h-full flex flex-col">
                 <CardContent className="pt-6 flex-grow flex flex-col justify-center">
                     {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
                         <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
@@ -526,7 +526,7 @@ export default function UserProfilePage() {
                     )}
                 </CardContent>
             </Card>
-            
+
             <Card className="lg:col-span-1 h-full flex flex-col">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
@@ -622,7 +622,7 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
             
-            <Card>
+            <Card className="lg:col-span-3 h-full flex flex-col">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle>
                 </CardHeader>
@@ -660,7 +660,7 @@ export default function UserProfilePage() {
                 </CardContent>
             </Card>
             
-            <Card>
+            <Card className="lg:col-span-3 h-full flex flex-col">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle>
                 </CardHeader>
@@ -670,7 +670,7 @@ export default function UserProfilePage() {
                             <div className="space-y-2 pr-4">
                                  {starredProblems.map(problem => (
                                     <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`}>
-                                        <div className={cn("px-2 py-1 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                        <div className={cn("px-2 py-1.5 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
                                             <div className="flex justify-between items-center">
                                                 <p className="font-medium text-sm truncate">{problem.title}</p>
                                                 <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
