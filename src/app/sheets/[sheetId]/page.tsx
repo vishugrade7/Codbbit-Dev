@@ -402,9 +402,9 @@ export default function SheetDisplayPage() {
                 </div>
             )}
             
-            <ScrollArea className="flex-1">
+            <ScrollArea className={cn("flex-1", isMobile && "-mx-8 px-[2px]")}>
                 {filteredProblems.length > 0 ? (
-                    <div className="rounded-lg border">
+                    <div className={cn("rounded-lg border", isMobile && "border-x-0")}>
                         <Table>
                             <TableHeader>
                                 <TableRow>
