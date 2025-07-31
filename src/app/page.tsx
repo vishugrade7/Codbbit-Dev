@@ -10,7 +10,6 @@ import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion } from 'framer-motion';
-import FeaturedContent from '@/components/featured-content';
 
 export default function Home() {
   const sectionVariants = {
@@ -78,9 +77,6 @@ export default function Home() {
       </div>
        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
         <FeatureGrid />
-      </motion.div>
-      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
-        <FeaturedContent />
       </motion.div>
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
         <Testimonials />
