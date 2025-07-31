@@ -413,18 +413,16 @@ export default function UserProfilePage() {
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-6">
                     {categoryData.length > 0 ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <ChartContainer config={chartConfig} className="w-full aspect-square max-h-[150px]">
-                                <PieChart>
-                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
-                                        {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ChartContainer>
-                        </div>
+                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full max-h-[150px]">
+                            <PieChart>
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
+                                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
+                                    {categoryData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ChartContainer>
                     ) : (
                         <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
                     )}
@@ -484,4 +482,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
