@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -381,10 +380,12 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         }
 
         const isTestClassProblem = problem.metadataType === 'Test Class';
+        const mainCode = isTestClassProblem ? problem.sampleCode : userCode;
+        const testCode = isTestClassProblem ? userCode : problem.testcases;
 
         // For regular problems, ensure user code matches expected metadata type
         if (!isTestClassProblem) {
-            const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
+            const codeTypeKeywordMatch = mainCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
             const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
             const problemTypeKeyword = problem.metadataType.toLowerCase();
 
@@ -397,8 +398,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             }
         }
         
-        const mainObjectName = getClassName(problem.sampleCode);
-        const testObjectName = getClassName(isTestClassProblem ? userCode : problem.testcases);
+        const mainObjectName = getClassName(mainCode);
+        const testObjectName = getClassName(testCode);
         
         if (!mainObjectName || !testObjectName) {
             throw new Error('Could not determine class/trigger names from the provided code.');
@@ -412,8 +413,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             return { success: false, message: 'Problem Configuration Error', details: msg };
         }
         
-        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, problem.sampleCode, problem.triggerSObject);
-        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, isTestClassProblem ? userCode : problem.testcases);
+        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, mainCode, problem.triggerSObject);
+        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, testCode);
 
         log.push("\n--- Running Tests ---");
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
