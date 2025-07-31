@@ -14,7 +14,7 @@ export default function FeatureGrid() {
             </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            <Card className="flex flex-col bg-background">
+            <Card className="flex flex-col bg-background rounded-2xl">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-primary p-3 text-primary-foreground mb-4 w-fit">
                   <Code2 className="h-6 w-6" />
@@ -34,7 +34,7 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col bg-background">
+            <Card className="flex flex-col bg-background rounded-2xl">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-secondary p-3 text-secondary-foreground mb-4 w-fit">
                   <BookOpenCheck className="h-6 w-6" />
@@ -54,7 +54,7 @@ export default function FeatureGrid() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col bg-background">
+            <Card className="flex flex-col bg-background rounded-2xl">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
                 <div className="inline-block rounded-lg bg-secondary p-3 text-secondary-foreground mb-4 w-fit">
                   <Award className="h-6 w-6" />
