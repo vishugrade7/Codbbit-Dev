@@ -32,7 +32,7 @@ export default function Home() {
 
   return (
     <main>
-      <div className="w-full flex flex-col items-center justify-center bg-background p-4 py-16 md:py-24 home-hero-gradient">
+      <div className="w-full flex flex-col items-center justify-center bg-background p-4 py-16 md:py-24">
         <div className="container mx-auto flex flex-col items-center text-center gap-8 max-w-4xl">
           <div className="flex flex-col gap-6">
             <motion.h1
@@ -42,10 +42,7 @@ export default function Home() {
               animate="visible"
               className="text-5xl md:text-7xl font-bold tracking-tight"
             >
-              Master Salesforce with Interactive Challenges in{' '}
-              <span className="relative inline-block whitespace-nowrap bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent animate-bg-shine">
-                <span className="relative z-10">Apex</span>
-              </span>
+              Master Salesforce with Interactive Challenges in
             </motion.h1>
              <motion.p
               custom={1}
