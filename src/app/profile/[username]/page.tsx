@@ -418,10 +418,10 @@ export default function UserProfilePage() {
                 <CardContent className="flex-grow flex items-center justify-center p-6">
                     {categoryData.length > 0 ? (
                        <div className="w-full flex items-center gap-6">
-                            <div className="relative h-28 w-28 shrink-0">
+                            <div className="relative h-32 w-32 shrink-0">
                                 <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
                                     <PieChart>
-                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={40} paddingAngle={2} strokeWidth={0}>
+                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={56} paddingAngle={2} strokeWidth={0}>
                                             {categoryData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
                                             ))}
