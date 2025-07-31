@@ -24,7 +24,7 @@ export default function PrivacyShowcase() {
                     <div className="flex flex-col gap-4">
                         <Accordion type="single" value={openItem} onValueChange={setOpenItem} collapsible>
                             <AccordionItem value="item-1" className="border-none">
-                                <div className="p-6 bg-card rounded-2xl">
+                                <div className={cn("p-6 rounded-2xl transition-colors", openItem === 'item-1' ? "bg-card" : "hover:bg-blue-50 dark:hover:bg-blue-900/30")}>
                                     <AccordionTrigger className="text-xl font-semibold hover:no-underline [&>svg]:hidden">
                                         <div className="flex items-center justify-between w-full">
                                             <span>Manage privacy settings</span>
@@ -44,7 +44,7 @@ export default function PrivacyShowcase() {
                                 </div>
                             </AccordionItem>
                              <AccordionItem value="item-2" className="border-none mt-4">
-                                <div className={cn("p-6 rounded-2xl", openItem === 'item-2' && 'bg-card')}>
+                                <div className={cn("p-6 rounded-2xl transition-colors", openItem === 'item-2' ? "bg-card" : "hover:bg-blue-50 dark:hover:bg-blue-900/30")}>
                                      <AccordionTrigger className="text-xl font-semibold hover:no-underline [&>svg]:hidden">
                                         <div className="flex items-center justify-between w-full">
                                             <span>See user-level insights</span>
@@ -59,7 +59,7 @@ export default function PrivacyShowcase() {
                                 </div>
                             </AccordionItem>
                              <AccordionItem value="item-3" className="border-none mt-4">
-                                <div className={cn("p-6 rounded-2xl", openItem === 'item-3' && 'bg-card')}>
+                                <div className={cn("p-6 rounded-2xl transition-colors", openItem === 'item-3' ? "bg-card" : "hover:bg-blue-50 dark:hover:bg-blue-900/30")}>
                                     <AccordionTrigger className="text-xl font-semibold hover:no-underline [&>svg]:hidden">
                                          <div className="flex items-center justify-between w-full">
                                             <span>Get graphs for easier understanding</span>
