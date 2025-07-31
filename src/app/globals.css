@@ -125,6 +125,10 @@
   fill: hsl(var(--muted-foreground));
 }
 
+.react-calendar-heatmap .month-label {
+    margin-left: 10px;
+}
+
 .react-calendar-heatmap rect:hover {
   stroke: hsl(var(--primary));
   stroke-width: 1px;

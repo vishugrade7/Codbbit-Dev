@@ -124,7 +124,11 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
                 startDate={startDate}
                 endDate={endDate}
                 values={activityData}
-                gutterSize={8}
+                gutterSize={2}
+                monthLabels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+                monthLabelAttributes={{
+                    className: 'month-label'
+                }}
                 classForValue={(value) => {
                     if (!value || value.count === 0) {
                         return 'color-empty';
