@@ -37,6 +37,11 @@ export default {
         '8xl': '4.5rem',
         '9xl': '6rem',
       },
+      backgroundImage: {
+        'podium-gradient-gold': 'linear-gradient(to bottom, hsl(var(--chart-3)), transparent)',
+        'podium-gradient-silver': 'linear-gradient(to bottom, hsl(var(--muted-foreground)), transparent)',
+        'podium-gradient-bronze': 'linear-gradient(to bottom, hsl(var(--chart-5)), transparent)',
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

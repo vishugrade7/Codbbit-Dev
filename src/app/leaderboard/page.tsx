@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -261,60 +262,70 @@ export default function Leaderboard() {
   }
 
   const PodiumCard = ({ user, rank }: { user: LeaderboardUser, rank: number }) => {
-     const heightClass = rank === 1 ? 'h-full' : rank === 2 ? 'h-[90%]' : 'h-[80%]';
-     const rankColors = {
-        1: { border: 'border-yellow-400', bg: 'bg-yellow-400/10', text: 'text-yellow-400', crown: 'text-yellow-400' },
-        2: { border: 'border-slate-400', bg: 'bg-slate-400/10', text: 'text-slate-400', crown: 'text-slate-400' },
-        3: { border: 'border-orange-500', bg: 'bg-orange-400/10', text: 'text-orange-500', crown: 'text-orange-500' }
-     }[rank] || { border: 'border-border', bg: 'bg-muted/50', text: 'text-muted-foreground', crown: 'text-muted-foreground' };
-
-     return (
-        <div className={cn('relative w-full flex flex-col items-center justify-end', heightClass)}>
-            <Card className={cn("w-full text-center p-4 border-2 relative overflow-visible", rankColors.border, rankColors.bg)}>
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                    <div className="relative">
-                        <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer">
-                            <Avatar className={cn("h-16 w-16 border-4", rankColors.border)}>
-                                <AvatarImage src={user.avatarUrl} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        </Link>
-                        {isUserPro(user) && <ProIconOverlay />}
-                         <div className="absolute -top-3 -right-3">
-                           <Crown className={cn("h-6 w-6 rotate-12", rankColors.crown)} />
-                         </div>
-                    </div>
-                </div>
-                 <div className="absolute top-2 left-2">
-                    <div className={cn('h-8 w-8 rounded-full flex items-center justify-center font-bold text-lg', rankColors.bg, rankColors.text, 'border-2', rankColors.border)}>
-                        {rank}
-                    </div>
-                 </div>
-                <div className="pt-10">
-                    <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline text-lg">{user.name}</Link>
-                    <p className="text-sm text-muted-foreground">@{user.username}</p>
-                    <p className="font-bold text-2xl mt-2">{user.points.toLocaleString()} pts</p>
-                </div>
-            </Card>
+    const rankSuffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : 'rd';
+    const rankColors = {
+      1: "from-yellow-400/30 to-yellow-400/0",
+      2: "from-slate-400/30 to-slate-400/0",
+      3: "from-orange-500/30 to-orange-400/0",
+    }[rank] || "from-muted/30 to-muted/0";
+  
+    return (
+      <Card className="relative overflow-hidden rounded-xl shadow-lg w-full max-w-sm mx-auto bg-card border-border/50">
+        <div className={cn("absolute inset-x-0 top-0 h-28 bg-gradient-to-b", rankColors)} />
+        <div className="absolute top-4 right-4 text-5xl font-bold text-foreground/20">
+          {rank}<span className="text-3xl font-medium">{rankSuffix}</span>
         </div>
-     );
+        <CardContent className="relative pt-8 flex flex-col items-center text-center">
+          <div className="relative h-24 w-24">
+            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+              <defs>
+                <clipPath id="hexagon">
+                  <path d="M 50,0 L 93.3,25 V 75 L 50,100 L 6.7,75 V 25 z" />
+                </clipPath>
+              </defs>
+              <image href={user.avatarUrl} x="0" y="0" height="100%" width="100%" clipPath="url(#hexagon)" />
+            </svg>
+          </div>
+  
+          <div className="mt-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold">{user.name}</h3>
+            {user.emailVerified && <VerifiedIcon />}
+          </div>
+          <p className="text-sm text-primary font-medium">{user.company || `@${user.username}`}</p>
+  
+          <div className="mt-4 flex items-center justify-center gap-4">
+             <div className="text-center">
+                <p className="text-2xl font-bold">{user.points.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Points</p>
+             </div>
+          </div>
+  
+          <Button asChild className="mt-6 w-full">
+            <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer">
+              View Profile
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
     <>
       <title>Leaderboard</title>
       <main className="flex-1 container py-8">
-        <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
+        <div className="text-center mb-12 relative">
+            <h1 className="text-6xl md:text-8xl font-black text-foreground/5 dark:text-white/5 absolute inset-x-0 -top-4 select-none pointer-events-none">CHAMPIONS</h1>
+            <h2 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
                 See how you rank against the top developers. Keep solving problems to climb up the ranks!
             </p>
         </div>
         
-        <div className="mb-12 grid grid-cols-1 md:grid-cols-3 items-end gap-4 h-64 md:h-72">
-            <div className="h-full w-full">{podiumData[1] && <PodiumCard user={podiumData[1]} rank={2}/>}</div>
-            <div className="h-full w-full">{podiumData[0] && <PodiumCard user={podiumData[0]} rank={1}/>}</div>
-            <div className="h-full w-full">{podiumData[2] && <PodiumCard user={podiumData[2]} rank={3}/>}</div>
+        <div className="mb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center gap-8">
+            {podiumData.map(user => (
+              <PodiumCard key={user.id} user={user} rank={user.rank} />
+            ))}
         </div>
 
         <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
