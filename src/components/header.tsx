@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Rocket, Bug, LifeBuoy } from "lucide-react";
+import { Menu, LogOut, User as UserIcon, Settings, UploadCloud, Rocket, Bug, LifeBuoy, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -257,6 +257,10 @@ export default function Header() {
               ) : user ? (
                   <>
                       <ThemeToggle />
+                      <Button variant="ghost" className="h-9 px-3 text-sm">
+                        <Flame className="h-5 w-5 text-orange-500 mr-2" />
+                        <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                      </Button>
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
