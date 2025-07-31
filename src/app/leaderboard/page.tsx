@@ -291,7 +291,21 @@ export default function Leaderboard() {
             <h3 className="text-xl font-bold">{user.name}</h3>
             {user.emailVerified && <VerifiedIcon />}
           </div>
-          <p className="text-sm text-primary font-medium">{user.company || `@${user.username}`}</p>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+              {user.company && (
+                  <div className="flex items-center gap-1.5">
+                    {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="rounded-full object-contain"/>}
+                    <span>{user.company}</span>
+                  </div>
+              )}
+              {user.company && user.country && user.country !== 'N/A' && <span className="text-muted-foreground/50">|</span>}
+              {user.country && user.country !== 'N/A' && (
+                  <div className="flex items-center gap-1.5">
+                      <Globe className="h-4 w-4" />
+                      <span>{user.country}</span>
+                  </div>
+              )}
+            </div>
   
           <div className="mt-4 flex items-center justify-center gap-4">
              <div className="text-center">
