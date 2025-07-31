@@ -97,7 +97,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-12 items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
              <Link href="/" className="flex items-center gap-2">
               {loadingBranding ? (
                 <Skeleton className="h-6 w-6 rounded-lg" />
@@ -108,40 +108,40 @@ export default function Header() {
             </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            {visibleNavLinks.map((link) => (
-              <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
+        <div className="flex items-center gap-2">
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                {visibleNavLinks.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                        "relative transition-colors text-foreground/60 hover:text-foreground",
+                        pathname.startsWith(link.href) && "text-foreground"
+                    )}
+                >
+                    {link.label}
+                    {pathname.startsWith(link.href) && (
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                    )}
+                </Link>
+                ))}
+                {isAuthorizedAdmin && adminNavLinks.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
                     "relative transition-colors text-foreground/60 hover:text-foreground",
                     pathname.startsWith(link.href) && "text-foreground"
-                  )}
-              >
-                  {link.label}
-                  {pathname.startsWith(link.href) && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                  )}
-              </Link>
-            ))}
-            {isAuthorizedAdmin && adminNavLinks.map((link) => (
-              <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                  "relative transition-colors text-foreground/60 hover:text-foreground",
-                  pathname.startsWith(link.href) && "text-foreground"
-                  )}
-              >
-                  {link.label}
-                   {pathname.startsWith(link.href) && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                  )}
-              </Link>
-            ))}
-        </nav>
+                    )}
+                >
+                    {link.label}
+                    {pathname.startsWith(link.href) && (
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                    )}
+                </Link>
+                ))}
+            </nav>
 
-        <div className="flex items-center gap-2">
             {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
