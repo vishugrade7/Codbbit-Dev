@@ -27,6 +27,7 @@ import { getCache, setCache } from "@/lib/cache";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from "next-themes";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string; categoryName?: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -296,7 +297,7 @@ export default function UserProfilePage() {
                 };
             })
             .sort((a, b) => new Date(b.solvedAt).getTime() - new Date(a.solvedAt).getTime())
-            .slice(0, 5); // Get top 5 most recent
+            .slice(0, 15); // Get top 15 most recent for scrolling
     }, [profileUser, allProblems]);
 
     const starredProblems: ProblemWithCategory[] = useMemo(() => {
@@ -628,30 +629,32 @@ export default function UserProfilePage() {
                 </CardHeader>
                 <CardContent>
                     {recentlySolvedProblems.length > 0 ? (
-                        <div className="space-y-2">
-                            {recentlySolvedProblems.map(problem => (
-                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                    <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                        <div className="flex justify-between items-center gap-4">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold truncate">{problem.title}</p>
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                                    <span>Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</span>
-                                                    <span className="text-muted-foreground/50">&middot;</span>
-                                                    <Badge variant="secondary" className="truncate">{problem.categoryName}</Badge>
+                        <ScrollArea className="h-72">
+                            <div className="space-y-2 pr-4">
+                                {recentlySolvedProblems.map(problem => (
+                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                        <div className={cn("p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                            <div className="flex justify-between items-center gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold truncate">{problem.title}</p>
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                                        <span>Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</span>
+                                                        <span className="text-muted-foreground/50">&middot;</span>
+                                                        <Badge variant="secondary" className="truncate">{problem.categoryName}</Badge>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-shrink-0 text-right space-y-1">
+                                                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                        {problem.difficulty}
+                                                    </Badge>
+                                                    <p className="text-xs font-semibold text-primary">+{problem.points} pts</p>
                                                 </div>
                                             </div>
-                                            <div className="flex-shrink-0 text-right space-y-1">
-                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                    {problem.difficulty}
-                                                </Badge>
-                                                <p className="text-xs font-semibold text-primary">+{problem.points} pts</p>
-                                            </div>
                                         </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </ScrollArea>
                     ) : (
                          <div className="text-center py-8 text-muted-foreground">No problems solved yet.</div>
                     )}
