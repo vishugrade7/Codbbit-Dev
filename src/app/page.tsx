@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -9,7 +8,6 @@ import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
-import ProfileTrackerShowcase from '@/components/profile-tracker-showcase';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 
@@ -102,7 +100,6 @@ export default function Home() {
       <Section><FeatureGrid /></Section>
       <Section><Testimonials /></Section>
       <Section><InteractivePlayground /></Section>
-      <Section><ProfileTrackerShowcase /></Section>
       <Section><CallToAction /></Section>
     </main>
   );
