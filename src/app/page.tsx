@@ -44,54 +44,53 @@ const HeroSection = () => {
 
   return (
     <div className="w-full flex items-center justify-center bg-background p-4 py-24 md:py-32 home-hero-gradient">
-      <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
-        <div className="flex flex-col items-start text-left gap-6">
-            <motion.div custom={0} variants={heroVariants} initial="hidden" animate="visible">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
-                    Showcase Canvas
-                </div>
-            </motion.div>
-
-            <motion.div custom={1} variants={heroVariants} initial="hidden" animate="visible" className="space-y-4">
-                <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-                  Crafting Digital Experiences, One Pixel at a Time
-                </h1>
-                <p className="text-lg text-muted-foreground max-w-xl">
-                  Welcome to my creative space. I design and build beautiful, intuitive, and high-performing web applications. Explore my work and see how I can bring your vision to life.
-                </p>
-            </motion.div>
-
-            <motion.div
-                custom={2}
-                variants={heroVariants}
-                initial="hidden"
-                animate="visible"
-                className="flex items-center gap-4"
-            >
-                <Button asChild size="lg">
-                    <Link href="#portfolio">View My Work</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                    <Link href="/contact">Get in Touch</Link>
-                </Button>
-            </motion.div>
-        </div>
+      <div className="container mx-auto flex flex-col items-center text-center gap-8">
         
         <motion.div
-            custom={3}
-            variants={heroVariants}
-            initial="hidden"
-            animate="visible"
-            className="w-full"
+          custom={0}
+          variants={heroVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col items-center gap-6"
         >
-            <Image
-                src="https://placehold.co/1024x768.png"
-                alt="Portfolio showcase"
-                width={1024}
-                height={768}
-                data-ai-hint="design portfolio"
-                className="rounded-lg border shadow-2xl shadow-primary/10"
-            />
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight max-w-4xl">
+            Powerful Tools for Modern Teams
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Streamline communication, boost productivity, and manage everything in one intuitive workspace built for teams that move fast.
+          </p>
+        </motion.div>
+
+        <motion.div
+          custom={1}
+          variants={heroVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex items-center gap-4"
+        >
+          <Button asChild size="lg">
+            <Link href="/signup">Start with Free</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/contact">Get Started</Link>
+          </Button>
+        </motion.div>
+
+        <motion.div
+          custom={2}
+          variants={heroVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-5xl mt-8"
+        >
+          <Image
+            src="https://placehold.co/1200x600.png"
+            alt="Dashboard preview"
+            width={1200}
+            height={600}
+            data-ai-hint="dashboard analytics"
+            className="rounded-lg border-2 border-primary/10 shadow-2xl shadow-primary/10"
+          />
         </motion.div>
       </div>
     </div>
