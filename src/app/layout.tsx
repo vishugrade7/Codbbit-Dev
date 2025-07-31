@@ -1,6 +1,6 @@
 
 import type {Metadata} from 'next';
-import { Source_Code_Pro } from 'next/font/google'
+import { Inter, Poppins, Source_Code_Pro } from 'next/font/google'
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
@@ -10,6 +10,19 @@ import AppShell from '@/components/app-shell';
 import DynamicFavicon from '@/components/dynamic-favicon';
 import Script from 'next/script';
 import SplashScreen from '@/components/splash-screen';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  variable: '--font-poppins',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+});
 
 const sourceCodePro = Source_Code_Pro({
   subsets: ['latin'],
@@ -44,7 +57,7 @@ export default function RootLayout({
           })(window,document,'script','dataLayer','GTM-TDJD2HMV');`}
         </Script>
       </head>
-      <body className={cn(sourceCodePro.variable, "font-body text-foreground select-none no-print")}>
+      <body className={cn(inter.variable, poppins.variable, sourceCodePro.variable, "font-sans text-foreground select-none no-print")}>
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TDJD2HMV"
         height="0" width="0" style={{display:"none",visibility:"hidden"}}></iframe></noscript>
         <ThemeProvider

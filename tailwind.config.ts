@@ -18,10 +18,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Helvetica", "Arial", "sans-serif"],
-        mono: ["var(--font-source-code-pro)"],
-        headline: ["Poppins", "sans-serif"],
-        body: ["PT Sans", "sans-serif"],
+        sans: ["var(--font-inter)"],
+        headline: ["var(--font-poppins)"],
         code: ["var(--font-source-code-pro)"],
       },
       fontSize: {
