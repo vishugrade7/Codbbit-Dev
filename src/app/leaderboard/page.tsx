@@ -262,24 +262,39 @@ export default function Leaderboard() {
 
   const PodiumCard = ({ user, rank }: { user: LeaderboardUser, rank: number }) => {
     const rankSuffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : 'rd';
+    
     const rankColors = {
-      1: "from-yellow-400/30 to-yellow-400/0",
-      2: "from-slate-400/30 to-slate-400/0",
-      3: "from-orange-500/30 to-orange-400/0",
+        1: "from-yellow-400/30 to-yellow-400/0",
+        2: "from-slate-400/30 to-slate-400/0",
+        3: "from-orange-500/30 to-orange-400/0",
     }[rank] || "from-muted/30 to-muted/0";
+    
+    const backgroundGradient = {
+        1: 'bg-podium-gold',
+        2: 'bg-podium-silver',
+        3: 'bg-podium-bronze'
+    }[rank] || 'bg-gradient-to-br from-card to-muted/30';
   
     return (
         <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="block group">
-            <Card className="relative overflow-hidden rounded-xl shadow-lg w-full max-w-sm mx-auto bg-card border-border/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-                <div className={cn("absolute inset-0 bg-gradient-to-br -z-10", rankColors, "bg-shimmer animate-bg-shine")} />
+            <Card className={cn(
+                "relative overflow-hidden rounded-xl shadow-lg w-full max-w-sm mx-auto bg-card border-border/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1",
+                backgroundGradient,
+                'animate-bg-shine'
+            )}>
                 <div className="absolute top-4 right-4 text-5xl font-bold text-foreground/20">
                     {rank}<span className="text-3xl font-medium">{rankSuffix}</span>
                 </div>
                 <CardContent className="relative pt-8 flex flex-col items-center text-center">
-                    <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                        <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -top-3 -translate-x-1/2 left-1/2">
+                           <Crown className={cn("h-8 w-8 text-yellow-400", rank !== 1 && "hidden")} />
+                        </div>
+                    </div>
         
                     <div className="mt-4 flex items-center gap-2">
                     <h3 className="text-xl font-bold">{user.name}</h3>
@@ -477,5 +492,3 @@ export default function Leaderboard() {
     </>
   );
 }
-
-    

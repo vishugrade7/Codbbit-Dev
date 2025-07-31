@@ -38,9 +38,9 @@ export default {
         '9xl': '6rem',
       },
       backgroundImage: {
-        'podium-gradient-gold': 'linear-gradient(to bottom, hsl(var(--chart-3)), transparent)',
-        'podium-gradient-silver': 'linear-gradient(to bottom, hsl(var(--muted-foreground)), transparent)',
-        'podium-gradient-bronze': 'linear-gradient(to bottom, hsl(var(--chart-5)), transparent)',
+        'podium-gold': 'linear-gradient(110deg, transparent 20%, hsl(48, 96%, 51%, 0.1), transparent 80%)',
+        'podium-silver': 'linear-gradient(110deg, transparent 20%, hsl(240, 5%, 65%, 0.1), transparent 80%)',
+        'podium-bronze': 'linear-gradient(110deg, transparent 20%, hsl(28, 80%, 55%, 0.1), transparent 80%)',
         'shimmer': 'linear-gradient(110deg, transparent 20%, hsl(var(--primary)/0.1), transparent 80%)',
       },
       colors: {
