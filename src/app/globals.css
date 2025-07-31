@@ -88,11 +88,11 @@
   }
 
   .home-hero-gradient {
-    background-color: hsl(var(--secondary));
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary)/.1), transparent);
   }
 
   .dark .home-hero-gradient {
-    background-color: hsl(var(--background));
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary)/.15), transparent);
   }
 }
 
