@@ -343,7 +343,7 @@ export default function Leaderboard() {
                 </CardContent>
               </Card>
             </div>
-            <div className="lg:col-span-2">
+            <div className="hidden lg:block lg:col-span-2">
               {suggestedProblem ? (
                   <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
                     <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6 h-full">
