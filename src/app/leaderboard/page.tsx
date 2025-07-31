@@ -277,9 +277,9 @@ export default function Leaderboard() {
     }[rank] || 'bg-gradient-to-br from-card to-muted/30';
   
     return (
-        <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="block group">
+        <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="block group w-full max-w-sm">
             <Card className={cn(
-                "relative overflow-hidden rounded-xl shadow-lg w-full max-w-sm mx-auto bg-card border-border/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1",
+                "relative overflow-hidden rounded-xl shadow-lg bg-card border-border/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1",
                 backgroundGradient,
                 'animate-bg-shine'
             )}>
@@ -341,7 +341,7 @@ export default function Leaderboard() {
             </p>
         </div>
         
-        <div className="mb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center gap-8">
+        <div className="mb-12 flex flex-wrap justify-center items-center gap-8">
             {podiumData.map(user => (
               <PodiumCard key={user.id} user={user} rank={user.rank} />
             ))}
