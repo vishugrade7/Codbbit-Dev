@@ -549,9 +549,9 @@ export default function UserProfilePage() {
                     <CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle>
                     <CardDescription>Points earned per problem category.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center p-6">
+                <CardContent className="flex-grow flex items-center justify-center p-6 min-h-0">
                     {categoryData.length > 0 ? (
-                       <div className="w-full flex items-center gap-6">
+                       <div className="w-full h-full flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative h-32 w-32 shrink-0">
                                 <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
                                     <PieChart>
@@ -567,17 +567,19 @@ export default function UserProfilePage() {
                                     <p className="text-xs text-muted-foreground">Total Points</p>
                                 </div>
                             </div>
-                             <div className="flex-1 space-y-2 text-sm">
-                                {categoryData.map((entry) => (
-                                    <div key={entry.name} className="flex justify-between items-center">
-                                        <div className="flex items-center gap-2">
-                                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
-                                            <span>{entry.name}</span>
+                            <ScrollArea className="h-32 flex-1">
+                                 <div className="flex-1 space-y-2 text-sm pr-4">
+                                    {categoryData.map((entry) => (
+                                        <div key={entry.name} className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
+                                                <span>{entry.name}</span>
+                                            </div>
+                                            <span className="font-semibold">{entry.value} pts</span>
                                         </div>
-                                        <span className="font-semibold">{entry.value} pts</span>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
                        </div>
                     ) : (
                         <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
@@ -587,7 +589,7 @@ export default function UserProfilePage() {
             
             <Card className="lg:col-span-1 h-full flex flex-col">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base"><Mountain className="h-4 w-4" /> Achievements</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
                     <CardDescription>Badges earned from your activity.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
