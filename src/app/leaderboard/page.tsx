@@ -269,51 +269,47 @@ export default function Leaderboard() {
     }[rank] || "from-muted/30 to-muted/0";
   
     return (
-      <Card className="relative overflow-hidden rounded-xl shadow-lg w-full max-w-sm mx-auto bg-card border-border/50">
-        <div className={cn("absolute inset-x-0 top-0 h-28 bg-gradient-to-b", rankColors)} />
-        <div className="absolute top-4 right-4 text-5xl font-bold text-foreground/20">
-          {rank}<span className="text-3xl font-medium">{rankSuffix}</span>
-        </div>
-        <CardContent className="relative pt-8 flex flex-col items-center text-center">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
-                <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-  
-          <div className="mt-4 flex items-center gap-2">
-            <h3 className="text-xl font-bold">{user.name}</h3>
-            {user.emailVerified && <VerifiedIcon />}
-          </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-              {user.company && (
-                  <div className="flex items-center gap-1.5">
-                    {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="rounded-full object-contain"/>}
-                    <span>{user.company}</span>
-                  </div>
-              )}
-              {user.company && user.country && user.country !== 'N/A' && <span className="text-muted-foreground/50">|</span>}
-              {user.country && user.country !== 'N/A' && (
-                  <div className="flex items-center gap-1.5">
-                      <Globe className="h-4 w-4" />
-                      <span>{user.country}</span>
-                  </div>
-              )}
-            </div>
-  
-          <div className="mt-4 flex items-center justify-center gap-4">
-             <div className="text-center">
-                <p className="text-2xl font-bold">{user.points.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Points</p>
-             </div>
-          </div>
-  
-          <Button asChild className="mt-6 w-full">
-            <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer">
-              View Profile
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+        <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="block group">
+            <Card className="relative overflow-hidden rounded-xl shadow-lg w-full max-w-sm mx-auto bg-card border-border/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                <div className={cn("absolute inset-0 bg-gradient-to-br -z-10", rankColors, "bg-shimmer animate-bg-shine")} />
+                <div className="absolute top-4 right-4 text-5xl font-bold text-foreground/20">
+                    {rank}<span className="text-3xl font-medium">{rankSuffix}</span>
+                </div>
+                <CardContent className="relative pt-8 flex flex-col items-center text-center">
+                    <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                        <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+        
+                    <div className="mt-4 flex items-center gap-2">
+                    <h3 className="text-xl font-bold">{user.name}</h3>
+                    {user.emailVerified && <VerifiedIcon />}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                        {user.company && (
+                            <div className="flex items-center gap-1.5">
+                            {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="rounded-full object-contain"/>}
+                            <span>{user.company}</span>
+                            </div>
+                        )}
+                        {user.company && user.country && user.country !== 'N/A' && <span className="text-muted-foreground/50">|</span>}
+                        {user.country && user.country !== 'N/A' && (
+                            <div className="flex items-center gap-1.5">
+                                <Globe className="h-4 w-4" />
+                                <span>{user.country}</span>
+                            </div>
+                        )}
+                    </div>
+        
+                    <div className="mt-6 mb-8 flex items-center justify-center gap-4">
+                        <div className="text-center">
+                            <p className="text-2xl font-bold">{user.points.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">Points</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+      </Link>
     );
   };
 

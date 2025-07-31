@@ -41,6 +41,7 @@ export default {
         'podium-gradient-gold': 'linear-gradient(to bottom, hsl(var(--chart-3)), transparent)',
         'podium-gradient-silver': 'linear-gradient(to bottom, hsl(var(--muted-foreground)), transparent)',
         'podium-gradient-bronze': 'linear-gradient(to bottom, hsl(var(--chart-5)), transparent)',
+        'shimmer': 'linear-gradient(110deg, transparent 20%, hsl(var(--primary)/0.1), transparent 80%)',
       },
       colors: {
         background: 'hsl(var(--background))',
