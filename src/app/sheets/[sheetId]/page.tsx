@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search, Lock } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, FileText, CheckCircle2, Circle, Search, Lock, PanelLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -25,6 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from '@/components/ui/progress';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -35,6 +37,7 @@ export default function SheetDisplayPage() {
     const { toast } = useToast();
     const { user: authUser, userData, isPro } = useAuth();
     const sheetId = params.sheetId as string;
+    const isMobile = useIsMobile();
     
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
     const [problems, setProblems] = useState<ProblemDetailWithCategory[]>([]);
@@ -240,6 +243,225 @@ export default function SheetDisplayPage() {
         return '';
     }, [sheet]);
 
+    const SheetDetails = () => (
+        <ScrollArea className="h-full pr-4">
+            <Card className="mb-8 overflow-hidden">
+                <CardHeader className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                        <div className="flex-1">
+                            <CardTitle className="text-xl font-headline">{sheet!.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-2">
+                                {sheet!.creatorAvatarUrl && (
+                                    <Avatar className="h-6 w-6">
+                                        <AvatarImage src={sheet!.creatorAvatarUrl} alt={sheet!.creatorName} />
+                                        <AvatarFallback>{sheet!.creatorName.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                )}
+                                <span className="text-sm">
+                                    Created by{' '}
+                                    {sheet!.creatorUsername ? (
+                                        <Link href={`/profile/${sheet!.creatorUsername}`} className="font-semibold text-foreground hover:underline">
+                                            {sheet!.creatorName}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-semibold text-foreground">{sheet!.creatorName}</span>
+                                    )}{' '}
+                                    {timeAgo}
+                                </span>
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow} size="sm">
+                                {isTogglingFollow ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : isFollowed ? (<UserCheck className="mr-2 h-4 w-4" />) : (<UserPlus className="mr-2 h-4 w-4" />)}
+                                {isFollowed ? 'Following' : 'Follow'}
+                            </Button>
+                            <Button onClick={handleCopyLink} variant="outline" size="sm"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
+                        <Users className="h-4 w-4" />
+                        <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
+                    </div>
+                </CardHeader>
+                
+                {(uniqueCategories.length > 0 || problems.length > 0) && (
+                    <CardContent className="p-4 sm:p-6 border-t">
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-muted-foreground">PROGRESS</h4>
+                            <div className="relative">
+                                <Progress value={progressPercentage} className="h-4" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-xs font-bold text-primary-foreground mix-blend-difference">
+                                        {Math.round(progressPercentage)}%
+                                    </span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
+                        </div>
+                        <div className="space-y-2 text-sm mt-4">
+                            <div className="flex items-center gap-2">
+                                <span className="w-16 text-muted-foreground">Easy</span>
+                                <div className="flex-1 bg-muted rounded-full h-2">
+                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                </div>
+                                <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-16 text-muted-foreground">Medium</span>
+                                <div className="flex-1 bg-muted rounded-full h-2">
+                                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
+                                </div>
+                                <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-16 text-muted-foreground">Hard</span>
+                                <div className="flex-1 bg-muted rounded-full h-2">
+                                    <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
+                                </div>
+                                <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
+                            </div>
+                        </div>
+                        <div className="space-y-4 mt-6">
+                            <h4 className="text-sm font-semibold text-muted-foreground">TOPICS COVERED</h4>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge
+                                    variant={categoryFilter === 'All' ? 'default' : 'secondary'}
+                                    onClick={() => setCategoryFilter('All')}
+                                    className="cursor-pointer"
+                                >
+                                    All Topics
+                                </Badge>
+                                {uniqueCategories.map(category => {
+                                    const isCompleted = categoryCompletionStatus[category];
+                                    return (
+                                        <Badge
+                                            key={category}
+                                            variant={categoryFilter === category ? 'default' : 'secondary'}
+                                            onClick={() => setCategoryFilter(category)}
+                                            className="cursor-pointer flex items-center gap-1.5"
+                                        >
+                                            <span>{category}</span>
+                                            {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
+                                        </Badge>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </CardContent>
+                )}
+            </Card>
+        </ScrollArea>
+    );
+
+    const ProblemList = () => (
+        <div className="flex flex-col h-full pl-0 md:pl-4">
+            {problems.length > 0 && (
+                <div className="flex flex-col md:flex-row gap-4 mb-4 flex-shrink-0">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                        placeholder="Search problems..."
+                        className="w-full pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Statuses</SelectItem>
+                            <SelectItem value="Solved">Solved</SelectItem>
+                            <SelectItem value="Unsolved">Unsolved</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectValue placeholder="Difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Difficulties</SelectItem>
+                            <SelectItem value="Easy">Easy</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Hard">Hard</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+            
+            <ScrollArea className="flex-1">
+                {filteredProblems.length > 0 ? (
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[50px] text-center hidden sm:table-cell">#</TableHead>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                                    <TableHead className="text-right">Difficulty</TableHead>
+                                    <TableHead className="w-[80px] text-center hidden sm:table-cell">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredProblems.map((problem, index) => {
+                                    const isLocked = problem.isPremium && !isPro;
+                                    return (
+                                    <TableRow 
+                                        key={problem.id} 
+                                        className={cn(
+                                            "cursor-pointer",
+                                            getDifficultyRowClass(problem.difficulty),
+                                            isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
+                                        )}
+                                        onClick={() => {
+                                            if (isLocked) {
+                                                router.push('/pricing');
+                                            } else {
+                                                router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
+                                            }
+                                        }}>
+                                        <TableCell className="font-medium text-center hidden sm:table-cell">{index + 1}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
+                                                <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
+                                            </div>
+                                            <div className="md:hidden mt-1 text-xs text-muted-foreground">
+                                                <Badge variant="secondary" className="mr-2">{problem.categoryName}</Badge>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden md:table-cell"><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                {problem.difficulty}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="hidden sm:table-cell">
+                                            <div className="flex justify-center">
+                                                {userData?.solvedProblems?.[problem.id] ? (
+                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                ) : (
+                                                    <Circle className="h-5 w-5 text-muted-foreground/50" />
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )})}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : (
+                    <div className="text-center py-16 border-2 border-dashed rounded-lg h-full flex flex-col justify-center items-center">
+                        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-4 text-lg font-semibold">{problems.length > 0 ? "No Matches" : "Sheet is Empty"}</h3>
+                        <p className="text-muted-foreground mt-1 text-sm">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
+                    </div>
+                )}
+            </ScrollArea>
+        </div>
+    );
+
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -267,229 +489,34 @@ export default function SheetDisplayPage() {
                     <ArrowLeft className="h-5 w-5" />
                     <span className="sr-only">Back to Problem Sheets</span>
                 </Button>
-                 <h1 className="text-2xl font-bold font-headline truncate">{sheet.name}</h1>
+                <h1 className="text-2xl font-bold font-headline truncate">{sheet.name}</h1>
+                {isMobile && (
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="sm" className="ml-auto">
+                                <PanelLeft className="mr-2 h-4 w-4" /> View Details
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="p-0">
+                             <div className="p-4 h-full"><SheetDetails /></div>
+                        </SheetContent>
+                    </Sheet>
+                )}
             </div>
-
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel defaultSize={35} minSize={25}>
-                    <ScrollArea className="h-full pr-4">
-                        <Card className="mb-8 overflow-hidden">
-                            <CardHeader className="p-4 sm:p-6">
-                                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                                    <div className="flex-1">
-                                        <CardTitle className="text-xl font-headline">{sheet.name}</CardTitle>
-                                        <CardDescription className="flex items-center gap-2 mt-2">
-                                            {sheet.creatorAvatarUrl && (
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                                    <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                            )}
-                                            <span className="text-sm">
-                                                Created by{' '}
-                                                {sheet.creatorUsername ? (
-                                                    <Link href={`/profile/${sheet.creatorUsername}`} className="font-semibold text-foreground hover:underline">
-                                                        {sheet.creatorName}
-                                                    </Link>
-                                                ) : (
-                                                    <span className="font-semibold text-foreground">{sheet.creatorName}</span>
-                                                )}{' '}
-                                                {timeAgo}
-                                            </span>
-                                        </CardDescription>
-                                    </div>
-                                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                                    <Button onClick={handleToggleFollow} disabled={!authUser || isTogglingFollow} size="sm">
-                                            {isTogglingFollow ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : isFollowed ? (<UserCheck className="mr-2 h-4 w-4" />) : (<UserPlus className="mr-2 h-4 w-4" />)}
-                                            {isFollowed ? 'Following' : 'Follow'}
-                                        </Button>
-                                        <Button onClick={handleCopyLink} variant="outline" size="sm"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
-                                    <Users className="h-4 w-4" />
-                                    <span>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</span>
-                                </div>
-                            </CardHeader>
-                            
-                            {(uniqueCategories.length > 0 || problems.length > 0) && (
-                                <CardContent className="p-4 sm:p-6 border-t">
-                                     <div className="space-y-4">
-                                        <h4 className="text-sm font-semibold text-muted-foreground">PROGRESS</h4>
-                                        <div className="relative">
-                                            <Progress value={progressPercentage} className="h-4" />
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <span className="text-xs font-bold text-primary-foreground mix-blend-difference">
-                                                    {Math.round(progressPercentage)}%
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-1 text-right">{solvedCount} / {difficultyStats.total} solved</p>
-                                    </div>
-                                    <div className="space-y-2 text-sm mt-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-16 text-muted-foreground">Easy</span>
-                                            <div className="flex-1 bg-muted rounded-full h-2">
-                                                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
-                                            </div>
-                                            <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-16 text-muted-foreground">Medium</span>
-                                            <div className="flex-1 bg-muted rounded-full h-2">
-                                                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Medium, difficultyStats.total)}%` }}></div>
-                                            </div>
-                                            <span className="w-8 text-right font-semibold">{difficultyStats.Medium}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-16 text-muted-foreground">Hard</span>
-                                            <div className="flex-1 bg-muted rounded-full h-2">
-                                                <div className="bg-destructive h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Hard, difficultyStats.total)}%` }}></div>
-                                            </div>
-                                            <span className="w-8 text-right font-semibold">{difficultyStats.Hard}</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4 mt-6">
-                                        <h4 className="text-sm font-semibold text-muted-foreground">TOPICS COVERED</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            <Badge
-                                                variant={categoryFilter === 'All' ? 'default' : 'secondary'}
-                                                onClick={() => setCategoryFilter('All')}
-                                                className="cursor-pointer"
-                                            >
-                                                All Topics
-                                            </Badge>
-                                            {uniqueCategories.map(category => {
-                                                const isCompleted = categoryCompletionStatus[category];
-                                                return (
-                                                    <Badge
-                                                        key={category}
-                                                        variant={categoryFilter === category ? 'default' : 'secondary'}
-                                                        onClick={() => setCategoryFilter(category)}
-                                                        className="cursor-pointer flex items-center gap-1.5"
-                                                    >
-                                                        <span>{category}</span>
-                                                        {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
-                                                    </Badge>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            )}
-                        </Card>
-                    </ScrollArea>
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={65} minSize={30}>
-                    <div className="flex flex-col h-full pl-4">
-                        {problems.length > 0 && (
-                            <div className="flex flex-col md:flex-row gap-4 mb-4 flex-shrink-0">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input
-                                    placeholder="Search problems..."
-                                    className="w-full pl-10"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="w-full md:w-[180px]">
-                                        <SelectValue placeholder="Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="All">All Statuses</SelectItem>
-                                        <SelectItem value="Solved">Solved</SelectItem>
-                                        <SelectItem value="Unsolved">Unsolved</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                                    <SelectTrigger className="w-full md:w-[180px]">
-                                        <SelectValue placeholder="Difficulty" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="All">All Difficulties</SelectItem>
-                                        <SelectItem value="Easy">Easy</SelectItem>
-                                        <SelectItem value="Medium">Medium</SelectItem>
-                                        <SelectItem value="Hard">Hard</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                        
-                        <ScrollArea className="flex-1">
-                            {filteredProblems.length > 0 ? (
-                                <div className="rounded-lg border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="w-[50px] text-center hidden sm:table-cell">#</TableHead>
-                                                <TableHead>Title</TableHead>
-                                                <TableHead className="hidden md:table-cell">Category</TableHead>
-                                                <TableHead className="text-right">Difficulty</TableHead>
-                                                <TableHead className="w-[80px] text-center hidden sm:table-cell">Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredProblems.map((problem, index) => {
-                                                const isLocked = problem.isPremium && !isPro;
-                                                return (
-                                                <TableRow 
-                                                    key={problem.id} 
-                                                    className={cn(
-                                                        "cursor-pointer",
-                                                        getDifficultyRowClass(problem.difficulty),
-                                                        isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
-                                                    )}
-                                                    onClick={() => {
-                                                        if (isLocked) {
-                                                            router.push('/pricing');
-                                                        } else {
-                                                            router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
-                                                        }
-                                                    }}>
-                                                    <TableCell className="font-medium text-center hidden sm:table-cell">{index + 1}</TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
-                                                            <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
-                                                        </div>
-                                                        <div className="md:hidden mt-1 text-xs text-muted-foreground">
-                                                            <Badge variant="secondary" className="mr-2">{problem.categoryName}</Badge>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="hidden md:table-cell"><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                            {problem.difficulty}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="hidden sm:table-cell">
-                                                        <div className="flex justify-center">
-                                                            {userData?.solvedProblems?.[problem.id] ? (
-                                                                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                            ) : (
-                                                                <Circle className="h-5 w-5 text-muted-foreground/50" />
-                                                            )}
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )})}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-16 border-2 border-dashed rounded-lg h-full flex flex-col justify-center items-center">
-                                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <h3 className="mt-4 text-lg font-semibold">{problems.length > 0 ? "No Matches" : "Sheet is Empty"}</h3>
-                                    <p className="text-muted-foreground mt-1 text-sm">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+            
+            {isMobile ? (
+                <ProblemList />
+            ) : (
+                <ResizablePanelGroup direction="horizontal" className="flex-1">
+                    <ResizablePanel defaultSize={35} minSize={25}>
+                        <SheetDetails />
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={65} minSize={30}>
+                        <ProblemList />
+                    </ResizablePanel>
+                </ResizablePanelGroup>
+            )}
         </main>
     );
 }
