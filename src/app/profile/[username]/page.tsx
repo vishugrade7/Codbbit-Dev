@@ -195,31 +195,6 @@ export default function UserProfilePage() {
 
         return () => unsubscribe();
     }, [username]);
-    
-    const recentlySolvedProblemsDetails = useMemo(() => {
-        if (!profileUser?.solvedProblems || loadingProblems || allProblems.length === 0) return [];
-    
-        const solvedProblemIds = Object.keys(profileUser.solvedProblems);
-        
-        const recentlySolvedMap = new Map(
-            allProblems
-                .filter(p => solvedProblemIds.includes(p.id))
-                .map(p => [p.id, { ...p, solvedAt: profileUser.solvedProblems![p.id].solvedAt, points: profileUser.solvedProblems![p.id].points }])
-        );
-
-        return Array.from(recentlySolvedMap.values())
-            .sort((a, b) => b.solvedAt.getTime() - a.solvedAt.getTime())
-            .slice(0, 5);
-    
-    }, [profileUser?.solvedProblems, allProblems, loadingProblems]);
-
-    const starredProblemsDetails = useMemo(() => {
-        if (loadingProblems || !profileUser?.starredProblems || allProblems.length === 0) {
-            return [];
-        }
-        const starredIds = new Set(profileUser.starredProblems);
-        return allProblems.filter(p => starredIds.has(p.id));
-    }, [profileUser?.starredProblems, allProblems, loadingProblems]);
 
     const difficultyTotals = useMemo(() => {
         if (loadingProblems || allProblems.length === 0) {
@@ -320,24 +295,6 @@ export default function UserProfilePage() {
     
     const isOwnProfile = authUser?.uid === profileUser.uid;
 
-    const getDifficultyClass = (difficulty: string) => {
-        switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-        case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
-        case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-        default: return 'bg-muted';
-        }
-    };
-    
-    const getDifficultyRowClass = (difficulty: string) => {
-        switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
-          case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
-          case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
-          default: return 'hover:bg-muted/50';
-        }
-    };
-
     const CATEGORY_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
     
     const categoryData = profileUser.categoryPoints ? 
@@ -359,11 +316,10 @@ export default function UserProfilePage() {
         ),
     } satisfies ChartConfig;
     
-    const { easySolved, mediumSolved, hardSolved, totalSolved } = {
+    const { easySolved, mediumSolved, hardSolved } = {
         easySolved: profileUser.dsaStats?.Easy || 0,
         mediumSolved: profileUser.dsaStats?.Medium || 0,
         hardSolved: profileUser.dsaStats?.Hard || 0,
-        totalSolved: (profileUser.dsaStats?.Easy || 0) + (profileUser.dsaStats?.Medium || 0) + (profileUser.dsaStats?.Hard || 0),
     };
 
 
@@ -372,23 +328,16 @@ export default function UserProfilePage() {
     <main className="flex-1 relative">
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Column 1: Profile + Heatmap */}
-            <div className="lg:col-span-1 space-y-8">
-                {/* User Info Card */}
+            
+            <div className="lg:col-span-1">
                 <Card className="p-6 text-center">
                     <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                        <Avatar className={cn(
-                            "h-28 w-28 border-4 mx-auto", 
-                            isProfileUserPro 
-                                ? "border-yellow-400 shadow-lg" 
-                                : "border-primary/50"
-                        )}>
+                        <Avatar className="h-28 w-28 border-4 mx-auto border-muted">
                             <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                             <AvatarFallback className="text-4xl">
                                 {profileUser.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                         </Avatar>
-                         {isProfileUserPro && <ProIconOverlay />}
                          {isOwnProfile && (
                             <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                 {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
@@ -400,19 +349,16 @@ export default function UserProfilePage() {
                     )}
                     <div className="mt-4">
                         <div className="flex items-center justify-center gap-2">
-                            <h1 className="text-2xl font-bold font-headline">{profileUser.name}</h1>
-                            {profileUser.emailVerified && <VerifiedIcon />}
+                            <h1 className="text-2xl font-bold">{profileUser.name}</h1>
                         </div>
                         <p className="text-md text-muted-foreground">@{profileUser.username}</p>
-                        {profileUser.about && (
-                            <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">{profileUser.about}</p>
-                        )}
-                        <div className="mt-4 flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        
+                        <div className="mt-4 flex flex-col items-center justify-center gap-1 text-sm text-muted-foreground">
                             {profileUser.company && (
-                                <Badge variant="secondary" className="mt-1">
-                                    {profileUser.companyLogoUrl && <Image src={profileUser.companyLogoUrl} alt={profileUser.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
-                                    <span className="truncate">{profileUser.company}</span>
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <Building className="h-4 w-4" />
+                                  <span>{profileUser.company}</span>
+                                </div>
                             )}
                             <div className="flex items-center gap-2">
                                 <Globe className="h-4 w-4 shrink-0" />
@@ -425,98 +371,72 @@ export default function UserProfilePage() {
                                 </div>
                             )}
                         </div>
-                        <div className="mt-4 flex items-center justify-center gap-2">
-                            {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
-                            {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
-                            {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
-                            {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
-                        </div>
                     </div>
                      {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)} className="mt-6 w-full"><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
                 </Card>
             </div>
-            {/* Column 2: Stats */}
-            <div className="lg:col-span-2 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
-                            <CardDescription>Breakdown by difficulty</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4 pt-4">
-                             <div className="space-y-4 text-sm">
-                                <div>
-                                    <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                        <span>Easy</span>
-                                        <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
-                                    </div>
-                                    <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                        <span>Medium</span>
-                                        <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
-                                    </div>
-                                    <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                        <span>Hard</span>
-                                        <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
-                                    </div>
-                                    <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="flex flex-col">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
-                            <CardDescription>Points earned per problem category.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow flex items-center justify-center p-6">
-                            {categoryData.length > 0 ? (
-                                <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                                    <div className="relative mx-auto aspect-square h-[150px]">
-                                        <ChartContainer config={chartConfig} className="w-full h-full">
-                                            <PieChart>
-                                                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                                                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
-                                                    {categoryData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
-                                                    ))}
-                                                </Pie>
-                                            </PieChart>
-                                        </ChartContainer>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-3xl font-bold text-foreground">{profileUser.points.toLocaleString()}</span>
-                                            <span className="text-sm text-muted-foreground">Total Points</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 text-sm">
-                                        {categoryData.slice(0, 5).map(item => (
-                                            <div key={item.name} className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[item.name]?.color }} />
-                                                    <span className="text-muted-foreground">{item.name}</span>
-                                                </div>
-                                                <span className="font-semibold text-right">{item.value.toLocaleString()} pts</span>
-                                            </div>
-                                        ))}
-                                        {categoryData.length > 5 && (
-                                            <p className="text-xs text-muted-foreground text-center pt-2">...and {categoryData.length - 5} more categories</p>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
                  <Card>
                     <CardHeader>
-                        <CardTitle>Submissions Heatmap</CardTitle>
+                        <CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle>
+                        <CardDescription>Breakdown by difficulty</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-4 text-sm">
+                         <div>
+                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                <span>Easy</span>
+                                <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
+                            </div>
+                            <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                <span>Medium</span>
+                                <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
+                            </div>
+                            <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                <span>Hard</span>
+                                <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
+                            </div>
+                            <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle>
+                        <CardDescription>Points earned per problem category.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-center justify-center p-6">
+                        {categoryData.length > 0 ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <ChartContainer config={chartConfig} className="w-full aspect-square max-h-[150px]">
+                                    <PieChart>
+                                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
+                                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={50} paddingAngle={2} strokeWidth={0}>
+                                            {categoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={chartConfig[entry.name]?.color} />
+                                            ))}
+                                        </Pie>
+                                    </PieChart>
+                                </ChartContainer>
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Submissions</CardTitle>
+                        <CardDescription>User's coding activity over the past year.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-2">
                         {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
@@ -529,14 +449,17 @@ export default function UserProfilePage() {
                         )}
                     </CardContent>
                 </Card>
+            </div>
+
+            <div className="lg:col-span-1">
                  <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" /> Achievements</CardTitle>
+                        <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
                         <CardDescription>Badges earned from your activity.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-4">
                                 {Object.values(profileUser.achievements).sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 12).map((achievement: Achievement) => (
                                     <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
                                         <div className="p-3 bg-amber-400/10 rounded-full">
@@ -547,80 +470,14 @@ export default function UserProfilePage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <p className="text-muted-foreground text-center py-4 text-sm">No achievements yet. Keep coding!</p>
+                            <div className="flex items-center justify-center h-full min-h-[120px]">
+                                <p className="text-muted-foreground text-center text-sm">No achievements yet. Keep coding!</p>
                             </div>
                         )}
                     </CardContent>
                 </Card>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
-                        <CardContent>
-                            {recentlySolvedProblemsDetails.length > 0 ? (
-                                <div className="space-y-2">
-                                    {recentlySolvedProblemsDetails.map(problem => (
-                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                            <div className={cn("flex items-center justify-between gap-4 p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                                <div className="flex-1">
-                                                    <p className="font-medium">{problem.title}</p>
-                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                                        <span>Solved {formatDistanceToNow(problem.solvedAt, { addSuffix: true })}</span>
-                                                        <span className="text-muted-foreground/50">•</span>
-                                                        <Badge variant="secondary">{problem.categoryName}</Badge>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right shrink-0">
-                                                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
-                                                    <p className="text-sm font-semibold text-primary mt-1">+{problem.points} pts</p>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
-                        <CardContent>
-                            {loadingProblems ? (
-                                <div className="flex justify-center items-center h-full"><LoaderCircle className="h-6 w-6 animate-spin text-primary" /></div>
-                            ) : starredProblemsDetails.length > 0 ? (
-                                <div className="space-y-2">
-                                    {starredProblemsDetails.map(problem => {
-                                        const isLocked = problem.isPremium && !isAuthUserPro;
-                                        const isSolved = userData?.solvedProblems?.[problem.id];
-                                        return (
-                                            <Link key={problem.id} href={isLocked ? '/pricing' : `/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                                <div className={cn("flex items-center justify-between gap-4 p-3 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                                    <div className="flex-1">
-                                                        <p className="font-medium">{problem.title}</p>
-                                                        <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 shrink-0">
-                                                        <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                                                        {isSolved ? (
-                                                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                        ) : (
-                                                            <Circle className="h-4 w-4 text-muted-foreground/50" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </Link>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No problems starred yet.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
+
         </div>
       </div>
     </main>
@@ -628,3 +485,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
