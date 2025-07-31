@@ -9,6 +9,7 @@ import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import PrivacyShowcase from '@/components/privacy-showcase';
+import Image from 'next/image';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -75,6 +76,23 @@ const HeroSection = () => {
           <Button asChild variant="secondary" size="lg">
             <Link href="/leaderboard">Leaderboard</Link>
           </Button>
+        </motion.div>
+
+        <motion.div
+          custom={2}
+          variants={heroVariants}
+          initial="hidden"
+          animate="visible"
+          className="mt-8"
+        >
+          <Image
+            src="https://placehold.co/800x450.png"
+            alt="Hero image showing the Codbbit platform"
+            width={800}
+            height={450}
+            data-ai-hint="platform user interface"
+            className="rounded-lg border shadow-lg"
+          />
         </motion.div>
       </div>
     </div>
