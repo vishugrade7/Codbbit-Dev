@@ -434,22 +434,6 @@ export default function UserProfilePage() {
                     </div>
                      {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)} className="mt-6 w-full"><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>}
                 </Card>
-                {/* Heatmap */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Submissions Heatmap</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-2">
-                        {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                            <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                        ) : (
-                            <div className="text-center py-10">
-                                <h3 className="text-md font-semibold">Start your journey!</h3>
-                                <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
             </div>
             {/* Column 2: Stats */}
             <div className="lg:col-span-2 space-y-8">
@@ -530,6 +514,21 @@ export default function UserProfilePage() {
                         </CardContent>
                     </Card>
                 </div>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Submissions Heatmap</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                        {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                            <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                        ) : (
+                            <div className="text-center py-10">
+                                <h3 className="text-md font-semibold">Start your journey!</h3>
+                                <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
                  <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" /> Achievements</CardTitle>
