@@ -96,8 +96,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
+      <div className="container flex h-14 items-center justify-between">
+        <div className="flex items-center gap-4">
              <Link href="/" className="flex items-center gap-2">
               {loadingBranding ? (
                 <Skeleton className="h-6 w-6 rounded-lg" />
@@ -108,111 +108,9 @@ export default function Header() {
             </Link>
         </div>
 
-        <div className="flex w-full items-center justify-between md:justify-end">
-          <div className="md:hidden">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="top" className="h-auto max-h-screen w-full overflow-y-auto bg-background/80 backdrop-blur-sm">
-                 <div className="grid gap-6 py-6">
-                  {user ? (
-                    <>
-                       <div className="flex flex-col gap-2">
-                        <Link href={`/profile/${userData?.username}`} className="flex items-center gap-4 text-left p-2" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Avatar className="h-12 w-12">
-                                <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
-                                <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                                <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                {user.email}
-                                </p>
-                            </div>
-                        </Link>
-                         <div className="grid gap-1 text-sm font-medium">
-                            {!isPro && (
-                                <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-primary bg-primary/10 transition-all hover:bg-primary/20">
-                                    <Rocket className="h-4 w-4" />
-                                    <span>Upgrade</span>
-                                </Link>
-                            )}
-                        </div>
-                      </div>
-                      <Separator />
-                    </>
-                  ) : (
-                     <div className="flex flex-col gap-2">
-                       <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
-                       <Button variant="secondary" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
-                    </div>
-                  )}
-                  <nav className="grid gap-4">
-                    {visibleNavLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={cn(
-                          "text-lg font-medium transition-colors hover:text-foreground/80",
-                          pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60",
-                          !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
-                        )}
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                    {isAuthorizedAdmin && user && adminNavLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={cn(
-                            "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
-                            pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
-                            )}
-                        >
-                            <link.icon className="h-5 w-5" />
-                            {link.label}
-                        </Link>
-                    ))}
-                  </nav>
-                  {user && (
-                    <>
-                    <Separator/>
-                     <div className="grid gap-1 text-sm font-medium">
-                         <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                            <Settings className="h-4 w-4" /> Settings
-                        </Link>
-                        <div className="flex items-center justify-between rounded-lg px-3 py-2 text-muted-foreground">
-                           <div className="flex items-center gap-3">
-                              <ThemeToggle />
-                              <span>Theme</span>
-                           </div>
-                        </div>
-                         <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                            <Bug className="h-4 w-4" /> Report a Bug
-                        </Link>
-                         <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                            <LifeBuoy className="h-4 w-4" /> Support
-                        </Link>
-                         <Button variant="secondary" size="sm" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
-                            <LogOut className="mr-2 h-4 w-4" /> Logout
-                         </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-2">
-            <nav className="flex items-center gap-6 text-sm font-medium">
+        <div className="flex items-center gap-2">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                 {visibleNavLinks.map((link) => (
                   <Link
                       key={link.href}
@@ -243,8 +141,10 @@ export default function Header() {
                       )}
                   </Link>
                 ))}
-              </nav>
-
+            </nav>
+            
+            {/* Desktop Auth and Theme Toggle */}
+            <div className="hidden md:flex items-center gap-2">
               <Separator orientation="vertical" className="h-6 mx-4" />
 
               {authLoading ? (
@@ -307,7 +207,110 @@ export default function Header() {
                       </Button>
                   </>
               )}
-          </div>
+            </div>
+          
+            {/* Mobile Menu */}
+            <div className="md:hidden">
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Open menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="top" className="h-auto max-h-screen w-full overflow-y-auto bg-background/80 backdrop-blur-sm">
+                    <div className="grid gap-6 py-6">
+                    {user ? (
+                        <>
+                        <div className="flex flex-col gap-2">
+                            <Link href={`/profile/${userData?.username}`} className="flex items-center gap-4 text-left p-2" onClick={() => setIsMobileMenuOpen(false)}>
+                                <Avatar className="h-12 w-12">
+                                    <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
+                                    <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                    {user.email}
+                                    </p>
+                                </div>
+                            </Link>
+                            <div className="grid gap-1 text-sm font-medium">
+                                {!isPro && (
+                                    <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-primary bg-primary/10 transition-all hover:bg-primary/20">
+                                        <Rocket className="h-4 w-4" />
+                                        <span>Upgrade</span>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                        <Separator />
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                        <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
+                        <Button variant="secondary" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
+                        </div>
+                    )}
+                    <nav className="grid gap-4">
+                        {visibleNavLinks.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={cn(
+                            "text-lg font-medium transition-colors hover:text-foreground/80",
+                            pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60",
+                            !link.isEnabled && "text-muted-foreground/50 cursor-not-allowed"
+                            )}
+                        >
+                            {link.label}
+                        </Link>
+                        ))}
+                        {isAuthorizedAdmin && user && adminNavLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={cn(
+                                "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
+                                pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
+                                )}
+                            >
+                                <link.icon className="h-5 w-5" />
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
+                    {user && (
+                        <>
+                        <Separator/>
+                        <div className="grid gap-1 text-sm font-medium">
+                            <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                                <Settings className="h-4 w-4" /> Settings
+                            </Link>
+                            <div className="flex items-center justify-between rounded-lg px-3 py-2 text-muted-foreground">
+                            <div className="flex items-center gap-3">
+                                <ThemeToggle />
+                                <span>Theme</span>
+                            </div>
+                            </div>
+                            <Link href="/contact?type=bug" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                                <Bug className="h-4 w-4" /> Report a Bug
+                            </Link>
+                            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
+                                <LifeBuoy className="h-4 w-4" /> Support
+                            </Link>
+                            <Button variant="secondary" size="sm" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
+                                <LogOut className="mr-2 h-4 w-4" /> Logout
+                            </Button>
+                        </div>
+                        </>
+                    )}
+                    </div>
+                </SheetContent>
+                </Sheet>
+            </div>
         </div>
       </div>
     </header>
