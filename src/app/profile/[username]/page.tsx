@@ -21,7 +21,7 @@ import { PieChart, Pie, Cell, Legend } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
 import { Progress } from "@/components/ui/progress";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from "date-fns";
 import { getCache, setCache } from "@/lib/cache";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -344,7 +344,7 @@ export default function UserProfilePage() {
     <>
     <main className="flex-1 relative">
       <div className="container mx-auto px-4 md:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <Card className="lg:col-span-1 p-6 relative flex flex-col h-full">
                 <div className="absolute top-4 right-4 flex items-center gap-2">
                     <TooltipProvider>
@@ -545,12 +545,12 @@ export default function UserProfilePage() {
             </Card>
             
             <div className="lg:col-span-1">
-                 <Card>
+                 <Card className="h-full flex flex-col">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base"><Mountain className="h-4 w-4" /> Achievements</CardTitle>
+                        <CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> Achievements</CardTitle>
                         <CardDescription>Badges earned from your activity.</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-grow">
                         {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-4">
                                 {Object.values(profileUser.achievements).sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 12).map((achievement: Achievement) => (
@@ -572,8 +572,8 @@ export default function UserProfilePage() {
             </div>
             
             <div className="lg:col-span-2">
-                 <Card>
-                    <CardContent className="pt-6">
+                 <Card className="h-full flex flex-col">
+                    <CardContent className="pt-6 flex-grow">
                         {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
                             <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
                         ) : (
