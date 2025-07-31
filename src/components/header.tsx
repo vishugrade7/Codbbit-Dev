@@ -95,21 +95,21 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/60 backdrop-blur-lg supports-[backdrop-filter]:bg-background/40">
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/20 backdrop-blur-lg supports-[backdrop-filter]:bg-background/20">
       <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
+        <div className="mr-4 flex">
             <Link href="/" className="flex items-center gap-2">
               {loadingBranding ? (
                 <Skeleton className="h-6 w-6 rounded-lg" />
               ) : (
                 <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
               )}
-              <span className="text-lg font-bold font-headline">Codbbit</span>
+              <span className="text-lg font-bold font-headline hidden sm:inline-block">Codbbit</span>
             </Link>
         </div>
         
         {/* Mobile Menu Trigger & Logo */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -117,7 +117,7 @@ export default function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-background/80 backdrop-blur-sm">
+              <SheetContent side="top" className="h-auto max-h-screen overflow-y-auto bg-background/80 backdrop-blur-sm">
                  <div className="grid gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                     {loadingBranding ? (
@@ -216,8 +216,8 @@ export default function Header() {
             </Sheet>
         </div>
 
-        <div className="flex flex-1 items-center justify-end">
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        <div className="flex flex-1 items-center justify-between">
+           <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-6">
             {visibleNavLinks.map((link) => (
               <Link
                   key={link.href}
