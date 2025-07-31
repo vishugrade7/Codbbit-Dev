@@ -105,7 +105,7 @@ export default function UserProfilePage() {
         if (profileUser.subscriptionEndDate) {
             if (profileUser.subscriptionEndDate instanceof Timestamp) {
                 endDate = profileUser.subscriptionEndDate.toDate();
-            } else if (typeof profileUser.subscriptionEndDate === 'string' || typeof profileUser.subscriptionEndDate === 'number') {
+            } else if (typeof profileUser.subscriptionEndDate === 'string' || typeof profileUser.subscriptionEndDate === 'number' || profileUser.subscriptionEndDate instanceof Date) {
                 endDate = new Date(profileUser.subscriptionEndDate);
             }
         }
@@ -390,14 +390,59 @@ export default function UserProfilePage() {
                         <p className="text-sm text-muted-foreground">{profileUser.about}</p>
                     </div>
                 )}
-                 <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                    {profileUser.trailheadUrl && <Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Image src="/trailhead-logo.svg" alt="Trailhead" width={24} height={24}/></Link>}
-                    {profileUser.githubUrl && <Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Github className="h-6 w-6"/></Link>}
-                    {profileUser.linkedinUrl && <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Linkedin className="h-6 w-6"/></Link>}
-                    {profileUser.twitterUrl && <Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Twitter className="h-6 w-6"/></Link>}
-                    {profileUser.isEmailPublic && profileUser.email && (
-                        <a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary"><Mail className="h-6 w-6"/></a>
-                    )}
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                    <TooltipProvider>
+                      {profileUser.trailheadUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary">
+                              <Mountain className="h-6 w-6"/>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Trailhead</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                      {profileUser.githubUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary">
+                              <Github className="h-6 w-6"/>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent><p>GitHub</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                      {profileUser.linkedinUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary">
+                              <Linkedin className="h-6 w-6"/>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent><p>LinkedIn</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                      {profileUser.twitterUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary">
+                              <Twitter className="h-6 w-6"/>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Twitter / X</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                      {profileUser.isEmailPublic && profileUser.email && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary">
+                              <Mail className="h-6 w-6"/>
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Email</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TooltipProvider>
                 </div>
             </Card>
 
