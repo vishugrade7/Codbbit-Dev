@@ -97,7 +97,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/20 backdrop-blur-lg supports-[backdrop-filter]:bg-background/20">
       <div className="container flex h-14 items-center">
-        <div className="mr-4 flex">
+        <div className="mr-4 flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               {loadingBranding ? (
                 <Skeleton className="h-6 w-6 rounded-lg" />
@@ -106,10 +106,42 @@ export default function Header() {
               )}
               <span className="text-lg font-bold font-headline hidden sm:inline-block">Codbbit</span>
             </Link>
+             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                {visibleNavLinks.map((link) => (
+                  <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "relative transition-colors text-foreground/60 hover:text-foreground",
+                        pathname.startsWith(link.href) && "text-foreground"
+                      )}
+                  >
+                      {link.label}
+                      {pathname.startsWith(link.href) && (
+                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                      )}
+                  </Link>
+                ))}
+                {isAuthorizedAdmin && adminNavLinks.map((link) => (
+                  <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                      "relative transition-colors text-foreground/60 hover:text-foreground",
+                      pathname.startsWith(link.href) && "text-foreground"
+                      )}
+                  >
+                      {link.label}
+                       {pathname.startsWith(link.href) && (
+                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                      )}
+                  </Link>
+                ))}
+              </nav>
         </div>
         
         {/* Mobile Menu Trigger & Logo */}
-        <div className="md:hidden">
+        <div className="flex flex-1 items-center justify-end md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -130,7 +162,7 @@ export default function Header() {
                    {user ? (
                     <>
                        <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-4 text-left p-2">
+                        <Link href={`/profile/${userData?.username}`} className="flex items-center gap-4 text-left p-2" onClick={() => setIsMobileMenuOpen(false)}>
                             <Avatar className="h-12 w-12">
                                 <AvatarImage src={userData?.avatarUrl} alt={userData?.name ?? ''} />
                                 <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
@@ -141,14 +173,8 @@ export default function Header() {
                                 {user.email}
                                 </p>
                             </div>
-                        </div>
+                        </Link>
                         <div className="grid gap-1 text-sm font-medium">
-                            <Link href={`/profile/${userData?.username}`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                              <UserIcon className="h-4 w-4" /> Profile
-                            </Link>
-                            <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
-                                <Settings className="h-4 w-4" /> Settings
-                            </Link>
                             {!isPro && (
                                 <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-primary bg-primary/10 transition-all hover:bg-primary/20">
                                     <Rocket className="h-4 w-4" />
@@ -216,100 +242,65 @@ export default function Header() {
             </Sheet>
         </div>
 
-        <div className="flex flex-1 items-center justify-between">
-           <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-6">
-            {visibleNavLinks.map((link) => (
-              <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "relative transition-colors text-foreground/60 hover:text-foreground",
-                    pathname.startsWith(link.href) && "text-foreground"
-                  )}
-              >
-                  {link.label}
-                  {pathname.startsWith(link.href) && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                  )}
-              </Link>
-            ))}
-            {isAuthorizedAdmin && adminNavLinks.map((link) => (
-              <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                  "relative transition-colors text-foreground/60 hover:text-foreground",
-                  pathname.startsWith(link.href) && "text-foreground"
-                  )}
-              >
-                  {link.label}
-                   {pathname.startsWith(link.href) && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                  )}
-              </Link>
-            ))}
-          </nav>
-          
-          <div className="flex flex-1 items-center justify-end space-x-2">
-            <div className="flex items-center gap-2">
-              {authLoading ? (
-                <div className="flex items-center gap-4">
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                </div>
-              ) : user ? (
-                <>
-                    <ThemeToggle />
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-secondary hover:bg-secondary/80">
-                                <UserIcon className="h-5 w-5"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                             <DropdownMenuLabel className="font-normal">
-                                <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                    {user.email}
-                                </p>
-                                </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
-                                <UserIcon className="mr-2 h-4 w-4" />
-                                <span>Profile</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push('/settings')}>
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
-                             {!isPro && (
-                                <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
-                                    <Rocket className="mr-2 h-4 w-4" />
-                                    <span>Upgrade</span>
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleLogout}>
-                                <LogOut className="mr-2 h-4 w-4" />
-                                <span>Log out</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </>
-              ) : (
-                <div className="hidden md:flex items-center gap-2">
-                    <ThemeToggle />
-                    <Button variant="ghost" asChild>
-                      <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </Button>
-                </div>
-              )}
-            </div>
+        <div className="hidden md:flex flex-1 items-center justify-end">
+          <div className="flex items-center gap-2">
+            {authLoading ? (
+              <div className="flex items-center gap-4">
+                  <Skeleton className="h-8 w-16 rounded-md" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+            ) : user ? (
+              <>
+                  <ThemeToggle />
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                              <UserIcon className="h-5 w-5"/>
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                           <DropdownMenuLabel className="font-normal">
+                              <div className="flex flex-col space-y-1">
+                              <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                              <p className="text-xs leading-none text-muted-foreground">
+                                  {user.email}
+                              </p>
+                              </div>
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
+                              <UserIcon className="mr-2 h-4 w-4" />
+                              <span>Profile</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push('/settings')}>
+                              <Settings className="mr-2 h-4 w-4" />
+                              <span>Settings</span>
+                          </DropdownMenuItem>
+                           {!isPro && (
+                              <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary focus:bg-primary/10 focus:text-primary">
+                                  <Rocket className="mr-2 h-4 w-4" />
+                                  <span>Upgrade</span>
+                              </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={handleLogout}>
+                              <LogOut className="mr-2 h-4 w-4" />
+                              <span>Log out</span>
+                          </DropdownMenuItem>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
