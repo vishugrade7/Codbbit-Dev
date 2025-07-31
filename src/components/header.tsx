@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import type { NavLink } from "@/types";
 import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "./ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "./theme-toggle";
@@ -109,39 +109,6 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                {visibleNavLinks.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                        "relative transition-colors text-foreground/60 hover:text-foreground",
-                        pathname.startsWith(link.href) && "text-foreground"
-                    )}
-                >
-                    {link.label}
-                    {pathname.startsWith(link.href) && (
-                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                    )}
-                </Link>
-                ))}
-                {isAuthorizedAdmin && adminNavLinks.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                    "relative transition-colors text-foreground/60 hover:text-foreground",
-                    pathname.startsWith(link.href) && "text-foreground"
-                    )}
-                >
-                    {link.label}
-                    {pathname.startsWith(link.href) && (
-                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
-                    )}
-                </Link>
-                ))}
-            </nav>
-
             {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -247,6 +214,39 @@ export default function Header() {
 
             {/* Desktop Auth and Theme Toggle */}
             <div className="hidden md:flex items-center gap-2">
+              <nav className="flex items-center gap-6 text-sm font-medium">
+                {visibleNavLinks.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                        "relative transition-colors text-foreground/60 dark:text-foreground hover:text-foreground",
+                        pathname.startsWith(link.href) && "text-foreground"
+                    )}
+                >
+                    {link.label}
+                    {pathname.startsWith(link.href) && (
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                    )}
+                </Link>
+                ))}
+                {isAuthorizedAdmin && adminNavLinks.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                    "relative transition-colors text-foreground/60 dark:text-foreground hover:text-foreground",
+                    pathname.startsWith(link.href) && "text-foreground"
+                    )}
+                >
+                    {link.label}
+                    {pathname.startsWith(link.href) && (
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                    )}
+                </Link>
+                ))}
+              </nav>
+
               <Separator orientation="vertical" className="h-6 mx-4" />
 
               {authLoading ? (
