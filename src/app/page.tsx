@@ -11,7 +11,7 @@ import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import ProfileTrackerShowcase from '@/components/profile-tracker-showcase';
 import Image from 'next/image';
-import { Rocket } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -44,57 +44,51 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center bg-background p-4 py-24 md:py-32 home-hero-gradient">
-      <div className="container mx-auto flex flex-col items-center text-center gap-8 max-w-4xl">
-        
-        <motion.div custom={0} variants={heroVariants} initial="hidden" animate="visible">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
-            Smarter Code, Less Effort <Rocket className="h-4 w-4"/>
-          </div>
-        </motion.div>
+    <div className="w-full flex items-center justify-center bg-background p-4 py-24 md:py-32 home-hero-gradient">
+      <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
+        <div className="flex flex-col items-start text-left gap-6">
+            <motion.div custom={0} variants={heroVariants} initial="hidden" animate="visible">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+                    Coding Like Never Before 🧐
+                </div>
+            </motion.div>
 
-        <motion.div custom={1} variants={heroVariants} initial="hidden" animate="visible">
-           <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Supercharge Your Codebase with an AI Coding Agent
-            </h1>
-        </motion.div>
+            <motion.div custom={1} variants={heroVariants} initial="hidden" animate="visible" className="space-y-4">
+                <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+                    The AI Coding Agent Developers Actually Use
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-xl">
+                    Tackle everyday development tasks bug fixing, refactoring, or feature building powered by autonomous AI agents built for real-world workflows.
+                </p>
+            </motion.div>
 
-        <motion.div custom={2} variants={heroVariants} initial="hidden" animate="visible">
-            <p className="text-lg text-muted-foreground max-w-2xl">
-                Your AI pair programmer write, debug, and refactor code faster with a fully integrated development agent.
-            </p>
-        </motion.div>
-
-        <motion.div
-          custom={3}
-          variants={heroVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-row items-center gap-4"
-        >
-          <Button asChild size="lg">
-            <Link href="/signup">Get started →</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/contact">Watch a demo</Link>
-          </Button>
-        </motion.div>
+            <motion.div
+                custom={2}
+                variants={heroVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                <Button asChild size="lg">
+                    <Link href="/signup">Get started <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                </Button>
+            </motion.div>
+        </div>
         
         <motion.div
-          custom={4}
-          variants={heroVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full max-w-3xl mt-8"
+            custom={3}
+            variants={heroVariants}
+            initial="hidden"
+            animate="visible"
+            className="w-full"
         >
-          <Image
-            src="https://placehold.co/1024x576.png"
-            alt="AI coding agent interface"
-            width={1024}
-            height={576}
-            data-ai-hint="dark editor user interface"
-            className="rounded-lg border shadow-2xl shadow-primary/10"
-          />
+            <Image
+                src="https://placehold.co/1024x768.png"
+                alt="AI coding agent interface"
+                width={1024}
+                height={768}
+                data-ai-hint="dark editor user interface"
+                className="rounded-lg border shadow-2xl shadow-primary/10"
+            />
         </motion.div>
       </div>
     </div>
