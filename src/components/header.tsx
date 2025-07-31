@@ -141,7 +141,7 @@ export default function Header() {
         </div>
         
         <div className="flex flex-1 items-center justify-end gap-2">
-            <ThemeToggle />
+            
 
             {/* Mobile Menu */}
             <div className="md:hidden">
@@ -154,14 +154,7 @@ export default function Header() {
                 </SheetTrigger>
                 <SheetContent side="top" className="h-auto max-h-screen w-full overflow-y-auto bg-background/80 backdrop-blur-sm">
                    <div className="grid gap-6 py-6">
-                    <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                      {loadingBranding ? (
-                        <Skeleton className="h-6 w-6 rounded-lg" />
-                      ) : (
-                        <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
-                      )}
-                      <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
-                    </Link>
+                    
                      {user ? (
                       <>
                          <div className="flex flex-col gap-2">
@@ -247,6 +240,7 @@ export default function Header() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-2">
+              <ThemeToggle />
               {authLoading ? (
                 <div className="flex items-center gap-4">
                     <Skeleton className="h-8 w-16 rounded-md" />
@@ -309,4 +303,3 @@ export default function Header() {
     </header>
   );
 }
-
