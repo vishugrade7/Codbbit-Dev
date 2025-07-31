@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Metadata } from 'next';
@@ -334,7 +333,6 @@ export default function Leaderboard() {
       <title>Leaderboard</title>
       <main className="flex-1 container py-8">
         <div className="text-center mb-12 relative">
-            <h1 className="text-6xl md:text-8xl font-black text-foreground/5 dark:text-white/5 absolute inset-x-0 -top-4 select-none pointer-events-none">CHAMPIONS</h1>
             <h2 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
                 See how you rank against the top developers. Keep solving problems to climb up the ranks!
