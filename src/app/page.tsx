@@ -9,7 +9,7 @@ import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
-import PrivacyShowcase from '@/components/privacy-showcase';
+import ProfileTrackerShowcase from '@/components/profile-tracker-showcase';
 import Image from 'next/image';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
@@ -109,7 +109,7 @@ export default function Home() {
       <Section><FeatureGrid /></Section>
       <Section><Testimonials /></Section>
       <Section><InteractivePlayground /></Section>
-      <Section><PrivacyShowcase /></Section>
+      <Section><ProfileTrackerShowcase /></Section>
       <Section><CallToAction /></Section>
     </main>
   );
