@@ -17,7 +17,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star, ChevronsUpDown, Check, Code } from "lucide-react";
+import { Loader2, Building, Trophy, Globe, BookOpen, ArrowRight, Star, ChevronsUpDown, Check, Code, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -73,21 +73,25 @@ const ProIconOverlay = () => (
 type ProblemWithCategory = Problem & { categoryName: string };
 
 const getMedalColor = (rank: number) => {
-  if (rank === 1) return 'bg-yellow-400/10 hover:bg-yellow-400/20';
-  if (rank === 2) return 'bg-slate-400/10 hover:bg-slate-400/20';
-  if (rank === 3) return 'bg-orange-500/10 hover:bg-orange-500/20';
-  return '';
+  if (rank === 1) return 'bg-yellow-400/10 hover:bg-yellow-400/20 border-yellow-400/20';
+  if (rank === 2) return 'bg-slate-400/10 hover:bg-slate-400/20 border-slate-400/20';
+  if (rank === 3) return 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-400/20';
+  return 'hover:bg-muted/50';
 };
+
+const getPodiumClass = (rank: number) => {
+    if (rank === 1) return 'border-yellow-400/50 bg-yellow-400/10';
+    if (rank === 2) return 'border-slate-400/50 bg-slate-400/10';
+    if (rank === 3) return 'border-orange-500/50 bg-orange-400/10';
+    return 'border-border';
+}
 
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
   const { user: authUser, userData } = useAuth();
-  const router = useRouter();
   const isMobile = useIsMobile();
 
   const [filterType, setFilterType] = useState<"Global" | "Country" | "Company">("Global");
@@ -211,7 +215,6 @@ export default function Leaderboard() {
 
   const handleFilterTypeChange = (value: "Global" | "Country" | "Company") => {
     setFilterType(value);
-    setCurrentPage(1);
     setCountrySearch('');
     setCompanySearch('');
     if (value === 'Country') {
@@ -224,7 +227,6 @@ export default function Leaderboard() {
   };
 
   const handleFilterValueChange = (value: string) => {
-    setCurrentPage(1);
     setFilterValue(value);
   }
 
@@ -237,7 +239,7 @@ export default function Leaderboard() {
     return isAdmin || hasActiveSub;
   };
 
-  const filteredData = useMemo(() => {
+  const rankedData = useMemo(() => {
     let data = leaderboardData;
     if (filterType === "Country" && filterValue) {
         data = leaderboardData.filter(u => u.country === filterValue);
@@ -247,31 +249,8 @@ export default function Leaderboard() {
     return data.map((user, index) => ({ ...user, rank: index + 1 }));
   }, [leaderboardData, filterType, filterValue]);
 
-  const currentUserEntry = useMemo(() => {
-    if (!authUser) return null;
-    const globalRankedData = leaderboardData.map((user, index) => ({ ...user, rank: index + 1 }));
-    return globalRankedData.find(entry => entry.id === authUser.uid);
-  }, [authUser, leaderboardData]);
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredData.slice(startIndex, endIndex);
-  }, [currentPage, filteredData]);
-
-
-  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-
-  const getDifficultyBadgeClass = (difficulty: string) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-      case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
-      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-      default: return 'bg-muted';
-    }
-  };
+  const podiumData = useMemo(() => rankedData.slice(0, 3), [rankedData]);
+  const tableData = useMemo(() => rankedData.slice(3), [rankedData]);
 
   if (loading) {
     return (
@@ -280,6 +259,37 @@ export default function Leaderboard() {
       </main>
     );
   }
+
+  const PodiumCard = ({ user, rank }: { user: LeaderboardUser, rank: number }) => {
+     const heightClass = rank === 1 ? 'h-full' : rank === 2 ? 'h-[90%]' : 'h-[80%]';
+     const crownColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-slate-400' : 'text-orange-500';
+
+     return (
+        <div className={cn('relative w-full flex flex-col items-center justify-end', heightClass)}>
+            <Card className={cn("w-full text-center p-4 border-2 relative overflow-visible", getPodiumClass(rank))}>
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                    <div className="relative">
+                        <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer">
+                            <Avatar className={cn("h-16 w-16 border-4", rank === 1 ? "border-yellow-400" : rank === 2 ? "border-slate-400" : "border-orange-400")}>
+                                <AvatarImage src={user.avatarUrl} alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                        {isUserPro(user) && <ProIconOverlay />}
+                    </div>
+                </div>
+                 <div className="absolute top-2 right-2">
+                    <Crown className={cn("h-6 w-6", crownColor)} />
+                 </div>
+                <div className="pt-10">
+                    <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">{user.name}</Link>
+                    <p className="text-sm text-muted-foreground">@{user.username}</p>
+                    <p className="font-bold text-xl mt-2">{user.points.toLocaleString()} pts</p>
+                </div>
+            </Card>
+        </div>
+     );
+  };
 
   return (
     <>
@@ -291,101 +301,13 @@ export default function Leaderboard() {
                 See how you rank against the top developers. Keep solving problems to climb up the ranks!
             </p>
         </div>
-
-         {currentUserEntry && (
-          <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-               <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
-                <CardContent className="p-6 flex flex-col flex-grow">
-                    <div className="flex justify-between items-start flex-grow">
-                        <Link href={`/profile/${currentUserEntry.username}`} className="flex items-start gap-4 group">
-                             <div className="relative">
-                                 <Avatar className={cn(
-                                      "h-20 w-20 border-4", 
-                                      isUserPro(currentUserEntry) 
-                                          ? "border-yellow-400 shadow-lg" 
-                                          : "border-primary/50"
-                                  )}>
-                                    <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                                    <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                {isUserPro(currentUserEntry) && <ProIconOverlay />}
-                             </div>
-                            <div>
-                                 <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-lg group-hover:underline">{currentUserEntry.name}</p>
-                                  {currentUserEntry.emailVerified && <VerifiedIcon />}
-                              </div>
-                                <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                                 {currentUserEntry.company && (
-                                  <Badge variant="secondary" className="mt-1">
-                                      {currentUserEntry.companyLogoUrl && <Image src={currentUserEntry.companyLogoUrl} alt={`${currentUserEntry.company} logo`} width={16} height={16} className="mr-1.5 rounded-sm object-contain"/>}
-                                      <span className="truncate">{currentUserEntry.company}</span>
-                                  </Badge>
-                                )}
-                            </div>
-                        </Link>
-                        <div className="text-right">
-                            <div className="flex items-center gap-2 font-bold text-2xl">
-                                <Trophy className="h-7 w-7 text-yellow-400" />
-                                <span>{currentUserEntry.rank}</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Global Rank</p>
-                        </div>
-                    </div>
-                     {currentUserEntry.rank > 1 && leaderboardData.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-primary/20 text-center">
-                            <p className="text-sm text-muted-foreground">
-                                You are <span className="font-bold text-foreground">{(leaderboardData[0].points - currentUserEntry.points).toLocaleString()}</span> points away from rank 1!
-                            </p>
-                        </div>
-                    )}
-                </CardContent>
-              </Card>
-            </div>
-            <div className="hidden lg:block lg:col-span-2">
-              {suggestedProblem ? (
-                  <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
-                    <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6 h-full">
-                        <div className="flex-grow">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                    <BookOpen className="h-5 w-5 text-primary" />
-                                </div>
-                                <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
-                            </div>
-                            <p className="text-muted-foreground text-sm mb-3">
-                                Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
-                                <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
-                                {suggestedProblem.difficulty}
-                                </Badge>
-                            </div>
-                        </div>
-                        <div className="flex-shrink-0">
-                            <Button asChild size="sm" className="text-primary-foreground dark:text-white">
-                              <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
-                                Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
-                              </Link>
-                            </Button>
-                        </div>
-                    </CardContent>
-                  </Card>
-              ) : (
-                <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed h-full">
-                    <CardContent className="p-0">
-                        <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold">You're a Champion!</h3>
-                        <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
-                    </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        )}
         
+        <div className="mb-12 grid grid-cols-1 md:grid-cols-3 items-end gap-4 h-64 md:h-72">
+            <div className="h-full w-full">{podiumData[1] && <PodiumCard user={podiumData[1]} rank={2}/>}</div>
+            <div className="h-full w-full">{podiumData[0] && <PodiumCard user={podiumData[0]} rank={1}/>}</div>
+            <div className="h-full w-full">{podiumData[2] && <PodiumCard user={podiumData[2]} rank={3}/>}</div>
+        </div>
+
         <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
             <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
                 <TabsList>
@@ -476,17 +398,16 @@ export default function Leaderboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedData.map((user) => (
+                {tableData.map((user) => (
                   <TableRow
                     key={user.id}
-                    className={cn("cursor-pointer", getMedalColor(user.rank))}
-                    onClick={() => router.push(`/profile/${user.username}`)}
+                    className={cn(getMedalColor(user.rank))}
                   >
                     <TableCell className="text-center">
                       <span className="font-bold text-lg">{user.rank}</span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
+                      <Link href={`/profile/${user.username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
                          <div className="relative">
                             <Avatar className={cn(
                                 "h-10 w-10 border-2", 
@@ -499,12 +420,12 @@ export default function Leaderboard() {
                          </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                              <p className="font-semibold">{user.name}</p>
+                              <p className="font-semibold group-hover:underline">{user.name}</p>
                                {user.emailVerified && <VerifiedIcon />}
                           </div>
                           <p className="text-sm text-muted-foreground">@{user.username}</p>
                         </div>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>
                        {user.company ? (
@@ -522,21 +443,7 @@ export default function Leaderboard() {
             </Table>
           </div>
 
-        {totalPages > 1 && (
-            <div className="flex items-center justify-center space-x-4 mt-8">
-                <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline">
-                    Previous
-                </Button>
-                <span className="text-sm font-medium text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                </span>
-                <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline">
-                    Next
-                </Button>
-            </div>
-        )}
-
-        {paginatedData.length === 0 && (
+        {rankedData.length === 0 && (
            <div className="text-center py-16">
               <h3 className="text-lg font-semibold">No users found</h3>
               <p className="text-muted-foreground mt-1">Try adjusting your filters.</p>
