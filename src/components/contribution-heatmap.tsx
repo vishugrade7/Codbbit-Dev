@@ -124,6 +124,7 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
                 startDate={startDate}
                 endDate={endDate}
                 values={activityData}
+                gutterSize={4}
                 classForValue={(value) => {
                     if (!value || value.count === 0) {
                         return 'color-empty';
