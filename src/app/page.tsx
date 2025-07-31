@@ -42,8 +42,8 @@ export default function Home() {
               className="text-5xl md:text-7xl font-bold tracking-tight"
             >
               Master Salesforce with Interactive Challenges in{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
-                Apex
+              <span className="relative inline-block whitespace-nowrap text-primary before:absolute before:inset-0 before:z-0 before:bg-gradient-to-r before:from-cyan-400 before:to-blue-600 before:bg-clip-text before:text-transparent before:animate-bg-shine">
+                <span className="relative z-10">Apex</span>
               </span>
             </motion.h1>
              <motion.p

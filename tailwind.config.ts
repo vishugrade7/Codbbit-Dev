@@ -149,7 +149,8 @@ export default {
             '50%': { transform: 'translateY(-4px) scale(1.1)' },
         },
         'bg-shine': {
-          '100%': { transform: 'translateX(100%)' },
+          'from': { backgroundPosition: '200% 0' },
+          'to': { backgroundPosition: '-200% 0' },
         },
       },
       animation: {
@@ -163,7 +164,7 @@ export default {
         'icon-pulse': 'icon-pulse 0.5s ease-in-out',
         'icon-shake': 'icon-shake 0.4s ease-in-out',
         'icon-bounce': 'icon-bounce 0.5s ease-in-out',
-        'bg-shine': 'bg-shine 2s linear infinite',
+        'bg-shine': 'bg-shine 3s linear infinite',
       },
     },
   },
