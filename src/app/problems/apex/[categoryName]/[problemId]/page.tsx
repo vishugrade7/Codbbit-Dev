@@ -616,7 +616,10 @@ export default function ProblemWorkspacePage() {
                 }
             }
         } else {
-            toast({ variant: "destructive", title: "Submission Failed", description: response.details || "An error occurred during submission.", duration: 9000 });
+            const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
+            const match = (response.details || "").match(errorRegex);
+            const errorMessage = match ? match[1].trim() : "An error occurred during submission.";
+            toast({ variant: "destructive", title: "Submission Failed", description: errorMessage, duration: 9000 });
         }
         
         setIsSubmitting(false);
@@ -831,10 +834,10 @@ export default function ProblemWorkspacePage() {
                 </Sheet>
             </div>
             <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5 font-semibold">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                </div>
+                <Button variant="ghost" className="h-9 px-3 text-sm">
+                  <Flame className="h-5 w-5 text-orange-500 mr-2" />
+                  <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </Button>
                 <div className="flex items-center gap-1.5 font-semibold">
                     <Award className="h-5 w-5 text-yellow-400" />
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
@@ -1023,3 +1026,4 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
