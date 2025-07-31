@@ -9,7 +9,6 @@ import FeatureGrid from '@/components/feature-grid';
 import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
-import StatsSection from '@/components/stats-section';
 import { motion } from 'framer-motion';
 
 const SkillCard = ({
@@ -238,9 +237,6 @@ export default function Home() {
       </div>
        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
         <FeatureGrid />
-      </motion.div>
-      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
-        <StatsSection />
       </motion.div>
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
         <Testimonials />
