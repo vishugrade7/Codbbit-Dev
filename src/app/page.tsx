@@ -10,6 +10,7 @@ import Testimonials from '@/components/testimonials';
 import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion } from 'framer-motion';
+import PrivacyShowcase from '@/components/privacy-showcase';
 
 export default function Home() {
   const sectionVariants = {
@@ -64,9 +65,7 @@ export default function Home() {
             animate="visible"
             className="flex flex-row items-center gap-4"
           >
-            <Button
-              asChild
-            >
+            <Button asChild>
               <Link href="/apex-problems">Explore Problems</Link>
             </Button>
             <Button asChild variant="secondary">
@@ -83,6 +82,9 @@ export default function Home() {
       </motion.div>
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
         <InteractivePlayground />
+      </motion.div>
+       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
+        <PrivacyShowcase />
       </motion.div>
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={sectionVariants}>
         <CallToAction />
