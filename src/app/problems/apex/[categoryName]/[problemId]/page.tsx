@@ -15,6 +15,7 @@ import ReactConfetti from 'react-confetti';
 import Image from "next/image";
 import { getCache, setCache } from "@/lib/cache";
 import mermaid from "mermaid";
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -195,7 +196,7 @@ const EditorAndResults = ({
     toggleFullScreen,
     resultsPanelRef,
     isResultsCollapsed,
-    setIsResultsCollapsed,
+    setIsResultsCollapsed: setIsResultsCollapsedProp,
     toggleResultsPanel,
     results,
     submissionSuccess,
@@ -219,6 +220,10 @@ const EditorAndResults = ({
     submissionStep: SubmissionStep
 }) => {
     const { resolvedTheme } = useTheme();
+
+    const setIsResultsCollapsed = (value: boolean) => {
+        setIsResultsCollapsedProp(value);
+    };
 
     return (
         <ResizablePanelGroup direction="vertical">
@@ -882,17 +887,27 @@ export default function ProblemWorkspacePage() {
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
                 </div>
                  <div className="flex items-center gap-1 p-1 rounded-full bg-muted">
-                    {isTimerExpanded ? (
-                        <div className="flex items-center gap-2 px-2">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsTimerExpanded(false)}><ChevronLeftIcon className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer}>
-                                {timerIsActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                            </Button>
-                            <span className="font-mono text-sm text-primary font-semibold w-20 text-center">{formatTime(elapsedTime)}</span>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetTimer}><RotateCcw className="h-4 w-4" /></Button>
-                        </div>
-                    ) : (
-                        <TooltipProvider>
+                    <AnimatePresence>
+                        {isTimerExpanded && (
+                             <motion.div
+                                key="timer-controls"
+                                initial={{ width: 0, opacity: 0, x: 20 }}
+                                animate={{ width: 'auto', opacity: 1, x: 0 }}
+                                exit={{ width: 0, opacity: 0, x: 20 }}
+                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                className="flex items-center gap-2 px-2 overflow-hidden"
+                            >
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsTimerExpanded(false)}><ChevronLeftIcon className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer}>
+                                    {timerIsActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                </Button>
+                                <span className="font-mono text-sm text-primary font-semibold w-20 text-center">{formatTime(elapsedTime)}</span>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetTimer}><RotateCcw className="h-4 w-4" /></Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    {!isTimerExpanded && (
+                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" className={cn("h-7 w-7 relative", timerIsActive && "animate-wave-ping text-primary")} onClick={() => setIsTimerExpanded(true)}>
@@ -1099,5 +1114,7 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
+    
 
     
