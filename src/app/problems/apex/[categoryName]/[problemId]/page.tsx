@@ -25,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, ArrowRight } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -537,17 +537,15 @@ export default function ProblemWorkspacePage() {
     }, [userData, problemId]);
 
     const filteredProblems = useMemo(() => {
-        // Create a map for quick index lookup
-        const problemIndexMap = new Map(allProblems.map((p, index) => [p.id, index + 1]));
         return allProblems
+            .map((p, index) => ({...p, index: index + 1}))
             .filter((p) => {
                 if (difficultyFilter === "All") return true;
                 return p.difficulty === difficultyFilter;
             })
             .filter((p) => {
                 return p.title.toLowerCase().includes(searchTerm.toLowerCase());
-            })
-            .map(p => ({ ...p, index: problemIndexMap.get(p.id) })); // Add the original index
+            });
     }, [allProblems, searchTerm, difficultyFilter]);
 
     const handleSubmit = async () => {
@@ -583,10 +581,6 @@ export default function ProblemWorkspacePage() {
             }
         }
         
-        const onProgress = (step: 'testing' | 'done') => {
-            setSubmissionStep(step);
-        };
-
         const response = await submitApexSolution(user.uid, problem, code);
         
         setResults(response.details || response.message);
@@ -619,7 +613,7 @@ export default function ProblemWorkspacePage() {
                 }
             }
         } else {
-             const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
+            const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
             const match = (response.details || "").match(errorRegex);
             const errorMessage = match ? match[1].trim() : "An error occurred during submission.";
             toast({ variant: "destructive", title: "Submission Failed", description: errorMessage, duration: 9000 });
@@ -681,6 +675,15 @@ export default function ProblemWorkspacePage() {
         case 'medium': return 'text-yellow-500';
         case 'hard': return 'text-red-500';
         default: return 'text-muted-foreground';
+        }
+    };
+    
+    const getDifficultyRowClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-500/10 hover:bg-green-500/20';
+          case 'medium': return 'bg-yellow-500/10 hover:bg-yellow-500/20';
+          case 'hard': return 'bg-destructive/10 hover:bg-destructive/20';
+          default: return 'hover:bg-muted/50';
         }
     };
 
@@ -775,8 +778,7 @@ export default function ProblemWorkspacePage() {
                     <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background/80 backdrop-blur-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <SheetHeader className="p-4 border-b shrink-0 flex-row items-center justify-between">
                             <SheetTitle className="flex items-center gap-2 text-lg">
-                                Problem List 
-                                <ArrowRight className="h-4 w-4" />
+                                {categoryName}
                             </SheetTitle>
                         </SheetHeader>
                         <div className="p-4 border-b space-y-4 shrink-0">
@@ -816,12 +818,15 @@ export default function ProblemWorkspacePage() {
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
                                         "flex items-center gap-4 w-full px-4 py-2.5 text-sm transition-colors",
-                                        p.id === problemId ? "bg-card text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                        p.id === problemId ? "bg-muted/80 text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                     )}
                                 >
                                     <span className="w-6 text-right">{p.index}.</span>
                                     <span className="flex-1 truncate pr-2">{p.title}</span>
-                                    <span className={cn("w-16 text-right", getDifficultyClass(p.difficulty))}>{p.difficulty}</span>
+                                    <div className="flex-shrink-0 flex items-center gap-2">
+                                        <span className={cn("w-16 text-right", getDifficultyClass(p.difficulty))}>{p.difficulty}</span>
+                                        {userData?.solvedProblems?.[p.id] && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                    </div>
                                 </Link>
                             )) : (
                                 <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
@@ -838,6 +843,26 @@ export default function ProblemWorkspacePage() {
                 <div className="flex items-center gap-1.5 font-semibold">
                     <Award className="h-5 w-5 text-yellow-400" />
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
+                </div>
+                 <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 bg-primary/20 text-primary shadow-inner">
+                                    <Timer className="h-4 w-4"/>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Timer</p></TooltipContent>
+                        </Tooltip>
+                         <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <UserPlus className="h-4 w-4"/>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Invite Teammate</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
                  <TooltipProvider>
                     <Tooltip>
@@ -1023,3 +1048,4 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
