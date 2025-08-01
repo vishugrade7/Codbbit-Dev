@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
@@ -25,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus, Pause, RotateCcw } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus, Pause, RotateCcw, ChevronLeft as ChevronLeftIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -42,7 +41,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -395,6 +393,7 @@ export default function ProblemWorkspacePage() {
     const { resolvedTheme } = useTheme();
 
     // Timer state
+    const [isTimerExpanded, setIsTimerExpanded] = useState(false);
     const [timerIsActive, setTimerIsActive] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0); // in seconds
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -520,6 +519,7 @@ export default function ProblemWorkspacePage() {
                         }
                         setProblem({...currentProblem, categoryName});
                         // For "Test Class" problems, the user starts with the (usually empty) test case file.
+                        // For other problems, they start with the (usually empty) test case file.
                         // For other problems, they start with the sample code.
                         const initialCode = currentProblem.metadataType === "Test Class" ? currentProblem.testcases : currentProblem.sampleCode;
                         setCode(initialCode);
@@ -737,7 +737,7 @@ export default function ProblemWorkspacePage() {
             <div className="p-4 h-full overflow-y-auto space-y-6">
                 <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
                 <div className="flex items-center gap-4 flex-wrap">
-                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(problem.difficulty))}>{problem.difficulty}</Badge>
                     <Badge variant="secondary">{categoryName}</Badge>
                      {problem.company && (
                         <Badge variant="secondary">
@@ -881,30 +881,31 @@ export default function ProblemWorkspacePage() {
                     <Award className="h-5 w-5 text-yellow-400" />
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
                 </div>
-                 <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 bg-primary/20 text-primary shadow-inner">
-                                <Timer className="h-4 w-4"/>
+                 <div className="flex items-center gap-1 p-1 rounded-full bg-muted">
+                    {isTimerExpanded ? (
+                        <div className="flex items-center gap-2 px-2">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsTimerExpanded(false)}><ChevronLeftIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer}>
+                                {timerIsActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel className="font-mono text-center text-lg">
-                                {formatTime(elapsedTime)}
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={toggleTimer}>
-                                {timerIsActive ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                                <span>{timerIsActive ? 'Pause' : 'Start'}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={resetTimer}>
-                                <RotateCcw className="mr-2 h-4 w-4" />
-                                <span>Reset</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                     <TooltipProvider>
-                         <Tooltip>
+                            <span className="font-mono text-sm text-primary font-semibold w-20 text-center">{formatTime(elapsedTime)}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetTimer}><RotateCcw className="h-4 w-4" /></Button>
+                        </div>
+                    ) : (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsTimerExpanded(true)}>
+                                        <Timer className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Open Timer</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                    <Separator orientation="vertical" className="h-5" />
+                    <TooltipProvider>
+                        <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">
                                     <UserPlus className="h-4 w-4"/>
@@ -951,7 +952,7 @@ export default function ProblemWorkspacePage() {
                     {/* Mobile View for Test Class */}
                     <div className="md:hidden flex flex-col h-full">
                         <Tabs defaultValue="class" className="flex-1 flex flex-col">
-                            <TabsList className="grid w-full grid-cols-2 shrink-0">
+                            <TabsList className="relative inline-flex h-auto items-center justify-center rounded-none border-b bg-transparent p-0 grid w-full grid-cols-2 shrink-0">
                                 <TabsTrigger value="class">Apex Class</TabsTrigger>
                                 <TabsTrigger value="code">Test Class</TabsTrigger>
                             </TabsList>
@@ -1098,3 +1099,4 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
