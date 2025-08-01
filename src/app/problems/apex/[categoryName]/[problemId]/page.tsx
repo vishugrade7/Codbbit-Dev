@@ -809,7 +809,7 @@ export default function ProblemWorkspacePage() {
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
-                                        "block p-2 rounded-md",
+                                        "block p-2 rounded-md transition-colors",
                                         p.id === problemId ? "bg-primary/10" : "hover:bg-muted"
                                     )}
                                 >
