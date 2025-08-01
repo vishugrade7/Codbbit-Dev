@@ -48,6 +48,7 @@ import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Separator } from "@/components/ui/separator";
 
 
 type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
@@ -519,7 +520,6 @@ export default function ProblemWorkspacePage() {
                         }
                         setProblem({...currentProblem, categoryName});
                         // For "Test Class" problems, the user starts with the (usually empty) test case file.
-                        // For other problems, they start with the (usually empty) test case file.
                         // For other problems, they start with the sample code.
                         const initialCode = currentProblem.metadataType === "Test Class" ? currentProblem.testcases : currentProblem.sampleCode;
                         setCode(initialCode);
@@ -1100,3 +1100,4 @@ export default function ProblemWorkspacePage() {
     )
 }
 
+    
