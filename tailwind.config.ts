@@ -158,6 +158,17 @@ export default {
           'from': { backgroundPosition: '200% 0' },
           'to': { backgroundPosition: '-200% 0' },
         },
+        'wave-ping': {
+          '0%': {
+            boxShadow: '0 0 0 0 hsl(var(--primary) / 0.5), 0 0 0 0 hsl(var(--primary) / 0.5)',
+          },
+          '80%': {
+            boxShadow: '0 0 0 10px hsl(var(--primary) / 0), 0 0 0 20px hsl(var(--primary) / 0)',
+          },
+          '100%': {
+            boxShadow: '0 0 0 0 hsl(var(--primary) / 0), 0 0 0 0 hsl(var(--primary) / 0)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -171,6 +182,7 @@ export default {
         'icon-shake': 'icon-shake 0.4s ease-in-out',
         'icon-bounce': 'icon-bounce 0.5s ease-in-out',
         'bg-shine': 'bg-shine 3s linear infinite',
+        'wave-ping': 'wave-ping 1.5s ease-out infinite',
       },
     },
   },

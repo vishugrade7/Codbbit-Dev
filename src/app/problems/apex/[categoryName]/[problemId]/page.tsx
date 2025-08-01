@@ -650,7 +650,7 @@ export default function ProblemWorkspacePage() {
                 }
             }
         } else {
-            const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
+             const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
             const match = (response.details || "").match(errorRegex);
             const errorMessage = match ? match[1].trim() : "An error occurred during submission.";
             toast({ variant: "destructive", title: "Submission Failed", description: errorMessage, duration: 9000 });
@@ -850,7 +850,7 @@ export default function ProblemWorkspacePage() {
                         </div>
                         <div className="py-2 overflow-y-auto flex-1">
                             {filteredProblems.length > 0 ? filteredProblems.map((p) => (
-                                <Link
+                               <Link
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
@@ -858,8 +858,8 @@ export default function ProblemWorkspacePage() {
                                         p.id === problemId ? "bg-muted/80 text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                     )}
                                 >
-                                    <span className="w-6 text-right">{p.index}.</span>
-                                    <span className="flex-1 truncate pr-2">{p.title}</span>
+                                    <span className="w-6 text-right font-medium text-base">{p.index}.</span>
+                                    <span className="flex-1 truncate pr-2 font-medium">{p.title}</span>
                                     <div className="flex-shrink-0 flex items-center gap-2">
                                         <span className={cn("w-16 text-right", getDifficultyClass(p.difficulty))}>{p.difficulty}</span>
                                         {userData?.solvedProblems?.[p.id] && <CheckCircle2 className="h-4 w-4 text-green-500" />}
@@ -895,7 +895,7 @@ export default function ProblemWorkspacePage() {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsTimerExpanded(true)}>
+                                    <Button variant="ghost" size="icon" className={cn("h-7 w-7 relative", timerIsActive && "animate-wave-ping text-primary")} onClick={() => setIsTimerExpanded(true)}>
                                         <Timer className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
