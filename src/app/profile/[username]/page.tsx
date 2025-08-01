@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from "next-themes";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion } from 'framer-motion';
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string; categoryName?: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -383,12 +384,21 @@ export default function UserProfilePage() {
     };
 
   return (
-    <>
     <main className="flex-1">
-      <div className="container mx-auto px-4 md:px-6 py-8">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="container mx-auto px-4 md:px-6 py-8"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
-          <div className="lg:col-span-1 space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-1 space-y-8"
+          >
             <Card>
                 <CardContent className="pt-6 relative">
                      <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -488,10 +498,15 @@ export default function UserProfilePage() {
                     )}
                 </CardContent>
             </Card>
-          </div>
+          </motion.div>
           
           {/* Right Column */}
-          <div className="lg:col-span-2 space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-2 space-y-8"
+          >
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <Card>
                     <CardContent className="pt-6">
@@ -621,12 +636,36 @@ export default function UserProfilePage() {
                     )}
                 </CardContent>
             </Card>
-          </div>
+            {starredProblems.length > 0 && (
+                <Card>
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400" /> Starred Problems</CardTitle></CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-64">
+                            <div className="space-y-2 pr-4">
+                                {starredProblems.map(problem => (
+                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                        <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                            <div className="flex justify-between items-center gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold truncate text-sm">{problem.title}</p>
+                                                    <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                                                </div>
+                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                    {problem.difficulty}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            )}
+          </motion.div>
         </div>
-      </div>
-    </main>
+      </motion.div>
     {isOwnProfile && <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={profileUser} />}
-    </>
+    </main>
   );
 }
-
