@@ -25,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -537,6 +537,8 @@ export default function ProblemWorkspacePage() {
     }, [userData, problemId]);
 
     const filteredProblems = useMemo(() => {
+        // Create a map for quick index lookup
+        const problemIndexMap = new Map(allProblems.map((p, index) => [p.id, index + 1]));
         return allProblems
             .filter((p) => {
                 if (difficultyFilter === "All") return true;
@@ -544,7 +546,8 @@ export default function ProblemWorkspacePage() {
             })
             .filter((p) => {
                 return p.title.toLowerCase().includes(searchTerm.toLowerCase());
-            });
+            })
+            .map(p => ({ ...p, index: problemIndexMap.get(p.id) })); // Add the original index
     }, [allProblems, searchTerm, difficultyFilter]);
 
     const handleSubmit = async () => {
@@ -616,7 +619,7 @@ export default function ProblemWorkspacePage() {
                 }
             }
         } else {
-            const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
+             const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
             const match = (response.details || "").match(errorRegex);
             const errorMessage = match ? match[1].trim() : "An error occurred during submission.";
             toast({ variant: "destructive", title: "Submission Failed", description: errorMessage, duration: 9000 });
@@ -674,10 +677,10 @@ export default function ProblemWorkspacePage() {
     
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-        case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
-        case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-        default: return 'bg-muted';
+        case 'easy': return 'text-green-400';
+        case 'medium': return 'text-yellow-500';
+        case 'hard': return 'text-red-500';
+        default: return 'text-muted-foreground';
         }
     };
 
@@ -770,15 +773,18 @@ export default function ProblemWorkspacePage() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background/80 backdrop-blur-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
-                        <SheetHeader className="p-4 border-b shrink-0">
-                            <SheetTitle>{categoryName}</SheetTitle>
+                        <SheetHeader className="p-4 border-b shrink-0 flex-row items-center justify-between">
+                            <SheetTitle className="flex items-center gap-2 text-lg">
+                                Problem List 
+                                <ArrowRight className="h-4 w-4" />
+                            </SheetTitle>
                         </SheetHeader>
                         <div className="p-4 border-b space-y-4 shrink-0">
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search problems..."
+                                        placeholder="Search questions..."
                                         className="w-full pl-9 h-9 rounded-full"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -809,22 +815,13 @@ export default function ProblemWorkspacePage() {
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
-                                        "block p-2 rounded-md transition-colors",
-                                        p.id === problemId ? "bg-primary/10" : "hover:bg-muted"
+                                        "flex items-center gap-4 w-full px-4 py-2.5 text-sm transition-colors",
+                                        p.id === problemId ? "bg-card text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                     )}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <p className={cn("font-medium text-sm truncate pr-2", p.id === problemId && "text-primary")}>
-                                            {p.title}
-                                        </p>
-                                        { (userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-1">
-                                         <Badge variant="outline" className={cn("text-xs", getDifficultyClass(p.difficulty))}>
-                                            {p.difficulty}
-                                        </Badge>
-                                        {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
-                                    </div>
+                                    <span className="w-6 text-right">{p.index}.</span>
+                                    <span className="flex-1 truncate pr-2">{p.title}</span>
+                                    <span className={cn("w-16 text-right", getDifficultyClass(p.difficulty))}>{p.difficulty}</span>
                                 </Link>
                             )) : (
                                 <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
@@ -1026,4 +1023,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
