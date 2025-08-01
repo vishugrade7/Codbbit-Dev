@@ -25,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus, Pause, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -42,6 +42,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -392,6 +393,42 @@ export default function ProblemWorkspacePage() {
     const decorationIdsRef = useRef<string[]>([]);
     const [coverageLines, setCoverageLines] = useState<{ covered: number[], uncovered: number[] } | null>(null);
     const { resolvedTheme } = useTheme();
+
+    // Timer state
+    const [timerIsActive, setTimerIsActive] = useState(false);
+    const [elapsedTime, setElapsedTime] = useState(0); // in seconds
+    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    
+    const toggleTimer = () => setTimerIsActive(!timerIsActive);
+
+    const resetTimer = () => {
+        setTimerIsActive(false);
+        setElapsedTime(0);
+    };
+    
+    useEffect(() => {
+        if (timerIsActive) {
+            timerIntervalRef.current = setInterval(() => {
+                setElapsedTime(prevTime => prevTime + 1);
+            }, 1000);
+        } else if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+        }
+        return () => {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+        };
+    }, [timerIsActive]);
+
+    const formatTime = (totalSeconds: number) => {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return [hours, minutes, seconds]
+            .map(v => v.toString().padStart(2, '0'))
+            .join(':');
+    };
 
     const handleEditorDidMount: OnMount = (editor, monaco) => {
         editorRef.current = editor;
@@ -845,15 +882,28 @@ export default function ProblemWorkspacePage() {
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
                 </div>
                  <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 bg-primary/20 text-primary shadow-inner">
-                                    <Timer className="h-4 w-4"/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Timer</p></TooltipContent>
-                        </Tooltip>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 bg-primary/20 text-primary shadow-inner">
+                                <Timer className="h-4 w-4"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel className="font-mono text-center text-lg">
+                                {formatTime(elapsedTime)}
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={toggleTimer}>
+                                {timerIsActive ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                                <span>{timerIsActive ? 'Pause' : 'Start'}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={resetTimer}>
+                                <RotateCcw className="mr-2 h-4 w-4" />
+                                <span>Reset</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                     <TooltipProvider>
                          <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -965,7 +1015,7 @@ export default function ProblemWorkspacePage() {
                 <>
                 <div className="md:hidden h-full">
                     <Tabs defaultValue="problem" className="flex flex-col h-full">
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="relative inline-flex h-auto items-center justify-center rounded-none border-b bg-transparent p-0 grid w-full grid-cols-2 shrink-0">
                             <TabsTrigger value="problem">Problem</TabsTrigger>
                             <TabsTrigger value="code">Code</TabsTrigger>
                         </TabsList>
@@ -1048,4 +1098,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
