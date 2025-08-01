@@ -13,6 +13,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isCallbackPage = pathname === '/salesforce-callback';
+  const isProblemWorkspace = pathname.startsWith('/problems/apex/');
   
   // Don't render any layout on auth or callback pages
   if (isAuthPage || isCallbackPage) {
@@ -30,9 +31,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Render a unified layout with Header and Footer for all other pages
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header />
+      {!isProblemWorkspace && <Header />}
       <div className="flex-1 w-full">{children}</div>
-      {!user && <Footer />}
+      {!user && !isProblemWorkspace && <Footer />}
     </div>
   );
 }
