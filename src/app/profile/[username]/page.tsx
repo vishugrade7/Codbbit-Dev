@@ -29,6 +29,7 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/comp
 import { useTheme } from "next-themes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from 'framer-motion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string; categoryName?: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -77,6 +78,15 @@ const ProIconOverlay = () => (
     </TooltipProvider>
 );
 
+const AnimatedCard = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay }}
+    >
+        {children}
+    </motion.div>
+);
 
 // This is the new public profile page
 export default function UserProfilePage() {
@@ -376,296 +386,278 @@ export default function UserProfilePage() {
 
     const getDifficultyRowClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-500/10 hover:bg-green-500/20';
-          case 'medium': return 'bg-yellow-500/10 hover:bg-yellow-500/20';
-          case 'hard': return 'bg-destructive/10 hover:bg-destructive/20';
+          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
+          case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
+          case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
           default: return 'hover:bg-muted/50';
         }
     };
 
   return (
-    <main className="flex-1">
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 md:px-6 py-8"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="lg:col-span-1 space-y-8"
-          >
-            <Card>
-                <CardContent className="pt-6 relative">
-                     <div className="absolute top-4 right-4 flex items-center gap-2">
-                        {isOwnProfile && (
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setIsEditModalOpen(true)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                        )}
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleShare}>
-                            <Share2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    <div className="flex flex-col items-center text-center">
-                        <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                            <Avatar className={cn("h-24 w-24 border-4", isProfileUserPro ? "border-yellow-400" : "border-muted")}>
-                                <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                                <AvatarFallback className="text-3xl">{profileUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                            </Avatar>
-                            {isOwnProfile && (
-                                <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                    {isUploading ? <LoaderCircle className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
-                                </div>
-                            )}
-                            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
-                            {isProfileUserPro && <ProIconOverlay />}
-                        </div>
-                        <div className="flex items-center gap-2 mt-4">
-                            <h1 className="text-xl font-bold">{profileUser.name}</h1>
-                            {profileUser.emailVerified && <VerifiedIcon />}
-                        </div>
-                        <p className="text-sm text-muted-foreground">@{profileUser.username}</p>
-                        <p className="text-sm mt-2 max-w-xs">{profileUser.about}</p>
-                    </div>
-
-                    <div className="mt-6 space-y-4 text-sm">
-                        {profileUser.company && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Building className="h-4 w-4" />
-                                <span className="text-foreground">{profileUser.company}</span>
-                            </div>
-                        )}
-                        {profileUser.country && (
-                             <div className="flex items-center gap-2 text-muted-foreground">
-                                <Globe className="h-4 w-4" />
-                                <span className="text-foreground">{profileUser.country}</span>
-                            </div>
-                        )}
-                    </div>
-                     <div className="mt-4 pt-4 border-t flex items-center justify-center gap-4">
-                        <TooltipProvider>
-                        {profileUser.trailheadUrl && (
-                            <Tooltip><TooltipTrigger asChild><Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Mountain className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>Trailhead</p></TooltipContent></Tooltip>
-                        )}
-                        {profileUser.githubUrl && (
-                           <Tooltip><TooltipTrigger asChild><Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Github className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>GitHub</p></TooltipContent></Tooltip>
-                        )}
-                        {profileUser.linkedinUrl && (
-                           <Tooltip><TooltipTrigger asChild><Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Linkedin className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>LinkedIn</p></TooltipContent></Tooltip>
-                        )}
-                        {profileUser.twitterUrl && (
-                           <Tooltip><TooltipTrigger asChild><Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Twitter className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>Twitter / X</p></TooltipContent></Tooltip>
-                        )}
-                        {profileUser.isEmailPublic && profileUser.email && (
-                            <Tooltip><TooltipTrigger asChild><a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary"><Mail className="h-5 w-5"/></a></TooltipTrigger><TooltipContent><p>Email</p></TooltipContent></Tooltip>
-                        )}
-                        </TooltipProvider>
-                    </div>
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader><CardTitle>Achievements</CardTitle></CardHeader>
-                <CardContent>
-                    {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                        <div className="grid grid-cols-4 gap-4">
-                            {Object.values(profileUser.achievements).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map((achievement: Achievement) => (
-                                <TooltipProvider key={achievement.name}>
-                                <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="flex flex-col items-center text-center gap-1.5">
-                                        <div className="p-3 bg-amber-400/10 rounded-full">
-                                            <Award className="h-6 w-6 text-amber-500" />
+    <main className="flex-1 bg-muted/30">
+        <div className="container mx-auto px-4 md:px-6 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Sticky Column */}
+                <div className="lg:col-span-4 xl:col-span-3">
+                    <div className="sticky top-20 space-y-8">
+                        <AnimatedCard>
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                                            <Avatar className={cn("h-24 w-24 border-4", isProfileUserPro ? "border-yellow-400" : "border-border")}>
+                                                <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
+                                                <AvatarFallback className="text-3xl">{profileUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                            </Avatar>
+                                            {isOwnProfile && (
+                                                <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                    {isUploading ? <LoaderCircle className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
+                                                </div>
+                                            )}
+                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
+                                            {isProfileUserPro && <ProIconOverlay />}
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-4">
+                                            <h1 className="text-xl font-bold">{profileUser.name}</h1>
+                                            {profileUser.emailVerified && <VerifiedIcon />}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">@{profileUser.username}</p>
+                                        <p className="text-sm mt-2 max-w-xs">{profileUser.about}</p>
+                                    </div>
+                                    <div className="mt-6 flex justify-center gap-2">
+                                        {isOwnProfile && (
+                                            <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(true)}>
+                                                <Pencil className="mr-2 h-4 w-4" /> Edit Profile
+                                            </Button>
+                                        )}
+                                        <Button variant="secondary" size="sm" onClick={handleShare}>
+                                            <Share2 className="mr-2 h-4 w-4" /> Share
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                                <CardContent className="border-t pt-4">
+                                     <div className="space-y-4 text-sm">
+                                        {profileUser.company && (
+                                            <div className="flex items-center gap-3 text-muted-foreground">
+                                                <Building className="h-4 w-4" />
+                                                <span className="text-foreground">{profileUser.company}</span>
+                                            </div>
+                                        )}
+                                        {profileUser.country && (
+                                            <div className="flex items-center gap-3 text-muted-foreground">
+                                                <Globe className="h-4 w-4" />
+                                                <span className="text-foreground">{profileUser.country}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-center gap-4 pt-4">
+                                            <TooltipProvider>
+                                                {profileUser.trailheadUrl && (<Tooltip><TooltipTrigger asChild><Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Mountain className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>Trailhead</p></TooltipContent></Tooltip>)}
+                                                {profileUser.githubUrl && (<Tooltip><TooltipTrigger asChild><Link href={profileUser.githubUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Github className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>GitHub</p></TooltipContent></Tooltip>)}
+                                                {profileUser.linkedinUrl && (<Tooltip><TooltipTrigger asChild><Link href={profileUser.linkedinUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Linkedin className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>LinkedIn</p></TooltipContent></Tooltip>)}
+                                                {profileUser.twitterUrl && (<Tooltip><TooltipTrigger asChild><Link href={profileUser.twitterUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Twitter className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>Twitter / X</p></TooltipContent></Tooltip>)}
+                                                {profileUser.isEmailPublic && profileUser.email && (<Tooltip><TooltipTrigger asChild><a href={`mailto:${profileUser.email}`} className="text-muted-foreground hover:text-primary"><Mail className="h-5 w-5"/></a></TooltipTrigger><TooltipContent><p>Email</p></TooltipContent></Tooltip>)}
+                                            </TooltipProvider>
                                         </div>
                                     </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="font-bold">{achievement.name}</p>
-                                    <p className="text-xs">{achievement.description}</p>
-                                </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground text-sm">No achievements yet. Keep coding!</div>
-                    )}
-                </CardContent>
-            </Card>
-          </motion.div>
-          
-          {/* Right Column */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2 space-y-8"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <Card>
-                    <CardContent className="pt-6">
-                        <p className="text-sm text-muted-foreground">Points</p>
-                        <p className="text-2xl font-bold">{profileUser.points.toLocaleString()}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="pt-6">
-                        <p className="text-sm text-muted-foreground">Problems Solved</p>
-                        <p className="text-2xl font-bold">{totalSolved}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="pt-6">
-                        <p className="text-sm text-muted-foreground">Current Streak</p>
-                        <p className="text-2xl font-bold">{profileUser.currentStreak || 0} days</p>
-                    </CardContent>
-                </Card>
-            </div>
-             <Card>
-                <CardHeader><CardTitle>Contribution Graph</CardTitle></CardHeader>
-                <CardContent>
-                    {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                        <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                    ) : (
-                        <div className="text-center py-10">
-                            <h3 className="text-md font-semibold">Start your journey!</h3>
-                            <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle></CardHeader>
-                    <CardContent className="space-y-4 pt-4 text-sm">
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span>Easy</span>
-                                <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
-                            </div>
-                            <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span>Medium</span>
-                                <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
-                            </div>
-                            <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                <span>Hard</span>
-                                <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
-                            </div>
-                            <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
-                        </div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle></CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center p-6 min-h-[160px]">
-                        {categoryData.length > 0 ? (
-                        <div className="w-full h-full flex flex-row items-center gap-6">
-                                <div className="relative h-28 w-28 shrink-0">
-                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
-                                        <PieChart><Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={48} paddingAngle={2} strokeWidth={0}>{categoryData.map((_, index) => (<Cell key={`cell-${index}`} fill={chartConfig[_.name]?.color} />))}</Pie></PieChart>
-                                    </ChartContainer>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <p className="text-2xl font-bold">{totalPoints}</p>
-                                        <p className="text-xs text-muted-foreground">Points</p>
-                                    </div>
-                                </div>
-                                <ScrollArea className="h-28 flex-1">
-                                    <div className="flex-1 space-y-2 text-sm pr-4">
-                                        {categoryData.map((entry) => (
-                                            <div key={entry.name} className="flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
-                                                    <span className="truncate">{entry.name}</span>
-                                                </div>
-                                                <span className="font-semibold">{entry.value}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                        </div>
-                        ) : (
-                            <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-             <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
-                <CardContent>
-                    {recentlySolvedProblems.length > 0 ? (
-                        <ScrollArea className="h-64">
-                            <div className="space-y-2 pr-4">
-                                {recentlySolvedProblems.map(problem => (
-                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                        <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                            <div className="flex justify-between items-center gap-4">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold truncate text-sm">{problem.title}</p>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                                        <span>Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</span>
-                                                        <span className="text-muted-foreground/50">&middot;</span>
-                                                        <Badge variant="secondary" className="truncate">{problem.categoryName}</Badge>
+                                </CardContent>
+                            </Card>
+                        </AnimatedCard>
+
+                         <AnimatedCard delay={0.1}>
+                           <Card>
+                                <CardHeader><CardTitle>Achievements</CardTitle></CardHeader>
+                                <CardContent>
+                                    {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                                        <div className="grid grid-cols-4 gap-4">
+                                            {Object.values(profileUser.achievements).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map((achievement: Achievement) => (
+                                                <TooltipProvider key={achievement.name}>
+                                                <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex flex-col items-center text-center gap-1.5">
+                                                        <div className="p-3 bg-amber-400/10 rounded-full">
+                                                            <Award className="h-6 w-6 text-amber-500" />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex-shrink-0 text-right space-y-1">
-                                                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                        {problem.difficulty}
-                                                    </Badge>
-                                                    <p className="text-xs font-semibold text-primary">+{problem.points} pts</p>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p className="font-bold">{achievement.name}</p>
+                                                    <p className="text-xs">{achievement.description}</p>
+                                                </TooltipContent>
+                                                </Tooltip>
+                                                </TooltipProvider>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-muted-foreground text-sm">No achievements yet. Keep coding!</div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </AnimatedCard>
+                    </div>
+                </div>
+
+                {/* Right Scrollable Column */}
+                <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+                     <AnimatedCard delay={0.2}>
+                         <Card>
+                            <CardHeader><CardTitle>Contribution Graph</CardTitle></CardHeader>
+                            <CardContent>
+                                {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                                    <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                                ) : (
+                                    <div className="text-center py-10">
+                                        <h3 className="text-md font-semibold">Start your journey!</h3>
+                                        <p className="text-muted-foreground mt-1 text-sm">Solve a problem to see your contribution graph.</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </AnimatedCard>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <AnimatedCard delay={0.3}>
+                            <Card>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle></CardHeader>
+                                <CardContent className="space-y-4 pt-4 text-sm">
+                                    <div>
+                                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                            <span>Easy</span>
+                                            <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
+                                        </div>
+                                        <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                            <span>Medium</span>
+                                            <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
+                                        </div>
+                                        <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                            <span>Hard</span>
+                                            <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
+                                        </div>
+                                        <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </AnimatedCard>
+                        <AnimatedCard delay={0.4}>
+                            <Card>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle></CardHeader>
+                                <CardContent className="flex-grow flex items-center justify-center p-6 min-h-[160px]">
+                                    {categoryData.length > 0 ? (
+                                    <div className="w-full h-full flex flex-row items-center gap-6">
+                                            <div className="relative h-28 w-28 shrink-0">
+                                                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
+                                                    <PieChart><Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={48} paddingAngle={2} strokeWidth={0}>{categoryData.map((_, index) => (<Cell key={`cell-${index}`} fill={chartConfig[_.name]?.color} />))}</Pie></PieChart>
+                                                </ChartContainer>
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                                    <p className="text-2xl font-bold">{totalPoints}</p>
+                                                    <p className="text-xs text-muted-foreground">Points</p>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground">No problems solved yet.</div>
-                    )}
-                </CardContent>
-            </Card>
-            {starredProblems.length > 0 && (
-                <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400" /> Starred Problems</CardTitle></CardHeader>
-                    <CardContent>
-                        <ScrollArea className="h-64">
-                            <div className="space-y-2 pr-4">
-                                {starredProblems.map(problem => (
-                                    <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                        <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
-                                            <div className="flex justify-between items-center gap-4">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold truncate text-sm">{problem.title}</p>
-                                                    <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                                            <ScrollArea className="h-28 flex-1">
+                                                <div className="flex-1 space-y-2 text-sm pr-4">
+                                                    {categoryData.map((entry) => (
+                                                        <div key={entry.name} className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
+                                                                <span className="truncate">{entry.name}</span>
+                                                            </div>
+                                                            <span className="font-semibold">{entry.value}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                    {problem.difficulty}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            )}
-          </motion.div>
+                                            </ScrollArea>
+                                    </div>
+                                    ) : (
+                                        <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </AnimatedCard>
+                    </div>
+
+                    <AnimatedCard delay={0.5}>
+                        <Tabs defaultValue="recent" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="recent">Recently Solved</TabsTrigger>
+                                <TabsTrigger value="starred">Starred Problems</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="recent">
+                                <Card>
+                                    <CardContent className="pt-6">
+                                        {recentlySolvedProblems.length > 0 ? (
+                                            <ScrollArea className="h-72">
+                                                <div className="space-y-2 pr-4">
+                                                    {recentlySolvedProblems.map(problem => (
+                                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                                            <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                                                <div className="flex justify-between items-center gap-4">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-semibold truncate text-sm">{problem.title}</p>
+                                                                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                                                            <span>Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</span>
+                                                                            <span className="text-muted-foreground/50">&middot;</span>
+                                                                            <Badge variant="secondary" className="truncate">{problem.categoryName}</Badge>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex-shrink-0 text-right space-y-1">
+                                                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                                            {problem.difficulty}
+                                                                        </Badge>
+                                                                        <p className="text-xs font-semibold text-primary">+{problem.points} pts</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        ) : (
+                                            <div className="text-center py-8 text-muted-foreground">No problems solved yet.</div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="starred">
+                                <Card>
+                                    <CardContent className="pt-6">
+                                        {starredProblems.length > 0 ? (
+                                            <ScrollArea className="h-72">
+                                                <div className="space-y-2 pr-4">
+                                                    {starredProblems.map(problem => (
+                                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                                            <div className={cn("p-2 rounded-md transition-colors", getDifficultyRowClass(problem.difficulty))}>
+                                                                <div className="flex justify-between items-center gap-4">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-semibold truncate text-sm">{problem.title}</p>
+                                                                        <Badge variant="secondary" className="mt-1">{problem.categoryName}</Badge>
+                                                                    </div>
+                                                                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                                        {problem.difficulty}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        ) : (
+                                            <div className="text-center py-8 text-muted-foreground">No starred problems yet.</div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </AnimatedCard>
+                </div>
+            </div>
         </div>
-      </motion.div>
-    {isOwnProfile && <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={profileUser} />}
+        {isOwnProfile && <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={profileUser} />}
     </main>
   );
 }
+
