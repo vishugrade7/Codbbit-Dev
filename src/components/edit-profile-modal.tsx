@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/types";
-import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter } from "lucide-react";
+import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter, Phone } from "lucide-react";
 import { Switch } from "./ui/switch";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
@@ -44,6 +44,7 @@ const profileSchema = z.object({
   isEmailPublic: z.boolean().optional(),
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
+  phone: z.string().optional(),
   trailheadUrl: z.string().url().optional().or(z.literal('')),
   githubUrl: z.string().url().optional().or(z.literal('')),
   linkedinUrl: z.string().url().optional().or(z.literal('')),
@@ -112,6 +113,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
       isEmailPublic: user.isEmailPublic || false,
       company: user.company || "",
       companyLogoUrl: user.companyLogoUrl || "",
+      phone: user.phone || "",
       trailheadUrl: user.trailheadUrl || "",
       githubUrl: user.githubUrl || "",
       linkedinUrl: user.linkedinUrl || "",
@@ -207,6 +209,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
         isEmailPublic: values.isEmailPublic,
         company: values.company,
         companyLogoUrl: companyLogo || '',
+        phone: values.phone,
         trailheadUrl: values.trailheadUrl,
         githubUrl: values.githubUrl,
         linkedinUrl: values.linkedinUrl,
@@ -288,6 +291,20 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
+                      </div>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

@@ -21,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, AtSign, Building, Globe, Mail, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Loader2, User, AtSign, Building, Globe, Mail, Lock, Eye, EyeOff, CheckCircle2, Phone } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "next-themes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,6 +51,7 @@ const formSchema = z.object({
   company: z.string().optional(),
   country: z.string({ required_error: "Please select a country." }),
   email: z.string().email({ message: "Invalid email address." }),
+  phone: z.string().optional(),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -130,6 +131,7 @@ export default function SignupPage() {
       username: "",
       company: "",
       email: "",
+      phone: "",
       password: "",
     },
     mode: "onChange",
@@ -212,6 +214,8 @@ export default function SignupPage() {
           uid: user.uid,
           email: user.email,
           emailVerified: user.emailVerified,
+          phone: values.phone || "",
+          phoneVerified: false,
           name: values.fullName,
           username: values.username.toLowerCase(),
           about: "",
@@ -409,6 +413,22 @@ export default function SignupPage() {
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input placeholder="user@example.com" {...field} className="pl-10" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number <span className="text-muted-foreground">(Optional)</span></FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
