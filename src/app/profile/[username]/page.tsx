@@ -437,18 +437,24 @@ export default function UserProfilePage() {
                                 </CardContent>
                                 <CardContent className="border-t pt-4">
                                      <div className="space-y-4 text-sm">
-                                        {profileUser.company && (
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <Building className="h-4 w-4" />
-                                                <span className="text-foreground">{profileUser.company}</span>
-                                            </div>
-                                        )}
-                                        {profileUser.country && (
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <Globe className="h-4 w-4" />
-                                                <span className="text-foreground">{profileUser.country}</span>
-                                            </div>
-                                        )}
+                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
+                                            {profileUser.company && (
+                                                <div className="flex items-center gap-2">
+                                                    {profileUser.companyLogoUrl ? (
+                                                        <Image src={profileUser.companyLogoUrl} alt={profileUser.company} width={16} height={16} className="rounded-full object-contain" />
+                                                    ) : (
+                                                        <Building className="h-4 w-4" />
+                                                    )}
+                                                    <span className="text-foreground">{profileUser.company}</span>
+                                                </div>
+                                            )}
+                                            {profileUser.country && (
+                                                <div className="flex items-center gap-2">
+                                                    <Globe className="h-4 w-4" />
+                                                    <span className="text-foreground">{profileUser.country}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="flex items-center justify-center gap-4 pt-4">
                                             <TooltipProvider>
                                                 {profileUser.trailheadUrl && (<Tooltip><TooltipTrigger asChild><Link href={profileUser.trailheadUrl} target="_blank" className="text-muted-foreground hover:text-primary"><Mountain className="h-5 w-5"/></Link></TooltipTrigger><TooltipContent><p>Trailhead</p></TooltipContent></Tooltip>)}
@@ -660,4 +666,3 @@ export default function UserProfilePage() {
     </main>
   );
 }
-
