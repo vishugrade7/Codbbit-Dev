@@ -65,7 +65,8 @@ const ProIconOverlay = () => (
             <TooltipTrigger asChild>
                 <div className="absolute -bottom-1 -right-1 h-6 w-6 flex items-center justify-center">
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="10" fill="#FDB813"/>
+                        <circle cx="12" cy="12" r="11" stroke="#3b82f6" strokeWidth="2"/>
+                        <circle cx="12" cy="12" r="8" fill="#FDB813"/>
                         <path d="M10.5 9.5L8 12L10.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M14.5 9.5L17 12L14.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -419,9 +420,11 @@ export default function UserProfilePage() {
                                         </div>
                                         <div className="flex items-center gap-2 mt-4">
                                             <h1 className="text-xl font-bold">{profileUser.name}</h1>
-                                            {profileUser.emailVerified && <VerifiedIcon />}
                                         </div>
-                                        <p className="text-sm text-muted-foreground">@{profileUser.username}</p>
+                                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                          <span>@{profileUser.username}</span>
+                                          {profileUser.emailVerified && <VerifiedIcon />}
+                                        </div>
                                         <p className="text-sm mt-2 max-w-xs">{profileUser.about}</p>
                                     </div>
                                     <div className="mt-6 flex justify-center gap-2">
