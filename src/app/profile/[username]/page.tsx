@@ -48,7 +48,7 @@ const VerifiedIcon = () => (
                     fill="currentColor"
                 >
                    <g>
-                     <path d="M20.69,8.69,19.28,7.28a1,1,0,0,0-1.42,0l-6.15,6.15L8,9.72a1,1,0,0,0-1.42,0L5.16,11.14a1,1,0,0,0,0,1.42l5.4,5.4a1,1,0,0,0,1.42,0l8.71-8.71A1,1,0,0,0,20.69,8.69Z" stroke="none"></path>
+                     <path d="M20.396 11c.018-.459-.122-1.228-.364-2.224a3.02 3.02 0 00-.51-1.032c-.328-.488-.738-.898-1.227-1.227a3.022 3.022 0 00-1.032-.51C16.236 5.764 15.467 5.624 15 5.606c-.459-.018-1.228.122-2.224.364a3.02 3.02 0 00-1.032.51c-.488.328-.898.738-1.227 1.227a3.022 3.022 0 00-.51 1.032c-.242.996-.382 1.765-.364 2.224.018.459.122 1.228.364 2.224a3.02 3.02 0 00.51 1.032c.328.488.738.898 1.227 1.227a3.022 3.022 0 001.032.51c.996.242 1.765.382 2.224.364.459-.018 1.228-.122 2.224-.364a3.02 3.02 0 001.032-.51c.488-.328.898-.738 1.227-1.227a3.022 3.022 0 00.51-1.032c.242-.996.382-1.765.364-2.224zM8.88 13.682l-2.58-2.58a.904.904 0 111.278-1.278l1.94 1.94 4.318-4.32a.904.904 0 111.278 1.28l-4.958 4.956a.902.902 0 01-1.278 0z" stroke="none"></path>
                    </g>
                 </svg>
             </TooltipTrigger>
@@ -406,7 +406,7 @@ export default function UserProfilePage() {
                                 <CardContent className="pt-6">
                                     <div className="flex flex-col items-center text-center">
                                         <div className="relative inline-block group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                                            <Avatar className={cn("h-24 w-24 border-4", isProfileUserPro ? "border-yellow-400" : "border-border")}>
+                                            <Avatar className={cn("h-24 w-24 border-4", isProfileUserPro ? "border-blue-500" : "border-border")}>
                                                 <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                                                 <AvatarFallback className="text-3xl">{profileUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                                             </Avatar>
@@ -423,7 +423,7 @@ export default function UserProfilePage() {
                                         </div>
                                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                           <span>@{profileUser.username}</span>
-                                          {profileUser.emailVerified && <VerifiedIcon />}
+                                          {profileUser.emailVerified && profileUser.phoneVerified && <VerifiedIcon />}
                                         </div>
                                         <p className="text-sm mt-2 max-w-xs">{profileUser.about}</p>
                                     </div>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -39,7 +40,7 @@ const VerifiedIcon = () => (
                     fill="currentColor"
                 >
                    <g>
-                     <path d="M20.69,8.69,19.28,7.28a1,1,0,0,0-1.42,0l-6.15,6.15L8,9.72a1,1,0,0,0-1.42,0L5.16,11.14a1,1,0,0,0,0,1.42l5.4,5.4a1,1,0,0,0,1.42,0l8.71-8.71A1,1,0,0,0,20.69,8.69Z" stroke="none"></path>
+                     <path d="M20.396 11c.018-.459-.122-1.228-.364-2.224a3.02 3.02 0 00-.51-1.032c-.328-.488-.738-.898-1.227-1.227a3.022 3.022 0 00-1.032-.51C16.236 5.764 15.467 5.624 15 5.606c-.459-.018-1.228.122-2.224.364a3.02 3.02 0 00-1.032.51c-.488.328-.898.738-1.227 1.227a3.022 3.022 0 00-.51 1.032c-.242.996-.382 1.765-.364 2.224.018.459.122 1.228.364 2.224a3.02 3.02 0 00.51 1.032c.328.488.738.898 1.227 1.227a3.022 3.022 0 001.032.51c.996.242 1.765.382 2.224.364.459-.018 1.228-.122 2.224-.364a3.02 3.02 0 001.032-.51c.488-.328.898-.738 1.227-1.227a3.022 3.022 0 00.51-1.032c.242-.996.382-1.765.364-2.224zM8.88 13.682l-2.58-2.58a.904.904 0 111.278-1.278l1.94 1.94 4.318-4.32a.904.904 0 111.278 1.28l-4.958 4.956a.902.902 0 01-1.278 0z" stroke="none"></path>
                    </g>
                 </svg>
             </TooltipTrigger>
@@ -175,6 +176,7 @@ export default function Leaderboard() {
                 company: data.company || '',
                 companyLogoUrl: data.companyLogoUrl || '',
                 emailVerified: data.emailVerified || false,
+                phoneVerified: data.phoneVerified || false,
                 razorpaySubscriptionStatus: data.razorpaySubscriptionStatus,
                 subscriptionEndDate: data.subscriptionEndDate,
                 isAdmin: data.isAdmin || false,
@@ -288,7 +290,7 @@ export default function Leaderboard() {
                 </div>
                 <CardContent className="relative pt-6 pb-4 flex flex-col items-center text-center">
                     <div className="relative">
-                        <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                        <Avatar className={cn("h-20 w-20 border-4 shadow-lg", isUserPro(user) ? "border-blue-500" : "border-background")}>
                             <AvatarImage src={user.avatarUrl} alt={user.name} />
                             <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
@@ -302,7 +304,7 @@ export default function Leaderboard() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <span>@{user.username}</span>
-                        {user.emailVerified && <VerifiedIcon />}
+                        {user.emailVerified && user.phoneVerified && <VerifiedIcon />}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                         {user.company && (
@@ -452,7 +454,7 @@ export default function Leaderboard() {
                          <div className="relative">
                             <Avatar className={cn(
                                 "h-10 w-10 border-2", 
-                                isUserPro(user) ? "border-yellow-400" : "border-transparent"
+                                isUserPro(user) ? "border-blue-500" : "border-transparent"
                             )}>
                               <AvatarImage src={user.avatarUrl} alt={user.name} />
                               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -465,7 +467,7 @@ export default function Leaderboard() {
                           </div>
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                               <span>@{user.username}</span>
-                              {user.emailVerified && <VerifiedIcon />}
+                              {user.emailVerified && user.phoneVerified && <VerifiedIcon />}
                           </div>
                         </div>
                       </Link>

@@ -50,6 +50,7 @@ export type User = {
   name: string;
   email: string;
   emailVerified?: boolean;
+  phoneVerified?: boolean;
   isEmailPublic?: boolean;
   avatarUrl: string;
   about?: string;
@@ -107,6 +108,7 @@ export type LeaderboardUser = {
   company?: string;
   companyLogoUrl?: string;
   emailVerified?: boolean;
+  phoneVerified?: boolean;
   razorpaySubscriptionStatus?: string;
   subscriptionEndDate?: any; // Firestore Timestamp
   isAdmin?: boolean;
@@ -219,6 +221,7 @@ export type NavLink = {
   isEnabled: boolean;
   isProtected: boolean; // To prevent deletion of core links
   isPro?: boolean; // To mark a link as for Pro users only
+  isAdminOnly?: boolean;
 };
 
 export type Badge = {
