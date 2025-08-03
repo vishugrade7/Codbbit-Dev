@@ -33,8 +33,9 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
@@ -180,6 +181,7 @@ export default function SheetDisplayPage() {
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
     const [categoryFilter, setCategoryFilter] = useState("All");
+    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
     useEffect(() => {
         if (!sheetId || !db) return;
@@ -491,18 +493,44 @@ export default function SheetDisplayPage() {
                 <h1 className="text-2xl font-bold font-headline truncate">{sheet.name}</h1>
                 
                 <div className="flex items-center gap-4 ml-auto">
-                    <div className="relative flex-1 min-w-[250px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search problems..."
-                            className="w-full pl-10 rounded-full"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="relative flex items-center">
+                        <AnimatePresence>
+                            {isSearchExpanded ? (
+                                <motion.div
+                                    key="search-input"
+                                    initial={{ width: 0, opacity: 0 }}
+                                    animate={{ width: 250, opacity: 1 }}
+                                    exit={{ width: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    className="relative"
+                                >
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search problems..."
+                                        className="w-full pl-10 rounded-full"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onBlur={() => setIsSearchExpanded(false)}
+                                        autoFocus
+                                    />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="search-button"
+                                    initial={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.5, opacity: 0 }}
+                                >
+                                    <Button variant="outline" size="icon" className="rounded-full" onClick={() => setIsSearchExpanded(true)}>
+                                        <Search className="h-5 w-5" />
+                                        <span className="sr-only">Search</span>
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0">
+                        <Button variant="outline" size="icon" className="shrink-0 rounded-full">
                             <Filter className="h-4 w-4" />
                             <span className="sr-only">Filters</span>
                         </Button>
