@@ -13,6 +13,8 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -32,6 +34,30 @@ const Section = ({ children }: { children: React.ReactNode }) => {
 };
 
 const HeroSection = () => {
+  const [userCount, setUserCount] = React.useState(500);
+  const [loadingCount, setLoadingCount] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchUserCount = async () => {
+      if (!db) {
+        setLoadingCount(false);
+        return;
+      }
+      try {
+        const usersCollection = collection(db, "users");
+        const snapshot = await getDocs(usersCollection);
+        setUserCount(500 + snapshot.size);
+      } catch (error) {
+        console.error("Error fetching user count:", error);
+        // Keep the base count if fetching fails
+      } finally {
+        setLoadingCount(false);
+      }
+    };
+
+    fetchUserCount();
+  }, []);
+
   const heroVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: (i: number) => ({
@@ -54,7 +80,9 @@ const HeroSection = () => {
                 <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtYW58ZW58MHx8fHwxNzU0MTQ2NDkwfDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="person" /></Avatar>
                 <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYW58ZW58MHx8fHwxNzU0MTQ2NDkwfDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="person" /></Avatar>
             </div>
-            <p className="text-sm text-muted-foreground">Trusted by 500+ developers</p>
+            <p className="text-sm text-muted-foreground">
+              {loadingCount ? "Trusted by developers" : `Trusted by ${userCount}+ developers`}
+            </p>
         </motion.div>
 
         <motion.div
