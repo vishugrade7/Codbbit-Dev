@@ -89,7 +89,7 @@ export default function Testimonials() {
                             width={48}
                             height={48}
                             data-ai-hint={testimonial['data-ai-hint']}
-                            className="rounded-full border-2 border-primary/50 object-cover"
+                            className="rounded-full border-2 border-primary/50 object-cover aspect-square"
                         />
                         <div>
                             <p className="font-semibold text-card-foreground">{testimonial.name}</p>
