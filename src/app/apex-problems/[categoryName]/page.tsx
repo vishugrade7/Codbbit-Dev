@@ -127,59 +127,52 @@ export default function CategoryProblemsPage() {
                 <ArrowLeft className="h-5 w-5" />
                 <span className="sr-only">Back to categories</span>
             </Button>
-            <div>
+            <div className="flex-1">
                  <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">{categoryName}</h1>
                  <p className="text-muted-foreground mt-1">
                     Select a problem to start solving.
                 </p>
             </div>
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search problems by title..."
+                  className="w-full pl-10 rounded-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="shrink-0">
+                    <Filter className="h-4 w-4" />
+                    <span className="sr-only">Filters</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                    <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                    <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
         </div>
       </motion.div>
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
-        <div className="flex items-center gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search problems by title..."
-              className="w-full pl-10 rounded-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0">
-                <Filter className="h-4 w-4" />
-                <span className="sr-only">Filters</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuLabel>Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </motion.div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
