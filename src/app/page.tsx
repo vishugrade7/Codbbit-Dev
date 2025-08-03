@@ -67,7 +67,7 @@ const HeroSection = () => {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground/80">
             💻 Codbbit – Build Your Code Habit
           </h1>
-          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-foreground font-headline">
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-primary font-headline">
             Practice Apex Coding Problems
           </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
