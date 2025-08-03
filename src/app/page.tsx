@@ -49,9 +49,9 @@ const HeroSection = () => {
         
         <motion.div custom={0} variants={heroVariants} initial="hidden" animate="visible" className="flex items-center gap-2">
             <div className="flex -space-x-2">
-                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://placehold.co/32x32.png" data-ai-hint="person" /></Avatar>
-                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://placehold.co/32x32.png" data-ai-hint="person" /></Avatar>
-                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://placehold.co/32x32.png" data-ai-hint="person" /></Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://images.unsplash.com/photo-1549692520-acc6669e2f0c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMnx8Y29kZXJ8ZW58MHx8fHwxNzU0MjIyMzE4fDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="person coder" /></Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtYW58ZW58MHx8fHwxNzU0MTQ2NDkwfDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="person" /></Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYW58ZW58MHx8fHwxNzU0MTQ2NDkwfDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="person" /></Avatar>
             </div>
             <p className="text-sm text-muted-foreground">Trusted by 500+ developers</p>
         </motion.div>
@@ -64,10 +64,10 @@ const HeroSection = () => {
           className="flex flex-col items-center gap-4"
         >
           <h1 className="text-2xl font-semibold tracking-tight text-foreground/80">
-            Master Salesforce with Codbbit
+            💻 Codbbit – Build Your Code Habit
           </h1>
           <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-foreground font-headline">
-            Bored of Theory? Let's Code.
+            Tired of Theory? Practice Real Coding Every Day
           </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
             Join thousands of developers building skills, cracking interviews, and landing internships.
@@ -98,7 +98,7 @@ const HeroSection = () => {
           className="w-full max-w-5xl mt-8"
         >
           <Image
-            src="https://placehold.co/1200x740.png"
+            src="https://images.unsplash.com/photo-1754220763477-97453f9e3d99?q=80&w=1559&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             alt="Dashboard preview of Codbbit platform"
             width={1200}
             height={740}
