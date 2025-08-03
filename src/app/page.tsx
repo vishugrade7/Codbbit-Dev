@@ -54,10 +54,10 @@ const HeroSection = () => {
           className="flex flex-col items-center gap-6"
         >
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight max-w-4xl">
-            Powerful Tools for Modern Teams
+            💻 Codbbit – Build Your Code Habit
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Streamline communication, boost productivity, and manage everything in one intuitive workspace built for teams that move fast.
+            Tired of Theory? Practice Real Coding Every Day.
           </p>
         </motion.div>
 
