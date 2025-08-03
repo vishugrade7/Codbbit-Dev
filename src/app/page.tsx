@@ -10,11 +10,12 @@ import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from '@/context/AuthContext';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -36,6 +37,8 @@ const Section = ({ children }: { children: React.ReactNode }) => {
 const HeroSection = () => {
   const [userCount, setUserCount] = React.useState(500);
   const [loadingCount, setLoadingCount] = React.useState(true);
+  const { user } = useAuth();
+  const getStartedHref = user ? "/apex-problems" : "/signup";
 
   React.useEffect(() => {
     const fetchUserCount = async () => {
@@ -49,7 +52,6 @@ const HeroSection = () => {
         setUserCount(500 + snapshot.size);
       } catch (error) {
         console.error("Error fetching user count:", error);
-        // Keep the base count if fetching fails
       } finally {
         setLoadingCount(false);
       }
@@ -112,10 +114,10 @@ const HeroSection = () => {
           className="flex items-center gap-4"
         >
           <Button asChild size="lg">
-            <Link href="/signup">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link href={getStartedHref}>Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/courses">Explore Courses <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link href="/leaderboard">View Leaderboard <Trophy className="ml-2 h-4 w-4" /></Link>
           </Button>
         </motion.div>
 
