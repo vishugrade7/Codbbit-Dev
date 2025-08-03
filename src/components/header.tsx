@@ -203,7 +203,7 @@ export default function Header() {
                             <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary">
                                 <LifeBuoy className="h-4 w-4" /> Support
                             </Link>
-                            <Button variant="secondary" size="sm" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
+                            <Button variant="destructive" size="sm" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full mt-4">
                                 <LogOut className="mr-2 h-4 w-4" /> Logout
                             </Button>
                         </div>
@@ -297,7 +297,7 @@ export default function Header() {
                                   </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={handleLogout}>
+                              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                   <LogOut className="mr-2 h-4 w-4" />
                                   <span>Log out</span>
                               </DropdownMenuItem>
