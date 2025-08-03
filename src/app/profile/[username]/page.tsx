@@ -30,6 +30,7 @@ import { useTheme } from "next-themes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProIconOverlay } from '@/components/pro-icon-overlay';
 
 type RecentlySolvedProblem = SolvedProblemType & { id: string; categoryName?: string };
 type ProblemWithCategory = Problem & { categoryName: string };
@@ -54,26 +55,6 @@ const VerifiedIcon = () => (
             </TooltipTrigger>
             <TooltipContent>
                 <p>Verified</p>
-            </TooltipContent>
-        </Tooltip>
-    </TooltipProvider>
-);
-
-const ProIconOverlay = () => (
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div className="absolute -bottom-1 -right-1 h-6 w-6 flex items-center justify-center">
-                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="11" stroke="#3b82f6" strokeWidth="2"/>
-                        <circle cx="12" cy="12" r="8" fill="#FDB813"/>
-                        <path d="M10.5 9.5L8 12L10.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14.5 9.5L17 12L14.5 14.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                </div>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>Pro User</p>
             </TooltipContent>
         </Tooltip>
     </TooltipProvider>
@@ -415,8 +396,8 @@ export default function UserProfilePage() {
                                                     {isUploading ? <LoaderCircle className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
                                                 </div>
                                             )}
-                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
                                             {isProfileUserPro && <ProIconOverlay />}
+                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
                                         </div>
                                         <div className="flex items-center gap-2 mt-4">
                                             <h1 className="text-xl font-bold">{profileUser.name}</h1>
