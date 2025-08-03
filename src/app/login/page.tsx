@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -60,7 +61,7 @@ export default function LoginPage() {
 
   const [showVerificationAlert, setShowVerificationAlert] = useState(false);
   
-  const { brandingSettings, loadingBranding, isPro } = useAuth();
+  const { brandingSettings, loadingBranding, isPro, setPromptForSfdcAuth } = useAuth();
   const { theme } = useTheme();
 
   const logoSrc = useMemo(() => {
@@ -100,8 +101,9 @@ export default function LoginPage() {
       
       if (!user.emailVerified) {
           await sendEmailVerification(user);
-          await auth.signOut();
           setShowVerificationAlert(true);
+          // Sign out the user until they are verified
+          await auth.signOut(); 
           setIsLoading(false);
           return;
       }

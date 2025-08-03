@@ -26,20 +26,26 @@ function UploadProblemContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     
+    // We get the initial view from URL params, but then manage it via state
     const initialView = searchParams.get('view') || 'dashboard';
     const courseId = searchParams.get('courseId');
 
     const [viewMode, setViewMode] = useState(initialView);
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
 
+    // This is the definitive authorization check.
     const isAuthorized = userData?.isAdmin === true;
 
     useEffect(() => {
+        // This effect runs when auth state is resolved.
+        // It redirects if the user is not authorized.
         if (!authLoading && !isAuthorized) {
             router.replace('/');
         }
     }, [authLoading, isAuthorized, router]);
 
+    // While authentication is in progress, show a loader.
+    // Do not render anything else to prevent content flashing for unauthorized users.
     if (authLoading) {
         return (
             <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background">
@@ -48,14 +54,11 @@ function UploadProblemContent() {
         );
     }
     
-    // This check is crucial. It ensures that no part of the admin UI renders
-    // until the authorization check is complete and successful.
+    // This is a crucial guard. After loading, if the user is still not authorized,
+    // render nothing, allowing the useEffect redirect to handle it.
+    // This prevents any part of the admin UI from rendering for non-admins.
     if (!isAuthorized) {
-        return (
-             <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
+        return null;
     }
     
     const handleAddNewProblem = () => {

@@ -18,7 +18,7 @@ import type { NavLink } from "@/types";
 import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "./ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { ThemeToggle } from "./theme-toggle";
+import { ThemeToggle } from "./ui/theme-toggle";
 import { useTheme } from "next-themes";
 
 
@@ -83,15 +83,13 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  // This is the definitive check for admin status for UI rendering
   const isAuthorizedAdmin = userData?.isAdmin === true;
 
   const visibleNavLinks = useMemo(() => {
     if (authLoading || loadingNav) return [];
     
     return navLinks.filter(link => {
-        if (isAuthorizedAdmin) {
-            return true;
-        }
         if (!link.isEnabled) {
             return false;
         }
@@ -100,7 +98,7 @@ export default function Header() {
         }
         return true;
     });
-  }, [navLinks, authLoading, loadingNav, isPro, isAuthorizedAdmin]);
+  }, [navLinks, authLoading, loadingNav, isPro]);
 
 
   return (

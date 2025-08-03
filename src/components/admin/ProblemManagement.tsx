@@ -32,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
-import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2, AlertTriangle, Replace } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UploadCloud, Edit, Search, GripVertical, Building, Download, ClipboardPaste, TestTube2, CheckCircle2, AlertTriangle, Replace, FileJson } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -385,6 +385,32 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
         link.click();
     };
 
+    const handleDownloadSelectedJson = () => {
+        if (selectedIds.size === 0) {
+            toast({ variant: 'destructive', title: 'No problems selected' });
+            return;
+        }
+
+        const selectedProblemsData = problems
+            .filter(p => selectedIds.has(p.id))
+            .map(p => {
+                // Convert to the format expected by the sample/bulk upload
+                const { categoryName, ...rest } = p;
+                return {
+                    ...rest,
+                    category: categoryName,
+                    hints: p.hints || [],
+                    examples: p.examples.map(({ id, ...ex }) => ex) // remove react key id
+                };
+            });
+        
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(selectedProblemsData, null, 2))}`;
+        const link = document.createElement("a");
+        link.href = jsonString;
+        link.download = "selected_problems.json";
+        link.click();
+    };
+
     const handleDownloadSampleCsv = () => {
         const sample = getSampleData(true);
         const headers = Object.keys(sample);
@@ -573,6 +599,9 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" onClick={() => setIsChangeCategoryOpen(true)}>
                                 <Replace className="mr-2 h-4 w-4" /> Change Category
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleDownloadSelectedJson}>
+                                <FileJson className="mr-2 h-4 w-4" /> Export as JSON
                             </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
