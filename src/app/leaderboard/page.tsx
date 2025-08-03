@@ -40,7 +40,7 @@ const VerifiedIcon = () => (
                     fill="currentColor"
                 >
                    <g>
-                     <path d="M20.396 11c.018-.459-.122-1.228-.364-2.224a3.02 3.02 0 00-.51-1.032c-.328-.488-.738-.898-1.227-1.227a3.022 3.022 0 00-1.032-.51C16.236 5.764 15.467 5.624 15 5.606c-.459-.018-1.228.122-2.224.364a3.02 3.02 0 00-1.032.51c-.488.328-.898.738-1.227 1.227a3.022 3.022 0 00-.51 1.032c-.242.996-.382 1.765-.364 2.224.018.459.122 1.228.364 2.224a3.02 3.02 0 00.51 1.032c.328.488.738.898 1.227 1.227a3.022 3.022 0 001.032.51c.996.242 1.765.382 2.224.364.459-.018 1.228-.122 2.224-.364a3.02 3.02 0 001.032-.51c.488-.328.898-.738 1.227-1.227a3.022 3.022 0 00.51-1.032c.242-.996.382-1.765.364-2.224zM8.88 13.682l-2.58-2.58a.904.904 0 111.278-1.278l1.94 1.94 4.318-4.32a.904.904 0 111.278 1.28l-4.958 4.956a.902.902 0 01-1.278 0z" stroke="none"></path>
+                     <path d="M20.396 11c.018-.459-.122-1.228-.364-2.224a3.02 3.02 0 00-.51-1.032c-.328-.488-.738-.898-1.227-1.227a3.022 3.022 0 00-1.032-.51C16.236 5.764 15.467 5.624 15 5.606c-.459-.018-1.228.122-2.224.364a3.02 3.02 0 00-1.032.51c-.488.328-.898.738-1.227 1.227a3.022 3.022 0 00-.51 1.032c-.242.996-.382 1.765-.364 2.224.018.459.122 1.228.364 2.224a3.02 3.02 0 00.51 1.032c.328.488.738.898 1.227 1.227a3.022 3.022 0 001.032.51c.996.242 1.765.382 2.224.364.459-.018 1.228-.122 2.224-.364a3.02 3.02 0 001.032-.51c.488-.328-.898-.738 1.227-1.227a3.022 3.022 0 00.51-1.032c.242-.996.382-1.765.364-2.224zM8.88 13.682l-2.58-2.58a.904.904 0 111.278-1.278l1.94 1.94 4.318-4.32a.904.904 0 111.278 1.28l-4.958 4.956a.902.902 0 01-1.278 0z" stroke="none"></path>
                    </g>
                 </svg>
             </TooltipTrigger>
@@ -357,9 +357,9 @@ export default function Leaderboard() {
         <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
             <Tabs value={filterType} onValueChange={(value) => handleFilterTypeChange(value as any)} className="w-auto">
                 <TabsList>
-                    <TabsTrigger value="Global" layoutId="leaderboard-filter-tabs">Global</TabsTrigger>
-                    <TabsTrigger value="Country" layoutId="leaderboard-filter-tabs">By Country</TabsTrigger>
-                    <TabsTrigger value="Company" layoutId="leaderboard-filter-tabs">By Company</TabsTrigger>
+                    <TabsTrigger value="Global">Global</TabsTrigger>
+                    <TabsTrigger value="Country">By Country</TabsTrigger>
+                    <TabsTrigger value="Company">By Company</TabsTrigger>
                 </TabsList>
             </Tabs>
             
