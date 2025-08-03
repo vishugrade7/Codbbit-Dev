@@ -16,7 +16,6 @@ import ReactConfetti from 'react-confetti';
 import Image from "next/image";
 import { getCache, setCache } from "@/lib/cache";
 import mermaid from "mermaid";
-import { motion, AnimatePresence } from 'framer-motion';
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -26,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus, Pause, RotateCcw, ChevronLeft as ChevronLeftIcon } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus, Pause, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -384,8 +383,7 @@ export default function ProblemWorkspacePage() {
     const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
 
     const [isFullScreen, setIsFullScreen] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const drawerRef = useRef<HTMLDivElement>(null);
+    const leftPanelRef = useRef<ImperativePanelHandle>(null);
     const resultsPanelRef = useRef<ImperativePanelHandle>(null);
     const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
     const [fontSize, setFontSize] = useState<number>(16);
@@ -476,38 +474,16 @@ export default function ProblemWorkspacePage() {
         setFontSize(isMobile ? 12 : 16);
     }, [isMobile]);
 
-    useEffect(() => {
-        if (isMobile) return;
-    
-        const handleMouseMove = (event: MouseEvent) => {
-          if (event.clientX < 20) {
-            setIsDrawerOpen(true);
-          }
-        };
-    
-        const handleMouseLeave = (event: MouseEvent) => {
-            if (drawerRef.current && !drawerRef.current.contains(event.target as Node)) {
-              setIsDrawerOpen(false);
-            }
-        };
-        
-        const drawerElement = drawerRef.current;
-        if(drawerElement) {
-            drawerElement.addEventListener('mouseleave', handleMouseLeave);
-        }
-    
-        window.addEventListener('mousemove', handleMouseMove);
-    
-        return () => {
-          window.removeEventListener('mousemove', handleMouseMove);
-          if (drawerElement) {
-            drawerElement.removeEventListener('mouseleave', handleMouseLeave);
-          }
-        };
-    }, [isMobile]);
-
     const toggleFullScreen = () => {
-        setIsFullScreen(!isFullScreen);
+        const panel = leftPanelRef.current;
+        if (panel) {
+            if (isFullScreen) {
+                panel.expand();
+            } else {
+                panel.collapse();
+            }
+            setIsFullScreen(!isFullScreen);
+        }
     };
     
     const toggleResultsPanel = useCallback(() => {
@@ -787,14 +763,16 @@ export default function ProblemWorkspacePage() {
                 ))}
 
                 {problem.hints && problem.hints.length > 0 && (
-                    <div>
-                        <h3 className="font-semibold mb-2">Constraints</h3>
-                        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                            {problem.hints.map((hint, index) => (
-                                <li key={index}>{hint}</li>
-                            ))}
-                        </ul>
-                    </div>
+                    <Card>
+                        <CardContent className="p-4">
+                            <h3 className="font-semibold mb-2">Hints</h3>
+                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                {problem.hints.map((hint, index) => (
+                                    <li key={index}>{hint}</li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         );
@@ -908,37 +886,25 @@ export default function ProblemWorkspacePage() {
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
                 </div>
                  <div className="flex items-center gap-1 p-1 rounded-full bg-muted">
-                    <AnimatePresence>
-                        {isTimerExpanded && (
-                             <motion.div
-                                key="timer-controls"
-                                initial={{ width: 0, opacity: 0, x: 20 }}
-                                animate={{ width: 'auto', opacity: 1, x: 0 }}
-                                exit={{ width: 0, opacity: 0, x: 20 }}
-                                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                className="flex items-center gap-2 px-2 overflow-hidden"
-                            >
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsTimerExpanded(false)}><ChevronLeftIcon className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer}>
-                                    {timerIsActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className={cn("h-7 w-7 relative", timerIsActive && "animate-wave-ping text-primary")} onClick={toggleTimer}>
+                                    {timerIsActive ? <Pause className="h-4 w-4" /> : <Timer className="h-4 w-4" />}
                                 </Button>
-                                <span className="font-mono text-sm text-primary font-semibold w-20 text-center">{formatTime(elapsedTime)}</span>
+                            </TooltipTrigger>
+                            <TooltipContent><p>{timerIsActive ? 'Pause Timer' : 'Start Timer'}</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <span className="font-mono text-sm text-primary font-semibold w-20 text-center">{formatTime(elapsedTime)}</span>
+                    <TooltipProvider>
+                       <Tooltip>
+                            <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetTimer}><RotateCcw className="h-4 w-4" /></Button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                    {!isTimerExpanded && (
-                         <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className={cn("h-7 w-7 relative", timerIsActive && "animate-wave-ping text-primary")} onClick={() => setIsTimerExpanded(true)}>
-                                        <Timer className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Open Timer</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )}
+                            </TooltipTrigger>
+                            <TooltipContent><p>Reset Timer</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                     <Separator orientation="vertical" className="h-5" />
                     <TooltipProvider>
                         <Tooltip>
@@ -1015,45 +981,40 @@ export default function ProblemWorkspacePage() {
                 </Tabs>
             </div>
 
-            <div className="hidden md:flex h-full relative">
-                <AnimatePresence>
-                    {isDrawerOpen && (
-                        <motion.div
-                            ref={drawerRef}
-                            initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: '25%', opacity: 1 }}
-                            exit={{ width: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="bg-card h-full overflow-hidden"
-                        >
-                            {drawerContent}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                 <motion.div
-                    className="h-full"
-                    animate={{ width: isDrawerOpen ? '75%' : '100%' }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                >
-                    <EditorAndResults 
-                        code={code}
-                        setCode={setCode}
-                        problem={problem}
-                        handleSubmit={handleSubmit}
-                        isSubmitting={isSubmitting}
-                        fontSize={fontSize}
-                        setFontSize={setFontSize}
-                        isFullScreen={isFullScreen}
-                        toggleFullScreen={toggleFullScreen}
-                        resultsPanelRef={resultsPanelRef}
-                        isResultsCollapsed={isResultsCollapsed}
-                        setIsResultsCollapsed={setIsResultsCollapsed}
-                        toggleResultsPanel={toggleResultsPanel}
-                        results={results}
-                        submissionSuccess={submissionSuccess}
-                        submissionStep={submissionStep}
-                    />
-                </motion.div>
+            <div className="hidden md:flex h-full">
+                <ResizablePanelGroup direction="horizontal">
+                    <ResizablePanel
+                        ref={leftPanelRef}
+                        defaultSize={50}
+                        minSize={30}
+                        collapsible={true}
+                        onCollapse={() => setIsFullScreen(true)}
+                        onExpand={() => setIsFullScreen(false)}
+                    >
+                       {drawerContent}
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={50} minSize={30}>
+                       <EditorAndResults 
+                            code={code}
+                            setCode={setCode}
+                            problem={problem}
+                            handleSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            fontSize={fontSize}
+                            setFontSize={setFontSize}
+                            isFullScreen={isFullScreen}
+                            toggleFullScreen={toggleFullScreen}
+                            resultsPanelRef={resultsPanelRef}
+                            isResultsCollapsed={isResultsCollapsed}
+                            setIsResultsCollapsed={setIsResultsCollapsed}
+                            toggleResultsPanel={toggleResultsPanel}
+                            results={results}
+                            submissionSuccess={submissionSuccess}
+                            submissionStep={submissionStep}
+                        />
+                    </ResizablePanel>
+                </ResizablePanelGroup>
             </div>
         </main>
         {nextProblem && (
@@ -1069,5 +1030,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
-    
