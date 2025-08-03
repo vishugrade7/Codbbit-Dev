@@ -24,29 +24,19 @@ type CategoryInfo = {
 };
 
 const gradientClasses = [
-  "from-blue-200 to-blue-300 dark:from-blue-900/50 dark:to-blue-800/50",
-  "from-orange-200 to-orange-300 dark:from-orange-900/50 dark:to-orange-800/50",
-  "from-green-200 to-green-300 dark:from-green-900/50 dark:to-green-800/50",
-  "from-purple-200 to-purple-300 dark:from-purple-900/50 dark:to-purple-800/50",
-  "from-teal-200 to-teal-300 dark:from-teal-900/50 dark:to-teal-800/50",
-  "from-red-200 to-red-300 dark:from-red-900/50 dark:to-red-800/50",
-  "from-yellow-200 to-yellow-300 dark:from-yellow-900/50 dark:to-yellow-800/50",
-  "from-pink-200 to-pink-300 dark:from-pink-900/50 dark:to-pink-800/50",
-  "from-indigo-200 to-indigo-300 dark:from-indigo-900/50 dark:to-indigo-800/50",
-  "from-gray-200 to-gray-300 dark:from-gray-900/50 dark:to-gray-800/50",
+  "from-green-400 to-cyan-500 dark:from-green-500/70 dark:to-cyan-600/70",
+  "from-purple-400 to-pink-500 dark:from-purple-500/70 dark:to-pink-600/70",
+  "from-orange-400 to-amber-500 dark:from-orange-500/70 dark:to-amber-600/70",
+  "from-rose-400 to-red-500 dark:from-rose-500/70 dark:to-red-600/70",
+  "from-sky-400 to-indigo-500 dark:from-sky-500/70 dark:to-indigo-600/70",
 ];
 
 const iconColors = [
-    "text-blue-800 dark:text-blue-200",
-    "text-orange-800 dark:text-orange-200",
-    "text-green-800 dark:text-green-200",
-    "text-purple-800 dark:text-purple-200",
-    "text-teal-800 dark:text-teal-200",
-    "text-red-800 dark:text-red-200",
-    "text-yellow-800 dark:text-yellow-200",
-    "text-pink-800 dark:text-pink-200",
-    "text-indigo-800 dark:text-indigo-200",
-    "text-gray-800 dark:text-gray-200",
+    "text-white/90",
+    "text-white/90",
+    "text-white/90",
+    "text-white/90",
+    "text-white/90",
 ];
 
 export default function ApexProblemsView() {
