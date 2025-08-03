@@ -258,7 +258,7 @@ export default function Header() {
                   <>
                       <ThemeToggle />
                       <Button variant="ghost" className="h-9 px-3 text-sm">
-                        <Flame className="h-5 w-5 text-orange-500 mr-2" />
+                        <Flame className="h-5 w-5 text-blue-500 mr-2" />
                         <span>{userData?.points?.toLocaleString() ?? 0}</span>
                       </Button>
                       <DropdownMenu>
