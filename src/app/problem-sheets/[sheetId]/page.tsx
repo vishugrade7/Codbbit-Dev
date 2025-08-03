@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -210,10 +211,10 @@ export default function SheetDisplayPage() {
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
-          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
-          case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-          default: return 'bg-muted';
+          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border border-[#1ca350]/30';
+          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border border-yellow-400/30';
+          case 'hard': return 'bg-destructive/20 text-destructive border border-destructive/30';
+          default: return 'bg-muted border';
         }
     };
 
@@ -339,9 +340,9 @@ export default function SheetDisplayPage() {
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-muted-foreground">PROGRESS</h4>
                                     <div className="relative">
-                                        <Progress value={progressPercentage} className="h-4" />
+                                        <Progress value={progressPercentage} className="h-4 bg-muted" />
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-xs font-bold text-primary-foreground mix-blend-difference">
+                                            <span className="text-xs font-bold text-background dark:text-foreground">
                                                 {Math.round(progressPercentage)}%
                                             </span>
                                         </div>
@@ -482,3 +483,4 @@ export default function SheetDisplayPage() {
         </main>
     );
 }
+

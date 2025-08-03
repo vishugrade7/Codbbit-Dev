@@ -640,10 +640,10 @@ const markdownComponents: Components = {
 const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: ContentBlock[] | string, allProblems: ProblemWithCategory[] }) => {
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
-      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-      default: return 'bg-muted';
+      case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border border-[#1ca350]/30';
+      case 'medium': return 'bg-primary/20 text-primary border border-primary/30';
+      case 'hard': return 'bg-destructive/20 text-destructive border border-destructive/30';
+      default: return 'bg-muted border';
     }
   };
   const { theme } = useTheme();
@@ -1099,8 +1099,15 @@ export default function LessonPage() {
                 <h2 className="text-lg font-semibold">{course.title}</h2>
                 {totalLessonsCount > 0 && (
                     <div className="mt-2 space-y-1">
-                        <Progress value={progressPercentage} className="h-2" />
-                        <p className="text-xs text-muted-foreground">{completedLessonsCount} / {totalLessonsCount} lessons completed</p>
+                        <div className="relative">
+                            <Progress value={progressPercentage} className="h-2 bg-muted" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-xs font-bold text-background dark:text-foreground">
+                                    {completedLessonsCount} / {totalLessonsCount}
+                                </span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{Math.round(progressPercentage)}% completed</p>
                     </div>
                 )}
             </div>
