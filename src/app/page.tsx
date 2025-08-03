@@ -113,12 +113,12 @@ const HeroSection = () => {
           variants={heroVariants}
           initial="hidden"
           animate="visible"
-          className="flex items-center gap-4"
+          className="flex flex-col sm:flex-row items-center gap-4"
         >
-          <Button asChild size="lg">
+          <Button asChild className="w-full sm:w-auto h-10 px-8 sm:h-auto sm:px-4">
             <Link href={getStartedHref}>Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
-          <Button asChild size="lg" variant="outline">
+          <Button asChild variant="outline" className="w-full sm:w-auto h-10 px-8 sm:h-auto sm:px-4">
             <Link href="/leaderboard">View Leaderboard <Trophy className="ml-2 h-4 w-4" /></Link>
           </Button>
         </motion.div>
