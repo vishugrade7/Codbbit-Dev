@@ -18,7 +18,7 @@ export default function InteractivePlayground() {
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     <div className="flex items-center justify-center">
                         <Image
-                            src="https://placehold.co/500x400.png"
+                            src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjb2Rpbmd8ZW58MHx8fHwxNzU0MjIyMDcxfDA&ixlib=rb-4.1.0&q=80&w=1080"
                             width={500}
                             height={400}
                             alt="Interactive coding illustration"
@@ -28,7 +28,7 @@ export default function InteractivePlayground() {
                     </div>
                     <div className="flex flex-col justify-center space-y-6">
                         <div className="space-y-2">
-                            <div className="text-primary font-semibold tracking-wide">LWC & APEX PLAYGROUND</div>
+                            <div className="text-primary font-semibold tracking-wide">APEX PLAYGROUND</div>
                             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Your Interactive Salesforce Playground</h2>
                         </div>
                         <ul className="grid gap-4">
@@ -43,7 +43,7 @@ export default function InteractivePlayground() {
                         </ul>
                         <div className="pt-4">
                             <Button asChild size="lg">
-                                <Link href="/lwc-playground">Explore Playground</Link>
+                                <Link href="/apex-problems">Explore Playground</Link>
                             </Button>
                         </div>
                     </div>
