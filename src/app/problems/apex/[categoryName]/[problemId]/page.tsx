@@ -985,8 +985,8 @@ export default function ProblemWorkspacePage() {
                 <ResizablePanelGroup direction="horizontal">
                     <ResizablePanel
                         ref={leftPanelRef}
-                        defaultSize={50}
-                        minSize={30}
+                        defaultSize={30}
+                        minSize={20}
                         collapsible={true}
                         onCollapse={() => setIsFullScreen(true)}
                         onExpand={() => setIsFullScreen(false)}
@@ -994,7 +994,7 @@ export default function ProblemWorkspacePage() {
                        {drawerContent}
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={50} minSize={30}>
+                    <ResizablePanel defaultSize={70} minSize={30}>
                        <EditorAndResults 
                             code={code}
                             setCode={setCode}
