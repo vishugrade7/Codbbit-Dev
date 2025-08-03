@@ -5,7 +5,7 @@
 
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, User, NavLink, Badge, ApexProblemsData, PricingSettings, Voucher } from '@/types';
+import type { Problem, Course, User, NavLink, Badge, ApexProblemsData, PricingSettings, Voucher, Achievement } from '@/types';
 import { adminStorage } from '@/lib/firebaseAdmin';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -468,7 +468,6 @@ const defaultNavLinks: NavLink[] = [
     { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true, isPro: false },
     { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true, isPro: false },
     { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true, isPro: false },
-    { id: 'lwc-playground', label: 'LWC Playground', href: '/lwc-playground', isEnabled: true, isProtected: false, isPro: false },
 ];
 
 export async function getNavigationSettings(): Promise<NavLink[]> {
@@ -577,8 +576,8 @@ export async function upsertBadge(data: z.infer<typeof badgeFormSchema>) {
             docRef = doc(db, 'badges', id);
             await updateDoc(docRef, badgeData);
         } else {
-            docRef = doc(collection(db, 'badges'));
-            await setDoc(docRef, badgeData);
+            const newDocRef = doc(collection(db, 'badges'));
+            await setDoc(newDocRef, { ...badgeData, id: newDocRef.id });
         }
         return { success: true, message: `Badge ${id ? 'updated' : 'created'} successfully!` };
     } catch (error) {
@@ -853,3 +852,4 @@ export async function deleteVoucher(voucherId: string) {
 }
 
 // #endregion
+

@@ -16,6 +16,7 @@ export type SolvedProblemDetail = {
 export type Achievement = {
   name: string;
   description: string;
+  imageUrl?: string;
   date: any; // Firestore Timestamp
 };
 
@@ -235,6 +236,7 @@ export type Badge = {
   id: string;
   name: string;
   description: string;
+  imageUrl?: string;
   type: 'STREAK' | 'POINTS' | 'TOTAL_SOLVED' | 'CATEGORY_SOLVED' | 'ACTIVE_DAYS';
   value: number;
   category?: string;
