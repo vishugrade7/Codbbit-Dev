@@ -43,6 +43,8 @@ export async function getCroppedImg(
   // Using image/jpeg for compression, with a quality of 0.7 (adjust as needed).
   // This is where size reduction happens.
   return new Promise((resolve) => {
+    // You can adjust the quality (0.0 to 1.0) to target a specific file size.
+    // Lower values (e.g., 0.5) will result in smaller files but lower quality.
     resolve(canvas.toDataURL('image/jpeg', 0.7));
   });
 }

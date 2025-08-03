@@ -31,7 +31,18 @@ function SalesforceCallbackContent() {
       }
       
       const code = searchParams.get('code');
+      const state = searchParams.get('state');
+      const storedState = sessionStorage.getItem('sfdc-state');
       const codeVerifier = sessionStorage.getItem('sfdc-code-verifier');
+      
+      if (state !== storedState) {
+        setMessage('Error: Invalid state parameter. Possible CSRF attack.');
+        toast({ variant: 'destructive', title: 'Authentication Failed', description: 'State mismatch. Please try connecting again.' });
+        router.push('/settings');
+        return;
+      }
+      
+      sessionStorage.removeItem('sfdc-state');
 
       if (!code) {
         setMessage('Error: Authorization code not found.');

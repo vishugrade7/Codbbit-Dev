@@ -34,6 +34,13 @@ const generateCodeChallenge = async (verifier: string) => {
     .replace(/=+$/, "");
 };
 
+const generateState = () => {
+    const an = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map((c) => an[c % an.length])
+        .join("");
+}
+
 export default function Settings() {
   const { user, userData, loading, isPro } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
@@ -46,8 +53,10 @@ export default function Settings() {
     try {
         const codeVerifier = generateCodeVerifier();
         const codeChallenge = await generateCodeChallenge(codeVerifier);
+        const state = generateState();
 
         sessionStorage.setItem('sfdc-code-verifier', codeVerifier);
+        sessionStorage.setItem('sfdc-state', state);
 
         const clientId = process.env.NEXT_PUBLIC_SFDC_CLIENT_ID;
         const redirectUri = `${process.env.NEXT_PUBLIC_HOST}/salesforce-callback`;
@@ -60,6 +69,7 @@ export default function Settings() {
         authUrl.searchParams.append('scope', 'api refresh_token');
         authUrl.searchParams.append('code_challenge', codeChallenge);
         authUrl.searchParams.append('code_challenge_method', 'S256');
+        authUrl.searchParams.append('state', state);
 
         window.location.href = authUrl.toString();
 

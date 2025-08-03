@@ -10,7 +10,7 @@ import InteractivePlayground from '@/components/interactive-playground';
 import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import Image from 'next/image';
-import { ArrowRight, Trophy } from 'lucide-react';
+import { ArrowRight, Trophy, Pencil } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { collection, getDocs } from "firebase/firestore";
@@ -37,7 +37,7 @@ const Section = ({ children }: { children: React.ReactNode }) => {
 const HeroSection = () => {
   const [userCount, setUserCount] = React.useState(500);
   const [loadingCount, setLoadingCount] = React.useState(true);
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const getStartedHref = user ? "/apex-problems" : "/signup";
 
   React.useEffect(() => {
@@ -71,6 +71,8 @@ const HeroSection = () => {
       },
     }),
   };
+
+  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
 
   return (
     <div className="w-full flex items-center justify-center bg-background p-4 pt-24 md:pt-32 home-hero-gradient">
@@ -126,7 +128,7 @@ const HeroSection = () => {
           variants={heroVariants}
           initial="hidden"
           animate="visible"
-          className="w-full max-w-5xl mt-8"
+          className="w-full max-w-5xl mt-8 relative group"
         >
           <Image
             src="https://images.unsplash.com/photo-1754220763477-97453f9e3d99?q=80&w=1559&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -136,6 +138,12 @@ const HeroSection = () => {
             data-ai-hint="dashboard course"
             className="rounded-lg border-2 border-primary/10 shadow-2xl shadow-primary/10"
           />
+          {isAuthorizedAdmin && (
+             <Button size="icon" className="absolute top-4 right-4 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Pencil className="h-4 w-4"/>
+                <span className="sr-only">Edit Image</span>
+             </Button>
+          )}
         </motion.div>
       </div>
     </div>
