@@ -24,11 +24,11 @@ type CategoryInfo = {
 };
 
 const gradientClasses = [
-  "from-green-400 to-cyan-500 dark:from-green-500/70 dark:to-cyan-600/70",
-  "from-purple-400 to-pink-500 dark:from-purple-500/70 dark:to-pink-600/70",
-  "from-orange-400 to-amber-500 dark:from-orange-500/70 dark:to-amber-600/70",
-  "from-rose-400 to-red-500 dark:from-rose-500/70 dark:to-red-600/70",
+  "from-blue-400 to-blue-600 dark:from-blue-500/70 dark:to-blue-700/70",
   "from-sky-400 to-indigo-500 dark:from-sky-500/70 dark:to-indigo-600/70",
+  "from-cyan-400 to-blue-500 dark:from-cyan-500/70 dark:to-blue-600/70",
+  "from-indigo-400 to-purple-500 dark:from-indigo-500/70 dark:to-purple-600/70",
+  "from-blue-300 to-sky-400 dark:from-blue-400/70 dark:to-sky-500/70",
 ];
 
 const iconColors = [
