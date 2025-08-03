@@ -31,6 +31,15 @@ export default function Header() {
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const [loadingNav, setLoadingNav] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const logoSrc = useMemo(() => {
     if (!brandingSettings) return "/favicon.ico";
@@ -95,7 +104,12 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+    <header className={cn(
+      "sticky top-0 z-30 w-full border-b transition-all duration-300",
+      scrolled
+        ? "border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60"
+        : "border-transparent bg-transparent"
+    )}>
       <div className="container flex h-12 items-center justify-between">
         <div className="flex items-center gap-2">
              <Link href="/" className="flex items-center gap-2">
