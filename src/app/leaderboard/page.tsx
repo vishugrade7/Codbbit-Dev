@@ -307,7 +307,7 @@ export default function Leaderboard() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <span>@{user.username}</span>
-                        {user.emailVerified && user.phoneVerified && <VerifiedIcon />}
+                        {user.emailVerified && <VerifiedIcon />}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                         {user.company && (
@@ -470,14 +470,14 @@ export default function Leaderboard() {
                           </div>
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                               <span>@{user.username}</span>
-                              {user.emailVerified && user.phoneVerified && <VerifiedIcon />}
+                              {user.emailVerified && <VerifiedIcon />}
                           </div>
                         </div>
                       </Link>
                     </TableCell>
                     <TableCell>
                        {user.company ? (
-                           <Badge variant="secondary">
+                           <Badge variant="secondary" className="border">
                                {user.companyLogoUrl && <Image src={user.companyLogoUrl} alt={user.company} width={16} height={16} className="mr-1.5 rounded-full object-contain"/>}
                                <span className="truncate">{user.company}</span>
                            </Badge>

@@ -423,7 +423,7 @@ export default function UserProfilePage() {
                                         </div>
                                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                           <span>@{profileUser.username}</span>
-                                          {profileUser.emailVerified && profileUser.phoneVerified && <VerifiedIcon />}
+                                          {profileUser.emailVerified && <VerifiedIcon />}
                                         </div>
                                         <p className="text-sm mt-2 max-w-xs">{profileUser.about}</p>
                                     </div>
