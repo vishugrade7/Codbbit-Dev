@@ -23,17 +23,6 @@ type CategoryInfo = {
   imageUrl?: string;
 };
 
-const gradientClasses = [
-  "from-sky-400 via-blue-500 to-indigo-500 dark:from-sky-500/70 dark:via-blue-600/70 dark:to-indigo-600/70",
-  "from-violet-500 via-pink-500 to-rose-500 dark:from-violet-600/70 dark:via-pink-600/70 dark:to-rose-600/70",
-  "from-green-300 via-cyan-400 to-blue-500 dark:from-green-400/70 dark:via-cyan-500/70 dark:to-blue-600/70",
-  "from-fuchsia-500 via-purple-600 to-violet-600 dark:from-fuchsia-600/70 dark:via-purple-700/70 dark:to-violet-700/70",
-  "from-teal-400 via-cyan-500 to-sky-500 dark:from-teal-500/70 dark:via-cyan-600/70 dark:to-sky-600/70",
-  "from-amber-400 via-orange-500 to-red-600 dark:from-amber-500/70 dark:via-orange-600/70 dark:to-red-700/70",
-  "from-rose-400 via-fuchsia-500 to-indigo-500 dark:from-rose-500/70 dark:via-fuchsia-600/70 dark:to-indigo-600/70",
-  "from-pink-500 via-red-500 to-yellow-500 dark:from-pink-600/70 dark:via-red-600/70 dark:to-yellow-600/70",
-];
-
 const iconColors = [
     "text-white/90",
     "text-white/90",
@@ -177,7 +166,6 @@ export default function ApexProblemsView() {
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {categories.map((category, index) => {
               const Icon = categoryIcons.get(category.name) || Code;
-              const gradient = gradientClasses[index % gradientClasses.length];
               const iconColor = iconColors[index % iconColors.length];
               return (
               <motion.div
@@ -190,7 +178,7 @@ export default function ApexProblemsView() {
               >
                 <Card className="overflow-hidden h-full flex flex-col group">
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-wave bg-400%", gradient)}>
+                      <div className={cn("aspect-video relative flex items-center justify-center bg-card-wave-gradient bg-cover")}>
                            <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
                       </div>
                   </Link>

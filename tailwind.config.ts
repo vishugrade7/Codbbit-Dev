@@ -42,6 +42,7 @@ export default {
         'podium-silver': 'linear-gradient(110deg, transparent 20%, hsl(240, 5%, 65%, 0.1), transparent 80%)',
         'podium-bronze': 'linear-gradient(110deg, transparent 20%, hsl(28, 80%, 55%, 0.1), transparent 80%)',
         'shimmer': 'linear-gradient(110deg, transparent 20%, hsl(var(--primary)/0.1), transparent 80%)',
+        'card-wave-gradient': `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cdefs%3e%3cfilter id='noise' x='-20%25' y='-20%25' width='140%25' height='140%25' filterUnits='objectBoundingBox' primitiveUnits='userSpaceOnUse' color-interpolation-filters='linearRGB'%3e%3c/filter%3e%3c/defs%3e%3cpath fill='%23081A42' d='M0 0h100v100H0z'/%3e%3cpath fill='%23223064' d='M100 24s-25 12-50 12S0 24 0 24v76h100V24z'/%3e%3cpath fill='%23384284' d='M100 30s-25 12-50 12S0 30 0 30v70h100V30z'/%3e%3cpath fill='%234F55A6' d='M100 36s-25 12-50 12S0 36 0 36v64h100V36z'/%3e%3cpath fill='%236567c6' d='M100 42s-25 12-50 12S0 42 0 42v58h100V42z'/%3e%3cpath fill='%237C7AE8' d='M100 48s-25 12-50 12S0 48 0 48v52h100V48z'/%3e%3c/svg%3e")`,
       },
       colors: {
         background: 'hsl(var(--background))',
