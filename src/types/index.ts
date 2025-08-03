@@ -1,5 +1,11 @@
 
 
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;

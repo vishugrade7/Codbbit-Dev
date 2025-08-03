@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getAuth, sendEmailVerification } from "firebase/auth";
+import { getAuth, sendEmailVerification, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -127,10 +127,25 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(user.company || null);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
+  
   const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
 
   const companyValue = form.watch("company");
   const phoneValue = form.watch("phone");
+  
+  useEffect(() => {
+    if (!isOpen) {
+        // Reset phone verification state when modal closes
+        setIsVerifyingPhone(false);
+        setOtpSent(false);
+        setOtpCode("");
+        setConfirmationResult(null);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (companyValue !== selectedCompanyName) {
@@ -201,23 +216,51 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
     }
   };
 
+  const setupRecaptcha = () => {
+      if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+                'callback': (response: any) => {
+                    // reCAPTCHA solved, allow signInWithPhoneNumber.
+                }
+            });
+        }
+  }
+  
   async function handlePhoneVerify() {
-    if (!currentUser) return;
+    if (!currentUser || !phoneValue) return;
     setIsVerifyingPhone(true);
-    const result = await verifyPhoneNumber(currentUser.uid);
-    if (result.success) {
-      toast({
-        title: "Phone Verified!",
-        description: "Your phone number has been successfully verified.",
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: result.error,
-      });
+    try {
+        setupRecaptcha();
+        const appVerifier = window.recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, phoneValue, appVerifier);
+        setConfirmationResult(result);
+        setOtpSent(true);
+        toast({ title: 'OTP Sent', description: 'Please enter the code you received via SMS.' });
+    } catch (error: any) {
+        console.error("Error sending OTP", error);
+        toast({ variant: 'destructive', title: 'Failed to send OTP', description: error.message });
+        setIsVerifyingPhone(false);
     }
-    setIsVerifyingPhone(false);
+  }
+
+  async function handleConfirmOtp() {
+      if (!confirmationResult || !otpCode) return;
+      try {
+          await confirmationResult.confirm(otpCode);
+          // Now update firestore
+          const verifyResult = await verifyPhoneNumber(currentUser!.uid);
+          if (verifyResult.success) {
+            toast({ title: "Phone Verified!", description: "Your phone number has been successfully verified." });
+            setOtpSent(false); // Go back to normal view
+          } else {
+             toast({ variant: 'destructive', title: 'Verification Failed', description: verifyResult.error });
+          }
+      } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Invalid Code', description: 'The OTP you entered was incorrect. Please try again.' });
+      } finally {
+          setIsVerifyingPhone(false);
+      }
   }
 
   async function onSubmit(values: z.infer<typeof profileSchema>) {
@@ -258,6 +301,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
                 Make changes to your profile here. Click save when you're done.
             </DialogDescription>
         </DialogHeader>
+        <div id="recaptcha-container"></div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 min-h-0 flex flex-col">
             <ScrollArea className="flex-1 -mx-6 px-6">
@@ -321,22 +365,31 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
+                      {otpSent ? (
+                        <div className="flex items-center gap-2">
+                           <Input value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="6-digit code" maxLength={6} />
+                           <Button type="button" onClick={handleConfirmOtp} disabled={isVerifyingPhone}>
+                                {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Confirm'}
+                           </Button>
                         </div>
-                        {phoneValue && !user.phoneVerified && (
-                            <Button type="button" variant="outline" size="sm" onClick={handlePhoneVerify} disabled={isVerifyingPhone}>
-                                {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verify'}
-                            </Button>
-                        )}
-                        {user.phoneVerified && (
-                             <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium">
-                                <CheckCircle className="h-4 w-4" /> Verified
-                             </div>
-                        )}
-                      </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
+                            </div>
+                            {phoneValue && !user.phoneVerified && (
+                                <Button type="button" variant="outline" size="sm" onClick={handlePhoneVerify} disabled={isVerifyingPhone}>
+                                    {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verify'}
+                                </Button>
+                            )}
+                            {user.phoneVerified && (
+                                <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium">
+                                    <CheckCircle className="h-4 w-4" /> Verified
+                                </div>
+                            )}
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
