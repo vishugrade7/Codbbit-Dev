@@ -1,6 +1,5 @@
 
 
-
 'use server';
 
 import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, query, where, getDocs, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
@@ -102,6 +101,7 @@ export async function upsertProblemToFirestore(data: z.infer<typeof import('@/li
             imageUrl: data.imageUrl,
             mermaidDiagram: data.mermaidDiagram,
             displayOrder: data.displayOrder,
+            isTested: data.isTested,
         };
 
         if (data.id) {
