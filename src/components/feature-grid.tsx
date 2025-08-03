@@ -10,7 +10,7 @@ export default function FeatureGrid() {
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center gap-4 mb-12">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
-              {'{Sharpen}'} Your Salesforce Skills
+              <span className="text-primary">{'{'}</span>Sharpen<span className="text-primary">{'}'}</span> Your Salesforce Skills
             </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
