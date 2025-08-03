@@ -36,8 +36,8 @@ export default function FeatureGrid() {
 
             <Card className="flex flex-col bg-background rounded-2xl">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-secondary p-3 text-secondary-foreground mb-4 w-fit">
-                  <BookOpenCheck className="h-6 w-6" />
+                <div className="inline-block p-3 mb-4 w-fit">
+                  <BookOpenCheck className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-2xl font-semibold">Interactive Courses</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
