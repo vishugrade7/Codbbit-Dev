@@ -84,11 +84,10 @@ const HeroSection = () => {
           className="w-full max-w-5xl mt-8"
         >
           <Image
-            src="https://placehold.co/1200x600.png"
+            src="https://images.unsplash.com/photo-1754220763477-97453f9e3d99?q=80&w=1559&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             alt="Dashboard preview"
             width={1200}
             height={600}
-            data-ai-hint="dashboard analytics"
             className="rounded-lg border-2 border-primary/10 shadow-2xl shadow-primary/10"
           />
         </motion.div>
