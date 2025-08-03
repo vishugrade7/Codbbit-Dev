@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import type { Problem, ApexProblemsData } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCache, setCache } from "@/lib/cache";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,8 @@ export default function CategoryProblemsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+
 
   useEffect(() => {
     if (!categoryName) return;
@@ -133,19 +135,45 @@ export default function CategoryProblemsPage() {
                     Select a problem to start solving.
                 </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search problems by title..."
-                  className="w-full pl-10 rounded-full"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+             <div className="flex items-center gap-4">
+              <div className="relative flex items-center">
+                  <AnimatePresence>
+                      {isSearchExpanded ? (
+                          <motion.div
+                              key="search-input"
+                              initial={{ width: 0, opacity: 0 }}
+                              animate={{ width: 250, opacity: 1 }}
+                              exit={{ width: 0, opacity: 0 }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                              className="relative"
+                          >
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input
+                                  placeholder="Search problems by title..."
+                                  className="w-full pl-10 rounded-full"
+                                  value={searchTerm}
+                                  onChange={(e) => setSearchTerm(e.target.value)}
+                                  onBlur={() => setIsSearchExpanded(false)}
+                                  autoFocus
+                              />
+                          </motion.div>
+                      ) : (
+                          <motion.div
+                              key="search-button"
+                              initial={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.5, opacity: 0 }}
+                          >
+                              <Button variant="outline" size="icon" className="rounded-full" onClick={() => setIsSearchExpanded(true)}>
+                                  <Search className="h-5 w-5" />
+                                  <span className="sr-only">Search</span>
+                              </Button>
+                          </motion.div>
+                      )}
+                  </AnimatePresence>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="shrink-0">
+                  <Button variant="outline" size="icon" className="shrink-0 rounded-full">
                     <Filter className="h-4 w-4" />
                     <span className="sr-only">Filters</span>
                   </Button>
