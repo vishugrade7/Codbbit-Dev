@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +24,7 @@ type ProblemWithCategory = Problem & { categoryName: string };
 function UploadProblemContent() {
     const { user: authUser, userData, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
+    const router = useRouter();
     
     const initialView = searchParams.get('view') || 'dashboard';
     const courseId = searchParams.get('courseId');
@@ -33,8 +34,18 @@ function UploadProblemContent() {
 
     const isAuthorized = userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
 
+    useEffect(() => {
+        if (!authLoading && !isAuthorized) {
+            router.push('/'); // Redirect non-admins to the homepage
+        }
+    }, [authLoading, isAuthorized, router]);
+
     if (authLoading || !isAuthorized) {
-        return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+        return (
+            <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
     }
     
     const handleAddNewProblem = () => {
