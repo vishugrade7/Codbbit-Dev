@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +41,8 @@ import { Textarea } from "./ui/textarea";
 import { verifyPhoneNumber } from "../app/profile/actions";
 import { updateUserProfilePicture } from "@/app/profile/actions";
 import { Slider } from "./ui/slider";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Label } from "./ui/label";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -207,7 +209,7 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
 
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useState<React.RefObject<HTMLInputElement>>({ current: null });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
 
   const companyValue = form.watch("company");
