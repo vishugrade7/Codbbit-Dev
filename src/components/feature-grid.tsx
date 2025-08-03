@@ -16,8 +16,8 @@ export default function FeatureGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             <Card className="flex flex-col bg-background rounded-2xl">
               <CardContent className="p-6 md:p-8 flex-1 flex flex-col">
-                <div className="inline-block rounded-lg bg-primary p-3 text-primary-foreground mb-4 w-fit">
-                  <Code2 className="h-6 w-6" />
+                <div className="inline-block p-3 mb-4 w-fit">
+                  <Code2 className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-2xl font-semibold">Practice Problems</h3>
                 <p className="mt-4 text-muted-foreground flex-1">
