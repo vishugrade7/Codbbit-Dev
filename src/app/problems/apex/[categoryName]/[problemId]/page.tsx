@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
@@ -232,7 +233,7 @@ const EditorAndResults = ({
                     <div className="flex items-center justify-between p-2 border-b">
                         <div className="flex items-center gap-2 font-semibold">
                             <Code className="h-5 w-5" />
-                            <span>Apex Code</span>
+                            <span>{problem.metadataType === "Test Class" ? "Test Class" : "Apex Code"}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <TooltipProvider>
@@ -383,7 +384,8 @@ export default function ProblemWorkspacePage() {
     const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
 
     const [isFullScreen, setIsFullScreen] = useState(false);
-    const leftPanelRef = useRef<ImperativePanelHandle>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const drawerRef = useRef<HTMLDivElement>(null);
     const resultsPanelRef = useRef<ImperativePanelHandle>(null);
     const [isResultsCollapsed, setIsResultsCollapsed] = useState(true);
     const [fontSize, setFontSize] = useState<number>(16);
@@ -474,16 +476,38 @@ export default function ProblemWorkspacePage() {
         setFontSize(isMobile ? 12 : 16);
     }, [isMobile]);
 
-    const toggleFullScreen = () => {
-        const panel = leftPanelRef.current;
-        if (panel) {
-            if (isFullScreen) {
-                panel.expand();
-            } else {
-                panel.collapse();
+    useEffect(() => {
+        if (isMobile) return;
+    
+        const handleMouseMove = (event: MouseEvent) => {
+          if (event.clientX < 20) {
+            setIsDrawerOpen(true);
+          }
+        };
+    
+        const handleMouseLeave = (event: MouseEvent) => {
+            if (drawerRef.current && !drawerRef.current.contains(event.target as Node)) {
+              setIsDrawerOpen(false);
             }
-            setIsFullScreen(!isFullScreen);
+        };
+        
+        const drawerElement = drawerRef.current;
+        if(drawerElement) {
+            drawerElement.addEventListener('mouseleave', handleMouseLeave);
         }
+    
+        window.addEventListener('mousemove', handleMouseMove);
+    
+        return () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          if (drawerElement) {
+            drawerElement.removeEventListener('mouseleave', handleMouseLeave);
+          }
+        };
+    }, [isMobile]);
+
+    const toggleFullScreen = () => {
+        setIsFullScreen(!isFullScreen);
     };
     
     const toggleResultsPanel = useCallback(() => {
@@ -615,12 +639,10 @@ export default function ProblemWorkspacePage() {
         setSubmissionStep('saving');
         setCoverageLines(null); // Clear previous coverage highlights
 
-        // Auto-expand results panel if it's a regular problem
-        if (problem.metadataType !== "Test Class") {
-            const panel = resultsPanelRef.current;
-            if (panel && isResultsCollapsed) {
-                toggleResultsPanel();
-            }
+        // Auto-expand results panel
+        const panel = resultsPanelRef.current;
+        if (panel && isResultsCollapsed) {
+            toggleResultsPanel();
         }
         
         const response = await submitApexSolution(user.uid, problem, code);
@@ -720,15 +742,6 @@ export default function ProblemWorkspacePage() {
         }
     };
     
-    const getDifficultyRowClass = (difficulty: string) => {
-        switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-500/10 hover:bg-green-500/20';
-          case 'medium': return 'bg-yellow-500/10 hover:bg-yellow-500/20';
-          case 'hard': return 'bg-destructive/10 hover:bg-destructive/20';
-          default: return 'hover:bg-muted/50';
-        }
-    };
-
     const componentMap: Record<ProblemLayoutComponent, React.ReactNode> = {
         description: <div key="description" className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />,
         image: problem.imageUrl ? <div key="image" className="relative w-full aspect-video my-4 rounded-lg overflow-hidden"><Image src={problem.imageUrl} alt="Problem visual aid" fill className="object-contain" /></div> : null,
@@ -788,6 +801,14 @@ export default function ProblemWorkspacePage() {
     }
     
     const isTestClassProblem = problem.metadataType === "Test Class";
+    const drawerContent = isTestClassProblem ? (
+        <div className="flex flex-col h-full bg-background">
+            <div className="flex items-center justify-between p-2 border-b">
+                <div className="flex items-center gap-2 font-semibold"><span>Read-Only Apex Class</span></div>
+            </div>
+            <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: fontSize, minimap: { enabled: false } }} />
+        </div>
+    ) : <ProblemDetails />;
 
     return (
     <div className="w-full h-screen flex flex-col bg-background text-foreground">
@@ -962,144 +983,78 @@ export default function ProblemWorkspacePage() {
         </header>
 
         <main className="flex-1 overflow-auto h-full">
-            {isTestClassProblem ? (
-                 <div className="h-full">
-                    {/* Mobile View for Test Class */}
-                    <div className="md:hidden flex flex-col h-full">
-                        <Tabs defaultValue="class" className="flex-1 flex flex-col">
-                            <TabsList className="relative inline-flex h-auto items-center justify-center rounded-none border-b bg-transparent p-0 grid w-full grid-cols-2 shrink-0">
-                                <TabsTrigger value="class">Apex Class</TabsTrigger>
-                                <TabsTrigger value="code">Test Class</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="class" className="flex-1 overflow-auto">
-                                <div className="p-2 border-b flex items-center justify-between">
-                                    <h3 className="font-semibold text-sm">Read-Only Apex Class</h3>
-                                </div>
-                                <div className="h-[calc(100%-41px)]">
-                                    <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: fontSize, minimap: { enabled: false } }} />
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="code" className="flex-1 overflow-auto flex flex-col m-0">
-                                 <div className="p-2 border-b flex items-center justify-between">
-                                    <h3 className="font-semibold text-sm">Your Test Class</h3>
-                                     <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                        Run Test
-                                    </Button>
-                                </div>
-                                 <div className="h-[calc(100%-41px)]">
-                                    <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: fontSize, minimap: { enabled: false } }} />
-                                 </div>
-                            </TabsContent>
-                        </Tabs>
-                        <div className="border-t shrink-0 h-48 overflow-y-auto">
-                           <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
-                        </div>
-                    </div>
+            <div className="md:hidden h-full">
+                <Tabs defaultValue="problem" className="flex flex-col h-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="problem">Problem</TabsTrigger>
+                        <TabsTrigger value="code">Code</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="problem" className="flex-auto overflow-y-auto">
+                        {drawerContent}
+                    </TabsContent>
+                    <TabsContent value="code" className="flex-auto flex flex-col m-0 overflow-hidden">
+                        <EditorAndResults 
+                            code={code}
+                            setCode={setCode}
+                            problem={problem}
+                            handleSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            fontSize={fontSize}
+                            setFontSize={setFontSize}
+                            isFullScreen={isFullScreen}
+                            toggleFullScreen={toggleFullScreen}
+                            resultsPanelRef={resultsPanelRef}
+                            isResultsCollapsed={isResultsCollapsed}
+                            setIsResultsCollapsed={setIsResultsCollapsed}
+                            toggleResultsPanel={toggleResultsPanel}
+                            results={results}
+                            submissionSuccess={submissionSuccess}
+                            submissionStep={submissionStep}
+                        />
+                    </TabsContent>
+                </Tabs>
+            </div>
 
-                    {/* Desktop View for Test Class */}
-                    <div className="hidden md:flex flex-col h-full">
-                         <ResizablePanelGroup direction="horizontal" className="flex-1">
-                            <ResizablePanel defaultSize={50} minSize={30}>
-                                <div className="flex flex-col h-full bg-background">
-                                    <div className="flex items-center justify-between p-2 border-b">
-                                        <div className="flex items-center gap-2 font-semibold"><span>Apex Class</span></div>
-                                    </div>
-                                    <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: fontSize, minimap: { enabled: false } }} />
-                                </div>
-                            </ResizablePanel>
-                            <ResizableHandle withHandle />
-                            <ResizablePanel defaultSize={50} minSize={30}>
-                                <div className="flex flex-col h-full bg-background">
-                                    <div className="flex items-center justify-between p-2 border-b">
-                                        <div className="flex items-center gap-2 font-semibold"><span>Test Class</span></div>
-                                        <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                            Run Test
-                                        </Button>
-                                    </div>
-                                    <MonacoEditor height="100%" language="java" value={code} onChange={(newValue) => setCode(newValue || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: fontSize, minimap: { enabled: false } }} />
-                                </div>
-                            </ResizablePanel>
-                        </ResizablePanelGroup>
-                        <div className="p-4 border-t h-48 overflow-y-auto">
-                            <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <>
-                <div className="md:hidden h-full">
-                    <Tabs defaultValue="problem" className="flex flex-col h-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="problem">Problem</TabsTrigger>
-                            <TabsTrigger value="code">Code</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="problem" className="flex-auto overflow-y-auto">
-                            <ProblemDetails />
-                        </TabsContent>
-                        <TabsContent value="code" className="flex-auto flex flex-col m-0 overflow-hidden">
-                            <EditorAndResults 
-                                code={code}
-                                setCode={setCode}
-                                problem={problem}
-                                handleSubmit={handleSubmit}
-                                isSubmitting={isSubmitting}
-                                fontSize={fontSize}
-                                setFontSize={setFontSize}
-                                isFullScreen={isFullScreen}
-                                toggleFullScreen={toggleFullScreen}
-                                resultsPanelRef={resultsPanelRef}
-                                isResultsCollapsed={isResultsCollapsed}
-                                setIsResultsCollapsed={setIsResultsCollapsed}
-                                toggleResultsPanel={toggleResultsPanel}
-                                results={results}
-                                submissionSuccess={submissionSuccess}
-                                submissionStep={submissionStep}
-                            />
-                        </TabsContent>
-                    </Tabs>
-                </div>
-
-                <div className="hidden md:flex h-full">
-                    <ResizablePanelGroup direction="horizontal">
-                        <ResizablePanel 
-                            ref={leftPanelRef}
-                            defaultSize={25}
-                            minSize={20}
-                            collapsible
-                            collapsedSize={0}
-                            onCollapse={() => setIsFullScreen(true)}
-                            onExpand={() => setIsFullScreen(false)}
-                            className={cn("transition-all duration-300 ease-in-out")}
+            <div className="hidden md:flex h-full relative">
+                <AnimatePresence>
+                    {isDrawerOpen && (
+                        <motion.div
+                            ref={drawerRef}
+                            initial={{ width: 0, opacity: 0 }}
+                            animate={{ width: '25%', opacity: 1 }}
+                            exit={{ width: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="bg-card h-full overflow-hidden"
                         >
-                            <ProblemDetails />
-                        </ResizablePanel>
-                        <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={75} minSize={30}>
-                            <EditorAndResults 
-                                code={code}
-                                setCode={setCode}
-                                problem={problem}
-                                handleSubmit={handleSubmit}
-                                isSubmitting={isSubmitting}
-                                fontSize={fontSize}
-                                setFontSize={setFontSize}
-                                isFullScreen={isFullScreen}
-                                toggleFullScreen={toggleFullScreen}
-                                resultsPanelRef={resultsPanelRef}
-                                isResultsCollapsed={isResultsCollapsed}
-                                setIsResultsCollapsed={setIsResultsCollapsed}
-                                toggleResultsPanel={toggleResultsPanel}
-                                results={results}
-                                submissionSuccess={submissionSuccess}
-                                submissionStep={submissionStep}
-                            />
-                        </ResizablePanel>
-                    </ResizablePanelGroup>
-                </div>
-                </>
-            )}
+                            {drawerContent}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                 <motion.div
+                    className="h-full"
+                    animate={{ width: isDrawerOpen ? '75%' : '100%' }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                    <EditorAndResults 
+                        code={code}
+                        setCode={setCode}
+                        problem={problem}
+                        handleSubmit={handleSubmit}
+                        isSubmitting={isSubmitting}
+                        fontSize={fontSize}
+                        setFontSize={setFontSize}
+                        isFullScreen={isFullScreen}
+                        toggleFullScreen={toggleFullScreen}
+                        resultsPanelRef={resultsPanelRef}
+                        isResultsCollapsed={isResultsCollapsed}
+                        setIsResultsCollapsed={setIsResultsCollapsed}
+                        toggleResultsPanel={toggleResultsPanel}
+                        results={results}
+                        submissionSuccess={submissionSuccess}
+                        submissionStep={submissionStep}
+                    />
+                </motion.div>
+            </div>
         </main>
         {nextProblem && (
             <NextProblemOverlay
@@ -1114,3 +1069,5 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
+    
