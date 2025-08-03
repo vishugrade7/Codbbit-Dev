@@ -210,7 +210,7 @@ export default function SheetDisplayPage() {
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
           case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
           case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
           default: return 'bg-muted';
@@ -219,7 +219,7 @@ export default function SheetDisplayPage() {
 
     const getDifficultyRowClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
+          case 'easy': return 'bg-[#1ca350]/5 hover:bg-[#1ca350]/10';
           case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
           case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
           default: return 'hover:bg-muted/50';
@@ -329,7 +329,7 @@ export default function SheetDisplayPage() {
                                                 className="cursor-pointer flex items-center gap-1.5"
                                             >
                                                 <span>{category}</span>
-                                                {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
+                                                {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-[#1ca350]" />}
                                             </Badge>
                                         );
                                     })}
@@ -352,7 +352,7 @@ export default function SheetDisplayPage() {
                                     <div className="flex items-center gap-2">
                                         <span className="w-16 text-muted-foreground">Easy</span>
                                         <div className="flex-1 bg-muted rounded-full h-2">
-                                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
+                                            <div className="bg-[#1ca350] h-2 rounded-full" style={{ width: `${getPercentage(difficultyStats.Easy, difficultyStats.total)}%` }}></div>
                                         </div>
                                         <span className="w-8 text-right font-semibold">{difficultyStats.Easy}</span>
                                     </div>
@@ -461,7 +461,7 @@ export default function SheetDisplayPage() {
                                     <TableCell className="hidden sm:table-cell">
                                         <div className="flex justify-center">
                                             {userData?.solvedProblems?.[problem.id] ? (
-                                                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                <CheckCircle2 className="h-5 w-5 text-[#1ca350]" />
                                             ) : (
                                                 <Circle className="h-5 w-5 text-muted-foreground/50" />
                                             )}

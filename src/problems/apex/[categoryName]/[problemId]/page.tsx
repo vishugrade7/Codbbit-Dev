@@ -93,8 +93,8 @@ const SubmissionResultsView = ({ log, isSubmitting, success, step }: { log: stri
     if (success) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                <div className="p-3 bg-green-500/10 rounded-full mb-4">
-                    <CheckCircle2 className="h-12 w-12 text-green-500" />
+                <div className="p-3 bg-[#1ca350]/10 rounded-full mb-4">
+                    <CheckCircle2 className="h-12 w-12 text-[#1ca350]" />
                 </div>
                 <p className="font-bold text-2xl">Success!</p>
                 <p className="text-muted-foreground">All test cases passed.</p>
@@ -671,7 +671,7 @@ export default function ProblemWorkspacePage() {
     
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+        case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
         case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
         case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
         default: return 'bg-muted';
@@ -700,7 +700,7 @@ export default function ProblemWorkspacePage() {
                         </Badge>
                     )}
                     {isSolved && (
-                    <div className="flex items-center gap-1.5 text-sm text-green-400">
+                    <div className="flex items-center gap-1.5 text-sm text-[#1ca350]">
                         <CheckCircle2 className="h-4 w-4" />
                         <span>Solved</span>
                     </div>
@@ -723,14 +723,16 @@ export default function ProblemWorkspacePage() {
                 ))}
 
                 {problem.hints && problem.hints.length > 0 && (
-                    <div>
-                        <h3 className="font-semibold mb-2">Constraints</h3>
-                        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                            {problem.hints.map((hint, index) => (
-                                <li key={index}>{hint}</li>
-                            ))}
-                        </ul>
-                    </div>
+                    <Card>
+                        <CardContent className="p-4">
+                            <h3 className="font-semibold mb-2">Hints</h3>
+                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                {problem.hints.map((hint, index) => (
+                                    <li key={index}>{hint}</li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         );
@@ -766,7 +768,7 @@ export default function ProblemWorkspacePage() {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M4 4H12V20H4V4ZM14 4H20V12H14V4ZM14 14H20V20H14V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background/80 backdrop-blur-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <SheetHeader className="p-4 border-b shrink-0">
                             <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
@@ -810,13 +812,15 @@ export default function ProblemWorkspacePage() {
                                         p.id === problemId && "bg-primary/10 text-primary"
                                     )}
                                 >
-                                    <span className="truncate pr-4">{p.title}</span>
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        {userData?.solvedProblems?.[p.id] && <CheckCircle2 className="h-4 w-4 text-[#1ca350] flex-shrink-0" />}
+                                        <span className="truncate">{p.title}</span>
+                                    </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
                                             {p.difficulty}
                                         </Badge>
-                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                     </div>
                                 </Link>
                             )) : (
@@ -970,7 +974,7 @@ export default function ProblemWorkspacePage() {
                     <ResizablePanelGroup direction="horizontal">
                         <ResizablePanel 
                             ref={leftPanelRef}
-                            defaultSize={25}
+                            defaultSize={30}
                             minSize={20}
                             collapsible
                             collapsedSize={0}
@@ -981,7 +985,7 @@ export default function ProblemWorkspacePage() {
                             <ProblemDetails />
                         </ResizablePanel>
                         <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={75} minSize={30}>
+                        <ResizablePanel defaultSize={70} minSize={30}>
                             <EditorAndResults 
                                 code={code}
                                 setCode={setCode}

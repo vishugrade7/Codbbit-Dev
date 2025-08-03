@@ -378,7 +378,7 @@ export default function UserProfilePage() {
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
           case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
           case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
           default: return 'bg-muted';
@@ -387,7 +387,7 @@ export default function UserProfilePage() {
 
     const getDifficultyRowClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
+          case 'easy': return 'bg-[#1ca350]/5 hover:bg-[#1ca350]/10';
           case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
           case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
           default: return 'hover:bg-muted/50';
@@ -533,7 +533,7 @@ export default function UserProfilePage() {
                                             <span>Easy</span>
                                             <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
                                         </div>
-                                        <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-green-500" />
+                                        <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-[#1ca350]" />
                                     </div>
                                     <div>
                                         <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">

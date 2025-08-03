@@ -19,7 +19,7 @@ type ProgressCardProps = {
 const chartConfig = {
   easy: {
     label: "Easy",
-    color: "hsl(142.1 76.2% 41%)", // green-500
+    color: "#1ca350",
   },
   medium: {
     label: "Medium",
@@ -107,7 +107,7 @@ export function ProgressCard({
         </div>
 
         <div className="w-full flex-1 space-y-2" style={{
-            '--color-easy': 'hsl(142.1 76.2% 41%)',
+            '--color-easy': '#1ca350',
             '--color-medium': 'hsl(48 96% 51%)',
             '--color-hard': 'hsl(var(--destructive))',
         } as React.CSSProperties}>

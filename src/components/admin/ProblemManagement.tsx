@@ -458,7 +458,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
           case 'medium': return 'bg-primary/20 text-primary border-primary/30';
           case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
           default: return 'bg-muted';
@@ -649,7 +649,7 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                                                 </UiBadge>
                                             </TableCell>
                                             <TableCell>
-                                                {problem.isTested && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                                                {problem.isTested && <CheckCircle2 className="h-5 w-5 text-[#1ca350]" />}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
