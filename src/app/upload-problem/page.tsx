@@ -36,10 +36,12 @@ function UploadProblemContent() {
 
     useEffect(() => {
         if (!authLoading && !isAuthorized) {
-            router.push('/'); // Redirect non-admins to the homepage
+            router.replace('/'); // Use replace to avoid back button issues
         }
     }, [authLoading, isAuthorized, router]);
 
+    // This is the critical security check. We will not render any part of the admin UI
+    // until we are sure the user is authenticated and authorized.
     if (authLoading || !isAuthorized) {
         return (
             <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background">
