@@ -194,7 +194,7 @@ export default function ApexProblemsView() {
               >
                 <Card className="overflow-hidden h-full flex flex-col group">
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-background-pan", gradient)}>
+                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-background-pan bg-[size:200%_200%]", gradient)}>
                            <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
                       </div>
                   </Link>
