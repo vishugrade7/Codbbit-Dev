@@ -19,6 +19,15 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -48,6 +57,8 @@ export default function LoginPage() {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
   
   const { brandingSettings, loadingBranding, isPro } = useAuth();
   const { theme } = useTheme();
@@ -90,12 +101,7 @@ export default function LoginPage() {
       if (!user.emailVerified) {
           await sendEmailVerification(user);
           await auth.signOut();
-          toast({
-              variant: "destructive",
-              title: "Email Not Verified",
-              description: "Please check your inbox to verify your email. A new verification link has been sent.",
-              duration: 9000,
-          });
+          setShowVerificationAlert(true);
           setIsLoading(false);
           return;
       }
@@ -174,6 +180,20 @@ export default function LoginPage() {
   return (
     <>
       <title>Login</title>
+      <AlertDialog open={showVerificationAlert} onOpenChange={setShowVerificationAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Email Not Verified</AlertDialogTitle>
+            <AlertDialogDescription>
+              A new verification link has been sent to your email address. Please check your inbox (and spam folder) to verify your account before logging in.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowVerificationAlert(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
