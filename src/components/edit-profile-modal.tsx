@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,8 @@ import * as z from "zod";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getAuth, sendEmailVerification, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from "firebase/auth";
+import Cropper, { type Area } from 'react-easy-crop';
+import { getCroppedImg } from '@/lib/image-utils';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,11 +34,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/types";
-import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter, Phone, CheckCircle } from "lucide-react";
+import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter, Phone, CheckCircle, Pencil } from "lucide-react";
 import { Switch } from "./ui/switch";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
 import { verifyPhoneNumber } from "../app/profile/actions";
+import { updateUserProfilePicture } from "@/app/profile/actions";
+import { Slider } from "./ui/slider";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -93,6 +97,74 @@ const CompanySuggestionItem = ({ suggestion, onClick }: { suggestion: CompanySug
   );
 };
 
+const ImageCropperDialog = ({
+  image,
+  onSave,
+  onClose
+}: {
+  image: string;
+  onSave: (croppedImage: string) => void;
+  onClose: () => void;
+}) => {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    try {
+      if (croppedAreaPixels) {
+        const croppedImage = await getCroppedImg(image, croppedAreaPixels);
+        onSave(croppedImage);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [image, croppedAreaPixels, onSave]);
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Crop Your Image</DialogTitle>
+          <DialogDescription>Adjust your profile picture.</DialogDescription>
+        </DialogHeader>
+        <div className="relative h-64 w-full bg-muted">
+          <Cropper
+            image={image}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            onCropChange={setCrop}
+            onCropComplete={onCropComplete}
+            onZoomChange={setZoom}
+            cropShape="round"
+          />
+        </div>
+        <div className="space-y-2">
+            <Label>Zoom</Label>
+            <Slider
+                defaultValue={[1]}
+                value={[zoom]}
+                min={1}
+                max={3}
+                step={0.1}
+                onValueChange={(val) => setZoom(val[0])}
+            />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 type EditProfileModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -133,6 +205,10 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
   const [otpCode, setOtpCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useState<React.RefObject<HTMLInputElement>>({ current: null });
+  
 
   const companyValue = form.watch("company");
   const phoneValue = form.watch("phone");
@@ -292,224 +368,283 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
     }
   }
 
+  const handleAvatarClick = () => {
+    if (!isUploading) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+      };
+    }
+  };
+
+  const handleCroppedImageSave = async (croppedImage: string) => {
+    setImageToCrop(null);
+    setIsUploading(true);
+    try {
+      const result = await updateUserProfilePicture(user.uid, croppedImage);
+      if (result.success) {
+        toast({ title: 'Avatar updated successfully!' });
+      } else {
+        throw new Error(result.error || 'An unknown server error occurred.');
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg h-full sm:h-auto flex flex-col">
-        <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
-            <DialogDescription>
-                Make changes to your profile here. Click save when you're done.
-            </DialogDescription>
-        </DialogHeader>
-        <div id="recaptcha-container"></div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 min-h-0 flex flex-col">
-            <ScrollArea className="flex-1 -mx-6 px-6">
-              <div className="space-y-4 py-4">
-                {currentUser && !currentUser.emailVerified && (
-                  <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm">
-                    Your email is not verified. 
-                    <Button variant="link" size="sm" className="p-0 h-auto ml-1 text-yellow-800 dark:text-yellow-300" onClick={handleResendVerification} disabled={isSendingVerification}>
-                      {isSendingVerification ? <Loader2 className="h-4 w-4 animate-spin"/> : "Resend verification email."}
-                    </Button>
-                  </div>
-                )}
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <div className="relative">
-                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="Your full name" {...field} className="pl-10" />
+    <>
+      {imageToCrop && (
+        <ImageCropperDialog
+          image={imageToCrop}
+          onSave={handleCroppedImageSave}
+          onClose={() => setImageToCrop(null)}
+        />
+      )}
+      <Dialog open={isOpen && !imageToCrop} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg h-full sm:h-auto flex flex-col">
+          <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+              <DialogDescription>
+                  Make changes to your profile here. Click save when you're done.
+              </DialogDescription>
+          </DialogHeader>
+          <div id="recaptcha-container"></div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 min-h-0 flex flex-col">
+              <ScrollArea className="flex-1 -mx-6 px-6">
+                <div className="space-y-4 py-4">
+                  {currentUser && !currentUser.emailVerified && (
+                    <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm">
+                      Your email is not verified. 
+                      <Button variant="link" size="sm" className="p-0 h-auto ml-1 text-yellow-800 dark:text-yellow-300" onClick={handleResendVerification} disabled={isSendingVerification}>
+                        {isSendingVerification ? <Loader2 className="h-4 w-4 animate-spin"/> : "Resend verification email."}
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4">
+                    <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                        <Avatar className="h-16 w-16">
+                            <AvatarImage src={user.avatarUrl} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            {isUploading ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : <Pencil className="h-6 w-6 text-white" />}
                         </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="about"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>About</FormLabel>
-                        <Textarea placeholder="Tell us a little about yourself" {...field} />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="isEmailPublic"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Show Email</FormLabel>
-                        <FormDescription>
-                          Allow others to see your email on your public profile.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      {otpSent ? (
-                        <div className="flex items-center gap-2">
-                           <Input value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="6-digit code" maxLength={6} />
-                           <Button type="button" onClick={handleConfirmOtp} disabled={isVerifyingPhone}>
-                                {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Confirm'}
-                           </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Name</FormLabel>
+                          <div className="relative">
+                                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input placeholder="Your full name" {...field} className="pl-10" />
                             </div>
-                            {phoneValue && !user.phoneVerified && (
-                                <Button type="button" variant="outline" size="sm" onClick={handlePhoneVerify} disabled={isVerifyingPhone}>
-                                    {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verify'}
-                                </Button>
-                            )}
-                            {user.phoneVerified && (
-                                <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium">
-                                    <CheckCircle className="h-4 w-4" /> Verified
-                                </div>
-                            )}
-                        </div>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                              <div className="relative">
-                                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    {companyLogo && !logoError ? (
-                                        <Image
-                                          src={companyLogo}
-                                          alt="Company Logo"
-                                          width={20}
-                                          height={20}
-                                          onError={() => setLogoError(true)}
-                                        />
-                                    ) : (
-                                        <Building className="h-5 w-5 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <Input 
-                                    placeholder="Your company or college" 
-                                    {...field} 
-                                    className="pl-10"
-                                    autoComplete="off"
-                                    onFocus={() => companyValue && suggestions.length > 0 && setIsSuggestionsOpen(true)}
-                                    onBlur={() => setIsSuggestionsOpen(false)}
-                                  />
+                    />
+                  </div>
+                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
+                  <FormField
+                    control={form.control}
+                    name="about"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>About</FormLabel>
+                          <Textarea placeholder="Tell us a little about yourself" {...field} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isEmailPublic"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>Show Email</FormLabel>
+                          <FormDescription>
+                            Allow others to see your email on your public profile.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        {otpSent ? (
+                          <div className="flex items-center gap-2">
+                            <Input value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="6-digit code" maxLength={6} />
+                            <Button type="button" onClick={handleConfirmOtp} disabled={isVerifyingPhone}>
+                                  {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Confirm'}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                              <div className="relative flex-1">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
                               </div>
-                          </FormControl>
-                          {isSuggestionsOpen && suggestions.length > 0 && (
-                            <Card className="absolute z-10 w-full mt-1 bg-popover border-border shadow-lg">
-                              <CardContent className="p-0">
-                                <ul className="flex flex-col">
-                                  {suggestions.map((suggestion) => (
-                                    <CompanySuggestionItem key={suggestion.domain} suggestion={suggestion} onClick={handleSuggestionClick} />
-                                  ))}
-                                </ul>
-                              </CardContent>
-                            </Card>
-                          )}
-                        </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="trailheadUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Trailhead URL</FormLabel>
-                      <div className="relative">
-                            <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="https://trailblazer.me/id/..." {...field} className="pl-10" />
-                        </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="githubUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>GitHub URL</FormLabel>
-                      <div className="relative">
-                            <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="https://github.com/..." {...field} className="pl-10" />
-                        </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="linkedinUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>LinkedIn URL</FormLabel>
-                      <div className="relative">
-                            <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="https://linkedin.com/in/..." {...field} className="pl-10" />
-                        </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="twitterUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Twitter / X URL</FormLabel>
-                      <div className="relative">
-                            <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="https://x.com/..." {...field} className="pl-10" />
-                        </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </ScrollArea>
-            <DialogFooter className="pt-4 mt-auto">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                              {phoneValue && !user.phoneVerified && (
+                                  <Button type="button" variant="outline" size="sm" onClick={handlePhoneVerify} disabled={isVerifyingPhone}>
+                                      {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verify'}
+                                  </Button>
+                              )}
+                              {user.phoneVerified && (
+                                  <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium">
+                                      <CheckCircle className="h-4 w-4" /> Verified
+                                  </div>
+                              )}
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="company"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                          <div className="relative">
+                            <FormControl>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                      {companyLogo && !logoError ? (
+                                          <Image
+                                            src={companyLogo}
+                                            alt="Company Logo"
+                                            width={20}
+                                            height={20}
+                                            onError={() => setLogoError(true)}
+                                          />
+                                      ) : (
+                                          <Building className="h-5 w-5 text-muted-foreground" />
+                                      )}
+                                    </div>
+                                    <Input 
+                                      placeholder="Your company or college" 
+                                      {...field} 
+                                      className="pl-10"
+                                      autoComplete="off"
+                                      onFocus={() => companyValue && suggestions.length > 0 && setIsSuggestionsOpen(true)}
+                                      onBlur={() => setIsSuggestionsOpen(false)}
+                                    />
+                                </div>
+                            </FormControl>
+                            {isSuggestionsOpen && suggestions.length > 0 && (
+                              <Card className="absolute z-10 w-full mt-1 bg-popover border-border shadow-lg">
+                                <CardContent className="p-0">
+                                  <ul className="flex flex-col">
+                                    {suggestions.map((suggestion) => (
+                                      <CompanySuggestionItem key={suggestion.domain} suggestion={suggestion} onClick={handleSuggestionClick} />
+                                    ))}
+                                  </ul>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="trailheadUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Trailhead URL</FormLabel>
+                        <div className="relative">
+                              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input placeholder="https://trailblazer.me/id/..." {...field} className="pl-10" />
+                          </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="githubUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>GitHub URL</FormLabel>
+                        <div className="relative">
+                              <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input placeholder="https://github.com/..." {...field} className="pl-10" />
+                          </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="linkedinUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>LinkedIn URL</FormLabel>
+                        <div className="relative">
+                              <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input placeholder="https://linkedin.com/in/..." {...field} className="pl-10" />
+                          </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="twitterUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Twitter / X URL</FormLabel>
+                        <div className="relative">
+                              <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input placeholder="https://x.com/..." {...field} className="pl-10" />
+                          </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </ScrollArea>
+              <DialogFooter className="pt-4 mt-auto">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
