@@ -8,8 +8,9 @@ export default function CallToAction() {
       <div className="container px-4 md:px-6">
         <div className="bg-secondary text-secondary-foreground p-8 sm:p-12 md:p-16 rounded-2xl flex flex-col items-center text-center">
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight max-w-3xl">
-            <span className="text-primary">{'{Discover}'}</span> how you can boost completions, enhance job-readiness, and increase your ROI.
+             Start Your Coding Journey with Codbbit
           </h2>
+           <p className="mt-4 text-lg text-muted-foreground">Join millions mastering top languages, cracking real-world problems</p>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
             <Button asChild>
               <Link href="/contact">Get a Demo</Link>
