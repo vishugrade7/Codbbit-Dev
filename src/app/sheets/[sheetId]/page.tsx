@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -41,19 +42,13 @@ const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 const ProblemList = ({ 
     problems, 
     searchTerm, 
-    setSearchTerm, 
     difficultyFilter, 
-    setDifficultyFilter, 
     statusFilter, 
-    setStatusFilter 
 }: {
     problems: ProblemDetailWithCategory[],
     searchTerm: string,
-    setSearchTerm: (s: string) => void,
-    difficultyFilter: string,
-    setDifficultyFilter: (d: string) => void,
-    statusFilter: string,
-    setStatusFilter: (s: string) => void,
+    difficultyFilter: string, 
+    statusFilter: string, 
 }) => {
     const { userData, isPro } = useAuth();
     const router = useRouter();
@@ -92,46 +87,6 @@ const ProblemList = ({
 
     return (
         <div className="flex flex-col h-full pl-0 md:pl-4">
-            {problems.length > 0 && (
-                <div className="flex items-center gap-4 mb-4 flex-shrink-0">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search problems..."
-                            className="w-full pl-10 rounded-full"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0">
-                            <Filter className="h-4 w-4" />
-                            <span className="sr-only">Filters</span>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end">
-                        <DropdownMenuLabel>Status</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                            <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                            <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )}
-            
             <ScrollArea className={cn("flex-1", isMobile && "-mx-8 px-[2px]")}>
                 {filteredProblems.length > 0 ? (
                     <div className={cn("rounded-lg border", isMobile && "border-x-0")}>
@@ -520,11 +475,8 @@ export default function SheetDisplayPage() {
       <ProblemList
           problems={problems.filter(p => categoryFilter === 'All' || p.categoryName === categoryFilter)}
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
           difficultyFilter={difficultyFilter}
-          setDifficultyFilter={setDifficultyFilter}
           statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
       />
     );
 
@@ -537,7 +489,45 @@ export default function SheetDisplayPage() {
                     <span className="sr-only">Back to Problem Sheets</span>
                 </Button>
                 <h1 className="text-2xl font-bold font-headline truncate">{sheet.name}</h1>
-                {isMobile && (
+                
+                <div className="flex items-center gap-4 ml-auto">
+                    <div className="relative flex-1 min-w-[250px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search problems..."
+                            className="w-full pl-10 rounded-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="shrink-0">
+                            <Filter className="h-4 w-4" />
+                            <span className="sr-only">Filters</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="end">
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                            <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                            <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+                 {isMobile && (
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button variant="outline" size="sm" className="ml-auto">
