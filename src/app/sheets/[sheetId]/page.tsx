@@ -38,6 +38,174 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/co
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
+const ProblemList = ({ 
+    problems, 
+    searchTerm, 
+    setSearchTerm, 
+    difficultyFilter, 
+    setDifficultyFilter, 
+    statusFilter, 
+    setStatusFilter 
+}: {
+    problems: ProblemDetailWithCategory[],
+    searchTerm: string,
+    setSearchTerm: (s: string) => void,
+    difficultyFilter: string,
+    setDifficultyFilter: (d: string) => void,
+    statusFilter: string,
+    setStatusFilter: (s: string) => void,
+}) => {
+    const { userData, isPro } = useAuth();
+    const router = useRouter();
+    const isMobile = useIsMobile();
+    
+    const filteredProblems = useMemo(() => {
+        return problems
+          .filter((p) => {
+            if (statusFilter === "All") return true;
+            const isSolved = !!userData?.solvedProblems?.[p.id];
+            if (statusFilter === "Solved") return isSolved;
+            if (statusFilter === "Unsolved") return !isSolved;
+            return true;
+          })
+          .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
+          .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [problems, searchTerm, difficultyFilter, statusFilter, userData]);
+
+    const getDifficultyBadgeClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
+          case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+          default: return 'bg-muted';
+        }
+    };
+
+    const getDifficultyRowClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
+          case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
+          case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
+          default: return 'hover:bg-muted/50';
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full pl-0 md:pl-4">
+            {problems.length > 0 && (
+                <div className="flex items-center gap-4 mb-4 flex-shrink-0">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search problems..."
+                            className="w-full pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="shrink-0">
+                            <Filter className="h-4 w-4" />
+                            <span className="sr-only">Filters</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="end">
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                            <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                            <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )}
+            
+            <ScrollArea className={cn("flex-1", isMobile && "-mx-8 px-[2px]")}>
+                {filteredProblems.length > 0 ? (
+                    <div className={cn("rounded-lg border", isMobile && "border-x-0")}>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[50px] text-center hidden sm:table-cell">#</TableHead>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                                    <TableHead className="text-right">Difficulty</TableHead>
+                                    <TableHead className="w-[80px] text-center hidden sm:table-cell">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredProblems.map((problem, index) => {
+                                    const isLocked = problem.isPremium && !isPro;
+                                    return (
+                                    <TableRow 
+                                        key={problem.id} 
+                                        className={cn(
+                                            "cursor-pointer",
+                                            getDifficultyRowClass(problem.difficulty),
+                                            isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
+                                        )}
+                                        onClick={() => {
+                                            if (isLocked) {
+                                                router.push('/pricing');
+                                            } else {
+                                                router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
+                                            }
+                                        }}>
+                                        <TableCell className="font-medium text-center hidden sm:table-cell">{index + 1}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
+                                                <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
+                                            </div>
+                                            <div className="md:hidden mt-1 text-xs text-muted-foreground">
+                                                <Badge variant="secondary" className="mr-2">{problem.categoryName}</Badge>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden md:table-cell"><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                                                {problem.difficulty}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="hidden sm:table-cell">
+                                            <div className="flex justify-center">
+                                                {userData?.solvedProblems?.[problem.id] ? (
+                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                ) : (
+                                                    <Circle className="h-5 w-5 text-muted-foreground/50" />
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )})}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : (
+                    <div className="text-center py-16 border-2 border-dashed rounded-lg h-full flex flex-col justify-center items-center">
+                        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-4 text-lg font-semibold">{problems.length > 0 ? "No Matches" : "Sheet is Empty"}</h3>
+                        <p className="text-muted-foreground mt-1 text-sm">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
+                    </div>
+                )}
+            </ScrollArea>
+        </div>
+    );
+};
+
+
 export default function SheetDisplayPage() {
     const params = useParams();
     const router = useRouter();
@@ -133,20 +301,6 @@ export default function SheetDisplayPage() {
         return { solvedCount: count, progressPercentage: percentage };
     }, [authUser, userData, problems]);
 
-    const filteredProblems = useMemo(() => {
-        return problems
-          .filter((p) => {
-            if (statusFilter === "All") return true;
-            const isSolved = !!userData?.solvedProblems?.[p.id];
-            if (statusFilter === "Solved") return isSolved;
-            if (statusFilter === "Unsolved") return !isSolved;
-            return true;
-          })
-          .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
-          .filter((p) => categoryFilter === "All" || p.categoryName === categoryFilter)
-          .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [problems, searchTerm, difficultyFilter, statusFilter, categoryFilter, userData]);
-
     const uniqueCategories = useMemo(() => {
         if (!problems || problems.length === 0) return [];
         const categorySet = new Set(problems.map(p => p.categoryName));
@@ -220,24 +374,6 @@ export default function SheetDisplayPage() {
         setIsTogglingFollow(false);
     };
 
-    const getDifficultyBadgeClass = (difficulty: string) => {
-        switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
-          case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-          default: return 'bg-muted';
-        }
-    };
-
-    const getDifficultyRowClass = (difficulty: string) => {
-        switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-500/5 hover:bg-green-500/10';
-          case 'medium': return 'bg-yellow-500/5 hover:bg-yellow-500/10';
-          case 'hard': return 'bg-destructive/5 hover:bg-destructive/10';
-          default: return 'hover:bg-muted/50';
-        }
-    };
-    
     const timeAgo = useMemo(() => {
         if (!sheet?.createdAt) return '';
         try {
@@ -360,120 +496,6 @@ export default function SheetDisplayPage() {
         </ScrollArea>
     );
 
-    const ProblemList = () => (
-        <div className="flex flex-col h-full pl-0 md:pl-4">
-            {problems.length > 0 && (
-                <div className="flex items-center gap-4 mb-4 flex-shrink-0">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search problems..."
-                            className="w-full pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0">
-                            <Filter className="h-4 w-4" />
-                            <span className="sr-only">Filters</span>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end">
-                        <DropdownMenuLabel>Status</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                            <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Solved">Solved</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Unsolved">Unsolved</DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioGroup value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                            <DropdownMenuRadioItem value="All">All Difficulties</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Easy">Easy</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Medium">Medium</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="Hard">Hard</DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )}
-            
-            <ScrollArea className={cn("flex-1", isMobile && "-mx-8 px-[2px]")}>
-                {filteredProblems.length > 0 ? (
-                    <div className={cn("rounded-lg border", isMobile && "border-x-0")}>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[50px] text-center hidden sm:table-cell">#</TableHead>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead className="hidden md:table-cell">Category</TableHead>
-                                    <TableHead className="text-right">Difficulty</TableHead>
-                                    <TableHead className="w-[80px] text-center hidden sm:table-cell">Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredProblems.map((problem, index) => {
-                                    const isLocked = problem.isPremium && !isPro;
-                                    return (
-                                    <TableRow 
-                                        key={problem.id} 
-                                        className={cn(
-                                            "cursor-pointer",
-                                            getDifficultyRowClass(problem.difficulty),
-                                            isLocked && "cursor-not-allowed opacity-60 hover:bg-transparent"
-                                        )}
-                                        onClick={() => {
-                                            if (isLocked) {
-                                                router.push('/pricing');
-                                            } else {
-                                                router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
-                                            }
-                                        }}>
-                                        <TableCell className="font-medium text-center hidden sm:table-cell">{index + 1}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
-                                                <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
-                                            </div>
-                                            <div className="md:hidden mt-1 text-xs text-muted-foreground">
-                                                <Badge variant="secondary" className="mr-2">{problem.categoryName}</Badge>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="hidden md:table-cell"><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
-                                                {problem.difficulty}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="hidden sm:table-cell">
-                                            <div className="flex justify-center">
-                                                {userData?.solvedProblems?.[problem.id] ? (
-                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                ) : (
-                                                    <Circle className="h-5 w-5 text-muted-foreground/50" />
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )})}
-                            </TableBody>
-                        </Table>
-                    </div>
-                ) : (
-                    <div className="text-center py-16 border-2 border-dashed rounded-lg h-full flex flex-col justify-center items-center">
-                        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold">{problems.length > 0 ? "No Matches" : "Sheet is Empty"}</h3>
-                        <p className="text-muted-foreground mt-1 text-sm">{problems.length > 0 ? "No problems found for the selected criteria." : "This sheet has no problems yet."}</p>
-                    </div>
-                )}
-            </ScrollArea>
-        </div>
-    );
-
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -493,6 +515,19 @@ export default function SheetDisplayPage() {
             </main>
         );
     }
+
+    const problemListContent = (
+      <ProblemList
+          problems={problems.filter(p => categoryFilter === 'All' || p.categoryName === categoryFilter)}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          difficultyFilter={difficultyFilter}
+          setDifficultyFilter={setDifficultyFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+      />
+    );
+
 
     return (
         <main className="flex-1 container py-8 h-[calc(100vh-4rem)] flex flex-col">
@@ -522,7 +557,7 @@ export default function SheetDisplayPage() {
             </div>
             
             {isMobile ? (
-                <ProblemList />
+                problemListContent
             ) : (
                 <ResizablePanelGroup direction="horizontal" className="flex-1">
                     <ResizablePanel defaultSize={35} minSize={25}>
@@ -530,7 +565,7 @@ export default function SheetDisplayPage() {
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={65} minSize={30}>
-                        <ProblemList />
+                        {problemListContent}
                     </ResizablePanel>
                 </ResizablePanelGroup>
             )}
