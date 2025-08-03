@@ -87,10 +87,10 @@ const HeroSection = () => {
               "bg-black dark:bg-gradient-to-r dark:from-blue-600 dark:to-slate-600 dark:hover:from-blue-500 dark:hover:to-slate-500",
               "text-white bg-[length:200%_100%] hover:bg-black/90 dark:hover:bg-none animate-bg-shine"
           )}>
-            <Link href="/signup">Get Started</Link>
+            <Link href="/signup">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/courses">Explore Courses</Link>
+            <Link href="/courses">Explore Courses <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </motion.div>
 
