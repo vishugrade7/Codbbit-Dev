@@ -98,7 +98,7 @@ const HeroSection = () => {
             Codbbit – Build Your Code Habit
           </h1>
           <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-primary font-headline">
-            Practice Apex Coding Problems
+            Practice {'{'}Apex{'}'} Coding Problems
           </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
             Join thousands of developers building skills, cracking interviews, and landing internships.
