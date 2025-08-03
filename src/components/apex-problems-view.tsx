@@ -23,6 +23,18 @@ type CategoryInfo = {
   imageUrl?: string;
 };
 
+const gradientClasses = [
+    "from-red-500/30 to-pink-500/30",
+    "from-purple-500/30 to-indigo-500/30",
+    "from-teal-500/30 to-cyan-500/30",
+    "from-green-500/30 to-lime-500/30",
+    "from-amber-500/30 to-orange-500/30",
+    "from-rose-500/30 to-fuchsia-500/30",
+    "from-sky-500/30 to-violet-500/30",
+    "from-emerald-500/30 to-teal-500/30",
+];
+
+
 const iconColors = [
     "text-white/90",
     "text-white/90",
@@ -167,6 +179,7 @@ export default function ApexProblemsView() {
             {categories.map((category, index) => {
               const Icon = categoryIcons.get(category.name) || Code;
               const iconColor = iconColors[index % iconColors.length];
+              const gradient = gradientClasses[index % gradientClasses.length];
               return (
               <motion.div
                 key={category.name}
@@ -178,7 +191,7 @@ export default function ApexProblemsView() {
               >
                 <Card className="overflow-hidden h-full flex flex-col group">
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                      <div className={cn("aspect-video relative flex items-center justify-center bg-card-wave-gradient bg-cover")}>
+                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-background-pan bg-[size:200%_200%]", gradient)}>
                            <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
                       </div>
                   </Link>
