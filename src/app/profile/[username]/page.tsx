@@ -378,9 +378,9 @@ export default function UserProfilePage() {
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
-          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
-          case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+          case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border border-[#1ca350]/30';
+          case 'medium': return 'bg-yellow-400/20 text-yellow-500 border border-yellow-400/30';
+          case 'hard': return 'bg-destructive/20 text-destructive border border-destructive/30';
           default: return 'bg-muted';
         }
     };
