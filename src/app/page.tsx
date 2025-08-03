@@ -111,10 +111,7 @@ const HeroSection = () => {
           animate="visible"
           className="flex items-center gap-4"
         >
-          <Button asChild size="lg" className={cn(
-              "bg-black dark:bg-gradient-to-r dark:from-blue-600 dark:to-slate-600 dark:hover:from-blue-500 dark:hover:to-slate-500",
-              "text-white bg-[length:200%_100%] hover:bg-black/90 dark:hover:bg-none animate-bg-shine"
-          )}>
+          <Button asChild size="lg">
             <Link href="/signup">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
           <Button asChild size="lg" variant="outline">
