@@ -25,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon, Timer, UserPlus, Pause, RotateCcw } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Search, Maximize, Minimize, XCircle, Award, Flame, ChevronDown, ChevronUp, Filter, Lock, PlayIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -49,7 +49,6 @@ import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Separator } from "@/components/ui/separator";
 
 
 type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
@@ -196,7 +195,7 @@ const EditorAndResults = ({
     toggleFullScreen,
     resultsPanelRef,
     isResultsCollapsed,
-    setIsResultsCollapsed: setIsResultsCollapsedProp,
+    setIsResultsCollapsed,
     toggleResultsPanel,
     results,
     submissionSuccess,
@@ -221,10 +220,6 @@ const EditorAndResults = ({
 }) => {
     const { resolvedTheme } = useTheme();
 
-    const setIsResultsCollapsed = (value: boolean) => {
-        setIsResultsCollapsedProp(value);
-    };
-
     return (
         <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={60} minSize={20}>
@@ -232,7 +227,7 @@ const EditorAndResults = ({
                     <div className="flex items-center justify-between p-2 border-b">
                         <div className="flex items-center gap-2 font-semibold">
                             <Code className="h-5 w-5" />
-                            <span>{problem.metadataType === "Test Class" ? "Test Class" : "Apex Code"}</span>
+                            <span>Apex Code</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <TooltipProvider>
@@ -398,43 +393,6 @@ export default function ProblemWorkspacePage() {
     const [coverageLines, setCoverageLines] = useState<{ covered: number[], uncovered: number[] } | null>(null);
     const { resolvedTheme } = useTheme();
 
-    // Timer state
-    const [isTimerExpanded, setIsTimerExpanded] = useState(false);
-    const [timerIsActive, setTimerIsActive] = useState(false);
-    const [elapsedTime, setElapsedTime] = useState(0); // in seconds
-    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    
-    const toggleTimer = () => setTimerIsActive(!timerIsActive);
-
-    const resetTimer = () => {
-        setTimerIsActive(false);
-        setElapsedTime(0);
-    };
-    
-    useEffect(() => {
-        if (timerIsActive) {
-            timerIntervalRef.current = setInterval(() => {
-                setElapsedTime(prevTime => prevTime + 1);
-            }, 1000);
-        } else if (timerIntervalRef.current) {
-            clearInterval(timerIntervalRef.current);
-        }
-        return () => {
-            if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current);
-            }
-        };
-    }, [timerIsActive]);
-
-    const formatTime = (totalSeconds: number) => {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return [hours, minutes, seconds]
-            .map(v => v.toString().padStart(2, '0'))
-            .join(':');
-    };
-
     const handleEditorDidMount: OnMount = (editor, monaco) => {
         editorRef.current = editor;
     };
@@ -580,7 +538,6 @@ export default function ProblemWorkspacePage() {
 
     const filteredProblems = useMemo(() => {
         return allProblems
-            .map((p, index) => ({...p, index: index + 1}))
             .filter((p) => {
                 if (difficultyFilter === "All") return true;
                 return p.difficulty === difficultyFilter;
@@ -615,12 +572,18 @@ export default function ProblemWorkspacePage() {
         setSubmissionStep('saving');
         setCoverageLines(null); // Clear previous coverage highlights
 
-        // Auto-expand results panel
-        const panel = resultsPanelRef.current;
-        if (panel && isResultsCollapsed) {
-            toggleResultsPanel();
+        // Auto-expand results panel if it's a regular problem
+        if (problem.metadataType !== "Test Class") {
+            const panel = resultsPanelRef.current;
+            if (panel && isResultsCollapsed) {
+                toggleResultsPanel();
+            }
         }
         
+        const onProgress = (step: 'testing' | 'done') => {
+            setSubmissionStep(step);
+        };
+
         const response = await submitApexSolution(user.uid, problem, code);
         
         setResults(response.details || response.message);
@@ -653,10 +616,7 @@ export default function ProblemWorkspacePage() {
                 }
             }
         } else {
-             const errorRegex = /--- ERROR ---\s*([\s\S]*)/;
-            const match = (response.details || "").match(errorRegex);
-            const errorMessage = match ? match[1].trim() : "An error occurred during submission.";
-            toast({ variant: "destructive", title: "Submission Failed", description: errorMessage, duration: 9000 });
+            toast({ variant: "destructive", title: "Submission Failed", description: response.details || "An error occurred during submission.", duration: 9000 });
         }
         
         setIsSubmitting(false);
@@ -711,13 +671,13 @@ export default function ProblemWorkspacePage() {
     
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'text-green-400';
-        case 'medium': return 'text-yellow-500';
-        case 'hard': return 'text-red-500';
-        default: return 'text-muted-foreground';
+        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+        case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
+        case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+        default: return 'bg-muted';
         }
     };
-    
+
     const componentMap: Record<ProblemLayoutComponent, React.ReactNode> = {
         description: <div key="description" className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />,
         image: problem.imageUrl ? <div key="image" className="relative w-full aspect-video my-4 rounded-lg overflow-hidden"><Image src={problem.imageUrl} alt="Problem visual aid" fill className="object-contain" /></div> : null,
@@ -731,7 +691,7 @@ export default function ProblemWorkspacePage() {
             <div className="p-4 h-full overflow-y-auto space-y-6">
                 <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
                 <div className="flex items-center gap-4 flex-wrap">
-                    <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(problem.difficulty))}>{problem.difficulty}</Badge>
+                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                     <Badge variant="secondary">{categoryName}</Badge>
                      {problem.company && (
                         <Badge variant="secondary">
@@ -779,14 +739,6 @@ export default function ProblemWorkspacePage() {
     }
     
     const isTestClassProblem = problem.metadataType === "Test Class";
-    const drawerContent = isTestClassProblem ? (
-        <div className="flex flex-col h-full bg-background">
-            <div className="flex items-center justify-between p-2 border-b">
-                <div className="flex items-center gap-2 font-semibold"><span>Read-Only Apex Class</span></div>
-            </div>
-            <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: fontSize, minimap: { enabled: false } }} />
-        </div>
-    ) : <ProblemDetails />;
 
     return (
     <div className="w-full h-screen flex flex-col bg-background text-foreground">
@@ -816,18 +768,16 @@ export default function ProblemWorkspacePage() {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M4 4H12V20H4V4ZM14 4H20V12H14V4ZM14 14H20V20H14V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background/60 backdrop-blur-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
-                        <SheetHeader className="p-4 border-b shrink-0 flex-row items-center justify-between">
-                            <SheetTitle className="flex items-center gap-2 text-lg">
-                                {categoryName}
-                            </SheetTitle>
+                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col bg-background" onOpenAutoFocus={(e) => e.preventDefault()}>
+                        <SheetHeader className="p-4 border-b shrink-0">
+                            <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
                         <div className="p-4 border-b space-y-4 shrink-0">
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search questions..."
+                                        placeholder="Search problems..."
                                         className="w-full pl-9 h-9 rounded-full"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -854,19 +804,21 @@ export default function ProblemWorkspacePage() {
                         </div>
                         <div className="py-2 overflow-y-auto flex-1">
                             {filteredProblems.length > 0 ? filteredProblems.map((p) => (
-                               <Link
+                                <Link
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
-                                        "flex items-center gap-4 w-full px-4 py-2.5 text-sm transition-colors",
-                                        p.id === problemId ? "bg-muted/80 text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                        "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-muted",
+                                        p.id === problemId && "bg-primary/10 text-primary"
                                     )}
                                 >
-                                    <span className="w-6 text-right font-medium text-base">{p.index}.</span>
-                                    <span className="flex-1 truncate pr-2 font-medium">{p.title}</span>
-                                    <div className="flex-shrink-0 flex items-center gap-2">
-                                        <span className={cn("w-16 text-right", getDifficultyClass(p.difficulty))}>{p.difficulty}</span>
-                                        {userData?.solvedProblems?.[p.id] && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                    <span className="truncate pr-4">{p.title}</span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
+                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
+                                            {p.difficulty}
+                                        </Badge>
+                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                     </div>
                                 </Link>
                             )) : (
@@ -877,45 +829,13 @@ export default function ProblemWorkspacePage() {
                 </Sheet>
             </div>
             <div className="flex items-center gap-4">
-                <Button variant="ghost" className="h-9 px-3 text-sm">
-                  <Flame className="h-5 w-5 text-orange-500 mr-2" />
-                  <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                </Button>
+                <div className="flex items-center gap-1.5 font-semibold">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </div>
                 <div className="flex items-center gap-1.5 font-semibold">
                     <Award className="h-5 w-5 text-yellow-400" />
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
-                </div>
-                 <div className="flex items-center gap-1 p-1 rounded-full bg-muted">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className={cn("h-7 w-7 relative", timerIsActive && "animate-wave-ping text-primary")} onClick={toggleTimer}>
-                                    {timerIsActive ? <Pause className="h-4 w-4" /> : <Timer className="h-4 w-4" />}
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>{timerIsActive ? 'Pause Timer' : 'Start Timer'}</p></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    <span className="font-mono text-sm text-primary font-semibold w-20 text-center">{formatTime(elapsedTime)}</span>
-                    <TooltipProvider>
-                       <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetTimer}><RotateCcw className="h-4 w-4" /></Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Reset Timer</p></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    <Separator orientation="vertical" className="h-5" />
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <UserPlus className="h-4 w-4"/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Invite Teammate</p></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
                 </div>
                  <TooltipProvider>
                     <Tooltip>
@@ -949,73 +869,144 @@ export default function ProblemWorkspacePage() {
         </header>
 
         <main className="flex-1 overflow-auto h-full">
-            <div className="md:hidden h-full">
-                <Tabs defaultValue="problem" className="flex flex-col h-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="problem">Problem</TabsTrigger>
-                        <TabsTrigger value="code">Code</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="problem" className="flex-auto overflow-y-auto">
-                        {drawerContent}
-                    </TabsContent>
-                    <TabsContent value="code" className="flex-auto flex flex-col m-0 overflow-hidden">
-                        <EditorAndResults 
-                            code={code}
-                            setCode={setCode}
-                            problem={problem}
-                            handleSubmit={handleSubmit}
-                            isSubmitting={isSubmitting}
-                            fontSize={fontSize}
-                            setFontSize={setFontSize}
-                            isFullScreen={isFullScreen}
-                            toggleFullScreen={toggleFullScreen}
-                            resultsPanelRef={resultsPanelRef}
-                            isResultsCollapsed={isResultsCollapsed}
-                            setIsResultsCollapsed={setIsResultsCollapsed}
-                            toggleResultsPanel={toggleResultsPanel}
-                            results={results}
-                            submissionSuccess={submissionSuccess}
-                            submissionStep={submissionStep}
-                        />
-                    </TabsContent>
-                </Tabs>
-            </div>
+            {isTestClassProblem ? (
+                 <div className="h-full">
+                    {/* Mobile View for Test Class */}
+                    <div className="md:hidden flex flex-col h-full">
+                        <Tabs defaultValue="class" className="flex-1 flex flex-col">
+                            <TabsList className="grid w-full grid-cols-2 shrink-0">
+                                <TabsTrigger value="class">Apex Class</TabsTrigger>
+                                <TabsTrigger value="code">Test Class</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="class" className="flex-1 overflow-auto">
+                                <div className="p-2 border-b flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm">Read-Only Apex Class</h3>
+                                </div>
+                                <div className="h-[calc(100%-41px)]">
+                                    <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: fontSize, minimap: { enabled: false } }} />
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="code" className="flex-1 overflow-auto flex flex-col m-0">
+                                 <div className="p-2 border-b flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm">Your Test Class</h3>
+                                     <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                        Run Test
+                                    </Button>
+                                </div>
+                                 <div className="h-[calc(100%-41px)]">
+                                    <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: fontSize, minimap: { enabled: false } }} />
+                                 </div>
+                            </TabsContent>
+                        </Tabs>
+                        <div className="border-t shrink-0 h-48 overflow-y-auto">
+                           <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
+                        </div>
+                    </div>
 
-            <div className="hidden md:flex h-full">
-                <ResizablePanelGroup direction="horizontal">
-                    <ResizablePanel
-                        ref={leftPanelRef}
-                        defaultSize={30}
-                        minSize={20}
-                        collapsible={true}
-                        onCollapse={() => setIsFullScreen(true)}
-                        onExpand={() => setIsFullScreen(false)}
-                    >
-                       {drawerContent}
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={70} minSize={30}>
-                       <EditorAndResults 
-                            code={code}
-                            setCode={setCode}
-                            problem={problem}
-                            handleSubmit={handleSubmit}
-                            isSubmitting={isSubmitting}
-                            fontSize={fontSize}
-                            setFontSize={setFontSize}
-                            isFullScreen={isFullScreen}
-                            toggleFullScreen={toggleFullScreen}
-                            resultsPanelRef={resultsPanelRef}
-                            isResultsCollapsed={isResultsCollapsed}
-                            setIsResultsCollapsed={setIsResultsCollapsed}
-                            toggleResultsPanel={toggleResultsPanel}
-                            results={results}
-                            submissionSuccess={submissionSuccess}
-                            submissionStep={submissionStep}
-                        />
-                    </ResizablePanel>
-                </ResizablePanelGroup>
-            </div>
+                    {/* Desktop View for Test Class */}
+                    <div className="hidden md:flex flex-col h-full">
+                         <ResizablePanelGroup direction="horizontal" className="flex-1">
+                            <ResizablePanel defaultSize={50} minSize={30}>
+                                <div className="flex flex-col h-full bg-background">
+                                    <div className="flex items-center justify-between p-2 border-b">
+                                        <div className="flex items-center gap-2 font-semibold"><span>Apex Class</span></div>
+                                    </div>
+                                    <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: fontSize, minimap: { enabled: false } }} />
+                                </div>
+                            </ResizablePanel>
+                            <ResizableHandle withHandle />
+                            <ResizablePanel defaultSize={50} minSize={30}>
+                                <div className="flex flex-col h-full bg-background">
+                                    <div className="flex items-center justify-between p-2 border-b">
+                                        <div className="flex items-center gap-2 font-semibold"><span>Test Class</span></div>
+                                        <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                            Run Test
+                                        </Button>
+                                    </div>
+                                    <MonacoEditor height="100%" language="java" value={code} onChange={(newValue) => setCode(newValue || "")} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: fontSize, minimap: { enabled: false } }} />
+                                </div>
+                            </ResizablePanel>
+                        </ResizablePanelGroup>
+                        <div className="p-4 border-t h-48 overflow-y-auto">
+                            <SubmissionResultsView log={results} isSubmitting={isSubmitting} success={submissionSuccess} step={submissionStep} />
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <>
+                <div className="md:hidden h-full">
+                    <Tabs defaultValue="problem" className="flex flex-col h-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="problem">Problem</TabsTrigger>
+                            <TabsTrigger value="code">Code</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="problem" className="flex-auto overflow-y-auto">
+                            <ProblemDetails />
+                        </TabsContent>
+                        <TabsContent value="code" className="flex-auto flex flex-col m-0 overflow-hidden">
+                            <EditorAndResults 
+                                code={code}
+                                setCode={setCode}
+                                problem={problem}
+                                handleSubmit={handleSubmit}
+                                isSubmitting={isSubmitting}
+                                fontSize={fontSize}
+                                setFontSize={setFontSize}
+                                isFullScreen={isFullScreen}
+                                toggleFullScreen={toggleFullScreen}
+                                resultsPanelRef={resultsPanelRef}
+                                isResultsCollapsed={isResultsCollapsed}
+                                setIsResultsCollapsed={setIsResultsCollapsed}
+                                toggleResultsPanel={toggleResultsPanel}
+                                results={results}
+                                submissionSuccess={submissionSuccess}
+                                submissionStep={submissionStep}
+                            />
+                        </TabsContent>
+                    </Tabs>
+                </div>
+
+                <div className="hidden md:flex h-full">
+                    <ResizablePanelGroup direction="horizontal">
+                        <ResizablePanel 
+                            ref={leftPanelRef}
+                            defaultSize={30}
+                            minSize={20}
+                            collapsible
+                            collapsedSize={0}
+                            onCollapse={() => setIsFullScreen(true)}
+                            onExpand={() => setIsFullScreen(false)}
+                            className={cn("transition-all duration-300 ease-in-out")}
+                        >
+                            <ProblemDetails />
+                        </ResizablePanel>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={70} minSize={30}>
+                            <EditorAndResults 
+                                code={code}
+                                setCode={setCode}
+                                problem={problem}
+                                handleSubmit={handleSubmit}
+                                isSubmitting={isSubmitting}
+                                fontSize={fontSize}
+                                setFontSize={setFontSize}
+                                isFullScreen={isFullScreen}
+                                toggleFullScreen={toggleFullScreen}
+                                resultsPanelRef={resultsPanelRef}
+                                isResultsCollapsed={isResultsCollapsed}
+                                setIsResultsCollapsed={setIsResultsCollapsed}
+                                toggleResultsPanel={toggleResultsPanel}
+                                results={results}
+                                submissionSuccess={submissionSuccess}
+                                submissionStep={submissionStep}
+                            />
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                </div>
+                </>
+            )}
         </main>
         {nextProblem && (
             <NextProblemOverlay
