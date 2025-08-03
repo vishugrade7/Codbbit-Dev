@@ -1031,7 +1031,7 @@ export default function ProblemWorkspacePage() {
                 <>
                 <div className="md:hidden h-full">
                     <Tabs defaultValue="problem" className="flex flex-col h-full">
-                        <TabsList className="relative inline-flex h-auto items-center justify-center rounded-none border-b bg-transparent p-0 grid w-full grid-cols-2 shrink-0">
+                        <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="problem">Problem</TabsTrigger>
                             <TabsTrigger value="code">Code</TabsTrigger>
                         </TabsList>
@@ -1114,7 +1114,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
-    
-
-    
