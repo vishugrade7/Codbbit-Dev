@@ -18,7 +18,7 @@ const testimonials = [
         quote: "Accidentally got addicted to Codbbit, oops. The problems are the perfect mix of challenging and fun for any Salesforce developer.",
         name: "Alex Johnson",
         role: "Salesforce Developer",
-        image: "https://images.unsplash.com/photo-1531123414780-f74242c2b052?q=80&w=1587&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        image: "https://images.unsplash.com/photo-1480455624313-e29b44bbfde1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWFufGVufDB8fHx8MTc1NDE0NjQ5MHww&ixlib=rb-4.1.0&q=80&w=1080",
         "data-ai-hint": "smiling developer"
     },
     {
