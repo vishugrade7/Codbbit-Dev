@@ -19,6 +19,7 @@ import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "./ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "./theme-toggle";
+import { useTheme } from "next-themes";
 
 
 export default function Header() {
@@ -273,7 +274,7 @@ export default function Header() {
                   <>
                       <ThemeToggle />
                       <Button variant="ghost" className="h-9 px-3 text-sm">
-                        <Flame className="h-5 w-5 text-blue-500 mr-2" />
+                        <Flame className="h-5 w-5 text-primary mr-2" />
                         <span>{userData?.points?.toLocaleString() ?? 0}</span>
                       </Button>
                       <DropdownMenu>
