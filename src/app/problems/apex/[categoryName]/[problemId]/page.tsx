@@ -812,13 +812,15 @@ export default function ProblemWorkspacePage() {
                                         p.id === problemId && "bg-primary/10 text-primary"
                                     )}
                                 >
-                                    <span className="truncate pr-4">{p.title}</span>
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />}
+                                        <span className="truncate">{p.title}</span>
+                                    </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         {p.isPremium && !isPro && <Lock className="h-3 w-3 text-primary" />}
                                         <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
                                             {p.difficulty}
                                         </Badge>
-                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                     </div>
                                 </Link>
                             )) : (
