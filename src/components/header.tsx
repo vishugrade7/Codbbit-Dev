@@ -18,7 +18,6 @@ import type { NavLink } from "@/types";
 import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "./ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { useTheme } from "next-themes";
 import { ThemeToggle } from "./theme-toggle";
 
 
@@ -119,7 +118,7 @@ export default function Header() {
                 <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
               )}
               <span className="text-lg font-bold font-headline hidden sm:inline-block">
-                {isPro ? "Codbbit Pro" : "Codbbit"}
+                Codbbit
               </span>
             </Link>
         </div>
@@ -183,7 +182,7 @@ export default function Header() {
                             {link.label}
                         </Link>
                         ))}
-                        {isAuthorizedAdmin && user && adminNavLinks.map((link) => (
+                        {isAuthorizedAdmin && adminNavLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}

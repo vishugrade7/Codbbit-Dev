@@ -41,17 +41,9 @@ const VerifiedIcon = () => (
     <TooltipProvider>
         <Tooltip>
             <TooltipTrigger>
-                 <svg
-                    viewBox="0 0 22 22"
-                    aria-label="Verified account"
-                    role="img"
-                    className="w-5 h-5 fill-current text-blue-500"
-                    fill="currentColor"
-                >
-                   <g>
-                    <path d="M18.156 11.233c.27.424.135 1.006-.301 1.258l-1.928 1.113c-.347.201-.502.623-.393.999l.628 2.14c.164.56-.255 1.11-.84.982l-2.18-.466a.88.88 0 0 0-.816.155l-1.56 1.635c-.378.396-1.002.43-1.428.082l-1.848-1.46c-.32-.252-.76-.252-1.08 0L4.56 16.712c-.426.348-1.05.314-1.428-.082L1.572 15.01a.88.88 0 0 0-.816-.155l-2.18.466c-.585.128-1.004-.422-.84-.982l.628-2.14c.11-.376-.046-.798-.393-.999L.044 12.49c-.436-.252-.57-8.34-.3-1.258L1.67 9.118c.347-.201.502-.623.393-.999l-.628-2.14c-.164-.56.255-1.11.84-.982l2.18.466c.343.073.69-.034.908-.283l1.56-1.635c.378-.396 1.002-.43 1.428-.082l1.848 1.46c.32.252.76.252 1.08 0l1.848-1.46c.426-.348 1.05-.314 1.428-.082l1.56 1.635c.218.25.565.356.908.283l2.18-.466c.585-.128 1.004.422.84.982l-.628 2.14c-.11.376.046.798.393.999l1.928 1.113zM9.47 14.15l-3.23-3.11c-.34-.33-.34-.86 0-1.18.34-.33.89-.33 1.23 0l2.62 2.52 5.34-5.1c.34-.33.89-.33 1.23 0 .34.33.34.86 0 1.18l-5.96 5.7c-.34.33-.89.33-1.23 0z" stroke="none"></path>
-                   </g>
-                </svg>
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM16.7071 9.70711C17.0976 9.31658 17.0976 8.68342 16.7071 8.29289C16.3166 7.90237 15.6834 7.90237 15.2929 8.29289L11 12.5858L9.70711 11.2929C9.31658 10.9024 8.68342 10.9024 8.29289 11.2929C7.90237 11.6834 7.90237 12.3166 8.29289 12.7071L10.2929 14.7071C10.6834 15.0976 11.3166 15.0976 11.7071 14.7071L16.7071 9.70711Z" fill="rgb(29 161 242)"/>
+                 </svg>
             </TooltipTrigger>
             <TooltipContent>
                 <p>Verified</p>
@@ -287,10 +279,11 @@ export default function UserProfilePage() {
                 return {
                     id,
                     ...details,
+                    solvedAt: details.solvedAt instanceof Date ? details.solvedAt : new Date(details.solvedAt),
                     categoryName: problemData?.categoryName || 'Unknown',
                 };
             })
-            .sort((a, b) => new Date(b.solvedAt).getTime() - new Date(a.solvedAt).getTime())
+            .sort((a, b) => b.solvedAt.getTime() - a.solvedAt.getTime())
             .slice(0, 15); // Get top 15 most recent for scrolling
     }, [profileUser, allProblems]);
 
@@ -460,7 +453,7 @@ export default function UserProfilePage() {
                                 <CardContent>
                                     {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
                                         <div className="grid grid-cols-4 gap-4">
-                                            {Object.values(profileUser.achievements).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map((achievement: Achievement) => (
+                                            {Object.values(profileUser.achievements).sort((a,b) => (b.date.getTime() - a.date.getTime())).slice(0, 8).map((achievement: Achievement) => (
                                                 <TooltipProvider key={achievement.name}>
                                                 <Tooltip>
                                                 <TooltipTrigger asChild>

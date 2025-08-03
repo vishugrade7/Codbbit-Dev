@@ -17,6 +17,8 @@ interface AuthContextType {
   isPro: boolean;
   brandingSettings: BrandingSettings | null;
   loadingBranding: boolean;
+  promptForSfdcAuth: boolean;
+  setPromptForSfdcAuth: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,6 +28,8 @@ const AuthContext = createContext<AuthContextType>({
   isPro: false,
   brandingSettings: null,
   loadingBranding: true,
+  promptForSfdcAuth: false,
+  setPromptForSfdcAuth: () => {},
 });
 
 const processCachedImages = async <T extends {}>(data: T, fields: (keyof T)[]): Promise<T> => {
@@ -51,6 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
+
+  const [promptForSfdcAuth, setPromptForSfdcAuth] = useState(false);
 
   const isPro = useMemo(() => {
     if (!userData) return false;
@@ -131,6 +137,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           const cachedUserData = await processCachedImages(currentData, ['avatarUrl', 'companyLogoUrl']);
           setUserData(cachedUserData);
+          
+          // Check if we should prompt for Salesforce auth
+          if (isLoggingIn && !cachedUserData.sfdcAuth?.connected) {
+              setPromptForSfdcAuth(true);
+          }
 
         } else {
           setUserData(null);
@@ -147,7 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribeSnapshot();
   }, [user, toast]);
 
-  const value = useMemo(() => ({ user, userData, loading, isPro, brandingSettings, loadingBranding }), [user, userData, loading, isPro, brandingSettings, loadingBranding]);
+  const value = useMemo(() => ({ user, userData, loading, isPro, brandingSettings, loadingBranding, promptForSfdcAuth, setPromptForSfdcAuth }), [user, userData, loading, isPro, brandingSettings, loadingBranding, promptForSfdcAuth]);
 
   return (
     <AuthContext.Provider value={value}>

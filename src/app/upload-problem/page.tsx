@@ -22,7 +22,7 @@ import type { Problem } from "@/types";
 type ProblemWithCategory = Problem & { categoryName: string };
 
 function UploadProblemContent() {
-    const { user: authUser, userData, loading: authLoading } = useAuth();
+    const { userData, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
     const router = useRouter();
     
@@ -48,8 +48,14 @@ function UploadProblemContent() {
         );
     }
     
+    // This check is crucial. It ensures that no part of the admin UI renders
+    // until the authorization check is complete and successful.
     if (!isAuthorized) {
-        return null;
+        return (
+             <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
     }
     
     const handleAddNewProblem = () => {
