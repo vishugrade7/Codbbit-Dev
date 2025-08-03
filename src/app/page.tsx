@@ -11,6 +11,7 @@ import CallToAction from '@/components/call-to-action';
 import { motion, type Variants } from 'framer-motion';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -43,22 +44,16 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="w-full flex items-center justify-center bg-background p-4 py-24 md:py-32 home-hero-gradient">
-      <div className="container mx-auto flex flex-col items-center text-center gap-8">
+    <div className="w-full flex items-center justify-center bg-background p-4 pt-24 md:pt-32 home-hero-gradient">
+      <div className="container mx-auto flex flex-col items-center text-center gap-6">
         
-        <motion.div
-          custom={0}
-          variants={heroVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-col items-center gap-6"
-        >
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight max-w-4xl">
-            💻 Codbbit – Build Your Code Habit
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl">
-            Tired of Theory? Practice Real Coding Every Day.
-          </p>
+        <motion.div custom={0} variants={heroVariants} initial="hidden" animate="visible" className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://placehold.co/32x32.png" data-ai-hint="person" /></Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://placehold.co/32x32.png" data-ai-hint="person" /></Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background"><AvatarImage src="https://placehold.co/32x32.png" data-ai-hint="person" /></Avatar>
+            </div>
+            <p className="text-sm text-muted-foreground">Trusted by 500+ developers</p>
         </motion.div>
 
         <motion.div
@@ -66,14 +61,18 @@ const HeroSection = () => {
           variants={heroVariants}
           initial="hidden"
           animate="visible"
-          className="flex items-center gap-4"
+          className="flex flex-col items-center gap-4"
         >
-          <Button asChild size="lg">
-            <Link href="/signup">Start with Free</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/contact">Get Started</Link>
-          </Button>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground/80">
+            Master Salesforce with Codbbit
+          </h1>
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-foreground font-headline">
+            Bored of Theory? Let's Code.
+          </h2>
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
+            Join thousands of developers building skills, cracking interviews, and landing internships.
+            Kickstart your coding journey—no boring lectures, just real practice!
+          </p>
         </motion.div>
 
         <motion.div
@@ -81,13 +80,29 @@ const HeroSection = () => {
           variants={heroVariants}
           initial="hidden"
           animate="visible"
+          className="flex items-center gap-4"
+        >
+          <Button asChild size="lg">
+            <Link href="/signup">Get Started</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/courses">Explore Courses</Link>
+          </Button>
+        </motion.div>
+
+        <motion.div
+          custom={3}
+          variants={heroVariants}
+          initial="hidden"
+          animate="visible"
           className="w-full max-w-5xl mt-8"
         >
           <Image
-            src="https://images.unsplash.com/photo-1754220763477-97453f9e3d99?q=80&w=1559&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            alt="Dashboard preview"
+            src="https://placehold.co/1200x740.png"
+            alt="Dashboard preview of Codbbit platform"
             width={1200}
-            height={600}
+            height={740}
+            data-ai-hint="dashboard course"
             className="rounded-lg border-2 border-primary/10 shadow-2xl shadow-primary/10"
           />
         </motion.div>
