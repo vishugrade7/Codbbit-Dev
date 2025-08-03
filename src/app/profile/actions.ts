@@ -126,3 +126,22 @@ export async function updateUserProfilePicture(userId: string, dataUrl: string) 
     return { success: false, error: error.message || 'An unknown server error occurred.' };
   }
 }
+
+export async function verifyPhoneNumber(userId: string) {
+    if (!userId) {
+        return { success: false, error: 'User not authenticated.' };
+    }
+    if (!db) {
+        return { success: false, error: 'Firebase is not configured.' };
+    }
+    // In a real app, this would involve sending an SMS via a service like Twilio.
+    // For this simulation, we will just update the user's status directly.
+    try {
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, { phoneVerified: true });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error verifying phone number:", error);
+        return { success: false, error: error.message || 'An unknown error occurred.' };
+    }
+}

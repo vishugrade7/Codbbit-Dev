@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -33,10 +32,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/types";
-import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter, Phone } from "lucide-react";
+import { Loader2, User as UserIcon, Building, Link as LinkIcon, Github, Linkedin, Twitter, Phone, CheckCircle } from "lucide-react";
 import { Switch } from "./ui/switch";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
+import { verifyPhoneNumber } from "../app/profile/actions";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -127,8 +127,10 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(user.company || null);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
 
   const companyValue = form.watch("company");
+  const phoneValue = form.watch("phone");
 
   useEffect(() => {
     if (companyValue !== selectedCompanyName) {
@@ -198,6 +200,25 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
       setIsSendingVerification(false);
     }
   };
+
+  async function handlePhoneVerify() {
+    if (!currentUser) return;
+    setIsVerifyingPhone(true);
+    const result = await verifyPhoneNumber(currentUser.uid);
+    if (result.success) {
+      toast({
+        title: "Phone Verified!",
+        description: "Your phone number has been successfully verified.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: result.error,
+      });
+    }
+    setIsVerifyingPhone(false);
+  }
 
   async function onSubmit(values: z.infer<typeof profileSchema>) {
     setIsLoading(true);
@@ -300,9 +321,21 @@ export default function EditProfileModal({ isOpen, onOpenChange, user }: EditPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Input placeholder="+1 (555) 123-4567" {...field} className="pl-10" />
+                        </div>
+                        {phoneValue && !user.phoneVerified && (
+                            <Button type="button" variant="outline" size="sm" onClick={handlePhoneVerify} disabled={isVerifyingPhone}>
+                                {isVerifyingPhone ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verify'}
+                            </Button>
+                        )}
+                        {user.phoneVerified && (
+                             <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium">
+                                <CheckCircle className="h-4 w-4" /> Verified
+                             </div>
+                        )}
                       </div>
                       <FormMessage />
                     </FormItem>
