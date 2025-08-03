@@ -39,14 +39,14 @@ const testimonials = [
         quote: "A must-have tool for any developer in the Salesforce ecosystem. The leaderboard adds a fun, competitive edge to learning.",
         name: "Emily Rodriguez",
         role: "Salesforce Admin",
-        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1587&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        image: "https://images.unsplash.com/photo-1488716820095-cbe80883c496?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8d29tYW58ZW58MHx8fHwxNzU0MjIxOTg4fDA&ixlib=rb-4.1.0&q=80&w=1080",
         "data-ai-hint": "woman professional"
     },
     {
         quote: "The 'Test Class' problems are unique and incredibly helpful for mastering test-driven development in Apex. I haven't seen this anywhere else.",
         name: "David Kim",
         role: "Lead Developer",
-        image: "https://images.unsplash.com/photo-1555066931-4365d1469c9b?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        image: "https://images.unsplash.com/photo-1600486913747-55e5470d6f40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOHx8bWFufGVufDB8fHx8MTc1NDE0NjQ5MHww&ixlib=rb-4.1.0&q=80&w=1080",
         "data-ai-hint": "man coding"
     }
 ];
