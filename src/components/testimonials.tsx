@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -17,7 +18,7 @@ const testimonials = [
         quote: "Accidentally got addicted to Codbbit, oops. The problems are the perfect mix of challenging and fun for any Salesforce developer.",
         name: "Alex Johnson",
         role: "Salesforce Developer",
-        image: "https://placehold.co/150x150.png",
+        image: "https://images.unsplash.com/photo-1531123414780-f74242c2b052?q=80&w=1587&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         "data-ai-hint": "smiling developer"
     },
     {
@@ -31,21 +32,21 @@ const testimonials = [
         quote: "Codbbit's interactive courses are a game-changer. I finally understood complex LWC concepts that I struggled with for months.",
         name: "Michael Chen",
         role: "Technical Architect",
-        image: "https://placehold.co/150x150.png",
+        image: "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8bWFufGVufDB8fHx8MTc1NDE0NjQ5MHww&ixlib=rb-4.1.0&q=80&w=1080",
         "data-ai-hint": "man at computer"
     },
     {
         quote: "A must-have tool for any developer in the Salesforce ecosystem. The leaderboard adds a fun, competitive edge to learning.",
         name: "Emily Rodriguez",
         role: "Salesforce Admin",
-        image: "https://placehold.co/150x150.png",
+        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1587&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         "data-ai-hint": "woman professional"
     },
     {
         quote: "The 'Test Class' problems are unique and incredibly helpful for mastering test-driven development in Apex. I haven't seen this anywhere else.",
         name: "David Kim",
         role: "Lead Developer",
-        image: "https://placehold.co/150x150.png",
+        image: "https://images.unsplash.com/photo-1555066931-4365d1469c9b?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         "data-ai-hint": "man coding"
     }
 ];
@@ -88,7 +89,7 @@ export default function Testimonials() {
                             width={48}
                             height={48}
                             data-ai-hint={testimonial['data-ai-hint']}
-                            className="rounded-full border-2 border-primary/50"
+                            className="rounded-full border-2 border-primary/50 object-cover"
                         />
                         <div>
                             <p className="font-semibold text-card-foreground">{testimonial.name}</p>
