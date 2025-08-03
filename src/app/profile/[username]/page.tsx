@@ -169,26 +169,27 @@ export default function UserProfilePage() {
                 const userDoc = querySnapshot.docs[0];
                 const data = userDoc.data();
                 
-                // Manually convert Timestamps
-                if (data.subscriptionEndDate && typeof data.subscriptionEndDate.toDate === 'function') {
-                  data.subscriptionEndDate = data.subscriptionEndDate.toDate();
-                }
-                if (data.solvedProblems) {
-                  for (const key in data.solvedProblems) {
-                    if (data.solvedProblems[key].solvedAt && typeof data.solvedProblems[key].solvedAt.toDate === 'function') {
-                      data.solvedProblems[key].solvedAt = data.solvedProblems[key].solvedAt.toDate();
+                // Manually convert Timestamps to Dates to prevent serialization errors
+                const convertTimestamps = (obj: any): any => {
+                    if (obj instanceof Timestamp) {
+                        return obj.toDate();
                     }
-                  }
-                }
-                if (data.achievements) {
-                    for (const key in data.achievements) {
-                        if (data.achievements[key].date && typeof data.achievements[key].date.toDate === 'function') {
-                            data.achievements[key].date = data.achievements[key].date.toDate();
+                    if (Array.isArray(obj)) {
+                        return obj.map(convertTimestamps);
+                    }
+                    if (obj !== null && typeof obj === 'object') {
+                        const newObj: { [key: string]: any } = {};
+                        for (const key in obj) {
+                            newObj[key] = convertTimestamps(obj[key]);
                         }
+                        return newObj;
                     }
-                }
+                    return obj;
+                };
 
-                setProfileUser({ id: userDoc.id, ...data } as AppUser);
+                const serializableData = convertTimestamps(data);
+
+                setProfileUser({ id: userDoc.id, ...serializableData } as AppUser);
                 setError(null);
             }
         }, (err) => {
