@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
  
-    --primary: 221 72% 57%;
+    --primary: 226 76% 51%;
     --primary-foreground: 0 0% 98%;
  
     --secondary: 240 4.8% 95.9%;
@@ -39,6 +39,9 @@
     --chart-3: 30 80% 50%;
     --chart-4: 280 75% 55%;
     --chart-5: 340 85% 55%;
+
+    --testimonial-background-light: 197 217 248;
+    --testimonial-background-dark: 29 34 78;
   }
  
   .dark {
@@ -51,7 +54,7 @@
     --popover: 0 0% 0%;
     --popover-foreground: 0 0% 98%;
  
-    --primary: 221 72% 57%;
+    --primary: 226 76% 51%;
     --primary-foreground: 240 10% 3.9%;
  
     --secondary: 240 3.7% 15.9%;

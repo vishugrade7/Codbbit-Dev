@@ -104,7 +104,9 @@ export default function Header() {
               ) : (
                 <Image src={logoSrc} alt="Codbbit logo" width={24} height={24} />
               )}
-              <span className="text-lg font-bold font-headline hidden sm:inline-block">Codbbit</span>
+              <span className="text-lg font-bold font-headline hidden sm:inline-block">
+                {isPro ? "Codbbit Pro" : "Codbbit"}
+              </span>
             </Link>
         </div>
 

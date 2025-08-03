@@ -60,7 +60,7 @@ export default function Testimonials() {
     <section className="w-full py-12 md:py-24 lg:py-32 bg-background text-foreground">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center gap-4 mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Why developers love <span className="text-primary">{'{Codbbit}'}</span>?</h2>
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">Why developers love <span className="text-primary">{'{'}</span>Codbbit<span className="text-primary">{'}'}</span>?</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl">
               See why developers choose to level up their Salesforce skills with our platform.
             </p>
@@ -78,7 +78,7 @@ export default function Testimonials() {
           <CarouselContent className="-ml-8">
             {testimonials.map((testimonial, index) => (
               <CarouselItem key={index} className="pl-8 md:basis-1/2 lg:basis-1/3">
-                <div className="h-full bg-card border rounded-2xl p-8 flex flex-col justify-center">
+                <div className="h-full bg-[rgb(var(--testimonial-background-light))] dark:bg-[rgb(var(--testimonial-background-dark))] border rounded-2xl p-8 flex flex-col justify-center">
                     <blockquote className="text-lg font-medium text-card-foreground">
                       “{testimonial.quote}”
                     </blockquote>

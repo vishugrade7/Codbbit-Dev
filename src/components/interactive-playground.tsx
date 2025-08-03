@@ -8,7 +8,6 @@ import { Button } from "./ui/button";
 export default function InteractivePlayground() {
     const features = [
         "Execute Apex code snippets and SOQL queries instantly.",
-        "Build and deploy Lightning Web Components right from your browser.",
         "Connect directly to your Salesforce org for real-world practice."
     ];
 
