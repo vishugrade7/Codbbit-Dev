@@ -32,22 +32,24 @@ function UploadProblemContent() {
     const [viewMode, setViewMode] = useState(initialView);
     const [currentProblem, setCurrentProblem] = useState<ProblemWithCategory | null>(null);
 
-    const isAuthorized = userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
+    const isAuthorized = userData?.isAdmin === true;
 
     useEffect(() => {
         if (!authLoading && !isAuthorized) {
-            router.replace('/'); // Use replace to avoid back button issues
+            router.replace('/');
         }
     }, [authLoading, isAuthorized, router]);
 
-    // This is the critical security check. We will not render any part of the admin UI
-    // until we are sure the user is authenticated and authorized.
-    if (authLoading || !isAuthorized) {
+    if (authLoading) {
         return (
             <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );
+    }
+    
+    if (!isAuthorized) {
+        return null;
     }
     
     const handleAddNewProblem = () => {

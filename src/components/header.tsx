@@ -83,7 +83,7 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
+  const isAuthorizedAdmin = userData?.isAdmin === true;
 
   const visibleNavLinks = useMemo(() => {
     if (authLoading || loadingNav) return [];
