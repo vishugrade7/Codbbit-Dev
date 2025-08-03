@@ -12,6 +12,7 @@ import { motion, type Variants } from 'framer-motion';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 const Section = ({ children }: { children: React.ReactNode }) => {
   const sectionVariants: Variants = {
@@ -82,7 +83,10 @@ const HeroSection = () => {
           animate="visible"
           className="flex items-center gap-4"
         >
-          <Button asChild size="lg">
+          <Button asChild size="lg" className={cn(
+              "bg-black dark:bg-gradient-to-r dark:from-blue-600 dark:to-slate-600 dark:hover:from-blue-500 dark:hover:to-slate-500",
+              "text-white bg-[length:200%_100%] hover:bg-black/90 dark:hover:bg-none animate-bg-shine"
+          )}>
             <Link href="/signup">Get Started</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
