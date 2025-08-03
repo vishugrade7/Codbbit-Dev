@@ -158,6 +158,11 @@ export default {
           'from': { backgroundPosition: '200% 0' },
           'to': { backgroundPosition: '-200% 0' },
         },
+        'wave': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
         'wave-ping': {
           '0%': {
             boxShadow: '0 0 0 0 hsl(var(--primary) / 0.5), 0 0 0 0 hsl(var(--primary) / 0.5)',
@@ -189,9 +194,11 @@ export default {
         'bg-shine': 'bg-shine 3s linear infinite',
         'wave-ping': 'wave-ping 1.5s ease-out infinite',
         'background-pan': 'background-pan 3s ease-in-out infinite',
+        'wave': 'wave 6s ease-in-out infinite',
       },
        backgroundSize: {
         '200%': '200% 200%',
+        '400%': '400% 400%',
       },
     },
   },

@@ -24,14 +24,20 @@ type CategoryInfo = {
 };
 
 const gradientClasses = [
-  "from-blue-400 to-blue-600 dark:from-blue-500/70 dark:to-blue-700/70",
-  "from-sky-400 to-indigo-500 dark:from-sky-500/70 dark:to-indigo-600/70",
-  "from-cyan-400 to-blue-500 dark:from-cyan-500/70 dark:to-blue-600/70",
-  "from-indigo-400 to-purple-500 dark:from-indigo-500/70 dark:to-purple-600/70",
-  "from-blue-300 to-sky-400 dark:from-blue-400/70 dark:to-sky-500/70",
+  "from-rose-400 to-orange-300 dark:from-rose-500/70 dark:to-orange-400/70",
+  "from-teal-400 to-lime-300 dark:from-teal-500/70 dark:to-lime-400/70",
+  "from-violet-400 to-purple-300 dark:from-violet-500/70 dark:to-purple-400/70",
+  "from-sky-400 to-cyan-300 dark:from-sky-500/70 dark:to-cyan-400/70",
+  "from-pink-400 to-rose-300 dark:from-pink-500/70 dark:to-rose-400/70",
+  "from-green-400 to-teal-300 dark:from-green-500/70 dark:to-teal-400/70",
+  "from-indigo-400 to-fuchsia-300 dark:from-indigo-500/70 dark:to-fuchsia-400/70",
+  "from-yellow-400 to-amber-300 dark:from-yellow-500/70 dark:to-amber-400/70",
 ];
 
 const iconColors = [
+    "text-white/90",
+    "text-white/90",
+    "text-white/90",
     "text-white/90",
     "text-white/90",
     "text-white/90",
@@ -184,7 +190,7 @@ export default function ApexProblemsView() {
               >
                 <Card className="overflow-hidden h-full flex flex-col group">
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-background-pan bg-[size:200%_200%]", gradient)}>
+                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-wave bg-[size:400%_400%]", gradient)}>
                            <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
                       </div>
                   </Link>
