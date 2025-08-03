@@ -169,6 +169,11 @@ export default {
             boxShadow: '0 0 0 0 hsl(var(--primary) / 0), 0 0 0 0 hsl(var(--primary) / 0)',
           },
         },
+        'background-pan': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -183,6 +188,10 @@ export default {
         'icon-bounce': 'icon-bounce 0.5s ease-in-out',
         'bg-shine': 'bg-shine 3s linear infinite',
         'wave-ping': 'wave-ping 1.5s ease-out infinite',
+        'background-pan': 'background-pan 15s ease-in-out infinite',
+      },
+       backgroundSize: {
+        '200%': '200% 200%',
       },
     },
   },

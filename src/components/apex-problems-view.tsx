@@ -23,18 +23,19 @@ type CategoryInfo = {
   imageUrl?: string;
 };
 
-const bgColors = [
-    "bg-blue-200 dark:bg-blue-900/30",
-    "bg-orange-200 dark:bg-orange-900/30",
-    "bg-green-200 dark:bg-green-900/30",
-    "bg-purple-200 dark:bg-purple-900/30",
-    "bg-teal-200 dark:bg-teal-900/30",
-    "bg-red-200 dark:bg-red-900/30",
-    "bg-yellow-200 dark:bg-yellow-900/30",
-    "bg-pink-200 dark:bg-pink-900/30",
-    "bg-indigo-200 dark:bg-indigo-900/30",
-    "bg-gray-200 dark:bg-gray-900/30",
+const gradientClasses = [
+  "from-blue-200 to-blue-300 dark:from-blue-900/50 dark:to-blue-800/50",
+  "from-orange-200 to-orange-300 dark:from-orange-900/50 dark:to-orange-800/50",
+  "from-green-200 to-green-300 dark:from-green-900/50 dark:to-green-800/50",
+  "from-purple-200 to-purple-300 dark:from-purple-900/50 dark:to-purple-800/50",
+  "from-teal-200 to-teal-300 dark:from-teal-900/50 dark:to-teal-800/50",
+  "from-red-200 to-red-300 dark:from-red-900/50 dark:to-red-800/50",
+  "from-yellow-200 to-yellow-300 dark:from-yellow-900/50 dark:to-yellow-800/50",
+  "from-pink-200 to-pink-300 dark:from-pink-900/50 dark:to-pink-800/50",
+  "from-indigo-200 to-indigo-300 dark:from-indigo-900/50 dark:to-indigo-800/50",
+  "from-gray-200 to-gray-300 dark:from-gray-900/50 dark:to-gray-800/50",
 ];
+
 const iconColors = [
     "text-blue-800 dark:text-blue-200",
     "text-orange-800 dark:text-orange-200",
@@ -180,7 +181,7 @@ export default function ApexProblemsView() {
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {categories.map((category, index) => {
               const Icon = categoryIcons.get(category.name) || Code;
-              const bgColor = bgColors[index % bgColors.length];
+              const gradient = gradientClasses[index % gradientClasses.length];
               const iconColor = iconColors[index % iconColors.length];
               return (
               <motion.div
@@ -193,7 +194,7 @@ export default function ApexProblemsView() {
               >
                 <Card className="overflow-hidden h-full flex flex-col group">
                   <Link href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block">
-                      <div className={cn("aspect-video relative flex items-center justify-center", bgColor)}>
+                      <div className={cn("aspect-video relative flex items-center justify-center bg-gradient-to-br animate-background-pan", gradient)}>
                            <Icon className={cn("h-16 w-16 transition-transform duration-300 group-hover:scale-110", iconColor)} />
                       </div>
                   </Link>
