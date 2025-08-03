@@ -1,20 +1,19 @@
+
 'use client';
 
 import * as idb from './indexedDB';
 
-// The concept of a global cache duration is less critical with IndexedDB
-// as it's persistent. We can rely on manual cache clearing or introduce
-// a timestamp-based check if needed, but for now, we'll simplify.
+const DATA_STORE = 'keyval';
 
 export async function setCache<T>(key: string, data: T): Promise<void> {
-  await idb.set(key, data);
+  await idb.set(DATA_STORE, data, key);
 }
 
 export async function getCache<T>(key: string): Promise<T | null> {
-  const data = await idb.get<T>(key);
+  const data = await idb.get<T>(DATA_STORE, key);
   return data ?? null;
 }
 
 export async function clearCache(key: string): Promise<void> {
-  await idb.clear(key);
+  await idb.clear(DATA_STORE, key);
 }

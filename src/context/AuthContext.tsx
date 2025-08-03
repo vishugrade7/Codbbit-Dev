@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import type { User as AppUser, BrandingSettings } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { clearCache } from '@/lib/cache';
+import { getCachedImage, cacheImage } from '@/lib/image-cache';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -26,6 +27,21 @@ const AuthContext = createContext<AuthContextType>({
   brandingSettings: null,
   loadingBranding: true,
 });
+
+const processCachedImages = async <T extends {}>(data: T, fields: (keyof T)[]): Promise<T> => {
+    if (!data) return data;
+    const processedData = { ...data };
+    for (const field of fields) {
+        const url = processedData[field] as string | undefined;
+        if (url) {
+            const cachedUrl = await getCachedImage(url);
+            if (cachedUrl) {
+                (processedData as any)[field] = cachedUrl;
+            }
+        }
+    }
+    return processedData;
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -70,9 +86,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
     const brandingDocRef = doc(db, 'settings', 'branding');
-    const unsubscribeBranding = onSnapshot(brandingDocRef, (doc) => {
+    const unsubscribeBranding = onSnapshot(brandingDocRef, async (doc) => {
         if (doc.exists()) {
-            setBrandingSettings(doc.data() as BrandingSettings);
+            const settings = doc.data() as BrandingSettings;
+            const cachedSettings = await processCachedImages(settings, ['logo_light', 'logo_dark', 'logo_pro_light', 'logo_pro_dark', 'favicon']);
+            setBrandingSettings(cachedSettings);
         } else {
             setBrandingSettings(null);
         }
@@ -90,14 +108,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user && db) {
       setLoading(true);
       const userDocRef = doc(db, 'users', user.uid);
-      unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+      unsubscribeSnapshot = onSnapshot(userDocRef, async (doc) => {
         const localSessionId = sessionStorage.getItem('appSessionId');
         const isLoggingIn = sessionStorage.getItem('isLoggingIn') === 'true';
 
         if (doc.exists()) {
           const currentData = doc.data() as AppUser;
           
-          // Session validation for other devices
           if (!isLoggingIn && localSessionId && currentData.activeSessionId && currentData.activeSessionId !== localSessionId) {
             auth?.signOut();
             toast({
@@ -105,16 +122,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               title: 'Session Expired',
               description: 'Your account has been logged into from another device.',
             });
-            return; // Stop further processing to prevent flicker
+            return;
           }
 
-          // If we are in the process of logging in, and we've successfully received the snapshot
-          // with the new session data, we can now safely remove the flag.
           if (isLoggingIn && localSessionId && currentData.activeSessionId === localSessionId) {
               sessionStorage.removeItem('isLoggingIn');
           }
-
-          setUserData(currentData);
+          
+          const cachedUserData = await processCachedImages(currentData, ['avatarUrl', 'companyLogoUrl']);
+          setUserData(cachedUserData);
 
         } else {
           setUserData(null);
