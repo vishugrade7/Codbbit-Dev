@@ -24,14 +24,14 @@ type CategoryInfo = {
 };
 
 const gradientClasses = [
-  "from-rose-400 to-orange-300 dark:from-rose-500/70 dark:to-orange-400/70",
-  "from-teal-400 to-lime-300 dark:from-teal-500/70 dark:to-lime-400/70",
-  "from-violet-400 to-purple-300 dark:from-violet-500/70 dark:to-purple-400/70",
-  "from-sky-400 to-cyan-300 dark:from-sky-500/70 dark:to-cyan-400/70",
-  "from-pink-400 to-rose-300 dark:from-pink-500/70 dark:to-rose-400/70",
-  "from-green-400 to-teal-300 dark:from-green-500/70 dark:to-teal-400/70",
-  "from-indigo-400 to-fuchsia-300 dark:from-indigo-500/70 dark:to-fuchsia-400/70",
-  "from-yellow-400 to-amber-300 dark:from-yellow-500/70 dark:to-amber-400/70",
+  "from-cyan-400 via-blue-500 to-emerald-500 dark:from-cyan-500/70 dark:via-blue-600/70 dark:to-emerald-600/70",
+  "from-cyan-400 via-sky-500 to-indigo-500 dark:from-cyan-500/70 dark:via-sky-600/70 dark:to-indigo-600/70",
+  "from-teal-400 via-cyan-500 to-sky-500 dark:from-teal-500/70 dark:via-cyan-600/70 dark:to-sky-600/70",
+  "from-emerald-400 via-teal-500 to-cyan-500 dark:from-emerald-500/70 dark:via-teal-600/70 dark:to-cyan-600/70",
+  "from-blue-400 via-indigo-500 to-violet-500 dark:from-blue-500/70 dark:via-indigo-600/70 dark:to-violet-600/70",
+  "from-sky-400 via-blue-500 to-indigo-500 dark:from-sky-500/70 dark:via-blue-600/70 dark:to-indigo-600/70",
+  "from-green-400 via-emerald-500 to-teal-500 dark:from-green-500/70 dark:via-emerald-600/70 dark:to-teal-600/70",
+  "from-cyan-400 via-teal-500 to-green-500 dark:from-cyan-500/70 dark:via-teal-600/70 dark:to-green-600/70",
 ];
 
 const iconColors = [
