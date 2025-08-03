@@ -228,7 +228,7 @@ export default function Header() {
                 >
                     {link.label}
                     {pathname.startsWith(link.href) && (
-                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full"></span>
                     )}
                 </Link>
                 ))}
@@ -243,7 +243,7 @@ export default function Header() {
                 >
                     {link.label}
                     {pathname.startsWith(link.href) && (
-                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-foreground rounded-full"></span>
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full"></span>
                     )}
                 </Link>
                 ))}
