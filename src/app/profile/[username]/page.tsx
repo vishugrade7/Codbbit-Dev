@@ -483,9 +483,9 @@ export default function UserProfilePage() {
                         </Card>
                     </AnimatedCard>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                         <AnimatedCard delay={0.3}>
-                            <Card>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <AnimatedCard delay={0.3} >
+                            <Card className="h-full">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-base">Skills</CardTitle>
                                     <CardDescription>Solved problems distribution across categories.</CardDescription>
@@ -515,102 +515,103 @@ export default function UserProfilePage() {
                                 </CardContent>
                             </Card>
                         </AnimatedCard>
-
-                         <AnimatedCard delay={0.4}>
-                            <Card>
-                                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle></CardHeader>
-                                <CardContent className="space-y-4 pt-4 text-sm">
-                                    <div>
-                                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                            <span>Easy</span>
-                                            <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
-                                        </div>
-                                        <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-[#1ca350]" />
-                                    </div>
-                                    <div>
-                                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                            <span>Medium</span>
-                                            <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
-                                        </div>
-                                        <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
-                                    </div>
-                                    <div>
-                                        <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
-                                            <span>Hard</span>
-                                            <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
-                                        </div>
-                                        <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </AnimatedCard>
-                        <AnimatedCard delay={0.5}>
-                            <Card>
-                                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle></CardHeader>
-                                <CardContent className="flex-grow flex items-center justify-center p-6 min-h-[160px]">
-                                    {categoryData.length > 0 ? (
-                                    <div className="w-full h-full flex flex-row items-center gap-6">
-                                            <div className="relative h-28 w-28 shrink-0">
-                                                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
-                                                    <PieChart><Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={48} paddingAngle={2} strokeWidth={0}>{categoryData.map((_, index) => (<Cell key={`cell-${index}`} fill={chartConfig[_.name]?.color} />))}</Pie></PieChart>
-                                                </ChartContainer>
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                                    <p className="text-2xl font-bold">{totalPoints}</p>
-                                                    <p className="text-xs text-muted-foreground">Points</p>
-                                                </div>
+                        <div className="space-y-8">
+                            <AnimatedCard delay={0.4}>
+                                <Card>
+                                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle></CardHeader>
+                                    <CardContent className="space-y-4 pt-4 text-sm">
+                                        <div>
+                                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                                <span>Easy</span>
+                                                <span className="font-semibold text-foreground">{easySolved} / {difficultyTotals.Easy}</span>
                                             </div>
-                                            <ScrollArea className="h-28 flex-1">
-                                                <div className="flex-1 space-y-2 text-sm pr-4">
-                                                    {categoryData.map((entry) => (
-                                                        <div key={entry.name} className="flex justify-between items-center">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
-                                                                <span className="truncate">{entry.name}</span>
-                                                            </div>
-                                                            <span className="font-semibold">{entry.value}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </ScrollArea>
-                                    </div>
-                                    ) : (
-                                        <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </AnimatedCard>
-                    </div>
-
-                    <AnimatedCard delay={0.6}>
-                         <Card>
-                            <CardHeader><CardTitle>Badges</CardTitle></CardHeader>
-                            <CardContent>
-                                {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                                    <div className="flex flex-wrap gap-4">
-                                        {Object.values(profileUser.achievements).sort((a,b) => (b.date.getTime() - a.date.getTime())).slice(0, 18).map((achievement: Achievement) => (
-                                            <TooltipProvider key={achievement.name}>
-                                            <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className="flex flex-col items-center text-center gap-1.5">
-                                                    <div className="p-3 bg-amber-400/10 rounded-full">
-                                                        <Award className="h-6 w-6 text-amber-500" />
+                                            <Progress value={difficultyTotals.Easy > 0 ? (easySolved / difficultyTotals.Easy) * 100 : 0} className="h-2" indicatorClassName="bg-[#1ca350]" />
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                                <span>Medium</span>
+                                                <span className="font-semibold text-foreground">{mediumSolved} / {difficultyTotals.Medium}</span>
+                                            </div>
+                                            <Progress value={difficultyTotals.Medium > 0 ? (mediumSolved / difficultyTotals.Medium) * 100 : 0} className="h-2" indicatorClassName="bg-yellow-500" />
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-center font-medium mb-1 text-muted-foreground">
+                                                <span>Hard</span>
+                                                <span className="font-semibold text-foreground">{hardSolved} / {difficultyTotals.Hard}</span>
+                                            </div>
+                                            <Progress value={difficultyTotals.Hard > 0 ? (hardSolved / difficultyTotals.Hard) * 100 : 0} className="h-2" indicatorClassName="bg-destructive" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </AnimatedCard>
+                             <AnimatedCard delay={0.5}>
+                                <Card>
+                                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle></CardHeader>
+                                    <CardContent className="flex-grow flex items-center justify-center p-6 min-h-[160px]">
+                                        {categoryData.length > 0 ? (
+                                        <div className="w-full h-full flex flex-row items-center gap-6">
+                                                <div className="relative h-28 w-28 shrink-0">
+                                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
+                                                        <PieChart><Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={48} paddingAngle={2} strokeWidth={0}>{categoryData.map((_, index) => (<Cell key={`cell-${index}`} fill={chartConfig[_.name]?.color} />))}</Pie></PieChart>
+                                                    </ChartContainer>
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                                        <p className="text-2xl font-bold">{totalPoints}</p>
+                                                        <p className="text-xs text-muted-foreground">Points</p>
                                                     </div>
                                                 </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p className="font-bold">{achievement.name}</p>
-                                                <p className="text-xs">{achievement.description}</p>
-                                            </TooltipContent>
-                                            </Tooltip>
-                                            </TooltipProvider>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 text-muted-foreground text-sm">No badges earned yet. Keep coding!</div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </AnimatedCard>
+                                                <ScrollArea className="h-28 flex-1">
+                                                    <div className="flex-1 space-y-2 text-sm pr-4">
+                                                        {categoryData.map((entry) => (
+                                                            <div key={entry.name} className="flex justify-between items-center">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig[entry.name]?.color }} />
+                                                                    <span className="truncate">{entry.name}</span>
+                                                                </div>
+                                                                <span className="font-semibold">{entry.value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </ScrollArea>
+                                        </div>
+                                        ) : (
+                                            <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </AnimatedCard>
+                             <AnimatedCard delay={0.6}>
+                                 <Card>
+                                    <CardHeader><CardTitle>Badges</CardTitle></CardHeader>
+                                    <CardContent>
+                                        {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                                            <div className="flex flex-wrap gap-4">
+                                                {Object.values(profileUser.achievements).sort((a,b) => (b.date.getTime() - a.date.getTime())).slice(0, 18).map((achievement: Achievement) => (
+                                                    <TooltipProvider key={achievement.name}>
+                                                    <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex flex-col items-center text-center gap-1.5">
+                                                            <div className="p-3 bg-amber-400/10 rounded-full">
+                                                                <Award className="h-6 w-6 text-amber-500" />
+                                                            </div>
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p className="font-bold">{achievement.name}</p>
+                                                        <p className="text-xs">{achievement.description}</p>
+                                                    </TooltipContent>
+                                                    </Tooltip>
+                                                    </TooltipProvider>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-8 text-muted-foreground text-sm">No badges earned yet. Keep coding!</div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </AnimatedCard>
+                        </div>
+                    </div>
+
 
                     <AnimatedCard delay={0.7}>
                         <Tabs defaultValue="recent" className="w-full">
