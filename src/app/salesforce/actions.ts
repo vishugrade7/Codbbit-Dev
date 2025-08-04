@@ -659,18 +659,9 @@ export async function executeSalesforceCode(
             const logHeader = `----------\nDEBUG LOG\n----------\n`;
     
             if (responseBody.success) {
-                const userDebugLines = debugLog
-                    .split('\n')
-                    .filter((line: string) => line.includes('|USER_DEBUG|'))
-                    .join('\n');
-    
-                const resultMessage = userDebugLines.trim() 
-                    ? userDebugLines.trim()
-                    : 'Execution successful. No USER_DEBUG output.';
-    
                 return {
                     success: true,
-                    result: resultMessage,
+                    result: `${logHeader}${debugLog}`,
                     logs: `${logHeader}${debugLog}`,
                     type: 'apex',
                 };
@@ -701,4 +692,98 @@ export async function executeSalesforceCode(
     }
 }
 
+async function deployLwcBundle(
+    log: string[],
+    auth: SfdcAuth,
+    name: string,
+    files: { html: string; js: string; css: string }
+): Promise<string> {
+    log.push(`\n--- Deploying LWC: ${name} ---`);
+    const bundleQuery = `SELECT Id FROM LightningComponentBundle WHERE DeveloperName = '${name}'`;
+    const existingBundleResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(bundleQuery)}`);
     
+    if (existingBundleResult.records.length > 0) {
+        const bundleId = existingBundleResult.records[0].Id;
+        log.push(`> Found existing bundle with ID: ${bundleId}. Deleting...`);
+        try {
+            await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/LightningComponentBundle/${bundleId}`, { method: 'DELETE' });
+            log.push(`> Deletion successful.`);
+        } catch (e: any) {
+            log.push(`> Warning: Could not delete existing LWC bundle. Error: ${e.message}`);
+        }
+    }
+
+    log.push(`> Creating new LightningComponentBundle...`);
+    const bundleRecord = await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/LightningComponentBundle/`, {
+        method: 'POST',
+        body: JSON.stringify({
+            MasterLabel: name,
+            DeveloperName: name,
+            ApiVersion: 59.0,
+        }),
+    });
+    const bundleId = bundleRecord.id;
+    log.push(`> Bundle created with ID: ${bundleId}.`);
+
+    const metaXmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__RecordPage</target>
+    </targets>
+</LightningComponentBundle>`;
+
+    const resources = [
+        { FilePath: `lwc/${name}/${name}.html`, Format: 'HTML', Source: files.html },
+        { FilePath: `lwc/${name}/${name}.js`, Format: 'JS', Source: files.js },
+        { FilePath: `lwc/${name}/${name}.css`, Format: 'CSS', Source: files.css },
+        { FilePath: `lwc/${name}/${name}.js-meta.xml`, Format: 'XML', Source: metaXmlContent },
+    ];
+    
+    log.push(`> Deploying ${resources.length} resources...`);
+    for (const resource of resources) {
+        log.push(`  - Deploying ${resource.FilePath}`);
+        await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/LightningComponentResource/`, {
+            method: 'POST',
+            body: JSON.stringify({
+                LightningComponentBundleId: bundleId,
+                FilePath: resource.FilePath,
+                Format: resource.Format,
+                Source: resource.Source,
+            }),
+        });
+    }
+    log.push(`> All resources deployed successfully.`);
+    return bundleId;
+}
+
+export async function deployLwcComponent(
+    userId: string,
+    files: { html: string; js: string; css: string }
+): Promise<SubmissionResult> {
+    const log: string[] = [];
+    try {
+        log.push("Starting LWC deployment...");
+        log.push("> Connecting to Salesforce...");
+        const auth = await getSfdcConnection(userId);
+        log.push("> Connection successful.");
+
+        const componentName = 'codbbitPreview';
+        await deployLwcBundle(log, auth, componentName, files);
+        
+        log.push("\n--- DEPLOYMENT SUCCEEDED ---");
+        log.push(`LWC component '${componentName}' has been deployed to your org.`);
+        log.push("To view it, edit any Lightning App Page and drag the component onto the canvas.");
+
+        return { success: true, message: "Deployment successful!", details: log.join('\n') };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        log.push(`\n--- ERROR ---`);
+        log.push(errorMessage);
+        return { success: false, message: 'An error occurred during deployment.', details: log.join('\n') };
+    }
+}
