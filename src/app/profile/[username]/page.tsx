@@ -514,39 +514,39 @@ export default function UserProfilePage() {
                         </Card>
                     </AnimatedCard>
                     
-                    <AnimatedCard delay={0.3}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-base">Skills</CardTitle>
-                                <CardDescription>Solved problems distribution across categories.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex items-center justify-center p-6 min-h-[250px]">
-                                {radarChartData.length > 2 ? (
-                                    <ChartContainer config={chartConfig} className="mx-auto w-full h-64">
-                                        <RadarChart data={radarChartData}>
-                                            <ChartTooltip content={<ChartTooltipContent />} />
-                                            <PolarGrid className="fill-muted-foreground/20" />
-                                            <PolarAngleAxis dataKey="subject" />
-                                            <Radar
-                                                name={profileUser.name}
-                                                dataKey="solved"
-                                                stroke="hsl(var(--primary))"
-                                                fill="hsl(var(--primary))"
-                                                fillOpacity={0.6}
-                                            />
-                                            <Legend />
-                                        </RadarChart>
-                                    </ChartContainer>
-                                ) : (
-                                    <p className="text-muted-foreground text-center py-4 text-sm">
-                                        Solve problems in at least 3 different categories to see your skills chart.
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </AnimatedCard>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                         <AnimatedCard delay={0.3}>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-base">Skills</CardTitle>
+                                    <CardDescription>Solved problems distribution across categories.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex items-center justify-center p-6 min-h-[250px]">
+                                    {radarChartData.length > 2 ? (
+                                        <ChartContainer config={chartConfig} className="mx-auto w-full h-64">
+                                            <RadarChart data={radarChartData}>
+                                                <ChartTooltip content={<ChartTooltipContent />} />
+                                                <PolarGrid className="fill-muted-foreground/20" />
+                                                <PolarAngleAxis dataKey="subject" />
+                                                <Radar
+                                                    name={profileUser.name}
+                                                    dataKey="solved"
+                                                    stroke="hsl(var(--primary))"
+                                                    fill="hsl(var(--primary))"
+                                                    fillOpacity={0.6}
+                                                />
+                                                <Legend />
+                                            </RadarChart>
+                                        </ChartContainer>
+                                    ) : (
+                                        <p className="text-muted-foreground text-center py-4 text-sm">
+                                            Solve problems in at least 3 different categories to see your skills chart.
+                                        </p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </AnimatedCard>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                          <AnimatedCard delay={0.4}>
                             <Card>
                                 <CardHeader><CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle></CardHeader>
