@@ -403,10 +403,12 @@ const AnonymousExecutor = ({ open, onOpenChange }: { open: boolean, onOpenChange
                     </Button>
                 </DialogHeader>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-                    <TabsList className="mx-4 mt-4">
-                        <TabsTrigger value="code">Code</TabsTrigger>
-                        <TabsTrigger value="output">Output</TabsTrigger>
-                    </TabsList>
+                    <div className="flex justify-center pt-4">
+                        <TabsList>
+                            <TabsTrigger value="code">Code</TabsTrigger>
+                            <TabsTrigger value="output">Output</TabsTrigger>
+                        </TabsList>
+                    </div>
                     <TabsContent value="code" className="flex-1 m-0 p-4">
                         <div className="h-full border rounded-md overflow-hidden">
                            <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
