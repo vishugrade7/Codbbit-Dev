@@ -44,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/context/AuthContext";
-import { submitApexSolution } from "@/app/salesforce/actions";
+import { submitApexSolution, executeSalesforceCode } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -351,6 +351,84 @@ const NextProblemOverlay = ({ nextProblem, onCancel, onNext }: { nextProblem: Pr
     );
 };
 
+const AnonymousExecutor = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
+    const { user, userData } = useAuth();
+    const { toast } = useToast();
+    const { resolvedTheme } = useTheme();
+    const router = useRouter();
+
+    const [code, setCode] = useState('// Your anonymous Apex code here');
+    const [output, setOutput] = useState('');
+    const [isExecuting, setIsExecuting] = useState(false);
+    const [activeTab, setActiveTab] = useState('code');
+
+    const handleExecute = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In' });
+            return;
+        }
+        if (!userData?.sfdcAuth?.connected) {
+            toast({ variant: 'destructive', title: 'Salesforce Not Connected', description: 'Please connect your Salesforce org in settings.' });
+            onOpenChange(false);
+            router.push('/settings');
+            return;
+        }
+
+        setIsExecuting(true);
+        setOutput('');
+        setActiveTab('output');
+        
+        const response = await executeSalesforceCode(user.uid, code, 'anonymous');
+        
+        if (response.success) {
+            setOutput(response.result);
+        } else {
+            setOutput(`Error: ${response.result}\n\n---Full Log---\n${response.logs}`);
+        }
+        
+        setIsExecuting(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl h-[60vh] flex flex-col p-0 gap-0">
+                <DialogHeader className="p-4 border-b flex-row items-center justify-between space-y-0">
+                    <div className="space-y-1">
+                        <DialogTitle>Run Anonymously</DialogTitle>
+                        <DialogDescription>Test snippets of Apex code quickly.</DialogDescription>
+                    </div>
+                    <Button onClick={handleExecute} disabled={isExecuting}>
+                        {isExecuting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Execute
+                    </Button>
+                </DialogHeader>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+                    <TabsList className="mx-4 mt-4">
+                        <TabsTrigger value="code">Code</TabsTrigger>
+                        <TabsTrigger value="output">Output</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="code" className="flex-1 m-0 p-4">
+                        <div className="h-full border rounded-md overflow-hidden">
+                           <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false } }} />
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="output" className="flex-1 m-0 p-4">
+                        <div className="h-full border rounded-md p-3 bg-muted/50 overflow-auto">
+                           {isExecuting ? (
+                               <div className="flex items-center justify-center h-full">
+                                   <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+                               </div>
+                           ) : (
+                              <pre className="text-sm font-code whitespace-pre-wrap">{output || 'Execution output will appear here.'}</pre>
+                           )}
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 const APEX_PROBLEMS_CACHE_KEY = 'apexProblemsData';
 
 export default function ProblemWorkspacePage() {
@@ -390,6 +468,7 @@ export default function ProblemWorkspacePage() {
     const [awardedPoints, setAwardedPoints] = useState(0);
     const [nextProblem, setNextProblem] = useState<Problem | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isExecutorOpen, setIsExecutorOpen] = useState(false);
 
     const editorRef = useRef<any>(null);
     const decorationIdsRef = useRef<string[]>([]);
@@ -765,6 +844,7 @@ export default function ProblemWorkspacePage() {
                  <SettingsContent />
             </DialogContent>
         </Dialog>
+        <AnonymousExecutor open={isExecutorOpen} onOpenChange={setIsExecutorOpen} />
 
         <header className="flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
              <div className="flex items-center gap-2">
@@ -849,6 +929,17 @@ export default function ProblemWorkspacePage() {
                     <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
                 </div>
                  <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExecutorOpen(true)}>
+                                <PlayIcon className="h-4 w-4" />
+                                <span className="sr-only">Run Anonymously</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Run Anonymously</p>
+                        </TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleToggleStar} disabled={isStarring}>
