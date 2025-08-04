@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { Course, Module, Lesson, ContentBlock, Problem, ApexProblemsData, MindmapNode } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, ArrowRight, Code, AlertTriangle, CheckSquare, FileQuestion, CheckCircle, XCircle, ChevronRight, Milestone, GitFork, FlaskConical, Play, CheckCircle2, Check, PartyPopper, LayoutGrid, ChevronDown, ChevronUp, SkipForward, SkipBack } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from "@/lib/utils";
@@ -761,34 +761,34 @@ const ContentRenderer = ({ contentBlocks, allProblems }: { contentBlocks: Conten
             );
           case 'problem':
               const problemDetails = allProblems.find(p => p.id === block.content.problemId);
+              const problemImage = problemDetails?.imageUrl || 'https://placehold.co/600x400.png';
+              
               return (
-                  <Card className="not-prose my-6">
-                      <CardHeader className="pb-4">
-                          <div className="flex justify-between items-start">
-                              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                                  <FileQuestion className="h-4 w-4" />
-                                  <span>Challenge</span>
-                              </div>
+                  <Card className="not-prose my-6 overflow-hidden bg-card text-card-foreground shadow-md transition-all hover:shadow-xl dark:bg-neutral-900">
+                    <Link href={`/problems/apex/${encodeURIComponent(problemDetails?.categoryName || '')}/${block.content.problemId}`} className="block">
+                      <div className="flex items-center">
+                          <div className="flex flex-col p-4 w-2/3">
+                              <h4 className="text-lg font-bold truncate">{block.content.title}</h4>
                               {problemDetails && (
-                                  <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(problemDetails.difficulty))}>
-                                      {problemDetails.difficulty}
-                                  </Badge>
+                                <p className="text-sm text-muted-foreground">{problemDetails.categoryName}</p>
                               )}
+                              <div className="mt-auto pt-4 flex items-center gap-4 text-muted-foreground">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full"><SkipBack className="h-5 w-5"/></Button>
+                                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full"><Play className="h-6 w-6 fill-current"/></Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full"><SkipForward className="h-5 w-5"/></Button>
+                              </div>
                           </div>
-                      </CardHeader>
-                      <CardContent className="pt-0 pb-4">
-                           <h4 className="text-xl font-bold">{block.content.title}</h4>
-                           {problemDetails?.metadataType && (
-                              <p className="text-sm text-muted-foreground mt-1">{problemDetails.metadataType}</p>
-                           )}
-                      </CardContent>
-                      <CardFooter>
-                          <Button asChild>
-                              <Link href={`/problems/apex/${encodeURIComponent(problemDetails?.categoryName || '')}/${block.content.problemId}`}>
-                                  Solve Problem
-                              </Link>
-                          </Button>
-                      </CardFooter>
+                          <div className="w-1/3 aspect-square relative">
+                              <Image 
+                                  src={problemImage} 
+                                  alt={block.content.title}
+                                  fill
+                                  data-ai-hint="abstract code"
+                                  className="object-cover"
+                              />
+                          </div>
+                      </div>
+                    </Link>
                   </Card>
               );
           case 'image':
