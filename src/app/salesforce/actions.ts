@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -529,7 +528,7 @@ export async function testApexProblem(userId: string, problem: Partial<Problem>)
         await deployMetadata([], auth, objectType, mainObjectName, problem.sampleCode, problem.triggerSObject);
         const testClassId = await deployMetadata([], auth, 'ApexClass', testObjectName, problem.testcases);
 
-        const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
+        const testRunResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/runTestsAsynchronous/`, {
             method: 'POST',
             body: JSON.stringify({ classids: testClassId })
         });
@@ -663,15 +662,6 @@ export async function executeSalesforceCode(
                 const userDebugLines = debugLog
                     .split('\n')
                     .filter((line: string) => line.includes('|USER_DEBUG|'))
-                    .map((line: string) => {
-                        const parts = line.split('|');
-                        const userDebugIndex = parts.indexOf('USER_DEBUG');
-                        if (userDebugIndex !== -1 && parts.length > userDebugIndex + 2) {
-                            return parts.slice(userDebugIndex + 3).join('|');
-                        }
-                        return null;
-                    })
-                    .filter((line: string | null): line is string => line !== null)
                     .join('\n');
     
                 const resultMessage = userDebugLines.trim() 
@@ -701,7 +691,7 @@ export async function executeSalesforceCode(
             }
         }
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return {
             success: false,
             result: `An unexpected error occurred: ${errorMessage}`,
@@ -710,3 +700,5 @@ export async function executeSalesforceCode(
         };
     }
 }
+
+    
