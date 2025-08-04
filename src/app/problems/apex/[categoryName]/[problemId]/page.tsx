@@ -49,6 +49,7 @@ import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogContent } from "@/components/ui/dialog";
 
 
 type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
@@ -93,8 +94,8 @@ const SubmissionResultsView = ({ log, isSubmitting, success, step }: { log: stri
     if (success) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                <div className="p-3 bg-green-500/10 rounded-full mb-4">
-                    <CheckCircle2 className="h-12 w-12 text-green-500" />
+                <div className="p-3 bg-[#1ca350]/10 rounded-full mb-4">
+                    <CheckCircle2 className="h-12 w-12 text-[#1ca350]" />
                 </div>
                 <p className="font-bold text-2xl">Success!</p>
                 <p className="text-muted-foreground">All test cases passed.</p>
@@ -387,6 +388,7 @@ export default function ProblemWorkspacePage() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [awardedPoints, setAwardedPoints] = useState(0);
     const [nextProblem, setNextProblem] = useState<Problem | null>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const editorRef = useRef<any>(null);
     const decorationIdsRef = useRef<string[]>([]);
@@ -558,7 +560,7 @@ export default function ProblemWorkspacePage() {
               title: "Salesforce Not Connected",
               description: "Please connect your Salesforce account in settings.",
             });
-            router.push('/settings');
+            setIsSettingsOpen(true);
             return;
         }
         if (!problem) {
@@ -671,7 +673,7 @@ export default function ProblemWorkspacePage() {
     
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+        case 'easy': return 'bg-[#1ca350]/20 text-[#1ca350] border-[#1ca350]/30';
         case 'medium': return 'bg-yellow-400/20 text-yellow-500 border-yellow-400/30';
         case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
         default: return 'bg-muted';
@@ -700,7 +702,7 @@ export default function ProblemWorkspacePage() {
                         </Badge>
                     )}
                     {isSolved && (
-                    <div className="flex items-center gap-1.5 text-sm text-green-400">
+                    <div className="flex items-center gap-1.5 text-sm text-[#1ca350]">
                         <CheckCircle2 className="h-4 w-4" />
                         <span>Solved</span>
                     </div>
@@ -757,6 +759,21 @@ export default function ProblemWorkspacePage() {
                 </div>
             </div>
         )}
+        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogContent>
+                 <DialogHeader>
+                    <DialogTitle>Settings</DialogTitle>
+                    <DialogDescription>
+                        For now, you can go to the main settings page to manage your account.
+                    </DialogDescription>
+                </DialogHeader>
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>Close</Button>
+                    <Button asChild><Link href="/settings">Go to Settings</Link></Button>
+                 </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
         <header className="flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
@@ -813,7 +830,7 @@ export default function ProblemWorkspacePage() {
                                     )}
                                 >
                                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />}
+                                        {userData?.solvedProblems?.[p.id] && <CheckCircle2 className="h-4 w-4 text-[#1ca350] flex-shrink-0" />}
                                         <span className="truncate">{p.title}</span>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
@@ -857,7 +874,7 @@ export default function ProblemWorkspacePage() {
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push('/settings')}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsSettingsOpen(true)}>
                                 <Settings className="h-4 w-4" />
                                 <span className="sr-only">Settings</span>
                             </Button>

@@ -573,8 +573,8 @@ export function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCateg
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
-                            placeholder="Search problems by title..."
-                            className="w-full pl-10"
+                            placeholder="Search problems..."
+                            className="w-full pl-10 rounded-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />

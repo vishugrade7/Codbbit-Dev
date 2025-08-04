@@ -175,15 +175,13 @@ export default function ProblemSheetsListPage() {
                   <TabsTrigger value="following" disabled={!authUser}>Following</TabsTrigger>
               </TabsList>
           </Tabs>
-          <div className={cn("relative w-full md:max-w-xs transition-all duration-300 ease-in-out", isSearchFocused && "md:max-w-md")}>
+          <div className="relative w-full md:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
                 placeholder="Search sheets..."
-                className="w-full pl-9 h-9"
+                className="w-full pl-9 h-9 rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
             />
           </div>
       </div>

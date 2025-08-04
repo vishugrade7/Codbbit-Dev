@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -149,8 +150,8 @@ export default function CategoryProblemsPage() {
                           >
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <Input
-                                  placeholder="Search problems by title..."
-                                  className="w-full pl-10 h-9"
+                                  placeholder="Search problems..."
+                                  className="w-full pl-10 rounded-full h-9"
                                   value={searchTerm}
                                   onChange={(e) => setSearchTerm(e.target.value)}
                                   onBlur={() => setIsSearchExpanded(false)}

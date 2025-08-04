@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, useRef } from "react";
@@ -310,39 +311,13 @@ function CreateProblemSheetClient() {
                         <div className="p-4 border-b flex-shrink-0">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="relative flex-1">
-                                    <AnimatePresence>
-                                        {isSearchExpanded ? (
-                                             <motion.div
-                                                key="search-input"
-                                                initial={{ width: 0, opacity: 0 }}
-                                                animate={{ width: '100%', opacity: 1 }}
-                                                exit={{ width: 0, opacity: 0 }}
-                                                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                                className="relative"
-                                            >
-                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                                <Input
-                                                    placeholder="Search problems by title..."
-                                                    className="w-full pl-10 rounded-full"
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    onBlur={() => !searchTerm && setIsSearchExpanded(false)}
-                                                    autoFocus
-                                                />
-                                            </motion.div>
-                                        ) : (
-                                            <motion.div
-                                                key="search-button"
-                                                initial={{ scale: 1, opacity: 1 }}
-                                                exit={{ scale: 0.5, opacity: 0 }}
-                                            >
-                                                <Button variant="outline" className="rounded-full w-full justify-start gap-2 text-muted-foreground" onClick={() => setIsSearchExpanded(true)}>
-                                                    <Search className="h-5 w-5" />
-                                                    <span>Search...</span>
-                                                </Button>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search problems..."
+                                        className="w-full pl-10 rounded-full"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
                                 </div>
                                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                                     <SelectTrigger className="w-full md:w-[180px] rounded-full">
