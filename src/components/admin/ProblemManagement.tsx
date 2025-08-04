@@ -38,9 +38,9 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "../ui/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 type ProblemWithCategory = Problem & { categoryName: string };
 type CompanySuggestion = {
@@ -1236,6 +1236,8 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
     const metadataTypeValue = form.watch("metadataType");
     const companyValue = form.watch("company");
     const mermaidDiagramValue = form.watch("mermaidDiagram");
+    const isPremiumValue = form.watch("isPremium");
+    const isTestedValue = form.watch("isTested");
 
     useEffect(() => {
         if (companyValue !== selectedCompanyName) {
@@ -1396,22 +1398,24 @@ export function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory
                                         <FormMessage />
                                     </FormItem>
                                 )} />
-                                <FormField control={form.control} name="isPremium" render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                        <div className="space-y-0.5">
-                                            <FormLabel>Premium Problem</FormLabel>
-                                            <FormDescription>
-                                                Mark this problem as premium content.
-                                            </FormDescription>
-                                        </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )} />
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Premium Problem</FormLabel>
+                                        <FormDescription>
+                                            Mark this problem as premium content.
+                                        </FormDescription>
+                                    </div>
+                                    <Tabs
+                                      defaultValue={isPremiumValue ? 'premium' : 'free'}
+                                      onValueChange={(val) => form.setValue('isPremium', val === 'premium')}
+                                      className="w-auto"
+                                    >
+                                      <TabsList>
+                                        <TabsTrigger value="free">Free</TabsTrigger>
+                                        <TabsTrigger value="premium">Premium</TabsTrigger>
+                                      </TabsList>
+                                    </Tabs>
+                                </FormItem>
                             </div>
                              <FormItem>
                                 <FormLabel>Content Display Order</FormLabel>

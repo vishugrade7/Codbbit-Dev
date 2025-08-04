@@ -14,12 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Loader2, FileUp, X, Instagram } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MAX_FILES = 3;
 const MAX_FILE_SIZE_MB = 5;
@@ -82,9 +81,10 @@ export default function ContactPage() {
   }, [searchParams, form]);
 
 
-  const handleSwitchChange = (checked: boolean) => {
-    const newType = checked ? 'Feedback' : 'Support';
-    form.setValue('type', newType);
+  const handleSwitchChange = (newType: string) => {
+    if(newType === 'Support' || newType === 'Feedback') {
+      form.setValue('type', newType);
+    }
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -128,15 +128,12 @@ export default function ContactPage() {
                         {formType === 'Support' ? 'Need help with something?' : 'Share your thoughts with us.'}
                     </CardDescription>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Label htmlFor="form-type-switch">Support</Label>
-                    <Switch
-                        id="form-type-switch"
-                        checked={formType === 'Feedback'}
-                        onCheckedChange={handleSwitchChange}
-                    />
-                    <Label htmlFor="form-type-switch">Feedback</Label>
-                </div>
+                <Tabs defaultValue={formType} onValueChange={handleSwitchChange} className="w-auto">
+                    <TabsList>
+                        <TabsTrigger value="Support">Support</TabsTrigger>
+                        <TabsTrigger value="Feedback">Feedback</TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </div>
           </CardHeader>
           <CardContent>
