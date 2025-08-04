@@ -50,6 +50,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogContent } from "@/components/ui/dialog";
+import SettingsContent from "@/components/settings-content";
 
 
 type SubmissionStep = 'idle' | 'saving' | 'testing' | 'done';
@@ -760,17 +761,8 @@ export default function ProblemWorkspacePage() {
             </div>
         )}
         <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-            <DialogContent>
-                 <DialogHeader>
-                    <DialogTitle>Settings</DialogTitle>
-                    <DialogDescription>
-                        For now, you can go to the main settings page to manage your account.
-                    </DialogDescription>
-                </DialogHeader>
-                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>Close</Button>
-                    <Button asChild><Link href="/settings">Go to Settings</Link></Button>
-                 </DialogFooter>
+            <DialogContent className="max-w-2xl">
+                 <SettingsContent />
             </DialogContent>
         </Dialog>
 
