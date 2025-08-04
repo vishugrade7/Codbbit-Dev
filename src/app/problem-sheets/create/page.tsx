@@ -420,16 +420,21 @@ function CreateProblemSheetClient() {
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={40} minSize={30}>
                    <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
-                        <CardHeader>
-                            <CardTitle>{formMode === 'edit' ? 'Editing Sheet' : 'Your New Sheet'}</CardTitle>
-                            <CardDescription>Select problems from the list to add them here.</CardDescription>
+                        <CardHeader className="flex flex-row justify-between items-start">
+                            <div>
+                                <CardTitle>{formMode === 'edit' ? 'Editing Sheet' : 'Your New Sheet'}</CardTitle>
+                                <CardDescription>Select problems from the list to add them here.</CardDescription>
+                            </div>
+                             <Button onClick={handleSaveSheet} disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {formMode === 'edit' ? 'Save Changes' : 'Create Sheet'}
+                            </Button>
                         </CardHeader>
                         <CardContent className="flex-1 flex flex-col gap-4 min-h-0">
                             <Input
                                 placeholder="Enter sheet name..."
                                 value={sheetName}
                                 onChange={(e) => setSheetName(e.target.value)}
-                                className="rounded-full"
                             />
                             <Textarea
                                 placeholder="Enter a short description..."
@@ -464,12 +469,6 @@ function CreateProblemSheetClient() {
                                 )}
                             </ScrollArea>
                         </CardContent>
-                        <CardFooter>
-                            <Button onClick={handleSaveSheet} disabled={isSaving} className="w-full">
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {formMode === 'edit' ? 'Save Changes' : 'Create & Share Sheet'}
-                            </Button>
-                        </CardFooter>
                    </Card>
                 </ResizablePanel>
             </ResizablePanelGroup>
@@ -488,3 +487,5 @@ export default function CreateProblemSheetPage() {
         </Suspense>
     );
 }
+
+    
