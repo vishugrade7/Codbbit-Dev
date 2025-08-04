@@ -138,7 +138,7 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
                     else if (value.count > 8) level = 4;
 
                     if (level > 0) {
-                        return `color-github-${level}`;
+                        return `color-blue-${level}`;
                     }
                     return 'color-empty';
                 }}

@@ -154,15 +154,15 @@
 }
 
 /* Custom Blue color scale */
-.react-calendar-heatmap .color-github-1 { fill: #dbeafe; } /* blue-100 */
-.react-calendar-heatmap .color-github-2 { fill: #93c5fd; } /* blue-300 */
-.react-calendar-heatmap .color-github-3 { fill: #3b82f6; } /* blue-500 */
-.react-calendar-heatmap .color-github-4 { fill: #1e40af; } /* blue-800 */
+.react-calendar-heatmap .color-blue-1 { fill: #dbeafe; } /* blue-100 */
+.react-calendar-heatmap .color-blue-2 { fill: #93c5fd; } /* blue-300 */
+.react-calendar-heatmap .color-blue-3 { fill: #3b82f6; } /* blue-500 */
+.react-calendar-heatmap .color-blue-4 { fill: #1e40af; } /* blue-800 */
 
-.dark .react-calendar-heatmap .color-github-1 { fill: #1e293b; } /* slate-800 */
-.dark .react-calendar-heatmap .color-github-2 { fill: #1d4ed8; } /* blue-700 */
-.dark .react-calendar-heatmap .color-github-3 { fill: #3b82f6; } /* blue-500 */
-.dark .react-calendar-heatmap .color-github-4 { fill: #93c5fd; } /* blue-300 */
+.dark .react-calendar-heatmap .color-blue-1 { fill: #1e293b; } /* slate-800 */
+.dark .react-calendar-heatmap .color-blue-2 { fill: #1d4ed8; } /* blue-700 */
+.dark .react-calendar-heatmap .color-blue-3 { fill: #3b82f6; } /* blue-500 */
+.dark .react-calendar-heatmap .color-blue-4 { fill: #93c5fd; } /* blue-300 */
 
 
 /* Custom Scrollbar */
