@@ -462,37 +462,6 @@ export default function UserProfilePage() {
                                 </CardContent>
                             </Card>
                         </AnimatedCard>
-
-                         <AnimatedCard delay={0.1}>
-                           <Card>
-                                <CardHeader><CardTitle>Achievements</CardTitle></CardHeader>
-                                <CardContent>
-                                    {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                                        <div className="grid grid-cols-4 gap-4">
-                                            {Object.values(profileUser.achievements).sort((a,b) => (b.date.getTime() - a.date.getTime())).slice(0, 8).map((achievement: Achievement) => (
-                                                <TooltipProvider key={achievement.name}>
-                                                <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div className="flex flex-col items-center text-center gap-1.5">
-                                                        <div className="p-3 bg-amber-400/10 rounded-full">
-                                                            <Award className="h-6 w-6 text-amber-500" />
-                                                        </div>
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p className="font-bold">{achievement.name}</p>
-                                                    <p className="text-xs">{achievement.description}</p>
-                                                </TooltipContent>
-                                                </Tooltip>
-                                                </TooltipProvider>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-8 text-muted-foreground text-sm">No achievements yet. Keep coding!</div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </AnimatedCard>
                     </div>
                 </div>
 
@@ -613,6 +582,37 @@ export default function UserProfilePage() {
                     </div>
 
                     <AnimatedCard delay={0.6}>
+                         <Card>
+                            <CardHeader><CardTitle>Badges</CardTitle></CardHeader>
+                            <CardContent>
+                                {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                                    <div className="flex flex-wrap gap-4">
+                                        {Object.values(profileUser.achievements).sort((a,b) => (b.date.getTime() - a.date.getTime())).slice(0, 18).map((achievement: Achievement) => (
+                                            <TooltipProvider key={achievement.name}>
+                                            <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="flex flex-col items-center text-center gap-1.5">
+                                                    <div className="p-3 bg-amber-400/10 rounded-full">
+                                                        <Award className="h-6 w-6 text-amber-500" />
+                                                    </div>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="font-bold">{achievement.name}</p>
+                                                <p className="text-xs">{achievement.description}</p>
+                                            </TooltipContent>
+                                            </Tooltip>
+                                            </TooltipProvider>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-muted-foreground text-sm">No badges earned yet. Keep coding!</div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </AnimatedCard>
+
+                    <AnimatedCard delay={0.7}>
                         <Tabs defaultValue="recent" className="w-full">
                             <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="recent">Recently Solved</TabsTrigger>
