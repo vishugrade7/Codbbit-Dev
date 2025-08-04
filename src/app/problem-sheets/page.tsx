@@ -159,7 +159,7 @@ export default function ProblemSheetsListPage() {
                   Browse community-created problem sheets or create your own.
               </p>
           </div>
-           <Button asChild>
+           <Button asChild className="shrink-0">
               <Link href="/problem-sheets/create">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create New Sheet
@@ -176,10 +176,10 @@ export default function ProblemSheetsListPage() {
               </TabsList>
           </Tabs>
           <div className={cn("relative w-full md:max-w-xs transition-all duration-300 ease-in-out", isSearchFocused && "md:max-w-md")}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-                placeholder="Search sheets by name, creator..."
-                className="w-full pl-10 rounded-full"
+                placeholder="Search sheets..."
+                className="w-full pl-9 h-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
