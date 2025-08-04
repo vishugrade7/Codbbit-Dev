@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { updateUserProfilePicture } from "@/app/profile/actions";
-import { PieChart, Pie, Cell, Legend } from "recharts";
+import { PieChart, Pie, Cell, Legend, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import ContributionHeatmap from "@/components/contribution-heatmap";
 import { Progress } from "@/components/ui/progress";
@@ -343,7 +343,23 @@ export default function UserProfilePage() {
     
     const totalPoints = categoryData.reduce((acc, curr) => acc + curr.value, 0);
 
+    const categorySolvedCounts: { [key: string]: number } = {};
+    if (profileUser.solvedProblems && allProblems.length > 0) {
+        for (const problemId of Object.keys(profileUser.solvedProblems)) {
+            const problem = allProblems.find(p => p.id === problemId);
+            if (problem) {
+                categorySolvedCounts[problem.categoryName] = (categorySolvedCounts[problem.categoryName] || 0) + 1;
+            }
+        }
+    }
     
+    const radarChartData = Object.entries(categorySolvedCounts).map(([subject, solved]) => ({
+      subject,
+      solved,
+      fullMark: difficultyTotals.total, // Or more specific total per category
+    }));
+
+
     const { easySolved, mediumSolved, hardSolved, totalSolved } = {
         easySolved: profileUser.dsaStats?.Easy || 0,
         mediumSolved: profileUser.dsaStats?.Medium || 0,
@@ -497,9 +513,41 @@ export default function UserProfilePage() {
                             </CardContent>
                         </Card>
                     </AnimatedCard>
+                    
+                    <AnimatedCard delay={0.3}>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">Skills</CardTitle>
+                                <CardDescription>Solved problems distribution across categories.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex items-center justify-center p-6 min-h-[250px]">
+                                {radarChartData.length > 2 ? (
+                                    <ChartContainer config={chartConfig} className="mx-auto w-full h-64">
+                                        <RadarChart data={radarChartData}>
+                                            <ChartTooltip content={<ChartTooltipContent />} />
+                                            <PolarGrid className="fill-muted-foreground/20" />
+                                            <PolarAngleAxis dataKey="subject" />
+                                            <Radar
+                                                name={profileUser.name}
+                                                dataKey="solved"
+                                                stroke="hsl(var(--primary))"
+                                                fill="hsl(var(--primary))"
+                                                fillOpacity={0.6}
+                                            />
+                                            <Legend />
+                                        </RadarChart>
+                                    </ChartContainer>
+                                ) : (
+                                    <p className="text-muted-foreground text-center py-4 text-sm">
+                                        Solve problems in at least 3 different categories to see your skills chart.
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </AnimatedCard>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                         <AnimatedCard delay={0.3}>
+                         <AnimatedCard delay={0.4}>
                             <Card>
                                 <CardHeader><CardTitle className="flex items-center gap-2 text-base"><GitCommit className="h-4 w-4" /> Problems Solved</CardTitle></CardHeader>
                                 <CardContent className="space-y-4 pt-4 text-sm">
@@ -527,7 +575,7 @@ export default function UserProfilePage() {
                                 </CardContent>
                             </Card>
                         </AnimatedCard>
-                        <AnimatedCard delay={0.4}>
+                        <AnimatedCard delay={0.5}>
                             <Card>
                                 <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4" /> Category Breakdown</CardTitle></CardHeader>
                                 <CardContent className="flex-grow flex items-center justify-center p-6 min-h-[160px]">
@@ -564,7 +612,7 @@ export default function UserProfilePage() {
                         </AnimatedCard>
                     </div>
 
-                    <AnimatedCard delay={0.5}>
+                    <AnimatedCard delay={0.6}>
                         <Tabs defaultValue="recent" className="w-full">
                             <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="recent">Recently Solved</TabsTrigger>
