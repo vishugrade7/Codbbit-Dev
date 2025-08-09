@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "../../app/upload-problem/actions";
+import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, deleteProblemFromFirestore, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "../../app/upload-problem/actions";
 import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, contentBlockSchema } from "@/lib/admin-schemas";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ type AdminContextType = {
     addProblem: (category: string, problem: any) => Promise<any>;
     addCourse: (course: any) => Promise<any>;
     fetchProblems: (category: string) => Promise<void>;
+    fetchCategories: () => Promise<void>;
 };
 
 const AdminContext = createContext<AdminContextType | null>(null);
@@ -136,7 +137,8 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         addProblem,
         addCourse,
-        fetchProblems
+        fetchProblems,
+        fetchCategories,
     };
 
     return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
@@ -154,7 +156,7 @@ export const useAdmin = () => {
 const ProblemList = () => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { problems: initialProblems, categories, loading: contextLoading, fetchProblems } = useAdmin();
+    const { problems: initialProblems, categories, loading: contextLoading, fetchProblems, fetchCategories } = useAdmin();
     const [problems, setProblems] = useState(initialProblems);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
