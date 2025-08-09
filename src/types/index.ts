@@ -1,5 +1,6 @@
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -60,6 +61,7 @@ export type User = {
   subscriptionEndDate?: any; // Firestore Timestamp
   subscriptionPeriod?: 'monthly' | 'biannually' | 'annually';
   activeSessionId?: string;
+  isAdmin?: boolean;
 };
 
 export type LeaderboardUser = {
@@ -130,6 +132,8 @@ export type Problem = {
   hints: string[];
   metadataType: 'Class' | 'Trigger';
   triggerSObject?: string;
+  sampleCode: string;
+  testcases: string;
   categoryName?: string; // Added for convenience
   company?: string;
   companyLogoUrl?: string;

@@ -5,8 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import Header from '@/components/header';
-import Footer from '@/components/footer';
+import { AdminProvider, AdminDashboard } from '@/components/admin/ProblemManagement';
 
 export default function AdminPage() {
     const { userData, loading: authLoading } = useAuth();
@@ -27,13 +26,16 @@ export default function AdminPage() {
     }
 
     return (
-        <>
-            <main className="flex-1 container py-8">
-                <h1 className="text-4xl font-bold">Admin Panel</h1>
-                <p className="text-muted-foreground mt-2">
-                    Welcome to the admin panel. Manage your application here.
-                </p>
-            </main>
-        </>
+        <main className="flex-1 container py-8">
+            <h1 className="text-4xl font-bold">Admin Panel</h1>
+            <p className="text-muted-foreground mt-2">
+                Welcome to the admin panel. Manage your application here.
+            </p>
+            <div className="mt-8">
+                <AdminProvider>
+                    <AdminDashboard />
+                </AdminProvider>
+            </div>
+        </main>
     );
 }
