@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CodeXml, Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, UploadCloud } from 'lucide-react';
+import { CodeXml, Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,10 +23,6 @@ const navItems = [
   { href: '/lwc-playground', label: 'Playground', icon: Play },
 ];
 
-const adminNavItems = [
-  { href: '/upload-problem', label: 'Admin', icon: UploadCloud }
-];
-
 const getInitials = (name: string) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -41,8 +38,6 @@ export default function Sidebar() {
     await auth.signOut();
     router.push('/');
   };
-
-  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
   
   if (!user) {
     return null;
@@ -59,25 +54,6 @@ export default function Sidebar() {
         
         <nav className="flex flex-col items-center gap-4 py-4">
           {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Button
-                  asChild
-                  variant={pathname === item.href ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="rounded-lg"
-                >
-                  <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{item.label}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          {isAuthorizedAdmin && adminNavItems.map((item) => (
             <Tooltip key={item.href}>
               <TooltipTrigger asChild>
                 <Button

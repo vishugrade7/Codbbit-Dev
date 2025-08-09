@@ -35,7 +35,6 @@ export type User = {
     issuedAt: number;
     connected: boolean;
   };
-  isAdmin?: boolean;
   trailheadUrl?: string;
   linkedinUrl?: string;
   twitterUrl?: string;

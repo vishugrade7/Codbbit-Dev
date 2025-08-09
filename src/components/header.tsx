@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, UploadCloud, Flame, Rocket, Lightbulb } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { NavLink } from "@/types";
-import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { getQuickTip } from "@/ai/flows/quick-tip-flow";
@@ -31,13 +30,16 @@ export default function Header() {
   const [loadingNav, setLoadingNav] = useState(true);
 
   useEffect(() => {
-    const fetchNavLinks = async () => {
-      setLoadingNav(true);
-      const links = await getPublicNavigationLinks();
-      setNavLinks(links);
-      setLoadingNav(false);
-    };
-    fetchNavLinks();
+    // A simplified nav link fetcher can be created if needed, 
+    // for now, we can hardcode them as admin panel is gone.
+    setNavLinks([
+        { id: 'apex-problems', label: 'Practice Problems', href: '/apex-problems', isEnabled: true, isProtected: true },
+        { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true },
+        { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true },
+        { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true },
+        { id: 'lwc-playground', label: 'LWC Playground', href: '/lwc-playground', isEnabled: true, isProtected: false },
+    ]);
+    setLoadingNav(false);
   }, []);
   
   useEffect(() => {
@@ -65,10 +67,6 @@ export default function Header() {
     }
   }, [user, toast]);
 
-  const adminNavLinks = [
-      { href: "/upload-problem", label: "Admin Page", icon: UploadCloud }
-  ]
-
   const handleLogout = async () => {
     if (!auth) return;
     await auth.signOut();
@@ -79,8 +77,6 @@ export default function Header() {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
-
-  const isAuthorizedAdmin = userData?.isAdmin || user?.email === 'gradevishu@gmail.com';
 
   return (
     <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
@@ -111,19 +107,6 @@ export default function Header() {
                 </Link>
                 ))
             )}
-            {user && isAuthorizedAdmin && adminNavLinks.map((link) => (
-                 <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                    "transition-colors hover:text-foreground/80 flex items-center gap-1",
-                    pathname === link.href ? "text-foreground" : "text-foreground/60"
-                    )}
-                >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                </Link>
-            ))}
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -141,10 +124,6 @@ export default function Header() {
 
               {/* Mobile view with Sheet */}
               <div className="flex items-center gap-2 md:hidden">
-                 <div className="flex items-center gap-1.5 font-semibold">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
-                </div>
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -203,19 +182,6 @@ export default function Header() {
                           >
                             {link.label}
                           </Link>
-                        ))}
-                        {isAuthorizedAdmin && adminNavLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={cn(
-                                "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-2",
-                                pathname === link.href ? "text-foreground" : "text-foreground/60"
-                                )}
-                            >
-                                <link.icon className="h-5 w-5" />
-                                {link.label}
-                            </Link>
                         ))}
                       </nav>
                       <div className="absolute bottom-4 left-4 right-4">
