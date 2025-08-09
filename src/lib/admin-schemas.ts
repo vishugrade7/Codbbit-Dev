@@ -12,7 +12,8 @@ export const hintSchema = z.object({
   value: z.string().min(1, "Hint cannot be empty"),
 });
 
-export const problemFormSchema = z.object({
+// Base schema without refinement
+const baseProblemSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
@@ -26,7 +27,10 @@ export const problemFormSchema = z.object({
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
   isPremium: z.boolean().optional(),
-}).refine(data => {
+});
+
+// Refined schema for the form
+export const problemFormSchema = baseProblemSchema.refine(data => {
     if (data.metadataType === 'Trigger') {
         return !!data.triggerSObject;
     }
@@ -36,7 +40,8 @@ export const problemFormSchema = z.object({
     path: ["triggerSObject"],
 });
 
-export const bulkProblemSchema = problemFormSchema.omit({ id: true });
+// Schema for bulk import, omitting the ID from the base schema
+export const bulkProblemSchema = baseProblemSchema.omit({ id: true });
 export const bulkUploadSchema = z.array(bulkProblemSchema);
 // #endregion
 
