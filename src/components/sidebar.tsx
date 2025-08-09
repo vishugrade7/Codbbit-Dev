@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CodeXml, Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon } from 'lucide-react';
+import { CodeXml, Home, Code, BookOpenCheck, Trophy, ClipboardList, Play, Settings, LogOut, User as UserIcon, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,7 +45,7 @@ export default function Sidebar() {
 
   return (
     <TooltipProvider>
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-16 flex-col items-center border-r bg-background py-4 md:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-14 flex-col items-center border-r bg-background py-4 md:flex">
         <Link href="/" className="mb-4">
           <CodeXml className="h-7 w-7 text-primary" />
         </Link>
@@ -60,7 +60,7 @@ export default function Sidebar() {
                   asChild
                   variant={pathname === item.href ? 'secondary' : 'ghost'}
                   size="icon"
-                  className="rounded-lg"
+                  className="rounded-lg h-9 w-9"
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
@@ -72,14 +72,33 @@ export default function Sidebar() {
               </TooltipContent>
             </Tooltip>
           ))}
+           {userData?.isAdmin && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  asChild
+                  variant={pathname === '/admin' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="rounded-lg h-9 w-9"
+                >
+                  <Link href="/admin">
+                    <Shield className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Admin</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </nav>
         
         <div className="mt-auto flex flex-col items-center gap-4">
           <Separator className="w-2/3" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className='w-10 h-10 rounded-full'>
-                    <Avatar className="h-10 w-10 border-2 border-primary/50">
+                <button className='w-9 h-9 rounded-full'>
+                    <Avatar className="h-9 w-9 border-2 border-primary/50">
                         <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
                         <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
                     </Avatar>

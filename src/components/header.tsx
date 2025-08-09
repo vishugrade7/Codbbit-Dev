@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -183,6 +183,17 @@ export default function Header() {
                             {link.label}
                           </Link>
                         ))}
+                         {userData?.isAdmin && (
+                            <Link
+                                href='/admin'
+                                className={cn(
+                                "text-lg font-medium transition-colors hover:text-foreground/80",
+                                pathname === '/admin' ? "text-foreground" : "text-foreground/60"
+                                )}
+                            >
+                                Admin
+                            </Link>
+                         )}
                       </nav>
                       <div className="absolute bottom-4 left-4 right-4">
                         <Button variant="secondary" onClick={handleLogout} className="w-full">
