@@ -18,6 +18,7 @@ import { getPublicNavigationLinks } from "@/app/upload-problem/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { getQuickTip } from "@/ai/flows/quick-tip-flow";
+import { Separator } from "@/components/ui/separator";
 
 
 export default function Header() {
