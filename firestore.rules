@@ -1,49 +1,47 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // Default deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper function to check for admin status
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
-    
-    // Users Collection
-    // Anyone can read user profiles to see names, points, etc.
-    // Only the authenticated user can write to their own document.
+  
+    // Users can read any profile, but only write to their own
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
     }
 
-    // Problems, Courses, Settings, Badges collections are read-only from the client.
-    // Write operations must be handled by a trusted backend server environment.
+    // Problems and Courses are publicly readable, but only admins can write
     match /problems/{doc=**} {
       allow read: if true;
+      allow write: if false; 
     }
     
     match /courses/{doc=**} {
       allow read: if true;
+      allow write: if false;
     }
-    
-    match /settings/{doc=**} {
-      allow read: if true;
-    }
-    
-    match /badges/{doc=**} {
-      allow read: if true;
-    }
-    
-    // Problem Sheets Collection
-    // Publicly readable.
-    // Any authenticated user can create a sheet.
-    // Any authenticated user can update (e.g., for subscribing).
-    // Deletion from the client is disallowed.
+
+    // Problem sheets are public, can be created by any auth user, updated by any auth user, but not deleted from client
     match /problem-sheets/{sheetId} {
       allow read: if true;
       allow create, update: if request.auth != null;
       allow delete: if false;
+    }
+    
+    // Settings are public, only admins can write
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Badges are public, only admins can write
+    match /badges/{badgeId} {
+        allow read: if true;
+        allow write: if false;
     }
   }
 }
