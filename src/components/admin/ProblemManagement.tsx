@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData } from '@/types';
@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type AdminContextType = {
     problems: Problem[];
@@ -57,6 +59,27 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
              router.replace('/');
         }
     }, [userData, router]);
+
+    // This effect ensures the primary admin email always has admin privileges in Firestore.
+    useEffect(() => {
+        const grantPrimaryAdminAccess = async () => {
+            if (user?.email === PRIMARY_ADMIN_EMAIL && !userData?.isAdmin) {
+                console.log("Primary admin detected. Granting admin privileges...");
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    await updateDoc(userDocRef, { isAdmin: true });
+                    toast({ title: "Admin privileges granted." });
+                } catch (error) {
+                    console.error("Error granting primary admin access:", error);
+                    toast({ variant: 'destructive', title: "Error", description: "Could not grant admin privileges." });
+                }
+            }
+        };
+
+        if (user && userData) {
+            grantPrimaryAdminAccess();
+        }
+    }, [user, userData, toast]);
 
     const fetchProblems = useCallback(async (category: string) => {
         if (!db) return;
@@ -505,3 +528,5 @@ export const AdminDashboard = () => {
     );
 };
 // #endregion
+
+    
