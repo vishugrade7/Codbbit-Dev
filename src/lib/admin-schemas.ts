@@ -10,7 +10,8 @@ export const exampleSchema = z.object({
   explanation: z.string().optional(),
 });
 
-export const problemFormSchema = z.object({
+// Base schema without refinement
+const baseProblemSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
@@ -25,7 +26,10 @@ export const problemFormSchema = z.object({
   company: z.string().optional(),
   companyLogoUrl: z.string().url().optional().or(z.literal('')),
   isPremium: z.boolean().optional(),
-}).refine(data => {
+});
+
+// Main form schema with refinement
+export const problemFormSchema = baseProblemSchema.refine(data => {
     if (data.metadataType === 'Trigger') {
         return !!data.triggerSObject && data.triggerSObject.length > 0;
     }
@@ -35,7 +39,8 @@ export const problemFormSchema = z.object({
     path: ["triggerSObject"],
 });
 
-export const bulkProblemSchema = problemFormSchema.omit({ id: true });
+// Schema for bulk upload, which omits the 'id' from the base schema
+export const bulkProblemSchema = baseProblemSchema.omit({ id: true });
 export const bulkUploadSchema = z.array(bulkProblemSchema);
 // #endregion
 
@@ -60,6 +65,7 @@ export const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.
     })).optional()
 }).refine(data => {
     if (data.type === 'columns') return true;
+    if (data.type === 'problem' && !data.content) return true; // Problem content can be empty initially
     return !!data.content;
 }, {
     message: "Content cannot be empty for this block type.",
