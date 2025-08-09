@@ -1,3 +1,4 @@
+
 'use server';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -26,6 +27,10 @@ export async function createProblemSheet(data: z.infer<typeof createSheetSchema>
     
     if (!db) {
       return { success: false, error: "Database not initialized." };
+    }
+    
+    if (!user || !user.uid) {
+        return { success: false, error: 'Authentication required. Please log in to create a sheet.' };
     }
 
     try {

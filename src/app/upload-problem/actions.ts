@@ -165,8 +165,11 @@ export async function setAdminStatus(userId: string, status: boolean) {
         await updateDoc(userDocRef, { isAdmin: status });
         const action = status ? "promoted to" : "revoked from";
         return { success: true, message: `User successfully ${action} admin.` };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error setting admin status:", error);
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to perform this action." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -261,8 +264,11 @@ export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>)
 
         return { success: true, message: `Problem ${data.id ? 'updated' : 'uploaded'} successfully!` };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error upserting problem:", error);
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to manage problems." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -324,7 +330,10 @@ export async function bulkUpsertProblemsFromJSON(jsonString: string) {
 
         return { success: true, message: `${problemsToUpload.length} problem(s) uploaded successfully!` };
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to upload problems." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during database update.';
         return { success: false, error: errorMessage };
     }
@@ -360,7 +369,10 @@ export async function addCategory(categoryName: string, imageUrl: string) {
         await updateDoc(apexDocRef, { Category: categories });
         return { success: true, message: `Category '${sanitizedCategoryName}' added successfully!` };
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to add categories." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -384,8 +396,11 @@ export async function upsertCourseToFirestore(data: z.infer<typeof courseSchema>
             const newDocRef = await addDoc(coursesCollection, newCourseData);
             return { success: true, message: `Course created successfully!`, courseId: newDocRef.id };
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error upserting course:", error);
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to manage courses." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -447,7 +462,10 @@ export async function updateNavigationSettings(links: NavLink[]) {
     try {
         await setDoc(settingsDocRef, { links: validation.data });
         return { success: true, message: "Navigation settings updated successfully." };
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to update navigation." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -506,7 +524,10 @@ export async function upsertBadge(data: z.infer<typeof badgeSchema>) {
             await setDoc(docRef, badgeData);
         }
         return { success: true, message: `Badge ${id ? 'updated' : 'created'} successfully!` };
-    } catch (error) {
+    } catch (error: any) {
+         if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to manage badges." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -523,7 +544,10 @@ export async function deleteBadge(badgeId: string) {
     try {
         await deleteDoc(doc(db, 'badges', badgeId));
         return { success: true, message: "Badge deleted successfully." };
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to delete badges." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -599,7 +623,10 @@ export async function updateCategoryDetails(oldName: string, newName: string, ne
         }
         return { success: true, message: "Category updated successfully." };
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to manage categories." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
@@ -633,7 +660,10 @@ export async function deleteCategory(categoryName: string) {
         });
 
         return { success: true, message: `Category '${categoryName}' deleted successfully.` };
-    } catch (error) {
+    } catch (error: any) {
+         if (error.code === 'permission-denied') {
+            return { success: false, error: "Permission Denied: You must be an administrator to delete categories." };
+        }
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return { success: false, error: errorMessage };
     }
