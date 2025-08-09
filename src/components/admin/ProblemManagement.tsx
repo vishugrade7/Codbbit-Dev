@@ -20,7 +20,7 @@ import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "../../app/upload-problem/actions";
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, contentBlockSchema } from "@/lib/admin-schemas";
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema } from "@/lib/admin-schemas";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1264,7 +1264,7 @@ function ProblemForm({ problem, onClose }: { problem: ProblemWithCategory | null
     
     useEffect(() => {
         const defaultValues = {
-            id: problem?.id,
+            id: problem?.id || '',
             title: problem?.title || '',
             description: problem?.description || '',
             category: problem?.categoryName || '',

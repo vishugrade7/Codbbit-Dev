@@ -6,107 +6,13 @@ import { doc, getDoc, updateDoc, collection, setDoc, serverTimestamp, addDoc, qu
 import { db } from '@/lib/firebase';
 import type { Problem, Course, User, NavLink, Badge, ApexProblemsData } from '@/types';
 import { z } from "zod";
-
-// #region Problem Schemas
-const exampleSchema = z.object({
-  input: z.string().optional(),
-  output: z.string().min(1, "Output is required."),
-  explanation: z.string().optional(),
-});
-
-// Base schema for a problem, without refinement.
-const problemObjectSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(1, "Title is required."),
-  description: z.string().min(1, "Description is required."),
-  category: z.string().min(1, "Category is required."),
-  difficulty: z.enum(["Easy", "Medium", "Hard"]),
-  metadataType: z.enum(["Class", "Trigger"]),
-  triggerSObject: z.string().optional(),
-  sampleCode: z.string().min(1, "Sample code is required."),
-  testcases: z.string().min(1, "Test cases is required."),
-  examples: z.array(exampleSchema).min(1, "At least one example is required."),
-  hints: z.array(z.object({ value: z.string().min(1, "Hint cannot be empty.") })).optional(),
-  company: z.string().optional(),
-  companyLogoUrl: z.string().url().optional().or(z.literal('')),
-  isPremium: z.boolean().optional(),
-});
-
-// Schema for form validation, with refinement.
-const formSchema = problemObjectSchema.refine(data => {
-    if (data.metadataType === 'Trigger') {
-        return !!data.triggerSObject && data.triggerSObject.length > 0;
-    }
-    return true;
-}, {
-    message: "Trigger SObject is required when Metadata Type is Trigger.",
-    path: ["triggerSObject"],
-});
-
-const bulkProblemSchema = problemObjectSchema.omit({ id: true });
-const bulkUploadSchema = z.array(bulkProblemSchema);
-// #endregion
-
-// #region Course Schemas
-type ActionContentBlock = {
-    id: string;
-    type: 'text' | 'image' | 'video' | 'code' | 'problem' | 'interactive' | 'columns';
-    content: string;
-    language?: string | undefined;
-    caption?: string | undefined;
-    columnData?: { blocks: ActionContentBlock[] }[] | undefined;
-};
-
-const contentBlockSchema: z.ZodType<ActionContentBlock> = z.lazy(() => z.object({
-    id: z.string(),
-    type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive', 'columns']),
-    content: z.string(),
-    language: z.string().optional(),
-    caption: z.string().optional(),
-    columnData: z.array(z.object({
-        blocks: z.array(z.lazy(() => contentBlockSchema))
-    })).optional()
-}).refine(data => {
-    if (data.type === 'columns') return true;
-    return !!data.content;
-}, {
-    message: "Content cannot be empty for this block type.",
-    path: ["content"],
-}));
-
-
-const lessonSchema = z.object({
-    id: z.string(),
-    title: z.string().min(1, 'Lesson title is required'),
-    isFree: z.boolean().optional(),
-    contentBlocks: z.array(contentBlockSchema),
-});
-
-const moduleSchema = z.object({
-    id: z.string(),
-    title: z.string().min(1, 'Module title is required'),
-    lessons: z.array(lessonSchema),
-});
-
-const courseSchema = z.object({
-    id: z.string().optional(),
-    title: z.string().min(1, 'Course title is required'),
-    description: z.string().min(1, 'Course description is required'),
-    category: z.string().min(1, 'Course category is required'),
-    thumbnailUrl: z.string().url('Must be a valid URL').min(1, 'Thumbnail URL is required'),
-    modules: z.array(moduleSchema).min(1, 'At least one module is required'),
-    isPublished: z.boolean(),
-    createdBy: z.string(),
-    isPremium: z.boolean().optional(),
-});
-// #endregion
+import { problemFormSchema, courseFormSchema, bulkUploadSchema } from '@/lib/admin-schemas';
 
 const setAdminStatusSchema = z.object({
     userId: z.string().min(1, "User ID is required."),
     status: z.boolean(),
 });
 
-// #region Badge Schemas
 const badgeSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, "Badge name is required."),
@@ -123,7 +29,6 @@ const badgeSchema = z.object({
     message: "Category is required for CATEGORY_SOLVED type badges.",
     path: ["category"],
 });
-// #endregion
 
 
 export async function getAllUsers(): Promise<{ success: boolean; users: User[]; error?: string }> {
@@ -175,7 +80,7 @@ export async function setAdminStatus(userId: string, status: boolean) {
     }
 }
 
-export async function upsertProblemToFirestore(data: z.infer<typeof formSchema>) {
+export async function upsertProblemToFirestore(data: z.infer<typeof problemFormSchema>) {
     const apexDocRef = doc(db, 'problems', 'Apex');
 
     try {
@@ -378,7 +283,7 @@ export async function addCategory(categoryName: string, imageUrl: string) {
     }
 }
 
-export async function upsertCourseToFirestore(data: z.infer<typeof courseSchema>) {
+export async function upsertCourseToFirestore(data: z.infer<typeof courseFormSchema>) {
     const coursesCollection = collection(db, 'courses');
 
     try {
