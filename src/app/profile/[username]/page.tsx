@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -27,11 +28,12 @@ import { formatDistanceToNow } from 'date-fns';
 
 
 type StarredProblemDetail = Problem & { categoryName: string };
-type RecentlySolvedProblem = SolvedProblemType & {
+type RecentlySolvedProblem = Omit<SolvedProblemType, 'solvedAt'> & {
     id: string;
     title?: string;
     difficulty?: 'Easy' | 'Medium' | 'Hard';
     categoryName?: string;
+    solvedAt: string; // Serialized date
 };
 
 
@@ -138,10 +140,10 @@ export default function UserProfilePage() {
 
     }, [profileUser, allProblems]);
     
-    const recentlySolvedProblems = useMemo(() => {
+    const recentlySolvedProblems: RecentlySolvedProblem[] = useMemo(() => {
         if (!profileUser?.solvedProblems || allProblems.length === 0) return [];
 
-        const solvedDetails: RecentlySolvedProblem[] = Object.entries(profileUser.solvedProblems).map(([id, details]) => ({
+        const solvedDetails: (SolvedProblemType & { id: string })[] = Object.entries(profileUser.solvedProblems).map(([id, details]) => ({
             id,
             ...details,
         }));
@@ -158,7 +160,8 @@ export default function UserProfilePage() {
                 ...solved,
                 title: problemDetail?.title,
                 difficulty: problemDetail?.difficulty,
-                categoryName: problemDetail?.categoryName
+                categoryName: problemDetail?.categoryName,
+                solvedAt: solved.solvedAt.toDate().toISOString(), // Serialize the date here
             };
         });
     }, [profileUser?.solvedProblems, allProblems]);
@@ -435,7 +438,7 @@ export default function UserProfilePage() {
                                     <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
                                         <div>
                                             <p className="font-medium">{problem.title}</p>
-                                            <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(problem.solvedAt.toDate(), { addSuffix: true })}</p>
+                                            <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</p>
                                         </div>
                                         <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
                                     </div>
