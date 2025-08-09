@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Rocket, BarChart, Database, Code, Trophy } from "lucide-react";
-import FeaturedContent from "@/components/featured-content";
 import Testimonials from "@/components/testimonials";
 import Image from "next/image";
 
@@ -77,8 +76,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <FeaturedContent />
 
       <Testimonials />
     </>
