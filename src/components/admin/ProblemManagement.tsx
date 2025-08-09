@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
-import { doc, getDoc, collection, query, getDocs, orderBy, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, getDocs, orderBy, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData, Course, Module, Lesson, User as AppUser, NavLink, Badge, ContentBlock } from "@/types";
@@ -85,16 +85,37 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     const [loadingCourses, setLoadingCourses] = useState(true);
 
     const isAuthorized = useMemo(() => {
-        if (authLoading) return undefined; // Undetermined state
-        return userData?.isAdmin || authUser?.email === 'gradevishu@gmail.com';
-    }, [userData, authUser, authLoading]);
+        if (authLoading) return undefined;
+        return userData?.isAdmin;
+    }, [userData, authLoading]);
     
     useEffect(() => {
-        if (isAuthorized === false) { // Explicitly check for false
+        if (isAuthorized === false) {
             toast({ variant: "destructive", title: "Access Denied", description: "You do not have permission to view this page." });
             router.push('/');
         }
     }, [isAuthorized, router, toast]);
+
+    // This effect ensures the primary admin email always has admin rights in Firestore.
+    useEffect(() => {
+        const checkAndGrantAdmin = async () => {
+            if (authUser && authUser.email === 'gradevishu@gmail.com' && !userData?.isAdmin) {
+                try {
+                    const userDocRef = doc(db, 'users', authUser.uid);
+                    await updateDoc(userDocRef, { isAdmin: true });
+                    toast({ title: "Admin privileges verified." });
+                } catch (error) {
+                    console.error("Failed to grant admin privileges:", error);
+                    toast({ variant: 'destructive', title: "Admin Sync Error", description: "Could not sync admin privileges." });
+                }
+            }
+        };
+
+        if (!authLoading) {
+            checkAndGrantAdmin();
+        }
+    }, [authUser, userData, authLoading, toast]);
+
 
     const fetchProblems = useCallback(async () => {
         setLoadingProblems(true);
@@ -146,14 +167,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (isAuthorized) {
             fetchProblems();
-        }
-    }, [isAuthorized, fetchProblems]);
-
-    useEffect(() => {
-        if (isAuthorized) {
             fetchCategories();
         }
-    }, [isAuthorized, fetchCategories]);
+    }, [isAuthorized, fetchProblems, fetchCategories]);
+
 
     if (authLoading || isAuthorized === undefined) {
         return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -2053,5 +2070,7 @@ function ContentBlockItem({ parentName, blockIndex, control, onRemove, isNested 
     );
 }
 // #endregion
+
+    
 
     
