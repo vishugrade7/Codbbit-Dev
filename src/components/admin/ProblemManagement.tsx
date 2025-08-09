@@ -20,7 +20,7 @@ import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "../../app/upload-problem/actions";
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema } from "@/lib/admin-schemas";
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, contentBlockSchema } from "@/lib/admin-schemas";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,6 +142,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
             setLoadingCourses(false);
         }
     }, [toast]);
+    
+    useEffect(() => {
+        if (isAuthorized) {
+            fetchProblems();
+        }
+    }, [isAuthorized, fetchProblems]);
+
+    useEffect(() => {
+        if (isAuthorized) {
+            fetchCategories();
+        }
+    }, [isAuthorized, fetchCategories]);
 
     if (authLoading || isAuthorized === undefined) {
         return <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -374,7 +386,7 @@ function ProblemList({ onEdit, onAddNew }: { onEdit: (p: ProblemWithCategory) =>
     const { allProblems, loadingProblems, fetchProblems } = useAdmin();
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState("All");
-    const [isUploading, setIsUploading] = useState(false);
+    const [isUploading, setIsUploading] = useState(isUploading(false));
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -2041,3 +2053,5 @@ function ContentBlockItem({ parentName, blockIndex, control, onRemove, isNested 
     );
 }
 // #endregion
+
+    
