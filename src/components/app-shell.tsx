@@ -34,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         {/* Header is now only for mobile navigation in the logged-in state */}
         <Header />
-        <div className="w-full md:pl-20">
+        <div className="w-full md:pl-16">
             {children}
         </div>
       </div>

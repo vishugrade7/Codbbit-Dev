@@ -45,9 +45,9 @@ export default function Sidebar() {
 
   return (
     <TooltipProvider>
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-20 flex-col items-center border-r bg-background py-4 md:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-16 flex-col items-center border-r bg-background py-4 md:flex">
         <Link href="/" className="mb-4">
-          <CodeXml className="h-8 w-8 text-primary" />
+          <CodeXml className="h-7 w-7 text-primary" />
         </Link>
         
         <Separator className="w-2/3" />
@@ -78,8 +78,8 @@ export default function Sidebar() {
           <Separator className="w-2/3" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className='w-12 h-12 rounded-full'>
-                    <Avatar className="h-12 w-12 border-2 border-primary/50">
+                <button className='w-10 h-10 rounded-full'>
+                    <Avatar className="h-10 w-10 border-2 border-primary/50">
                         <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
                         <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
                     </Avatar>
