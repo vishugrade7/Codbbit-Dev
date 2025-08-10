@@ -3,43 +3,72 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users can read their own data and update specific fields.
-    // Public profile data is readable by anyone.
+    // Helper function to check if the requesting user is an admin.
+    // It checks for the existence of the user document and the isAdmin flag.
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Rules for the 'users' collection.
     match /users/{userId} {
+      // Anyone can read user profiles (for public profile pages).
       allow read;
-      allow write: if request.auth.uid == userId;
+      
+      // An authenticated user can create their own document.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // An authenticated user can update their own document, or an admin can update any user document.
+      allow update: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+
+      // Only the user themselves can delete their account.
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Problems are readable by everyone, but only writable by admins.
+    // Rules for the 'problems' collection (which contains the single 'Apex' document).
     match /problems/{docId} {
+      // Anyone can read the problems.
       allow read;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Only admins can write (create, update, delete) problems.
+      allow write: if isAdmin();
     }
     
-    // Courses are readable by everyone, but only writable by admins.
+    // Rules for the 'courses' collection.
     match /courses/{courseId} {
+      // Anyone can read courses.
       allow read;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Only admins can write courses.
+      allow write: if isAdmin();
     }
 
-    // Sheets can be read by anyone, created by authenticated users, 
-    // and updated only by the creator.
+    // Rules for user-created problem sheets.
     match /problem-sheets/{sheetId} {
+      // Anyone can read a problem sheet.
       allow read;
+      
+      // Any authenticated user can create a new sheet.
       allow create: if request.auth != null;
-      allow update: if request.auth.uid == resource.data.createdBy;
+
+      // Only the original creator can update the core details of the sheet.
+      // Any authenticated user can update the 'subscribers' list to subscribe/unsubscribe.
+      allow update: if request.auth != null && 
+                      (request.auth.uid == resource.data.createdBy || request.writeFields.hasOnly('subscribers'));
     }
 
-    // Badges are readable by everyone, but only writable by admins.
+    // Rules for the 'badges' collection.
     match /badges/{badgeId} {
+      // Anyone can read badge definitions.
       allow read;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Only admins can write badges.
+      allow write: if isAdmin();
     }
     
-    // General settings are readable by everyone, but only writable by admins.
+    // Rules for general site settings.
     match /settings/{settingId} {
+      // Anyone can read settings.
       allow read;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Only admins can write settings.
+      allow write: if isAdmin();
     }
   }
 }
