@@ -41,12 +41,9 @@ type AdminContextType = {
 
 const AdminContext = createContext<AdminContextType | null>(null);
 
-const PRIMARY_ADMIN_EMAIL = "gradevishu@gmail.com";
-
 export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, userData } = useAuth();
     const router = useRouter();
-    const { toast } = useToast();
 
     const [problems, setProblems] = useState<Problem[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
@@ -62,27 +59,6 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
              router.replace('/');
         }
     }, [userData, router]);
-
-    // This effect ensures the primary admin email always has admin privileges in Firestore.
-    useEffect(() => {
-        const grantPrimaryAdminAccess = async () => {
-            if (user?.email === PRIMARY_ADMIN_EMAIL && !userData?.isAdmin) {
-                console.log("Primary admin detected. Granting admin privileges...");
-                try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    await updateDoc(userDocRef, { isAdmin: true });
-                    toast({ title: "Admin privileges granted." });
-                } catch (error) {
-                    console.error("Error granting primary admin access:", error);
-                    toast({ variant: 'destructive', title: "Error", description: "Could not grant admin privileges." });
-                }
-            }
-        };
-
-        if (user && userData) {
-            grantPrimaryAdminAccess();
-        }
-    }, [user, userData, toast]);
 
     const fetchProblems = useCallback(async (category: string) => {
         if (!db) return;
