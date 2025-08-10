@@ -5,7 +5,8 @@ service cloud.firestore {
     
     // Helper function to check for admin status
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Check for auth existence first to prevent errors on public reads.
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     // Users can read their own data and update specific fields.
