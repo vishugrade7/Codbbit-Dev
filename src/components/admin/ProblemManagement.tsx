@@ -22,6 +22,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type AdminContextType = {
     problems: Problem[];
@@ -263,11 +265,16 @@ const ProblemList = () => {
                 <CardTitle>Problem Management</CardTitle>
                 <CardDescription>View, edit, or add new Apex coding challenges to the platform.</CardDescription>
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pt-4">
-                     <Tabs value={activeCategory || ''} onValueChange={setActiveCategory} className="w-full sm:w-auto">
-                        <TabsList>
-                            {categories.map(cat => <TabsTrigger key={cat.name} value={cat.name}>{cat.name}</TabsTrigger>)}
-                        </TabsList>
-                    </Tabs>
+                     <div className="w-full sm:w-auto sm:min-w-64">
+                        <Select value={activeCategory || ''} onValueChange={setActiveCategory}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map(cat => <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                     </div>
                     <div className="flex gap-2">
                          <Button variant="outline" onClick={() => setIsManageModalOpen(true)}>Manage Categories</Button>
                          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
