@@ -33,8 +33,6 @@ type AdminContextType = {
     badges: Badge[];
     categories: Awaited<ReturnType<typeof getProblemCategories>>;
     loading: boolean;
-    addProblem: (category: string, problem: any) => Promise<any>;
-    addCourse: (course: any) => Promise<any>;
     fetchProblems: (category: string) => Promise<void>;
     fetchCategories: () => Promise<void>;
 };
@@ -98,22 +96,6 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     }, [user, userData, fetchCategories]);
 
 
-    const addProblem = async (category: string, problem: any) => {
-        if (!user) return { success: false, error: 'Not authenticated' };
-        setLoading(true);
-        const result = await upsertProblemToFirestore(user.uid, category, problem);
-        setLoading(false);
-        return result;
-    };
-
-    const addCourse = async (course: any) => {
-        if (!user) return { success: false, error: 'Not authenticated' };
-        setLoading(true);
-        const result = await upsertCourseToFirestore(user.uid, course);
-        setLoading(false);
-        return result;
-    };
-
     const value = {
         problems,
         courses,
@@ -122,8 +104,6 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         badges,
         categories,
         loading,
-        addProblem,
-        addCourse,
         fetchProblems,
         fetchCategories,
     };
@@ -143,8 +123,7 @@ export const useAdmin = () => {
 const ProblemList = () => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { problems: initialProblems, categories, loading: contextLoading, fetchProblems, fetchCategories } = useAdmin();
-    const [problems, setProblems] = useState(initialProblems);
+    const { problems, categories, loading: contextLoading, fetchProblems, fetchCategories } = useAdmin();
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
@@ -167,10 +146,6 @@ const ProblemList = () => {
             fetchProblems(activeCategory);
         }
     }, [activeCategory, fetchProblems]);
-
-    useEffect(() => {
-        setProblems(initialProblems);
-    }, [initialProblems]);
 
     const handleUpsertProblem = async (values: z.infer<typeof problemFormSchema>) => {
         if (!user || !activeCategory) return;
