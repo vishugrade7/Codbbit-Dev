@@ -1,42 +1,67 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check if the requesting user is an administrator.
-    // It verifies that the user is authenticated and has the 'isAdmin' flag set to true.
+    // Helper function to check for admin status securely.
+    // It verifies that the user is authenticated before checking their admin status.
     function isAdmin() {
-      return request.auth != null && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for the 'users' collection.
+    // --- User Data Rules ---
     match /users/{userId} {
-      // Public profiles are readable by anyone.
+      // Anyone can read public profile data.
       allow read;
       
-      // Users can only write to their own document.
-      // This covers create, update, and delete operations for the logged-in user.
-      allow write: if request.auth.uid == userId;
+      // Authenticated users can create their own document.
+      allow create: if request.auth.uid == userId;
+      
+      // Users can update their own data. Admins can update any user's data (e.g., to grant admin status).
+      allow update: if request.auth.uid == userId || isAdmin();
+      
+      // Only the user themselves or an admin can delete a user account.
+      allow delete: if request.auth.uid == userId || isAdmin();
     }
 
-    // Rules for collections that are publicly readable but only managed by administrators.
-    match /{collection}/{docId} where collection in ['problems', 'courses', 'badges', 'settings'] {
+    // --- Content Rules (Problems, Courses, Badges, Settings) ---
+    // These collections are readable by anyone but only writable by admins.
+    match /problems/{docId} {
       allow read;
       allow write: if isAdmin();
     }
     
-    // Rules for user-generated problem sheets.
-    match /problem-sheets/{sheetId} {
-        allow read;
+    match /courses/{courseId} {
+      allow read;
+      allow write: if isAdmin();
+    }
 
-        // Any authenticated user can create a new problem sheet.
-        allow create: if request.auth != null;
-        
-        // The creator of the sheet can update its core content (name, problemIds).
-        // Any authenticated user can update the 'subscribers' list to subscribe/unsubscribe.
-        allow update: if (request.auth.uid == resource.data.createdBy) || 
-                       (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscribers']));
+    match /badges/{badgeId} {
+      allow read;
+      allow write: if isAdmin();
+    }
+    
+    match /settings/{settingId} {
+      allow read;
+      allow write: if isAdmin();
+    }
+
+    // --- Problem Sheets Rules ---
+    match /problem-sheets/{sheetId} {
+      // Anyone can read public sheets.
+      allow read;
+      
+      // Any authenticated user can create a sheet.
+      allow create: if request.auth != null;
+      
+      // The creator can update any field. 
+      // Other authenticated users can only update the 'subscribers' array.
+      allow update: if (request.auth.uid == resource.data.createdBy) || 
+                       (request.auth != null && request.resource.data.keys().hasOnly(['subscribers']));
+                       
+      // Only the creator or an admin can delete a sheet.
+      allow delete: if request.auth.uid == resource.data.createdBy || isAdmin();
     }
   }
 }

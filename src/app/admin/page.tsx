@@ -26,16 +26,16 @@ export default function AdminPage() {
     }
 
     return (
-        <main className="flex-1 container py-8">
-            <h1 className="text-4xl font-bold">Admin Panel</h1>
-            <p className="text-muted-foreground mt-2">
-                Welcome to the admin panel. Manage your application here.
-            </p>
-            <div className="mt-8">
-                <AdminProvider>
+        <AdminProvider>
+            <main className="flex-1 container py-8">
+                <h1 className="text-4xl font-bold">Admin Panel</h1>
+                <p className="text-muted-foreground mt-2">
+                    Welcome to the admin panel. Manage your application here.
+                </p>
+                <div className="mt-8">
                     <AdminDashboard />
-                </AdminProvider>
-            </div>
-        </main>
+                </div>
+            </main>
+        </AdminProvider>
     );
 }

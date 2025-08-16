@@ -4,15 +4,32 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import type { Problem, Course, NavLink, Badge, ApexProblemsData } from '@/types';
+import type { Problem, Course, NavLink, Badge as BadgeType, ApexProblemsData, User as AppUser } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { upsertProblemToFirestore, bulkUpsertProblemsFromJSON, deleteProblemFromFirestore, addCategory, upsertCourseToFirestore, getAllUsers, setAdminStatus, getNavigationSettings, updateNavigationSettings, getBadges, upsertBadge, deleteBadge as deleteBadgeAction, getProblemCategories, updateCategoryDetails, deleteCategory } from "../../app/upload-problem/actions";
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, contentBlockSchema } from '@/lib/admin-schemas';
+import { 
+    upsertProblemToFirestore, 
+    bulkUpsertProblemsFromJSON, 
+    deleteProblemFromFirestore, 
+    addCategory, 
+    upsertCourseToFirestore, 
+    getAllUsers, 
+    setAdminStatus, 
+    getNavigationSettings, 
+    updateNavigationSettings, 
+    getBadges, 
+    upsertBadge, 
+    deleteBadge as deleteBadgeAction, 
+    getProblemCategories, 
+    updateCategoryDetails, 
+    deleteCategory 
+} from "@/app/upload-problem/actions";
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema } from '@/lib/admin-schemas';
+import { z } from 'zod';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, Eye } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, Eye, Shield, UserX, UserCheck } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -20,9 +37,8 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from '../ui/switch';
 
 
 type AdminContextType = {
@@ -30,11 +46,12 @@ type AdminContextType = {
     courses: Course[];
     users: any[];
     navLinks: NavLink[];
-    badges: Badge[];
+    badges: BadgeType[];
     categories: Awaited<ReturnType<typeof getProblemCategories>>;
     loading: boolean;
     fetchProblems: (category: string) => Promise<void>;
     fetchCategories: () => Promise<void>;
+    fetchUsers: () => Promise<void>;
 };
 
 const AdminContext = createContext<AdminContextType | null>(null);
@@ -42,18 +59,18 @@ const AdminContext = createContext<AdminContextType | null>(null);
 export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, userData } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
 
     const [problems, setProblems] = useState<Problem[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [navLinks, setNavLinks] = useState<NavLink[]>([]);
-    const [badges, setBadges] = useState<Badge[]>([]);
+    const [badges, setBadges] = useState<BadgeType[]>([]);
     const [categories, setCategories] = useState<Awaited<ReturnType<typeof getProblemCategories>>>([]);
     const [loading, setLoading] = useState(true);
     
-    // Authorization check
     useEffect(() => {
-        if (userData === null && user) { // Still loading userData
+        if (userData === null && user) {
             setLoading(true);
         } else if (!user || !userData?.isAdmin) {
              router.replace('/');
@@ -88,13 +105,19 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         }
         setLoading(false);
     }, [fetchProblems]);
-
-    useEffect(() => {
-        if(user && userData?.isAdmin) {
-            fetchCategories();
+    
+    const fetchUsers = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+        const result = await getAllUsers(user.uid);
+        if (Array.isArray(result)) {
+            setUsers(result);
+        } else {
+            toast({ variant: 'destructive', title: "Error fetching users", description: result.error });
+            setUsers([]);
         }
-    }, [user, userData, fetchCategories]);
-
+        setLoading(false);
+    }, [user, toast]);
 
     const value = {
         problems,
@@ -106,6 +129,7 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         fetchProblems,
         fetchCategories,
+        fetchUsers,
     };
 
     return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
@@ -463,10 +487,125 @@ const ManageCategoriesModal = ({ isOpen, onOpenChange, onCategoryUpdate }: { isO
     );
 };
 
+const CourseList = () => {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Course Management</CardTitle>
+                <CardDescription>This feature is coming soon. You'll be able to create and manage courses here.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">Course editor will be available here.</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
-const CourseList = () => <div>Course management coming soon...</div>;
-const UserManagement = () => <div>User management coming soon...</div>;
-const SiteSettings = () => <div>Site settings coming soon...</div>;
+const UserManagement = () => {
+    const { user: adminUser } = useAuth();
+    const { toast } = useToast();
+    const { users, loading, fetchUsers } = useAdmin();
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+    
+    const handleSetAdmin = async (targetUserId: string, isAdmin: boolean) => {
+        if (!adminUser) return;
+        const result = await setAdminStatus(adminUser.uid, targetUserId, isAdmin);
+        if (result.success) {
+            toast({ title: `User role updated.`});
+            fetchUsers();
+        } else {
+            toast({ variant: 'destructive', title: 'Error updating role', description: result.error });
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>View and manage user roles in the application.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                            ) : users.length > 0 ? (
+                                users.map((user: AppUser) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell className="font-medium">{user.name}</TableCell>
+                                        <TableCell>{user.email}</TableCell>
+                                        <TableCell>
+                                            <UiBadge variant={user.isAdmin ? "default" : "secondary"}>
+                                                {user.isAdmin ? "Admin" : "User"}
+                                            </UiBadge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {adminUser?.uid !== user.uid && ( // Prevent admin from changing their own role
+                                                 <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="outline" size="sm">
+                                                            {user.isAdmin ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
+                                                            {user.isAdmin ? "Revoke Admin" : "Make Admin"}
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                You are about to {user.isAdmin ? "revoke" : "grant"} admin privileges for {user.name}.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleSetAdmin(user.id, !user.isAdmin)}>
+                                                                Confirm
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow><TableCell colSpan={4} className="h-24 text-center">No users found.</TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+const SiteSettings = () => {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Site Settings</CardTitle>
+                <CardDescription>This feature is coming soon. You'll be able to manage site-wide settings here.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">Global settings will be available here.</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
 
 export const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState("problems");
@@ -495,8 +634,3 @@ export const AdminDashboard = () => {
         </div>
     );
 };
-// #endregion
-
-    
-
-    

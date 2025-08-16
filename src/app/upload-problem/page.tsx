@@ -13,6 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash, PlusCircle } from 'lucide-react';
 import type { Problem } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type ProblemFormProps = {
   onSubmit: (values: z.infer<typeof problemFormSchema>) => Promise<void>;
@@ -149,6 +150,30 @@ export function ProblemForm({ onSubmit, isLoading, categories, initialData, onCa
                         )}
                     />
                 )}
+                
+                <FormField
+                    control={form.control}
+                    name="isPremium"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                Premium Problem
+                                </FormLabel>
+                                <FormDescription>
+                                Mark this problem as premium to require a Pro subscription.
+                                </FormDescription>
+                            </div>
+                        </FormItem>
+                    )}
+                />
+
 
                 <div>
                     <h3 className="text-lg font-medium mb-4">Examples</h3>
