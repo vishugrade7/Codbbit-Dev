@@ -51,23 +51,32 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     const [navLinks, setNavLinks] = useState<NavLink[]>([]);
     const [badges, setBadges] = useState<Badge[]>([]);
     const [categories, setCategories] = useState<Awaited<ReturnType<typeof getProblemCategories>>>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     
     // Authorization check
     useEffect(() => {
-        if (userData && !userData.isAdmin) {
+        if (userData === null && user) { // Still loading userData
+            setLoading(true);
+        } else if (!user || !userData?.isAdmin) {
              router.replace('/');
+        } else {
+            setLoading(false);
         }
-    }, [userData, router]);
+    }, [user, userData, router]);
 
     const fetchProblems = useCallback(async (category: string) => {
         if (!db) return;
         setLoading(true);
-        const apexDocRef = doc(db, "problems", "Apex");
-        const docSnap = await getDoc(apexDocRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data().Category as ApexProblemsData;
-            setProblems(data[category]?.Questions || []);
+        try {
+            const apexDocRef = doc(db, "problems", "Apex");
+            const docSnap = await getDoc(apexDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data().Category as ApexProblemsData;
+                setProblems(data[category]?.Questions || []);
+            }
+        } catch (error) {
+            console.error("Error fetching problems:", error);
+            setProblems([]);
         }
         setLoading(false);
     }, []);
@@ -83,10 +92,10 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     }, [fetchProblems]);
 
     useEffect(() => {
-        if(user) {
+        if(user && userData?.isAdmin) {
             fetchCategories();
         }
-    }, [user, fetchCategories]);
+    }, [user, userData, fetchCategories]);
 
 
     const addProblem = async (category: string, problem: any) => {
@@ -145,7 +154,6 @@ const ProblemList = () => {
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
     useEffect(() => {
@@ -253,12 +261,12 @@ const ProblemList = () => {
                      </div>
                     <div className="flex gap-2">
                          <Button variant="outline" onClick={() => setIsManageModalOpen(true)}>Manage Categories</Button>
-                         <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                         <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading || !activeCategory}>
                             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                             Bulk Upload
                          </Button>
                          <input type="file" ref={fileInputRef} onChange={handleBulkUpload} accept=".json" className="hidden" />
-                        <Button onClick={() => setIsFormOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Problem</Button>
+                        <Button onClick={() => setIsFormOpen(true)} disabled={!activeCategory}><PlusCircle className="mr-2 h-4 w-4" /> Add New Problem</Button>
                     </div>
                 </div>
             </CardHeader>

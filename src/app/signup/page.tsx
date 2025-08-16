@@ -174,6 +174,8 @@ export default function SignupPage() {
       const sessionId = crypto.randomUUID();
       sessionStorage.setItem('appSessionId', sessionId);
 
+      const isAdmin = values.email === 'gradevishu@gmail.com';
+
       await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: user.email,
@@ -187,7 +189,7 @@ export default function SignupPage() {
           companyLogoUrl: companyLogoUrl,
           achievements: {},
           contributions: [],
-          isAdmin: false,
+          isAdmin: isAdmin,
           isEmailPublic: false,
           
           // Initialize new progress tracking fields
