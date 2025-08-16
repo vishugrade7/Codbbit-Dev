@@ -9,8 +9,6 @@ import { db } from "@/lib/firebase";
 import type { ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -84,9 +82,7 @@ export default function ApexProblems() {
   }, [userData]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex-1 container py-8">
+    <main className="flex-1 container py-8">
         <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Practice Problems</h1>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
@@ -146,7 +142,5 @@ export default function ApexProblems() {
             </div>
         )}
       </main>
-      <Footer />
-    </div>
   );
 }

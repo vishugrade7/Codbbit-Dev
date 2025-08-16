@@ -9,8 +9,6 @@ import { useAuth } from "@/context/AuthContext";
 import type { Problem, ApexProblemsData } from "@/types";
 import { cn } from "@/lib/utils";
 
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,9 +84,7 @@ export default function CategoryProblemsPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex-1 container py-8">
+    <main className="flex-1 container py-8">
         <div className="flex items-center gap-4 mb-8">
             <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => router.push('/apex-problems')}>
                 <ArrowLeft className="h-5 w-5" />
@@ -200,7 +196,5 @@ export default function CategoryProblemsPage() {
           </div>
         )}
       </main>
-      <Footer />
-    </div>
   );
 }

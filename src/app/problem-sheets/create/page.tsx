@@ -10,8 +10,6 @@ import type { Problem, ApexProblemsData, ProblemSheet } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -194,7 +192,7 @@ function CreateProblemSheetClient() {
     const backUrl = formMode === 'edit' && sheetId ? `/sheets/${sheetId}` : '/problem-sheets';
 
     return (
-        <>
+        <main className="flex-1 container py-8 flex flex-col">
             <div className="mb-8">
                 <Button variant="outline" onClick={() => router.push(backUrl)} className="mb-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -333,24 +331,18 @@ function CreateProblemSheetClient() {
                    </Card>
                 </ResizablePanel>
             </ResizablePanelGroup>
-        </>
+        </main>
     );
 }
 
 export default function CreateProblemSheetPage() {
     return (
-        <div className="flex min-h-screen w-full flex-col bg-background">
-            <Header />
-            <main className="flex-1 container py-8 flex flex-col">
-                <Suspense fallback={
-                    <div className="flex justify-center items-center flex-1">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    </div>
-                }>
-                    <CreateProblemSheetClient />
-                </Suspense>
-            </main>
-            <Footer />
-        </div>
+        <Suspense fallback={
+            <div className="flex justify-center items-center flex-1 h-screen">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        }>
+            <CreateProblemSheetClient />
+        </Suspense>
     );
 }

@@ -4,8 +4,6 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useParams } from "next/navigation";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -221,17 +219,13 @@ export default function UserProfilePage() {
     
     if (error) {
         return (
-            <div className="flex min-h-screen w-full flex-col bg-background">
-              <Header />
-              <main className="flex-1 container py-8 flex items-center justify-center text-center">
-                <div>
-                  <h1 className="text-2xl font-bold text-destructive">{error}</h1>
-                  <p className="text-muted-foreground mt-2">The user @{username} could not be found.</p>
-                  <Button asChild className="mt-4" onClick={() => router.push('/leaderboard')}>Go to Leaderboard</Button>
-                </div>
-              </main>
-              <Footer />
-            </div>
+            <main className="flex-1 container py-8 flex items-center justify-center text-center">
+              <div>
+                <h1 className="text-2xl font-bold text-destructive">{error}</h1>
+                <p className="text-muted-foreground mt-2">The user @{username} could not be found.</p>
+                <Button asChild className="mt-4" onClick={() => router.push('/leaderboard')}>Go to Leaderboard</Button>
+              </div>
+            </main>
         )
     }
 
@@ -276,207 +270,203 @@ export default function UserProfilePage() {
 
   return (
     <>
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <Header />
-      <main className="flex-1 relative">
-        <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
-            {/* User Info Header */}
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-                 <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                    <Avatar className="h-28 w-28 border-4 border-primary/50">
-                        <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
-                        <AvatarFallback className="text-4xl">
-                            {profileUser.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                    </Avatar>
-                    {isOwnProfile && (
-                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                            {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
-                        </div>
-                    )}
-                </div>
-                {isOwnProfile && (
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
-                )}
-                <div className="flex-1 text-center sm:text-left">
-                    <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
-                    <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
-                    <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                        {profileUser.company && (
-                            <div className="flex items-center gap-2">
-                                <Building className="h-4 w-4 shrink-0" />
-                                <span>{profileUser.company}</span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 shrink-0" />
-                            <span>{profileUser.country}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
-                    {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
-                    {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
-                    {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
-                    {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>}
-                </div>
-            </div>
+    <main className="flex-1 relative">
+      <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
+          {/* User Info Header */}
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+               <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                  <Avatar className="h-28 w-28 border-4 border-primary/50">
+                      <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
+                      <AvatarFallback className="text-4xl">
+                          {profileUser.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                  </Avatar>
+                  {isOwnProfile && (
+                      <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                          {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
+                      </div>
+                  )}
+              </div>
+              {isOwnProfile && (
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
+              )}
+              <div className="flex-1 text-center sm:text-left">
+                  <h1 className="text-3xl font-bold font-headline">{profileUser.name}</h1>
+                  <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+                  <div className="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      {profileUser.company && (
+                          <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4 shrink-0" />
+                              <span>{profileUser.company}</span>
+                          </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 shrink-0" />
+                          <span>{profileUser.country}</span>
+                      </div>
+                  </div>
+              </div>
+              <div className="flex items-center gap-2">
+                  {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
+                  {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
+                  {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
+                  {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
+                  {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>}
+              </div>
+          </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Problems Solved */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
-                        <CardDescription>You've solved {totalSolved} out of {totalAvailable} problems.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>Easy</span>
-                                <span>{profileUser.dsaStats?.Easy || 0} / {totalProblemsByDifficulty.Easy}</span>
-                            </div>
-                            <Progress value={(profileUser.dsaStats?.Easy || 0) * 100 / (totalProblemsByDifficulty.Easy || 1)} className="h-2 [&>div]:bg-green-500" />
-                        </div>
-                         <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>Medium</span>
-                                <span>{profileUser.dsaStats?.Medium || 0} / {totalProblemsByDifficulty.Medium}</span>
-                            </div>
-                            <Progress value={(profileUser.dsaStats?.Medium || 0) * 100 / (totalProblemsByDifficulty.Medium || 1)} className="h-2" />
-                        </div>
-                         <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>Hard</span>
-                                <span>{profileUser.dsaStats?.Hard || 0} / {totalProblemsByDifficulty.Hard}</span>
-                            </div>
-                            <Progress value={(profileUser.dsaStats?.Hard || 0) * 100 / (totalProblemsByDifficulty.Hard || 1)} className="h-2 [&>div]:bg-destructive" />
-                        </div>
-                    </CardContent>
-                </Card>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Problems Solved */}
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" /> Problems Solved</CardTitle>
+                      <CardDescription>You've solved {totalSolved} out of {totalAvailable} problems.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-medium">
+                              <span>Easy</span>
+                              <span>{profileUser.dsaStats?.Easy || 0} / {totalProblemsByDifficulty.Easy}</span>
+                          </div>
+                          <Progress value={(profileUser.dsaStats?.Easy || 0) * 100 / (totalProblemsByDifficulty.Easy || 1)} className="h-2 [&>div]:bg-green-500" />
+                      </div>
+                       <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-medium">
+                              <span>Medium</span>
+                              <span>{profileUser.dsaStats?.Medium || 0} / {totalProblemsByDifficulty.Medium}</span>
+                          </div>
+                          <Progress value={(profileUser.dsaStats?.Medium || 0) * 100 / (totalProblemsByDifficulty.Medium || 1)} className="h-2" />
+                      </div>
+                       <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-medium">
+                              <span>Hard</span>
+                              <span>{profileUser.dsaStats?.Hard || 0} / {totalProblemsByDifficulty.Hard}</span>
+                          </div>
+                          <Progress value={(profileUser.dsaStats?.Hard || 0) * 100 / (totalProblemsByDifficulty.Hard || 1)} className="h-2 [&>div]:bg-destructive" />
+                      </div>
+                  </CardContent>
+              </Card>
 
-                {/* Category Breakdown */}
-                <Card className="flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
-                        <CardDescription>Points earned per problem category.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center">
-                        {categoryData.length > 0 ? (
-                            <ChartContainer
-                                config={chartConfig}
-                                className="mx-auto aspect-square h-[180px]"
-                            >
-                                <PieChart>
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent hideLabel nameKey="name" />}
-                                    />
-                                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} paddingAngle={2}>
-                                        {categoryData.map((entry) => (
-                                            <Cell key={entry.name} fill={`var(--color-${entry.name})`} className="stroke-background hover:opacity-80" />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ChartContainer>
-                        ) : (
-                            <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
-                
-                {/* Achievements */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" /> Achievements</CardTitle>
-                        <CardDescription>Badges earned from your activity.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
-                            <div className="grid grid-cols-3 gap-4">
-                                {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
-                                    <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
-                                        <div className="p-3 bg-amber-400/10 rounded-full">
-                                            <Award className="h-6 w-6 text-amber-500" />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <p className="text-muted-foreground text-center py-4 text-sm">No achievements yet. Keep coding!</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+              {/* Category Breakdown */}
+              <Card className="flex flex-col">
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Category Breakdown</CardTitle>
+                      <CardDescription>Points earned per problem category.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex items-center justify-center">
+                      {categoryData.length > 0 ? (
+                          <ChartContainer
+                              config={chartConfig}
+                              className="mx-auto aspect-square h-[180px]"
+                          >
+                              <PieChart>
+                                  <ChartTooltip
+                                      cursor={false}
+                                      content={<ChartTooltipContent hideLabel nameKey="name" />}
+                                  />
+                                  <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} paddingAngle={2}>
+                                      {categoryData.map((entry) => (
+                                          <Cell key={entry.name} fill={`var(--color-${entry.name})`} className="stroke-background hover:opacity-80" />
+                                      ))}
+                                  </Pie>
+                              </PieChart>
+                          </ChartContainer>
+                      ) : (
+                          <p className="text-muted-foreground text-center py-4 text-sm">No points earned yet.</p>
+                      )}
+                  </CardContent>
+              </Card>
+              
+              {/* Achievements */}
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5" /> Achievements</CardTitle>
+                      <CardDescription>Badges earned from your activity.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                          <div className="grid grid-cols-3 gap-4">
+                              {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
+                                  <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
+                                      <div className="p-3 bg-amber-400/10 rounded-full">
+                                          <Award className="h-6 w-6 text-amber-500" />
+                                      </div>
+                                      <p className="text-xs text-muted-foreground leading-tight">{achievement.name}</p>
+                                  </div>
+                              ))}
+                          </div>
+                      ) : (
+                          <div className="flex items-center justify-center h-full">
+                              <p className="text-muted-foreground text-center py-4 text-sm">No achievements yet. Keep coding!</p>
+                          </div>
+                      )}
+                  </CardContent>
+              </Card>
+          </div>
 
-            {/* Contribution Heatmap */}
-            <Card>
-                <CardContent className="pt-6">
-                    {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
-                        <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
-                    ) : (
-                        <div className="text-center py-10">
-                            <h3 className="text-lg font-semibold">Start your journey!</h3>
-                            <p className="text-muted-foreground mt-2">Solve a problem to see your contribution graph here.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+          {/* Contribution Heatmap */}
+          <Card>
+              <CardContent className="pt-6">
+                  {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
+                      <ContributionHeatmap data={profileUser.submissionHeatmap || {}} currentStreak={profileUser.currentStreak} maxStreak={profileUser.maxStreak} />
+                  ) : (
+                      <div className="text-center py-10">
+                          <h3 className="text-lg font-semibold">Start your journey!</h3>
+                          <p className="text-muted-foreground mt-2">Solve a problem to see your contribution graph here.</p>
+                      </div>
+                  )}
+              </CardContent>
+          </Card>
 
-            {/* Recently Solved */}
-            <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
-                <CardContent>
-                    {recentlySolvedProblems.length > 0 ? (
-                        <div className="space-y-2">
-                            {recentlySolvedProblems.map(problem => (
-                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                    <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                        <div>
-                                            <p className="font-medium">{problem.title}</p>
-                                            <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</p>
-                                        </div>
-                                        <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
-                    )}
-                </CardContent>
-            </Card>
+          {/* Recently Solved */}
+          <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recently Solved</CardTitle></CardHeader>
+              <CardContent>
+                  {recentlySolvedProblems.length > 0 ? (
+                      <div className="space-y-2">
+                          {recentlySolvedProblems.map(problem => (
+                              <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                  <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                      <div>
+                                          <p className="font-medium">{problem.title}</p>
+                                          <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</p>
+                                      </div>
+                                      <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
+                                  </div>
+                              </Link>
+                          ))}
+                      </div>
+                  ) : (
+                      <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
+                  )}
+              </CardContent>
+          </Card>
 
-            {/* Starred Problems */}
-            <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
-                <CardContent>
-                    {loadingStarred ? (
-                        <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
-                    ) : starredProblems.length > 0 ? (
-                        <div className="space-y-2">
-                            {starredProblems.map(problem => (
-                                <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
-                                    <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                        <span className="font-medium">{problem.title}</span>
-                                        <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-      </main>
-      <Footer />
-    </div>
+          {/* Starred Problems */}
+          <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle></CardHeader>
+              <CardContent>
+                  {loadingStarred ? (
+                      <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
+                  ) : starredProblems.length > 0 ? (
+                      <div className="space-y-2">
+                          {starredProblems.map(problem => (
+                              <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
+                                  <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                      <span className="font-medium">{problem.title}</span>
+                                      <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                                  </div>
+                              </Link>
+                          ))}
+                      </div>
+                  ) : (
+                      <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
+                  )}
+              </CardContent>
+          </Card>
+      </div>
+    </main>
     {isOwnProfile && <EditProfileModal isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen} user={profileUser} />}
     </>
   );
