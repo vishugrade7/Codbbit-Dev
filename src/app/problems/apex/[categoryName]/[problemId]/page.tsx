@@ -31,6 +31,7 @@ import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProModal } from "@/components/pro-modal";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -595,21 +596,18 @@ export default function ProblemWorkspacePage() {
         </ResizablePanelGroup>
         
         {/* Mobile Layout */}
-        <div className="flex-1 flex flex-col lg:hidden">
-            <Tabs defaultValue="problem" className="w-full h-full flex flex-col">
-                <div className="flex-shrink-0 px-4">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="problem"><FileText className="mr-2 h-4 w-4"/> Problem</TabsTrigger>
-                        <TabsTrigger value="code"><Code className="mr-2 h-4 w-4"/> Code</TabsTrigger>
-                    </TabsList>
-                </div>
-                <TabsContent value="problem" className="flex-1 overflow-y-auto">
-                     <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
-                </TabsContent>
-                <TabsContent value="code" className="flex-1 flex flex-col overflow-hidden">
-                    <ResizablePanelGroup direction="vertical" className="flex-1">
-                        <ResizablePanel defaultSize={60} minSize={25}>
-                            <div className="flex flex-col h-full">
+        <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+            <ResizablePanelGroup direction="vertical" className="flex-1">
+                <ResizablePanel defaultSize={40} minSize={25}>
+                    <ScrollArea className="h-full">
+                        <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
+                    </ScrollArea>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={60} minSize={25}>
+                    <ResizablePanelGroup direction="vertical" className="h-full">
+                        <ResizablePanel defaultSize={60} minSize={20}>
+                             <div className="flex flex-col h-full">
                                  <div className="editor-container flex-1 w-full h-full overflow-auto">
                                     <MonacoEditor
                                         height="100%"
@@ -628,9 +626,9 @@ export default function ProblemWorkspacePage() {
                                 </div>
                             </div>
                         </ResizablePanel>
-                        <ResizableHandle withHandle />
+                         <ResizableHandle withHandle />
                         <ResizablePanel defaultSize={40} minSize={15}>
-                            <div className="flex flex-col h-full">
+                             <div className="flex flex-col h-full">
                                 <div className="p-2 border-b border-t flex items-center justify-between">
                                     <h3 className="font-semibold text-sm">Test Results</h3>
                                     <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
@@ -644,8 +642,8 @@ export default function ProblemWorkspacePage() {
                             </div>
                         </ResizablePanel>
                     </ResizablePanelGroup>
-                </TabsContent>
-            </Tabs>
+                </ResizablePanel>
+            </ResizablePanelGroup>
         </div>
     </div>
     )
