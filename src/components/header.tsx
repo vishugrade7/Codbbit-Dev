@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb, Shield } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb, Shield, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -118,6 +118,10 @@ export default function Header() {
             <>
               {/* Desktop view */}
               <div className="hidden md:flex items-center gap-4">
+                 <div className="flex items-center gap-1.5 font-semibold">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <span>{userData?.points?.toLocaleString() ?? 0}</span>
+                </div>
                  <ThemeToggle />
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -233,7 +237,7 @@ export default function Header() {
                                 href='/admin'
                                 className={cn(
                                 "text-lg font-medium transition-colors hover:text-foreground/80",
-                                pathname === '/admin' ? "text-foreground" : "text-foreground/60"
+                                pathname.startsWith('/admin') ? "text-foreground" : "text-foreground/60"
                                 )}
                             >
                                 Admin
