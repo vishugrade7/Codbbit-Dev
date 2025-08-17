@@ -941,8 +941,23 @@ const BrandingManager = () => {
 };
 
 const PricingManager = () => {
-    return <div>Pricing Management Coming Soon</div>;
-}
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">Pricing Management</h1>
+                <p className="text-muted-foreground">This feature is not yet implemented.</p>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Coming Soon</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>The ability to dynamically manage pricing plans from the admin panel is currently under development. For now, pricing is managed directly in the code at <code className="bg-muted px-1 py-0.5 rounded-sm">src/app/pricing/page.tsx</code>.</p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
 
 export const AdminDashboard = () => {
     const searchParams = useSearchParams();
