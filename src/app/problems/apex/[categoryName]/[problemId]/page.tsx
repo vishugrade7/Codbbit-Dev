@@ -146,7 +146,7 @@ const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSo
                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
                <Badge variant="secondary">{problem.categoryName}</Badge>
                {problem.company && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="hidden sm:flex items-center gap-1.5">
                         {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
                         <span className="text-sm font-medium">{problem.company}</span>
                     </div>
@@ -647,4 +647,3 @@ export default function ProblemWorkspacePage() {
     )
 }
 
-    
