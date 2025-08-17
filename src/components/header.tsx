@@ -12,7 +12,7 @@ import { auth } from "@/lib/firebase";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { NavLink } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -97,17 +97,21 @@ export default function Header() {
                         <Skeleton className="h-5 w-28" />
                     </>
                 ) : (
-                    navLinks.map((link) => (
-                    <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                        "transition-colors hover:text-foreground/80",
-                        pathname === link.href ? "text-foreground" : "text-foreground/60"
+                    navLinks.map((link, index) => (
+                    <React.Fragment key={link.href}>
+                        <Link
+                            href={link.href}
+                            className={cn(
+                            "transition-colors hover:text-foreground/80",
+                            pathname === link.href ? "text-foreground" : "text-foreground/60"
+                            )}
+                        >
+                            {link.label}
+                        </Link>
+                        {index < navLinks.length - 1 && (
+                            <span className="text-foreground/30">|</span>
                         )}
-                    >
-                        {link.label}
-                    </Link>
+                    </React.Fragment>
                     ))
                 )}
             </nav>
