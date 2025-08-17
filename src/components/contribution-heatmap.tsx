@@ -78,8 +78,8 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
       <ActivityCalendar
         data={activityData}
         theme={{
-          light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-          dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
+          light: ['hsl(0 0% 93%)', 'hsl(204 100% 88%)', 'hsl(204 100% 78%)', 'hsl(204 100% 68%)', 'hsl(204 100% 58%)'],
+          dark: ['hsl(240 10% 15%)', 'hsl(210 55% 25%)', 'hsl(210 55% 45%)', 'hsl(210 55% 65%)', 'hsl(210 55% 85%)'],
         }}
         colorScheme={theme === 'dark' ? 'dark' : 'light'}
         blockSize={12}
