@@ -17,6 +17,7 @@ import type { NavLink } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { getQuickTip } from "@/ai/flows/quick-tip-flow";
+import { getNavigationSettings } from "@/app/upload-problem/actions";
 import { Separator } from "@/components/ui/separator";
 
 
@@ -30,16 +31,13 @@ export default function Header() {
   const [loadingNav, setLoadingNav] = useState(true);
 
   useEffect(() => {
-    // A simplified nav link fetcher can be created if needed, 
-    // for now, we can hardcode them as admin panel is gone.
-    setNavLinks([
-        { id: 'apex-problems', label: 'Practice Problems', href: '/apex-problems', isEnabled: true, isProtected: true },
-        { id: 'courses', label: 'Courses', href: '/courses', isEnabled: true, isProtected: true },
-        { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', isEnabled: true, isProtected: true },
-        { id: 'problem-sheets', label: 'Problem Sheets', href: '/problem-sheets', isEnabled: true, isProtected: true },
-        { id: 'lwc-playground', label: 'LWC Playground', href: '/lwc-playground', isEnabled: true, isProtected: false },
-    ]);
-    setLoadingNav(false);
+    const fetchNav = async () => {
+        setLoadingNav(true);
+        const links = await getNavigationSettings();
+        setNavLinks(links.filter(link => link.isEnabled));
+        setLoadingNav(false);
+    }
+    fetchNav();
   }, []);
   
   useEffect(() => {
@@ -306,3 +304,5 @@ export default function Header() {
     </header>
   );
 }
+
+    
