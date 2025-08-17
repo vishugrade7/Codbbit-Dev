@@ -185,8 +185,7 @@ export default function Leaderboard() {
 
         <div className="px-6">
           {currentUserEntry && (
-            <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1">
+            <div className="mb-8 max-w-lg mx-auto">
                 <Link href={`/profile/${currentUserEntry.username}`} className="block h-full">
                   <Card className="bg-primary/10 border-primary/20 shadow-lg h-full">
                     <CardContent className="p-6 h-full grid grid-cols-2 gap-4">
@@ -244,54 +243,6 @@ export default function Leaderboard() {
                     </CardContent>
                   </Card>
                 </Link>
-              </div>
-              <div className="hidden lg:block lg:col-span-2">
-                {suggestedProblem ? (
-                    <Card className="bg-gradient-to-br from-card to-muted/50 h-full">
-                      <CardContent className="p-6 flex flex-col h-full">
-                          <div className="flex-grow">
-                              <div className="flex items-center gap-3 mb-2">
-                                  <div className="p-2 bg-primary/10 rounded-lg">
-                                      <BookOpen className="h-5 w-5 text-primary" />
-                                  </div>
-                                  <h3 className="text-lg font-semibold">Challenge Yourself!</h3>
-                              </div>
-                              <p className="text-muted-foreground text-sm mb-3">
-                                  Solve <span className="font-semibold text-foreground">{suggestedProblem.title}</span> to climb the leaderboard.
-                              </p>
-                              <div className="flex items-center gap-2">
-                                  <Badge variant="secondary">{suggestedProblem.categoryName}</Badge>
-                                  <Badge variant="outline" className={cn("justify-center", getDifficultyBadgeClass(suggestedProblem.difficulty))}>
-                                  {suggestedProblem.difficulty}
-                                  </Badge>
-                              </div>
-                          </div>
-                          <Button asChild className="w-full mt-4 flex-shrink-0">
-                            <Link href={`/problems/apex/${encodeURIComponent(suggestedProblem.categoryName)}/${suggestedProblem.id}`}>
-                              Start Challenge <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                          </Button>
-                      </CardContent>
-                    </Card>
-                ) : (
-                  <Card className="flex items-center justify-center text-center p-6 bg-card/80 border-dashed min-h-[160px]">
-                      <CardContent className="p-0">
-                          {allProblems.length > 0 && userData && userData.solvedProblems && Object.keys(userData.solvedProblems).length >= allProblems.length ? (
-                          <>
-                              <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                              <h3 className="text-xl font-bold">You're a Champion!</h3>
-                              <p className="text-muted-foreground mt-2">You've solved all available problems. Great work!</p>
-                          </>
-                          ) : (
-                          <>
-                              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-                              <p className="text-muted-foreground">Finding a great challenge for you...</p>
-                          </>
-                          )}
-                      </CardContent>
-                  </Card>
-                )}
-              </div>
             </div>
           )}
           
