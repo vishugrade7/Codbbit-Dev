@@ -176,76 +176,47 @@ export default function Leaderboard() {
   return (
     <main className="flex-1">
       <div className="container px-0 md:px-6 py-8">
-        <div className="text-center mb-12 px-6">
-            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
-            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-                See how you rank against the best Salesforce developers in the world. Keep solving problems to climb up the ranks!
-            </p>
-        </div>
-
-        <div className="px-6">
-          {currentUserEntry && (
-            <div className="mb-8 max-w-lg mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12 px-6">
+            <div className="flex-1">
+                <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">Leaderboard</h1>
+                <p className="text-muted-foreground mt-4 max-w-md">
+                    See how you rank against the top developers. Keep solving problems to climb up the ranks!
+                </p>
+            </div>
+            
+            {currentUserEntry && (
+              <div className="w-full md:w-auto md:min-w-[400px]">
                 <Link href={`/profile/${currentUserEntry.username}`} className="block h-full">
-                  <Card className="bg-primary/10 border-primary/20 shadow-lg h-full">
-                    <CardContent className="p-6 h-full grid grid-cols-2 gap-4">
-                      <div className="flex flex-col justify-between">
+                  <Card className="bg-muted/50 border-border shadow-sm h-full">
+                    <CardContent className="p-4 h-full grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border-2 border-primary">
+                            <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                            <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
                         <div>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-12 w-12 border-2 border-primary">
-                                <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                                <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                                <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                              {currentUserEntry.company && (
-                                  <div className="flex items-center gap-1.5">
-                                      {currentUserEntry.companyLogoUrl ? (
-                                          <Image
-                                              src={currentUserEntry.companyLogoUrl}
-                                              alt={currentUserEntry.company || 'Company logo'}
-                                              width={16}
-                                              height={16}
-                                              className="rounded-sm object-contain"
-                                          />
-                                      ) : (
-                                          <Building className="h-4 w-4" />
-                                      )}
-                                      <span>{currentUserEntry.company}</span>
-                                  </div>
-                              )}
-                              {currentUserEntry.country && (
-                                  <div className="flex items-center gap-1.5">
-                                      <Globe className="h-4 w-4" />
-                                      <span>{currentUserEntry.country}</span>
-                                  </div>
-                              )}
+                            <p className="font-semibold">{currentUserEntry.name}</p>
+                            <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                         </div>
                       </div>
-                      <div className="flex flex-col justify-between items-end text-right">
+                      <div className="flex justify-between items-center text-right">
                         <div>
-                          <div className="flex items-center gap-2 font-bold text-2xl">
-                              <Trophy className="h-6 w-6 text-yellow-400" />
-                              <span>{currentUserEntry.rank}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">Rank</p>
+                          <p className="font-bold text-lg">{currentUserEntry.rank}th</p>
+                          <p className="text-xs text-muted-foreground">Rank</p>
                         </div>
                         <div>
-                          <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">Points</p>
+                          <p className="font-semibold text-lg">{currentUserEntry.points.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Points</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 </Link>
-            </div>
-          )}
-          
+              </div>
+            )}
+        </div>
+
+        <div className="px-6">
           <div className="mb-8 flex flex-col md:flex-row justify-center items-center gap-4">
               <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-auto">
                   <TabsList>
@@ -365,5 +336,3 @@ export default function Leaderboard() {
     </main>
   );
 }
-
-    
