@@ -22,7 +22,7 @@ const baseProblemSchema = z.object({
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),
   hints: z.array(hintSchema).optional(),
-  metadataType: z.enum(["Class", "Trigger"]),
+  metadataType: z.enum(["Class", "Trigger", "Test Class"]),
   triggerSObject: z.string().optional(),
   sampleCode: z.string().min(1, "Sample code is required."),
   testcases: z.string().min(1, "Test cases are required."),

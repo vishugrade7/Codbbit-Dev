@@ -4,6 +4,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -133,7 +134,7 @@ export type Problem = {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   examples: Example[];
   hints: string[];
-  metadataType: 'Class' | 'Trigger';
+  metadataType: 'Class' | 'Trigger' | 'Test Class';
   triggerSObject?: string;
   sampleCode: string;
   testcases: string;

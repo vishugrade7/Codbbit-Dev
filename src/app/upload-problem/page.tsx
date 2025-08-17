@@ -149,6 +149,7 @@ export function ProblemForm({ onSubmit, isLoading, categories, initialData, onCa
                             <SelectContent>
                             <SelectItem value="Class">Class</SelectItem>
                             <SelectItem value="Trigger">Trigger</SelectItem>
+                            <SelectItem value="Test Class">Test Class</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
