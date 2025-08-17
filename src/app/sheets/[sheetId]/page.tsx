@@ -104,7 +104,7 @@ const SheetDetailsSidebar = ({ sheet, totalProgress, solvedStats, difficultyStat
                     </Button>
                     <Button size="sm" onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <div className="flex items-center gap-2 mb-1 text-sm text-muted-foreground">
                     <Avatar className="h-6 w-6">
                         <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
                         <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
@@ -127,19 +127,19 @@ const SheetDetailsSidebar = ({ sheet, totalProgress, solvedStats, difficultyStat
                 </div>
                 <Progress value={totalProgress} className="h-2 mb-4" />
                 <div className="space-y-3 text-sm">
-                    <div className="flex items-center gap-3">
-                        <span className="w-14 shrink-0 text-muted-foreground">Easy</span>
-                        <Progress value={(solvedStats.Easy / (difficultyStats.Easy || 1)) * 100} className="h-1.5 [&>div]:bg-green-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="w-14 shrink-0 text-muted-foreground flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500" /> Easy</span>
+                        <Progress value={(solvedStats.Easy / (difficultyStats.Easy || 1)) * 100} className="h-1.5 flex-1 [&>div]:bg-green-500" />
                         <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Easy}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="w-14 shrink-0 text-muted-foreground">Medium</span>
-                        <Progress value={(solvedStats.Medium / (difficultyStats.Medium || 1)) * 100} className="h-1.5 [&>div]:bg-amber-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="w-14 shrink-0 text-muted-foreground flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500" /> Medium</span>
+                        <Progress value={(solvedStats.Medium / (difficultyStats.Medium || 1)) * 100} className="h-1.5 flex-1 [&>div]:bg-amber-500" />
                         <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Medium}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="w-14 shrink-0 text-muted-foreground">Hard</span>
-                        <Progress value={(solvedStats.Hard / (difficultyStats.Hard || 1)) * 100} className="h-1.5 [&>div]:bg-red-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="w-14 shrink-0 text-muted-foreground flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> Hard</span>
+                        <Progress value={(solvedStats.Hard / (difficultyStats.Hard || 1)) * 100} className="h-1.5 flex-1 [&>div]:bg-red-500" />
                         <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Hard}</span>
                     </div>
                 </div>
