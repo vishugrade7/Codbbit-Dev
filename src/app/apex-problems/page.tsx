@@ -8,6 +8,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ApexProblemsData } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
@@ -26,6 +27,15 @@ type CategoryInfo = {
   };
   imageUrl?: string;
 };
+
+const cardColorClasses = [
+  "bg-sky-100/50 dark:bg-sky-900/20 border-sky-500/20 hover:border-sky-500/50",
+  "bg-amber-100/50 dark:bg-amber-900/20 border-amber-500/20 hover:border-amber-500/50",
+  "bg-emerald-100/50 dark:bg-emerald-900/20 border-emerald-500/20 hover:border-emerald-500/50",
+  "bg-violet-100/50 dark:bg-violet-900/20 border-violet-500/20 hover:border-violet-500/50",
+  "bg-rose-100/50 dark:bg-rose-900/20 border-rose-500/20 hover:border-rose-500/50",
+  "bg-fuchsia-100/50 dark:bg-fuchsia-900/20 border-fuchsia-500/20 hover:border-fuchsia-500/50",
+];
 
 export default function ApexProblems() {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
@@ -96,10 +106,10 @@ export default function ApexProblems() {
           </div>
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 border-transparent hover:border-primary/30 h-full flex flex-col">
+                  <Card className={cn("overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 h-full flex flex-col border-2", cardColorClasses[index % cardColorClasses.length])}>
                     <CardContent className="p-0 flex flex-col flex-grow">
                       <div className="aspect-video relative">
                          <Image 
