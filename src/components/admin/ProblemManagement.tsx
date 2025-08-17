@@ -23,9 +23,10 @@ import {
     updateNavigationSettings,
     getBadges,
     upsertBadge,
-    deleteBadge
+    deleteBadge,
+    updateBrandingSettings
 } from "@/app/upload-problem/actions";
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema } from '@/lib/admin-schemas';
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -33,7 +34,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -51,6 +52,7 @@ import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 
 type AdminContextType = {
@@ -845,8 +847,98 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
 
 
 const BrandingManager = () => {
-    return <div>Branding Management Coming Soon</div>;
-}
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+
+    const form = useForm<z.infer<typeof brandingSchema>>({
+        resolver: zodResolver(brandingSchema),
+        defaultValues: {
+            colors: {
+                primary: '231 59% 48%',
+                accent: '174 100% 29%',
+                background: '231 60% 96%',
+            },
+            fonts: {
+                headline: 'Poppins',
+                body: 'PT Sans'
+            }
+        }
+    });
+
+    const onSave = async (data: z.infer<typeof brandingSchema>) => {
+        if (!user) return;
+        setLoading(true);
+        const result = await updateBrandingSettings(user.uid, data);
+        if (result.success) {
+            toast({ title: "Branding updated successfully! Refresh the page to see changes." });
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setLoading(false);
+    }
+    
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">Branding Management</h1>
+                <p className="text-muted-foreground">Customize your application's colors and typography.</p>
+            </div>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSave)} className="space-y-8">
+                    <Card>
+                        <CardHeader><CardTitle>Colors</CardTitle></CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <FormField control={form.control} name="colors.primary" render={({field}) => (
+                                <FormItem>
+                                    <FormLabel>Primary Color (HSL)</FormLabel>
+                                    <FormControl><Input {...field} placeholder="e.g., 231 59% 48%" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="colors.accent" render={({field}) => (
+                                <FormItem>
+                                    <FormLabel>Accent Color (HSL)</FormLabel>
+                                    <FormControl><Input {...field} placeholder="e.g., 174 100% 29%" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="colors.background" render={({field}) => (
+                                <FormItem>
+                                    <FormLabel>Background Color (HSL)</FormLabel>
+                                    <FormControl><Input {...field} placeholder="e.g., 231 60% 96%" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Typography</CardTitle></CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={form.control} name="fonts.headline" render={({field}) => (
+                                <FormItem>
+                                    <FormLabel>Headline Font</FormLabel>
+                                    <FormControl><Input {...field} placeholder="e.g., Poppins" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                             <FormField control={form.control} name="fonts.body" render={({field}) => (
+                                <FormItem>
+                                    <FormLabel>Body Font</FormLabel>
+                                    <FormControl><Input {...field} placeholder="e.g., PT Sans" /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                        </CardContent>
+                    </Card>
+                    <div className="flex justify-end">
+                        <Button type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin mr-2"/> : null} Save Branding</Button>
+                    </div>
+                </form>
+            </Form>
+        </div>
+    );
+};
 
 const PricingManager = () => {
     return <div>Pricing Management Coming Soon</div>;

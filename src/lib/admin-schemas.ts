@@ -97,4 +97,17 @@ export const badgeFormSchema = z.object({
     value: z.number().min(1, "Value must be positive"),
     category: z.string().optional(),
 });
+
+export const brandingSchema = z.object({
+    colors: z.object({
+        primary: z.string().min(1, "Primary color is required."),
+        accent: z.string().min(1, "Accent color is required."),
+        background: z.string().min(1, "Background color is required."),
+    }),
+    fonts: z.object({
+        headline: z.string().min(1, "Headline font is required."),
+        body: z.string().min(1, "Body font is required."),
+    }),
+});
+
 // #endregion

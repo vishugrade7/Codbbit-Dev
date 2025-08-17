@@ -4,7 +4,7 @@
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 231 60% 96%;
     --foreground: 222.2 84% 4.9%;
  
     --card: 0 0% 100%;
@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
  
-    --primary: 196 76% 53%;
+    --primary: 231 59% 48%;
     --primary-foreground: 210 40% 98%;
  
     --secondary: 210 40% 96.1%;
@@ -22,7 +22,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
  
-    --accent: 196 76% 53%;
+    --accent: 174 100% 29%;
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 84.2% 60.2%;
@@ -30,7 +30,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 196 76% 53%;
+    --ring: 231 59% 48%;
  
     --radius: 0.5rem;
 
@@ -54,7 +54,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 196 76% 53%;
+    --primary: 231 59% 48%;
     --primary-foreground: 210 40% 98%;
  
     --secondary: 217.2 32.6% 17.5%;
@@ -63,7 +63,7 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
  
-    --accent: 196 76% 53%;
+    --accent: 174 100% 29%;
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 62.8% 30.6%;
@@ -71,7 +71,7 @@
  
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 196 76% 53%;
+    --ring: 231 59% 48%;
 
     --chart-1: 220 70% 60%;
     --chart-2: 160 60% 55%;
@@ -90,7 +90,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-inter);
+    font-family: var(--font-body);
   }
 }
 

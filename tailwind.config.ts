@@ -18,10 +18,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)"],
+        sans: ["var(--font-body)"],
         mono: ["var(--font-source-code-pro)"],
-        headline: ["var(--font-inter)"],
-        body: ["var(--font-inter)"],
+        headline: ["var(--font-headline)"],
+        body: ["var(--font-body)"],
         code: ["var(--font-source-code-pro)"],
       },
       colors: {

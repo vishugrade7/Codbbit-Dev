@@ -1,5 +1,5 @@
 import type {Metadata} from 'next';
-import { Inter, Source_Code_Pro } from 'next/font/google'
+import { Poppins, PT_Sans } from 'next/font/google'
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
@@ -7,16 +7,18 @@ import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/app-shell';
 
-const inter = Inter({ 
+const poppins = Poppins({ 
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-headline',
   display: 'swap',
+  weight: ['400', '500', '600', '700']
 })
 
-const sourceCodePro = Source_Code_Pro({
+const ptSans = PT_Sans({
   subsets: ['latin'],
-  variable: '--font-source-code-pro',
+  variable: '--font-body',
   display: 'swap',
+  weight: ['400', '700']
 })
 
 export const metadata: Metadata = {
@@ -32,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(inter.variable, sourceCodePro.variable, "bg-background font-body text-foreground select-none no-print")}>
+      <body className={cn(poppins.variable, ptSans.variable, "bg-background font-body text-foreground select-none no-print")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

@@ -5,8 +5,10 @@ import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayU
 import { db } from '@/lib/firebase';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData } from '@/types';
 import { z } from 'zod';
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema } from '@/lib/admin-schemas';
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema } from '@/lib/admin-schemas';
 import { revalidatePath } from 'next/cache';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Helper function to get current user and check for admin privileges
 async function getAdminUser(userId: string) {
@@ -357,6 +359,86 @@ export async function deleteBadge(userId: string, badgeId: string) {
     try {
         const badgeDocRef = doc(db, 'badges', badgeId);
         await deleteDoc(badgeDocRef);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function updateBrandingSettings(userId: string, data: z.infer<typeof brandingSchema>) {
+    await getAdminUser(userId);
+    
+    const validation = brandingSchema.safeParse(data);
+    if (!validation.success) {
+        return { success: false, error: validation.error.message };
+    }
+    
+    const { colors, fonts } = validation.data;
+
+    try {
+        // --- Update CSS file ---
+        const cssPath = path.join(process.cwd(), 'src', 'app', 'globals.css');
+        let cssContent = await fs.readFile(cssPath, 'utf-8');
+
+        // Replace color variables
+        cssContent = cssContent.replace(/--primary:\s*[^;]+;/g, `--primary: ${colors.primary};`);
+        cssContent = cssContent.replace(/--accent:\s*[^;]+;/g, `--accent: ${colors.accent};`);
+        cssContent = cssContent.replace(/--background:\s*[^;]+;/g, `--background: ${colors.background};`);
+
+        await fs.writeFile(cssPath, cssContent);
+
+        // --- Update layout file for fonts ---
+        const layoutPath = path.join(process.cwd(), 'src', 'app', 'layout.tsx');
+        let layoutContent = await fs.readFile(layoutPath, 'utf-8');
+        
+        // This is a simplified replacement. A more robust solution might use ASTs.
+        const fontImportRegex = /const\s+\w+\s*=\s*\w+\({[\s\S]*?}\)/g;
+        layoutContent = layoutContent.replace(fontImportRegex, ''); // Remove old font imports
+
+        const newHeadlineFontName = fonts.headline.replace(' ', '_');
+        const newBodyFontName = fonts.body.replace(' ', '_');
+
+        const newFontImports = `import { ${newHeadlineFontName}, ${newBodyFontName} } from 'next/font/google'
+        
+const ${newHeadlineFontName.toLowerCase()} = ${newHeadlineFontName}({ 
+  subsets: ['latin'],
+  variable: '--font-headline',
+  display: 'swap',
+  weight: ['400', '500', '600', '700']
+})
+
+const ${newBodyFontName.toLowerCase()} = ${newBodyFontName}({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+  weight: ['400', '700']
+})
+`;
+        // Add new imports at the top
+        layoutContent = layoutContent.replace(/import type {Metadata} from 'next';/, `import type {Metadata} from 'next';\n${newFontImports}`);
+        
+        // Update className in body
+        const bodyClassRegex = /className=\{cn\([^,]+, [^,]+,/;
+        layoutContent = layoutContent.replace(bodyClassRegex, `className={cn(${newHeadlineFontName.toLowerCase()}.variable, ${newBodyFontName.toLowerCase()}.variable,`);
+        
+        await fs.writeFile(layoutPath, layoutContent);
+
+        // --- Update tailwind.config.ts ---
+        const tailwindPath = path.join(process.cwd(), 'tailwind.config.ts');
+        let tailwindContent = await fs.readFile(tailwindPath, 'utf-8');
+        
+        const fontFamilyRegex = /fontFamily: {[\s\S]*?},/;
+        const newFontFamily = `fontFamily: {
+        sans: ["var(--font-body)"],
+        mono: ["var(--font-source-code-pro)"],
+        headline: ["var(--font-headline)"],
+        body: ["var(--font-body)"],
+        code: ["var(--font-source-code-pro)"],
+      },`;
+        tailwindContent = tailwindContent.replace(fontFamilyRegex, newFontFamily);
+
+        await fs.writeFile(tailwindPath, tailwindContent);
+
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };
