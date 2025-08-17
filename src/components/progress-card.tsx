@@ -46,9 +46,9 @@ export function ProgressCard({
   const hardPercentage = hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0;
 
   const chartData = [
-    { difficulty: "easy", value: easyPercentage, fill: "var(--color-easy)" },
-    { difficulty: "medium", value: mediumPercentage, fill: "var(--color-medium)" },
     { difficulty: "hard", value: hardPercentage, fill: "var(--color-hard)" },
+    { difficulty: "medium", value: mediumPercentage, fill: "var(--color-medium)" },
+    { difficulty: "easy", value: easyPercentage, fill: "var(--color-easy)" },
   ];
 
   return (
@@ -66,10 +66,10 @@ export function ProgressCard({
               data={chartData}
               startAngle={90}
               endAngle={450}
-              innerRadius="30%"
+              innerRadius="20%"
               outerRadius="100%"
-              barSize={8}
-              barGap={4}
+              barSize={12}
+              barGap={2}
             >
               <PolarAngleAxis
                 type="number"
