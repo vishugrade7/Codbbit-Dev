@@ -11,7 +11,9 @@ import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ClipboardList } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
 type CategoryInfo = {
   name: string;
@@ -27,12 +29,12 @@ type CategoryInfo = {
 };
 
 const cardColorClasses = [
-  "from-sky-500",
-  "from-amber-500",
-  "from-emerald-500",
-  "from-violet-500",
-  "from-rose-500",
-  "from-fuchsia-500",
+  "bg-[#15803d] text-white border-green-400/30 hover:border-green-400", // Dark Green
+  "bg-[#b45309] text-white border-amber-400/30 hover:border-amber-400", // Amber
+  "bg-[#6d28d9] text-white border-violet-400/30 hover:border-violet-400", // Violet
+  "bg-[#0369a1] text-white border-sky-400/30 hover:border-sky-400", // Sky
+  "bg-[#be185d] text-white border-rose-400/30 hover:border-rose-400", // Rose
+  "bg-[#86198f] text-white border-fuchsia-400/30 hover:border-fuchsia-400", // Fuchsia
 ];
 
 export default function ApexProblems() {
@@ -104,34 +106,46 @@ export default function ApexProblems() {
           </div>
         ) : categories.length > 0 ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((category, index) => (
+            {categories.map((category, index) => {
+              const colorClass = cardColorClasses[index % cardColorClasses.length];
+              const progress = category.problemCount > 0 ? (category.solvedCount / category.problemCount) * 100 : 0;
+              return (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 h-full flex flex-col border-0">
-                    <CardContent className="p-0 flex flex-col flex-grow relative">
-                      <div className="aspect-video relative">
-                         <Image 
-                           src={category.imageUrl || 'https://placehold.co/600x400.png'} 
-                           alt={category.name}
-                           fill
-                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                           className="object-cover transition-transform duration-300 group-hover:scale-105"
-                         />
-                      </div>
-                      <div className={cn(
-                        "absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t to-transparent opacity-80 group-hover:opacity-100 transition-opacity", 
-                        cardColorClasses[index % cardColorClasses.length]
-                      )}></div>
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                          <h3 className="font-semibold text-white text-lg drop-shadow-md">
-                              {category.name}
-                          </h3>
-                      </div>
+                  <Card className={cn("transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full flex flex-col", colorClass)}>
+                    <CardContent className="p-5 flex flex-col flex-grow text-white/90">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-2 rounded-lg bg-white/20">
+                               <ClipboardList className="h-6 w-6" />
+                            </div>
+                            <h3 className="font-semibold text-xl flex-1">{category.name}</h3>
+                        </div>
+
+                        <div className="flex-grow grid grid-cols-2 gap-4 my-4">
+                            <div>
+                                <p className="text-sm opacity-80">Questions</p>
+                                <p className="text-2xl font-bold">{category.problemCount}</p>
+                            </div>
+                             <div>
+                                <p className="text-sm opacity-80">Solved</p>
+                                <p className="text-2xl font-bold">{category.solvedCount}</p>
+                            </div>
+                        </div>
+
+                        <Separator className="bg-white/20 my-2" />
+
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="opacity-80">Progress</span>
+                             <div className="px-4 py-1.5 rounded-full bg-white/20 font-semibold hover:bg-white/30 transition-colors">
+                                View
+                            </div>
+                        </div>
+                         <Progress value={progress} className="h-2 mt-2 bg-white/20 [&>div]:bg-white" />
                     </CardContent>
                   </Card>
                 </Link>
               )
-            ))}
+            )})}
           </div>
         ) : (
             <div className="text-center py-12">
