@@ -23,6 +23,7 @@ import ContributionHeatmap from "@/components/contribution-heatmap";
 import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
 import { ProgressCard } from "@/components/progress-card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 type StarredProblemDetail = Problem & { categoryName: string };
@@ -324,20 +325,22 @@ export default function UserProfilePage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-0">
                             {loadingStarred ? (
-                                <div className="flex justify-center items-center h-24"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
+                                <div className="flex justify-center items-center h-48"><LoaderCircle className="h-6 w-6 animate-spin" /></div>
                             ) : starredProblems.length > 0 ? (
-                                <div className="space-y-2">
-                                    {starredProblems.map(problem => (
-                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
-                                            <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                                <span className="font-medium text-sm">{problem.title}</span>
-                                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                                <ScrollArea className="h-48">
+                                    <div className="space-y-2 p-4">
+                                        {starredProblems.map(problem => (
+                                            <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName)}/${problem.id}`} className="block">
+                                                <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                                    <span className="font-medium text-sm">{problem.title}</span>
+                                                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                             ) : (
                                 <p className="text-muted-foreground text-center py-4 text-sm">Star problems in the workspace to see them here.</p>
                             )}
