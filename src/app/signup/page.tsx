@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -9,16 +9,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { countries } from "@/lib/countries";
+import { useDebounce } from "use-debounce";
+
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Building, Eye, EyeOff } from "lucide-react";
+import { Loader2, Building, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 import AuthImage from "@/components/auth-image";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -81,9 +83,12 @@ export default function SignupPage() {
 
   const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       fullName: "",
       username: "",
@@ -94,6 +99,36 @@ export default function SignupPage() {
   });
 
   const companyValue = form.watch("company");
+  const usernameValue = form.watch("username");
+  const [debouncedUsername] = useDebounce(usernameValue, 500);
+
+  const checkUsernameAvailability = useCallback(async (username: string) => {
+    if (username.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+    setUsernameStatus('checking');
+    try {
+      const q = query(collection(db, "users"), where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        setUsernameStatus('available');
+      } else {
+        setUsernameStatus('unavailable');
+        form.setError("username", { type: "manual", message: "This username is already taken." });
+      }
+    } catch (error) {
+      setUsernameStatus('idle');
+      console.error("Error checking username:", error);
+    }
+  }, [form]);
+  
+  useEffect(() => {
+    if (debouncedUsername) {
+      checkUsernameAvailability(debouncedUsername);
+    }
+  }, [debouncedUsername, checkUsernameAvailability]);
+
 
   useEffect(() => {
     if (!companyValue || companyValue.trim().length < 2) {
@@ -137,6 +172,10 @@ export default function SignupPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (usernameStatus !== 'available') {
+      form.setError("username", { type: "manual", message: "Please choose an available username." });
+      return;
+    }
     setIsLoading(true);
     sessionStorage.setItem('isLoggingIn', 'true');
 
@@ -212,6 +251,19 @@ export default function SignupPage() {
     }
   }
 
+  const UsernameStatusIcon = () => {
+    switch (usernameStatus) {
+      case 'checking':
+        return <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />;
+      case 'available':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'unavailable':
+        return <XCircle className="h-5 w-5 text-destructive" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
        <div className="flex items-center justify-center py-12">
@@ -244,7 +296,12 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g. tim_cook" {...field} />
+                        <div className="relative">
+                            <Input placeholder="e.g. tim_cook" {...field} />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <UsernameStatusIcon />
+                            </div>
+                        </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -364,3 +421,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+    
