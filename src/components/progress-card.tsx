@@ -56,7 +56,7 @@ export function ProgressCard({
       <CardHeader>
         <CardTitle>Progress</CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 flex flex-row items-center gap-6">
+      <CardContent className="pt-0 flex flex-col md:flex-row items-center gap-6">
         <div className="relative h-40 w-40">
           <ChartContainer
             config={chartConfig}
