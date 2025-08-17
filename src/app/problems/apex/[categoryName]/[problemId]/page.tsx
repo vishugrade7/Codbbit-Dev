@@ -404,7 +404,7 @@ export default function ProblemWorkspacePage() {
     };
 
     return (
-    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-14 md:pt-0">
+    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-12 md:pt-0">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
         {showSuccess && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
@@ -420,7 +420,7 @@ export default function ProblemWorkspacePage() {
                 </div>
             </div>
         )}
-        <header className="fixed md:relative top-0 left-0 right-0 flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40">
+        <header className="fixed md:relative top-0 left-0 right-0 flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
