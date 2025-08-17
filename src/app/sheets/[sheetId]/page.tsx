@@ -338,11 +338,11 @@ export default function SheetDisplayPage() {
                 {/* --- Right Column --- */}
                 <div className="lg:col-span-2 flex flex-col overflow-hidden">
                     <div className="flex justify-between items-center mb-4 gap-2 shrink-0">
-                        <div className="relative flex-1">
+                        <div className="relative flex-1 md:w-auto">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                             placeholder="Search problems..."
-                            className="w-full pl-9 h-9"
+                            className="w-full md:w-64 pl-9 h-9"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             />
