@@ -457,10 +457,11 @@ export default function SheetDisplayPage() {
             </div>
              {/* Mobile "View Details" button */}
              <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t rounded-t-2xl">
+                <p className="text-center font-bold mb-2">{sheet.name}</p>
                 <Sheet>
                     <SheetTrigger asChild>
-                        <Button size="lg" className="w-full text-lg font-bold">
-                            {sheet.name}
+                        <Button size="lg" className="w-full font-bold">
+                            View Details
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="bottom" className="h-[90vh]">
