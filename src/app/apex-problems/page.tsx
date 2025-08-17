@@ -12,8 +12,6 @@ import { cn } from "@/lib/utils";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 
 type CategoryInfo = {
   name: string;
@@ -29,12 +27,12 @@ type CategoryInfo = {
 };
 
 const cardColorClasses = [
-  "bg-sky-100/50 dark:bg-sky-900/20 border-sky-500/20 hover:border-sky-500/50",
-  "bg-amber-100/50 dark:bg-amber-900/20 border-amber-500/20 hover:border-amber-500/50",
-  "bg-emerald-100/50 dark:bg-emerald-900/20 border-emerald-500/20 hover:border-emerald-500/50",
-  "bg-violet-100/50 dark:bg-violet-900/20 border-violet-500/20 hover:border-violet-500/50",
-  "bg-rose-100/50 dark:bg-rose-900/20 border-rose-500/20 hover:border-rose-500/50",
-  "bg-fuchsia-100/50 dark:bg-fuchsia-900/20 border-fuchsia-500/20 hover:border-fuchsia-500/50",
+  "from-sky-500",
+  "from-amber-500",
+  "from-emerald-500",
+  "from-violet-500",
+  "from-rose-500",
+  "from-fuchsia-500",
 ];
 
 export default function ApexProblems() {
@@ -109,8 +107,8 @@ export default function ApexProblems() {
             {categories.map((category, index) => (
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
-                  <Card className={cn("overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 h-full flex flex-col border-2", cardColorClasses[index % cardColorClasses.length])}>
-                    <CardContent className="p-0 flex flex-col flex-grow">
+                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1.5 h-full flex flex-col border-0">
+                    <CardContent className="p-0 flex flex-col flex-grow relative">
                       <div className="aspect-video relative">
                          <Image 
                            src={category.imageUrl || 'https://placehold.co/600x400.png'} 
@@ -120,25 +118,14 @@ export default function ApexProblems() {
                            className="object-cover transition-transform duration-300 group-hover:scale-105"
                          />
                       </div>
-                      <div className="p-4 flex flex-col flex-grow">
-                          <div className="flex justify-between items-start">
-                              <h3 className="font-semibold leading-snug group-hover:text-primary transition-colors text-sm flex-grow pr-2">
-                                  {category.name}
-                              </h3>
-                              <Badge variant="secondary">{category.problemCount} Problems</Badge>
-                          </div>
-                          {userData && category.problemCount > 0 ? (
-                               <div className="mt-auto pt-2">
-                                  <Progress value={(category.solvedCount / category.problemCount) * 100} className="h-2" />
-                                  <p className="text-xs text-muted-foreground mt-1 text-right">{category.solvedCount} / {category.problemCount} solved</p>
-                              </div>
-                          ) : (
-                            <div className="mt-auto pt-2">
-                                <p className="text-muted-foreground text-xs">
-                                <Link href="/login" className="underline text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>Log in</Link> to track your progress.
-                                </p>
-                            </div>
-                          )}
+                      <div className={cn(
+                        "absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t to-transparent opacity-80 group-hover:opacity-100 transition-opacity", 
+                        cardColorClasses[index % cardColorClasses.length]
+                      )}></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                          <h3 className="font-semibold text-white text-lg drop-shadow-md">
+                              {category.name}
+                          </h3>
                       </div>
                     </CardContent>
                   </Card>
