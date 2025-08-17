@@ -92,67 +92,67 @@ export default function CategoryProblemsPage() {
 
   return (
     <main className="flex-1 container py-8">
-        <div className="flex items-center gap-4 mb-8">
-            <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => router.push('/apex-problems')}>
-                <ArrowLeft className="h-5 w-5" />
-                <span className="sr-only">Back to categories</span>
-            </Button>
-            <div>
-                 <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">{categoryName}</h1>
-                 <p className="text-muted-foreground mt-1">
-                    Select a problem to start solving.
-                </p>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => router.push('/apex-problems')}>
+                    <ArrowLeft className="h-5 w-5" />
+                    <span className="sr-only">Back to categories</span>
+                </Button>
+                <div>
+                    <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">{categoryName}</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Select a problem to start solving.
+                    </p>
+                </div>
             </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search problems by title..."
-              className="w-full md:w-80 pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
-                        <Filter className="h-5 w-5" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-0" align="end">
-                    <div className="py-2">
-                        <p className="text-sm font-medium px-4 mb-2">Status</p>
-                        {statusOptions.map(option => (
-                             <button
-                                key={option}
-                                className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
-                                onClick={() => setStatusFilter(getStatusValue(option))}
-                            >
-                                <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
-                                {option}
-                            </button>
-                        ))}
-                    </div>
-                    <Separator />
-                     <div className="py-2">
-                        <p className="text-sm font-medium px-4 mb-2">Difficulty</p>
-                        {difficultyOptions.map(option => (
-                             <button
-                                key={option}
-                                className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
-                                onClick={() => setDifficultyFilter(getDifficultyValue(option))}
-                            >
-                                <span className={cn("h-2 w-2 rounded-full mr-3", getDifficultyValue(difficultyFilter) === getDifficultyValue(option) ? "bg-primary" : "bg-transparent")}></span>
-                                {option}
-                            </button>
-                        ))}
-                    </div>
-                </PopoverContent>
-            </Popover>
-          </div>
+            <div className="flex w-full md:w-auto items-center gap-2">
+                <div className="relative flex-1 md:flex-initial">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                    placeholder="Search problems by title..."
+                    className="w-full md:w-80 pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
+                            <Filter className="h-5 w-5" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-0" align="end">
+                        <div className="py-2">
+                            <p className="text-sm font-medium px-4 mb-2">Status</p>
+                            {statusOptions.map(option => (
+                                <button
+                                    key={option}
+                                    className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                    onClick={() => setStatusFilter(getStatusValue(option))}
+                                >
+                                    <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                        <Separator />
+                        <div className="py-2">
+                            <p className="text-sm font-medium px-4 mb-2">Difficulty</p>
+                            {difficultyOptions.map(option => (
+                                <button
+                                    key={option}
+                                    className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                    onClick={() => setDifficultyFilter(getDifficultyValue(option))}
+                                >
+                                    <span className={cn("h-2 w-2 rounded-full mr-3", getDifficultyValue(difficultyFilter) === getDifficultyValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            </div>
         </div>
 
         {loading ? (
