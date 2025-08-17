@@ -55,7 +55,7 @@ import { Textarea } from '../ui/textarea';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -1321,3 +1321,4 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
