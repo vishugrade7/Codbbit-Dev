@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, KeyRound } from "lucide-react";
+import { ArrowRight, KeyRound, Code, BookOpen, Award } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import Testimonials from "@/components/testimonials";
 
 
 export default function Home() {
@@ -50,17 +52,74 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="container px-4 md:px-6">
-        <div className="relative aspect-[16/9] md:aspect-[2.4/1] overflow-hidden rounded-t-xl border">
-          <Image
-            src="https://placehold.co/1200x500.png"
-            alt="Hero Image"
-            fill
-            className="object-cover"
-            data-ai-hint="person teaching"
-          />
+      
+      <section className="w-full py-20 md:py-32">
+        <div className="container px-4 md:px-6">
+            <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">
+                    {'{Sharpen}'} Your Salesforce Skills
+                </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <div className="p-3 bg-primary/10 rounded-full w-fit mb-2">
+                           <Code className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">Practice Problems</h3>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <p className="text-muted-foreground">
+                            Challenge yourself with exercises crafted to strengthen different coding techniques and master Apex, SOQL, and LWC.
+                        </p>
+                    </CardContent>
+                    <CardFooter>
+                        <Button variant="ghost" asChild>
+                            <Link href="/apex-problems">Start Solving <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+                <Card className="flex flex-col">
+                    <CardHeader>
+                         <div className="p-3 bg-primary/10 rounded-full w-fit mb-2">
+                           <BookOpen className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">Interactive Courses</h3>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <p className="text-muted-foreground">
+                           Solve Apex & LWC problems right in the browser and use test cases (TDD) to check your work as you progress.
+                        </p>
+                    </CardContent>
+                    <CardFooter>
+                         <Button variant="ghost" asChild>
+                            <Link href="/courses">Explore Courses <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+                <Card className="flex flex-col">
+                    <CardHeader>
+                         <div className="p-3 bg-primary/10 rounded-full w-fit mb-2">
+                           <Award className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">Earn Ranks and Honor</h3>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <p className="text-muted-foreground">
+                          As you complete higher-ranked problems, you level up your profile and push your software development skills to their highest potential.
+                        </p>
+                    </CardContent>
+                    <CardFooter>
+                         <Button variant="ghost" asChild>
+                            <Link href="/leaderboard">View Leaderboard <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
         </div>
       </section>
+
+      <Testimonials />
     </main>
   );
 }
