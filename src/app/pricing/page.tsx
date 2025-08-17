@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { PricingPlan } from "@/types";
-import { getDocs, collection } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // Function to load the Razorpay script
@@ -41,7 +41,7 @@ export default function PricingPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isRazorpayReady, setIsRazorpayReady] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(true);
-  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [allPlans, setAllPlans] = useState<any>(null); // Will hold the single pricing document data
   const [loadingPlans, setLoadingPlans] = useState(true);
 
   useEffect(() => {
@@ -57,9 +57,13 @@ export default function PricingPage() {
         if (!db) return;
         setLoadingPlans(true);
         try {
-            const querySnapshot = await getDocs(collection(db, 'pricing'));
-            const fetchedPlans = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PricingPlan)).filter(p => p.active);
-            setPlans(fetchedPlans);
+            const pricingDocRef = doc(db, 'settings', 'pricing');
+            const docSnap = await getDoc(pricingDocRef);
+            if (docSnap.exists()) {
+                setAllPlans(docSnap.data());
+            } else {
+                 toast({ variant: 'destructive', title: 'Pricing plans not configured.' });
+            }
         } catch (error) {
             console.error("Failed to fetch pricing plans:", error);
             toast({ variant: 'destructive', title: 'Could not load pricing plans.' });
@@ -70,18 +74,26 @@ export default function PricingPage() {
   }, [toast]);
 
   const getPlanDetails = (planId: 'monthly' | 'biannually' | 'annually') => {
-        const plan = plans.find(p => p.id === planId);
-        if (!plan) return null;
-
+        if (!allPlans) return null;
+        
         const currency = isIndianUser ? 'inr' : 'usd';
         const currencySymbol = isIndianUser ? '₹' : '$';
-        const price = plan.prices[currency];
+        
+        const planData = allPlans[currency]?.[planId];
+        if (!planData) return null;
 
         return {
-            ...plan,
-            price,
+            id: planId,
+            price: planData.price,
+            total: planData.total,
             currency: currencySymbol,
             currencyCode: currency.toUpperCase() as 'INR' | 'USD',
+            // Hardcoded features for now, can be moved to DB later
+            features: [
+                { value: 'Access to all premium problems' },
+                { value: 'Detailed submission analytics' },
+                { value: 'Create unlimited problem sheets' },
+            ]
         };
     };
 
@@ -122,7 +134,7 @@ export default function PricingPage() {
       return;
     }
 
-    const orderResponse = await createRazorpayOrder(selectedPlan.price, selectedPlan.currencyCode);
+    const orderResponse = await createRazorpayOrder(selectedPlan.total, selectedPlan.currencyCode);
 
     if (orderResponse.error || !orderResponse.orderId) {
         toast({ variant: 'destructive', title: 'Checkout Error', description: orderResponse.error || 'Could not create an order.' });
@@ -142,7 +154,7 @@ export default function PricingPage() {
             const verificationResult = await verifyAndSavePayment(
               response,
               user.uid,
-              selectedPlan.price * 100, // Pass amount in subunits
+              selectedPlan.total * 100, // Pass amount in subunits
               selectedPlan.currencyCode,
               selectedPlan.id as 'monthly' | 'biannually' | 'annually'
             );
@@ -183,20 +195,18 @@ export default function PricingPage() {
 
   const getBillingDescription = (plan: ReturnType<typeof getPlanDetails>) => {
       if (!plan) return '';
-      const total = plan.price;
       switch(plan.id) {
           case 'monthly': return 'Billed monthly.';
-          case 'biannually': return `Billed ${plan.currency}${(total * 6).toLocaleString()} every 6 months.`;
-          case 'annually': return `Billed ${plan.currency}${(total * 12).toLocaleString()} annually.`;
+          case 'biannually': return `Billed ${plan.currency}${(plan.total).toLocaleString()} every 6 months.`;
+          case 'annually': return `Billed ${plan.currency}${(plan.total).toLocaleString()} annually.`;
           default: return '';
       }
   };
 
   const getSavings = (plan: ReturnType<typeof getPlanDetails>) => {
       if (!plan || !monthlyPlan || plan.id === 'monthly') return null;
-      const monthlyPrice = monthlyPlan.price;
-      const currentMonthlyEquivalent = plan.price;
-      const savings = 100 - (currentMonthlyEquivalent / monthlyPrice * 100);
+      const monthlyTotal = monthlyPlan.price * (plan.id === 'annually' ? 12 : 6);
+      const savings = 100 - (plan.total / monthlyTotal * 100);
       return Math.round(savings);
   }
 
@@ -222,11 +232,9 @@ export default function PricingPage() {
 
       <div className="flex justify-center mb-10">
           <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="w-auto">
-              <TabsList>
-                  {monthlyPlan && <TabsTrigger value="monthly">Monthly</TabsTrigger>}
-                  {biannualPlan && <TabsTrigger value="biannually">6 Months</TabsTrigger>}
-                  {annualPlan && <TabsTrigger value="annually">Yearly</TabsTrigger>}
-              </TabsList>
+              {monthlyPlan && <TabsTrigger value="monthly">Monthly</TabsTrigger>}
+              {biannualPlan && <TabsTrigger value="biannually">6 Months</TabsTrigger>}
+              {annualPlan && <TabsTrigger value="annually">Yearly</TabsTrigger>}
           </Tabs>
       </div>
 

@@ -2,7 +2,7 @@
 
 'use server';
 
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction, DocumentData, WithFieldValue, query } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction, DocumentData, WithFieldValue, query, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData, PricingPlan } from '@/types';
 import { z } from 'zod';
@@ -448,37 +448,30 @@ const ${newBodyFontName.toLowerCase()} = ${newBodyFontName}({
 // #endregion
 
 // #region Pricing Actions
-export async function getPricingPlans(userId: string): Promise<{ success: boolean; plans?: PricingPlan[]; error?: string }> {
+export async function getPricingPlans(userId: string): Promise<{ success: boolean; plans?: any; error?: string }> {
     await getAdminUser(userId);
     if (!db) return { success: false, error: 'DB not available' };
     
     try {
-        const plansRef = collection(db, 'pricing');
-        const q = query(plansRef);
-        const querySnapshot = await getDocs(q);
-        const plans = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PricingPlan));
-        return { success: true, plans };
+        const pricingDocRef = doc(db, 'settings', 'pricing');
+        const docSnap = await getDoc(pricingDocRef);
+
+        if (docSnap.exists()) {
+            return { success: true, plans: docSnap.data() };
+        } else {
+             return { success: false, error: "Pricing document not found." };
+        }
     } catch (error: any) {
         return { success: false, error: error.message };
     }
 }
 
-export async function upsertPricingPlan(userId: string, plan: z.infer<typeof pricingPlanSchema>): Promise<{ success: boolean; error?: string }> {
+export async function updatePricingPlans(userId: string, plansData: any): Promise<{ success: boolean; error?: string }> {
     await getAdminUser(userId);
     if (!db) return { success: false, error: 'DB not available' };
-
-    const validation = pricingPlanSchema.safeParse(plan);
-    if (!validation.success) {
-        return { success: false, error: validation.error.message };
-    }
-
-    const { id, ...planData } = validation.data;
-    if (!id) {
-        return { success: false, error: 'Plan ID is required.' };
-    }
     
     try {
-        await setDoc(doc(db, 'pricing', id), planData, { merge: true });
+        await setDoc(doc(db, 'settings', 'pricing'), plansData, { merge: true });
         revalidatePath('/admin?tab=pricing');
         revalidatePath('/pricing');
         return { success: true };

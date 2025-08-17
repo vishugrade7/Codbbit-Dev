@@ -10,7 +10,6 @@ This document outlines the data structure used in Firebase Firestore for this ap
 -   `/problem-sheets`
 -   `/badges`
 -   `/settings`
--   `/pricing`
 
 ---
 
@@ -184,45 +183,34 @@ This collection stores the definitions for all achievable badges.
 
 ## 6. `settings`
 
-This collection stores global application settings.
+This collection stores global application settings. It contains documents for different settings areas.
 
 **Document ID:** `navigation`
+- **Fields:** `links` (array of nav link objects)
 
-**Fields:**
+**Document ID:** `pricing`
+- **Fields:** 
+  - `inr` (map)
+    - `monthly` (map): `price` (number), `total` (number)
+    - `biannually` (map): `price` (number), `total` (number)
+    - `annually` (map): `price` (number), `total` (number)
+  - `usd` (map)
+    - `monthly` (map): `price` (number), `total` (number)
+    - `biannually` (map): `price` (number), `total` (number)
+    - `annually` (map): `price` (number), `total` (number)
 
--   **`links`**: `array` of navigation link objects.
-    ```json
-    [
-      {
-        "id": "string",
-        "label": "string",
-        "href": "string",
-        "isEnabled": "boolean",
-        "isProtected": "boolean"
-      }
-    ]
-    ```
-
----
-
-## 7. `pricing`
-
-This collection stores the subscription plans. Each document represents a billing cycle.
-
-**Document ID:** `monthly` | `biannually` | `annually`
-
-**Fields:**
-
-```json
+```
+- `pricing` document example:
 {
-  "active": "boolean",
-  "prices": {
-    "inr": "number",
-    "usd": "number"
+  "inr": {
+    "monthly": { "price": 199, "total": 199 },
+    "biannually": { "price": 999, "total": 999 },
+    "annually": { "price": 1499, "total": 1499 }
   },
-  "features": [
-    { "value": "string" },
-    { "value": "string" }
-  ]
+  "usd": {
+    "monthly": { "price": 5, "total": 5 },
+    "biannually": { "price": 25, "total": 25 },
+    "annually": { "price": 40, "total": 40 }
+  }
 }
 ```

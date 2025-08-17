@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -26,7 +27,7 @@ import {
     deleteBadge,
     updateBrandingSettings,
     getPricingPlans,
-    upsertPricingPlan
+    updatePricingPlans
 } from "@/app/upload-problem/actions";
 import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingPlanSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
@@ -944,7 +945,16 @@ const BrandingManager = () => {
 };
 
 const pricingFormSchema = z.object({
-    plans: z.array(pricingPlanSchema)
+    inr: z.object({
+        monthly: z.object({ price: z.number(), total: z.number() }),
+        biannually: z.object({ price: z.number(), total: z.number() }),
+        annually: z.object({ price: z.number(), total: z.number() }),
+    }),
+    usd: z.object({
+        monthly: z.object({ price: z.number(), total: z.number() }),
+        biannually: z.object({ price: z.number(), total: z.number() }),
+        annually: z.object({ price: z.number(), total: z.number() }),
+    }),
 });
 
 const PricingManager = () => {
@@ -954,7 +964,16 @@ const PricingManager = () => {
     
     const form = useForm<z.infer<typeof pricingFormSchema>>({
         defaultValues: {
-            plans: []
+            inr: {
+                monthly: { price: 0, total: 0 },
+                biannually: { price: 0, total: 0 },
+                annually: { price: 0, total: 0 },
+            },
+            usd: {
+                monthly: { price: 0, total: 0 },
+                biannually: { price: 0, total: 0 },
+                annually: { price: 0, total: 0 },
+            },
         }
     });
 
@@ -964,10 +983,7 @@ const PricingManager = () => {
             setIsSaving(true);
             const result = await getPricingPlans(user.uid);
             if (result.success && result.plans) {
-                // Ensure plans are sorted correctly
-                const planOrder = ['monthly', 'biannually', 'annually'];
-                const sortedPlans = result.plans.sort((a, b) => planOrder.indexOf(a.id) - planOrder.indexOf(b.id));
-                form.reset({ plans: sortedPlans });
+                form.reset(result.plans);
             } else {
                 toast({ variant: 'destructive', title: 'Error fetching plans', description: result.error });
             }
@@ -975,26 +991,16 @@ const PricingManager = () => {
         };
         fetchPlans();
     }, [user, toast, form]);
-
-    const { fields } = useFieldArray({
-        control: form.control,
-        name: "plans",
-    });
-
+    
     const onSubmit = async (data: z.infer<typeof pricingFormSchema>) => {
         if (!user) return;
         setIsSaving(true);
-        
-        const results = await Promise.all(data.plans.map(plan => upsertPricingPlan(user.uid, plan)));
-        
-        const hasError = results.some(r => !r.success);
-        
-        if (hasError) {
-            toast({ variant: 'destructive', title: 'Error saving one or more plans.' });
+        const result = await updatePricingPlans(user.uid, data);
+        if (result.success) {
+            toast({ title: 'Prices saved successfully!' });
         } else {
-            toast({ title: 'All prices saved successfully!' });
+            toast({ variant: 'destructive', title: 'Error saving prices.', description: result.error });
         }
-
         setIsSaving(false);
     };
     
@@ -1016,17 +1022,30 @@ const PricingManager = () => {
                             <CardTitle className="text-lg">INR Pricing (₹)</CardTitle>
                         </CardHeader>
                         <CardContent>
-                             <Accordion type="single" collapsible className="w-full">
-                                {fields.map((field, index) => (
-                                    <AccordionItem key={field.id} value={field.id}>
-                                        <AccordionTrigger className="capitalize font-medium">{field.id}</AccordionTrigger>
-                                        <AccordionContent>
-                                            <FormField
+                             <Accordion type="single" collapsible className="w-full" defaultValue="monthly">
+                                {['monthly', 'biannually', 'annually'].map((plan) => (
+                                    <AccordionItem key={plan} value={plan}>
+                                        <AccordionTrigger className="capitalize font-medium">{plan}</AccordionTrigger>
+                                        <AccordionContent className="p-4 grid grid-cols-2 gap-4">
+                                             <FormField
                                                 control={form.control}
-                                                name={`plans.${index}.prices.inr`}
+                                                name={`inr.${plan}.price`}
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Price (₹)</FormLabel>
+                                                        <FormLabel>Price per month (₹)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                                                        </FormControl>
+                                                         <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`inr.${plan}.total`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Total Price (₹)</FormLabel>
                                                         <FormControl>
                                                             <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
                                                         </FormControl>
@@ -1046,17 +1065,30 @@ const PricingManager = () => {
                             <CardTitle className="text-lg">USD Pricing ($)</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <Accordion type="single" collapsible className="w-full">
-                                {fields.map((field, index) => (
-                                    <AccordionItem key={field.id} value={field.id}>
-                                        <AccordionTrigger className="capitalize font-medium">{field.id}</AccordionTrigger>
-                                        <AccordionContent>
+                            <Accordion type="single" collapsible className="w-full" defaultValue="monthly">
+                                {['monthly', 'biannually', 'annually'].map((plan) => (
+                                    <AccordionItem key={plan} value={plan}>
+                                        <AccordionTrigger className="capitalize font-medium">{plan}</AccordionTrigger>
+                                        <AccordionContent className="p-4 grid grid-cols-2 gap-4">
                                             <FormField
                                                 control={form.control}
-                                                name={`plans.${index}.prices.usd`}
+                                                name={`usd.${plan}.price`}
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Price ($)</FormLabel>
+                                                        <FormLabel>Price per month ($)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                                                        </FormControl>
+                                                         <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                             <FormField
+                                                control={form.control}
+                                                name={`usd.${plan}.total`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Total Price ($)</FormLabel>
                                                         <FormControl>
                                                             <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
                                                         </FormControl>
