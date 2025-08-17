@@ -29,12 +29,12 @@ type CategoryInfo = {
 };
 
 const cardColorClasses = [
-  "bg-[#15803d] text-white border-green-400/30 hover:border-green-400", // Dark Green
-  "bg-[#b45309] text-white border-amber-400/30 hover:border-amber-400", // Amber
-  "bg-[#6d28d9] text-white border-violet-400/30 hover:border-violet-400", // Violet
-  "bg-[#0369a1] text-white border-sky-400/30 hover:border-sky-400", // Sky
-  "bg-[#be185d] text-white border-rose-400/30 hover:border-rose-400", // Rose
-  "bg-[#86198f] text-white border-fuchsia-400/30 hover:border-fuchsia-400", // Fuchsia
+  "bg-green-100 text-green-800 border-green-200/80 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700/60",
+  "bg-amber-100 text-amber-800 border-amber-200/80 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/60",
+  "bg-violet-100 text-violet-800 border-violet-200/80 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/60",
+  "bg-sky-100 text-sky-800 border-sky-200/80 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-700/60",
+  "bg-rose-100 text-rose-800 border-rose-200/80 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700/60",
+  "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200/80 dark:bg-fuchsia-900/40 dark:text-fuchsia-300 dark:border-fuchsia-700/60",
 ];
 
 export default function ApexProblems() {
@@ -113,9 +113,9 @@ export default function ApexProblems() {
               category.firstProblemId && (
                 <Link key={category.name} href={`/apex-problems/${encodeURIComponent(category.name)}`} className="block group">
                   <Card className={cn("transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full flex flex-col", colorClass)}>
-                    <CardContent className="p-5 flex flex-col flex-grow text-white/90">
+                    <CardContent className="p-5 flex flex-col flex-grow">
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="p-2 rounded-lg bg-white/20">
+                            <div className="p-2 rounded-lg bg-foreground/10">
                                <ClipboardList className="h-6 w-6" />
                             </div>
                             <h3 className="font-semibold text-xl flex-1">{category.name}</h3>
@@ -132,15 +132,15 @@ export default function ApexProblems() {
                             </div>
                         </div>
 
-                        <Separator className="bg-white/20 my-2" />
+                        <Separator className="bg-foreground/10 my-2" />
 
                         <div className="flex justify-between items-center text-sm">
                             <span className="opacity-80">Progress</span>
-                             <div className="px-4 py-1.5 rounded-full bg-white/20 font-semibold hover:bg-white/30 transition-colors">
+                             <div className="px-4 py-1.5 rounded-full bg-foreground/10 font-semibold hover:bg-foreground/20 transition-colors">
                                 View
                             </div>
                         </div>
-                         <Progress value={progress} className="h-2 mt-2 bg-white/20 [&>div]:bg-white" />
+                         <Progress value={progress} className="h-2 mt-2 bg-white/20 [&>div]:bg-foreground/80" />
                     </CardContent>
                   </Card>
                 </Link>
