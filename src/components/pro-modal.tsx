@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { createRazorpayOrder, isRazorpayConfigured } from '@/app/razorpay/actions';
+import { createRazorpayOrder, isRazorpayConfigured, verifyAndSavePayment } from '@/app/razorpay/actions';
 import Testimonials from './testimonials';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Carousel, CarouselContent, CarouselItem } from './ui/carousel';
@@ -153,16 +153,63 @@ export const ProModal = () => {
         }
 
         const orderResponse = await createRazorpayOrder(selectedPlan.total, selectedPlan.currencyCode);
+
         if (orderResponse.error || !orderResponse.orderId) {
             toast({ variant: 'destructive', title: 'Checkout Error', description: orderResponse.error || 'Could not create an order.' });
             setIsCheckingOut(false);
             return;
         }
-        // Razorpay handler logic needs to be implemented here based on how you have it in pricing/page.tsx
-        // ... (This would be the same Razorpay options and handler logic)
-         setIsCheckingOut(false); // For now, just reset
-         setIsOpen(false); // Close modal on click
-         router.push('/pricing'); // Redirect to full pricing page to complete
+
+        const options = {
+            key: orderResponse.razorpayKeyId,
+            amount: orderResponse.amount,
+            currency: orderResponse.currency,
+            name: "Codbbit",
+            description: "Pro Plan Subscription",
+            image: "https://placehold.co/128x128.png",
+            order_id: orderResponse.orderId,
+            handler: async function (response: any) {
+                const verificationResult = await verifyAndSavePayment(
+                response,
+                user.uid,
+                selectedPlan!.total * 100, // Pass amount in subunits
+                selectedPlan!.currencyCode,
+                selectedPlan!.id as 'monthly' | 'biannually' | 'annually'
+                );
+                if (verificationResult.success) {
+                    toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
+                    setIsOpen(false);
+                    router.push('/profile');
+                } else {
+                    toast({ variant: 'destructive', title: 'Payment Verification Failed', description: verificationResult.error || 'Please contact support.' });
+                }
+                setIsCheckingOut(false);
+            },
+            prefill: {
+                name: userData.name,
+                email: userData.email,
+            },
+            theme: {
+                color: "#1976D2"
+            },
+            modal: {
+                ondismiss: function() {
+                    setIsCheckingOut(false);
+                }
+            }
+        };
+
+        try {
+            const paymentObject = new (window as any).Razorpay(options);
+            paymentObject.on('payment.failed', function (response: any){
+                toast({ variant: 'destructive', title: 'Payment Failed', description: response.error.description });
+                setIsCheckingOut(false);
+            });
+            paymentObject.open();
+        } catch(error) {
+            toast({ variant: 'destructive', title: 'Payment Error', description: 'Failed to initialize the payment gateway.' });
+            setIsCheckingOut(false);
+        }
     };
 
 
@@ -207,7 +254,8 @@ export const ProModal = () => {
                                 </Label>
                             )}
                         </RadioGroup>
-                        <Button className="mt-auto" size="lg" onClick={() => router.push('/pricing')}>
+                        <Button className="mt-auto" size="lg" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig || loadingPlans}>
+                            {(isCheckingOut || loadingConfig || loadingPlans) && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                             Continue to Payment
                         </Button>
                     </div>
