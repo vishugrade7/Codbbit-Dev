@@ -13,28 +13,47 @@ type HeatmapProps = {
   maxStreak?: number;
 };
 
+// Helper to generate a date string in YYYY-MM-DD format
+const getISODateString = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
 export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak = 0 }: HeatmapProps) {
   const { theme } = useTheme();
 
-  const activityData = useMemo(() => {
-    return Object.entries(data).map(([date, count]) => {
-      let level = 0;
-      if (count > 0 && count <= 2) level = 1;
-      if (count > 2 && count <= 5) level = 2;
-      if (count > 5 && count <= 8) level = 3;
-      if (count > 8) level = 4;
-      
-      return {
-        date,
-        count,
-        level,
-      };
-    });
+  const activityData: Activity[] = useMemo(() => {
+    const today = new Date();
+    const yearAgo = new Date();
+    yearAgo.setFullYear(today.getFullYear() - 1);
+    
+    const dates: Activity[] = [];
+    let currentDate = yearAgo;
+
+    // Create an entry for every day in the last year
+    while (currentDate <= today) {
+        const dateString = getISODateString(currentDate);
+        const count = data[dateString] || 0;
+        let level = 0;
+        if (count > 0 && count <= 2) level = 1;
+        if (count > 2 && count <= 5) level = 2;
+        if (count > 5 && count <= 8) level = 3;
+        if (count > 8) level = 4;
+        
+        dates.push({
+            date: dateString,
+            count: count,
+            level: level,
+        });
+
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return dates;
   }, [data]);
 
   const totalSubmissions = React.useMemo(() => {
-    return activityData.reduce((sum, activity) => sum + activity.count, 0);
-  }, [activityData]);
+    return Object.values(data).reduce((sum, count) => sum + count, 0);
+  }, [data]);
   
   return (
     <div className="text-foreground">
@@ -57,12 +76,13 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
       <ActivityCalendar
         data={activityData}
         theme={{
-          light: ['hsl(0 0% 93%)', 'hsl(202 55% 85%)', 'hsl(202 65% 70%)', 'hsl(202 75% 55%)', 'hsl(202 85% 40%)'],
-          dark: ['hsl(240 5% 14%)', 'hsl(202 85% 40%)', 'hsl(202 75% 55%)', 'hsl(202 65% 70%)', 'hsl(202 55% 85%)'],
+          light: ['hsl(0 0% 93%)', 'hsl(215 50% 85%)', 'hsl(215 65% 70%)', 'hsl(215 75% 55%)', 'hsl(215 85% 40%)'],
+          dark: ['hsl(240 5% 14%)', 'hsl(215 85% 40%)', 'hsl(215 75% 55%)', 'hsl(215 65% 70%)', 'hsl(215 50% 85%)'],
         }}
         colorScheme={theme === 'dark' ? 'dark' : 'light'}
         blockSize={14}
         blockMargin={4}
+        blockRadius={2}
         fontSize={14}
         hideTotalCount
         showWeekdayLabels
@@ -71,7 +91,11 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
             <Tooltip>
               <TooltipTrigger asChild>{block}</TooltipTrigger>
               <TooltipContent>
-                <p><strong>{activity.count} {activity.count === 1 ? 'submission' : 'submissions'}</strong> on {new Date(activity.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p>
+                  <strong>
+                    {activity.count === 0 ? 'No' : activity.count} {activity.count === 1 ? 'submission' : 'submissions'}
+                  </strong> on {new Date(activity.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
