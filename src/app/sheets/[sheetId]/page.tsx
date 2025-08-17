@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -10,7 +10,6 @@ import type { ProblemSheet, Problem, ApexProblemsData } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { toggleSheetSubscription } from '../actions';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,15 +20,15 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from "@/components/ui/input";
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 
-const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniqueCategories, topicFilter, setTopicFilter }: { sheet: ProblemSheet, totalProgress: number, solvedStats: any, difficultyStats: any, uniqueCategories: string[], topicFilter: string, setTopicFilter: (filter: string) => void }) => {
+const SheetDetailsSidebar = ({ sheet, totalProgress, solvedStats, difficultyStats, uniqueCategories, topicFilter, setTopicFilter }: { sheet: ProblemSheet, totalProgress: number, solvedStats: any, difficultyStats: any, uniqueCategories: string[], topicFilter: string, setTopicFilter: (filter: string) => void }) => {
     const { toast } = useToast();
     const { authUser } = useAuth();
     const [isSubscribing, setIsSubscribing] = useState(false);
@@ -91,9 +90,9 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
     return (
         <aside className="space-y-8">
             <section>
-                <h1 className="text-3xl font-bold font-headline mb-2">{sheet.name}</h1>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-                    <Button size="sm" onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
+                <h1 className="text-3xl font-bold font-headline mb-4">{sheet.name}</h1>
+                <div className="flex items-center gap-2 mb-4">
+                     <Button size="sm" onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
                         {isSubscribing ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : isSubscribed ? (
@@ -105,7 +104,7 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
                     </Button>
                     <Button size="sm" onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Avatar className="h-6 w-6">
                         <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
                         <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
@@ -113,7 +112,7 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
                     <span>Created by {sheet.creatorName} {timeAgo}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
+                    <Users className="h-4 w-4 ml-1" />
                     <span>{subscribersCount} {subscribersCount === 1 ? 'follower' : 'followers'}</span>
                 </div>
             </section>
@@ -123,8 +122,8 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
             <section>
                 <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Progress</h2>
                 <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold">{Math.round(totalProgress)}%</span>
-                <span className="text-sm text-muted-foreground">{solvedStats.total} / {difficultyStats.total} solved</span>
+                    <span className="font-semibold">{Math.round(totalProgress)}%</span>
+                    <span className="text-sm text-muted-foreground">{solvedStats.total} / {difficultyStats.total} solved</span>
                 </div>
                 <Progress value={totalProgress} className="h-2 mb-4" />
                 <div className="space-y-3 text-sm">
@@ -183,15 +182,6 @@ export default function SheetDisplayPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
     const [topicFilter, setTopicFilter] = useState("All Topics");
-    
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const searchInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (isSearchOpen) {
-            searchInputRef.current?.focus();
-        }
-    }, [isSearchOpen]);
 
     useEffect(() => {
         if (!sheetId || !db) return;
@@ -302,9 +292,9 @@ export default function SheetDisplayPage() {
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-          case 'easy': return 'bg-green-100 text-green-800 border-green-200/80 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700/60';
-          case 'medium': return 'bg-amber-100 text-amber-800 border-amber-200/80 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/60';
-          case 'hard': return 'bg-red-100 text-red-800 border-red-200/80 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700/60';
+          case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+          case 'medium': return 'bg-amber-400/20 text-amber-500 border-amber-400/30';
+          case 'hard': return 'bg-red-400/20 text-red-500 border-red-400/30';
           default: return 'bg-muted';
         }
     };
@@ -336,40 +326,32 @@ export default function SheetDisplayPage() {
     }
 
     return (
-        <main className="flex-1 container mx-auto px-4 md:px-6 py-8 flex flex-col h-screen">
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
+        <main className="flex-1 container mx-auto px-4 md:px-6 py-8 flex flex-col h-screen overflow-hidden">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 flex-1 overflow-hidden">
                 {/* --- Left Column (Desktop) --- */}
-                <div className="hidden lg:block lg:col-span-1 h-full overflow-hidden">
+                <div className="hidden lg:block lg:col-span-4 h-full overflow-hidden">
                     <ScrollArea className="h-full pr-4">
-                        <SheetDetails sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
+                        <SheetDetailsSidebar sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
                     </ScrollArea>
                 </div>
 
                 {/* --- Right Column --- */}
-                <div className="lg:col-span-2 flex flex-col overflow-hidden">
-                    <header className="flex items-center justify-between gap-4 mb-4">
+                <div className="lg:col-span-8 flex flex-col overflow-hidden">
+                    <header className="flex items-center justify-between gap-4 mb-6">
                         <Button variant="ghost" onClick={() => router.push('/problem-sheets')} className="text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
                         </Button>
                         <div className="flex items-center gap-2">
-                            {isSearchOpen ? (
-                                <div className="relative w-full md:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        ref={searchInputRef}
-                                        placeholder="Search..."
-                                        className="w-full pl-9 h-9 rounded-full bg-background"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        onBlur={() => setIsSearchOpen(false)}
-                                    />
-                                </div>
-                            ) : (
-                                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
-                                    <Search className="h-5 w-5" />
-                                </Button>
-                            )}
+                             <div className="relative w-full md:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search..."
+                                    className="w-full pl-9 h-9 rounded-full bg-muted/50"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
 
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -432,9 +414,9 @@ export default function SheetDisplayPage() {
                                                     <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="hidden md:table-cell"><Badge variant="outline">{problem.categoryName}</Badge></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Badge variant="secondary">{problem.categoryName}</Badge></TableCell>
                                             <TableCell className="hidden md:table-cell">
-                                                <Badge variant="outline" className={cn("font-medium", getDifficultyBadgeClass(problem.difficulty))}>
+                                                <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
                                                     {problem.difficulty}
                                                 </Badge>
                                             </TableCell>
@@ -473,7 +455,7 @@ export default function SheetDisplayPage() {
                         <SheetTitle>Sheet Details</SheetTitle>
                     </SheetHeader>
                     <ScrollArea className="h-[calc(90vh-4rem)] mt-4">
-                        <SheetDetails sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
+                        <SheetDetailsSidebar sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
                     </ScrollArea>
                 </SheetContent>
             </Sheet>
