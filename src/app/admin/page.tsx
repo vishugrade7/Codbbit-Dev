@@ -3,9 +3,62 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Loader2, LayoutDashboard, FileText, BookOpen, Users, Settings, Award, Palette, CreditCard } from 'lucide-react';
 import { AdminProvider, AdminDashboard } from '@/components/admin/ProblemManagement';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { CodeXml } from 'lucide-react';
+
+
+const AdminSidebar = () => {
+    const pathname = usePathname();
+    const navItems = [
+        // { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/admin/problems', label: 'Problems', icon: FileText },
+        { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+        { href: '/admin/users', label: 'Users', icon: Users },
+        { href: '/admin/navigation', label: 'Navigation', icon: Settings },
+        { href: '/admin/badges', label: 'Badges', icon: Award },
+        { href: '/admin/branding', label: 'Branding', icon: Palette },
+        { href: '/admin/pricing', 'label': 'Pricing', icon: CreditCard }
+    ];
+
+    // For now, we only have one active page. This logic can be expanded later.
+    const currentPath = '/admin/problems';
+
+    return (
+        <aside className="w-64 flex-shrink-0 bg-sidebar border-r">
+            <div className="h-full flex flex-col">
+                <div className="h-16 flex items-center px-6 border-b">
+                    <h2 className="text-xl font-bold font-headline">Admin Panel</h2>
+                </div>
+                <nav className="flex-1 px-4 py-6 space-y-2">
+                     {navItems.map((item) => (
+                         <Link
+                            key={item.label}
+                            href={'/admin'} // All links point to /admin for now
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-4 py-2.5 text-base font-medium transition-colors",
+                                currentPath === item.href
+                                ? "bg-primary/10 text-primary"
+                                : "text-sidebar-foreground hover:bg-muted"
+                            )}
+                            // Prevent navigation for disabled items
+                            onClick={(e) => { if(item.href !== '/admin/problems') e.preventDefault(); }}
+                            aria-disabled={item.href !== '/admin/problems'}
+                         >
+                            <item.icon className="h-5 w-5" />
+                            {item.label}
+                         </Link>
+                     ))}
+                </nav>
+            </div>
+        </aside>
+    );
+};
+
 
 export default function AdminPage() {
     const { userData, loading: authLoading } = useAuth();
@@ -27,15 +80,26 @@ export default function AdminPage() {
 
     return (
         <AdminProvider>
-            <main className="flex-1 container py-8">
-                <h1 className="text-4xl font-bold">Admin Panel</h1>
-                <p className="text-muted-foreground mt-2">
-                    Welcome to the admin panel. Manage your application here.
-                </p>
-                <div className="mt-8">
-                    <AdminDashboard />
+            <div className="flex min-h-screen bg-background">
+                <AdminSidebar />
+                <div className="flex-1 flex flex-col">
+                     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card/80 backdrop-blur-sm px-6">
+                        <div className="flex items-center gap-2">
+                            <CodeXml className="h-6 w-6" />
+                            <span className="text-lg font-bold font-headline">Codbbit</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm font-medium">
+                            <Link href="/apex-problems" className="text-muted-foreground hover:text-foreground">Practice Problems</Link>
+                            <Link href="/leaderboard" className="text-muted-foreground hover:text-foreground">Leaderboard</Link>
+                            <Link href="/problem-sheets" className="text-muted-foreground hover:text-foreground">Problem Sheets</Link>
+                            <Link href="/admin" className="font-semibold text-primary">Admin</Link>
+                        </div>
+                    </header>
+                    <main className="flex-1 p-6">
+                         <AdminDashboard />
+                    </main>
                 </div>
-            </main>
+            </div>
         </AdminProvider>
     );
 }
