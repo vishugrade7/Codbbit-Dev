@@ -596,7 +596,7 @@ export default function ProblemWorkspacePage() {
         </ResizablePanelGroup>
         
         {/* Mobile Layout */}
-         <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
+        <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
             <Tabs defaultValue="problem" className="flex-1 flex flex-col">
                 <TabsList className="shrink-0 rounded-none border-b bg-transparent justify-start px-2">
                     <TabsTrigger value="problem">Problem</TabsTrigger>
@@ -608,30 +608,26 @@ export default function ProblemWorkspacePage() {
                 </TabsContent>
 
                 <TabsContent value="code" className="flex-1 flex flex-col overflow-hidden mt-0">
-                    <ResizablePanelGroup direction="vertical" className="h-full">
+                    <ResizablePanelGroup direction="vertical">
                         <ResizablePanel defaultSize={60} minSize={20}>
-                            <div className="flex flex-col h-full">
-                                <div className="editor-container flex-1 w-full h-full overflow-auto">
-                                    <MonacoEditor
-                                        height="100%"
-                                        language="java"
-                                        value={code}
-                                        onChange={(newValue) => setCode(newValue || "")}
-                                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                        options={{
-                                            fontSize: 14,
-                                            minimap: { enabled: false },
-                                            scrollBeyondLastLine: false,
-                                            padding: { top: 16, bottom: 16 },
-                                            fontFamily: 'var(--font-source-code-pro)',
-                                        }}
-                                    />
-                                </div>
-                            </div>
+                            <MonacoEditor
+                                height="100%"
+                                language="java"
+                                value={code}
+                                onChange={(newValue) => setCode(newValue || "")}
+                                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                options={{
+                                    fontSize: 14,
+                                    minimap: { enabled: false },
+                                    scrollBeyondLastLine: false,
+                                    padding: { top: 16, bottom: 16 },
+                                    fontFamily: 'var(--font-source-code-pro)',
+                                }}
+                            />
                         </ResizablePanel>
                         <ResizableHandle withHandle />
                         <ResizablePanel defaultSize={40} minSize={15}>
-                             <div className="flex flex-col h-full">
+                            <div className="flex flex-col h-full">
                                 <div className="p-2 border-b border-t flex items-center justify-between">
                                     <h3 className="font-semibold text-sm">Test Results</h3>
                                     <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
