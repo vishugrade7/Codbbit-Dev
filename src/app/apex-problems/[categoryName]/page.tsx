@@ -170,6 +170,7 @@ export default function CategoryProblemsPage() {
                 <TableRow>
                   <TableHead className="w-[80px]">Status</TableHead>
                   <TableHead>Title</TableHead>
+                  <TableHead className="hidden md:table-cell text-right w-[120px]">Difficulty</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -204,11 +205,16 @@ export default function CategoryProblemsPage() {
                            {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
                            <div className="flex flex-col">
                             <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
-                            <Badge variant="outline" className={cn("w-20 justify-center mt-1 hidden md:flex", getDifficultyBadgeClass(problem.difficulty))}>
+                             <Badge variant="outline" className={cn("w-20 justify-center mt-1 md:hidden", getDifficultyBadgeClass(problem.difficulty))}>
                                 {problem.difficulty}
                             </Badge>
                            </div>
                         </div>
+                    </TableCell>
+                     <TableCell className="hidden md:table-cell text-right">
+                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyBadgeClass(problem.difficulty))}>
+                            {problem.difficulty}
+                        </Badge>
                     </TableCell>
                   </TableRow>
                 )})}
