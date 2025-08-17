@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock } from "lucide-react";
+import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock, Filter } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 
 export default function CategoryProblemsPage() {
   const params = useParams();
@@ -108,28 +110,53 @@ export default function CategoryProblemsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="All">All Statuses</SelectItem>
-                    <SelectItem value="Solved">Solved</SelectItem>
-                    <SelectItem value="Unsolved">Unsolved</SelectItem>
-                </SelectContent>
-            </Select>
-            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="All">All Difficulties</SelectItem>
-                    <SelectItem value="Easy">Easy</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Hard">Hard</SelectItem>
-                </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="h-10 w-10">
+                  <Filter className="h-5 w-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="end">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">Filters</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Refine your problem search.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <Label htmlFor="status-filter">Status</Label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="col-span-2 h-8">
+                              <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="All">All Statuses</SelectItem>
+                              <SelectItem value="Solved">Solved</SelectItem>
+                              <SelectItem value="Unsolved">Unsolved</SelectItem>
+                          </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                       <Label htmlFor="difficulty-filter">Difficulty</Label>
+                       <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                          <SelectTrigger className="col-span-2 h-8">
+                              <SelectValue placeholder="Difficulty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="All">All Difficulties</SelectItem>
+                              <SelectItem value="Easy">Easy</SelectItem>
+                              <SelectItem value="Medium">Medium</SelectItem>
+                              <SelectItem value="Hard">Hard</SelectItem>
+                          </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 

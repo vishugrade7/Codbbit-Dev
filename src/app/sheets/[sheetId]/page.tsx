@@ -23,6 +23,9 @@ import { useAuth } from '@/context/AuthContext';
 import { Input } from "@/components/ui/input";
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
@@ -328,9 +331,35 @@ export default function SheetDisplayPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                         <Button variant="outline" size="icon" className="h-9 w-9">
-                             <Filter className="h-4 w-4" />
-                         </Button>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-9 w-9">
+                                    <Filter className="h-4 w-4" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64" align="end">
+                                <div className="grid gap-4">
+                                <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Filters</h4>
+                                </div>
+                                <div className="grid gap-2">
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label>Status</Label>
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="col-span-2 h-8">
+                                            <SelectValue placeholder="Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="All">All Statuses</SelectItem>
+                                            <SelectItem value="Solved">Solved</SelectItem>
+                                            <SelectItem value="Unsolved">Unsolved</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    </div>
+                                </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
 
                     <ScrollArea className="flex-1">
