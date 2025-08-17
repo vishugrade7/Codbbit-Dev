@@ -4,6 +4,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { db } from '@/lib/firebase';
 import type { Problem, Course, NavLink, Badge as BadgeType, ApexProblemsData, User as AppUser } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -43,15 +45,10 @@ import { Switch } from '../ui/switch';
 
 type AdminContextType = {
     problems: Problem[];
-    courses: Course[];
-    users: any[];
-    navLinks: NavLink[];
-    badges: BadgeType[];
     categories: Awaited<ReturnType<typeof getProblemCategories>>;
     loading: boolean;
-    fetchProblems: (category: string) => Promise<void>;
-    fetchCategories: () => Promise<void>;
-    fetchUsers: () => Promise<void>;
+    fetchProblems: (category: string) => void;
+    fetchCategories: () => void;
 };
 
 const AdminContext = createContext<AdminContextType | null>(null);
@@ -59,13 +56,8 @@ const AdminContext = createContext<AdminContextType | null>(null);
 export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, userData } = useAuth();
     const router = useRouter();
-    const { toast } = useToast();
 
     const [problems, setProblems] = useState<Problem[]>([]);
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [users, setUsers] = useState<any[]>([]);
-    const [navLinks, setNavLinks] = useState<NavLink[]>([]);
-    const [badges, setBadges] = useState<BadgeType[]>([]);
     const [categories, setCategories] = useState<Awaited<ReturnType<typeof getProblemCategories>>>([]);
     const [loading, setLoading] = useState(true);
     
@@ -79,57 +71,45 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user, userData, router]);
 
-    const fetchProblems = useCallback(async (category: string) => {
+    const fetchProblems = useCallback((category: string) => {
         if (!db) return;
         setLoading(true);
-        try {
-            const apexDocRef = doc(db, "problems", "Apex");
-            const docSnap = await getDoc(apexDocRef);
+        const apexDocRef = doc(db, "problems", "Apex");
+        const unsubscribe = onSnapshot(apexDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data().Category as ApexProblemsData;
                 setProblems(data[category]?.Questions || []);
+            } else {
+                setProblems([]);
             }
-        } catch (error) {
+            setLoading(false);
+        }, (error) => {
             console.error("Error fetching problems:", error);
             setProblems([]);
-        }
-        setLoading(false);
+            setLoading(false);
+        });
+        
+        return unsubscribe;
     }, []);
 
     const fetchCategories = useCallback(async () => {
         setLoading(true);
         const fetchedCategories = await getProblemCategories();
         setCategories(fetchedCategories);
-        if (fetchedCategories.length > 0) {
-            await fetchProblems(fetchedCategories[0].name);
-        }
         setLoading(false);
-    }, [fetchProblems]);
+    }, []);
     
-    const fetchUsers = useCallback(async () => {
-        if (!user) return;
-        setLoading(true);
-        const result = await getAllUsers(user.uid);
-        if (Array.isArray(result)) {
-            setUsers(result);
-        } else {
-            toast({ variant: 'destructive', title: "Error fetching users", description: result.error });
-            setUsers([]);
-        }
-        setLoading(false);
-    }, [user, toast]);
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
+
 
     const value = {
         problems,
-        courses,
-        users,
-        navLinks,
-        badges,
         categories,
         loading,
         fetchProblems,
         fetchCategories,
-        fetchUsers,
     };
 
     return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
@@ -166,9 +146,15 @@ const ProblemList = () => {
     }, [categories, activeCategory]);
 
     useEffect(() => {
+        let unsubscribe: (() => void) | undefined;
         if (activeCategory) {
-            fetchProblems(activeCategory);
+            unsubscribe = fetchProblems(activeCategory);
         }
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
     }, [activeCategory, fetchProblems]);
 
     const handleUpsertProblem = async (values: z.infer<typeof problemFormSchema>) => {
@@ -177,7 +163,7 @@ const ProblemList = () => {
         const result = await upsertProblemToFirestore(user.uid, activeCategory, values);
         if (result.success) {
             toast({ title: `Problem ${editingProblem ? 'updated' : 'added'} successfully!` });
-            await fetchProblems(activeCategory);
+            // Data will be refetched by the onSnapshot listener
             setIsFormOpen(false);
             setEditingProblem(null);
         } else {
@@ -192,7 +178,7 @@ const ProblemList = () => {
         const result = await deleteProblemFromFirestore(user.uid, activeCategory, problemId);
         if (result.success) {
             toast({ title: 'Problem deleted successfully!' });
-            await fetchProblems(activeCategory);
+             // Data will be refetched by the onSnapshot listener
         } else {
             toast({ variant: 'destructive', title: 'Error deleting problem', description: result.error });
         }
@@ -212,7 +198,7 @@ const ProblemList = () => {
                 const result = await bulkUpsertProblemsFromJSON(user.uid, activeCategory!, problemsJSON);
                 if (result.success) {
                     toast({ title: 'Bulk Upload Successful', description: result.message });
-                    await fetchProblems(activeCategory!);
+                    // Data will be refetched by the onSnapshot listener
                 } else {
                     throw new Error(result.error);
                 }
@@ -506,7 +492,21 @@ const CourseList = () => {
 const UserManagement = () => {
     const { user: adminUser } = useAuth();
     const { toast } = useToast();
-    const { users, loading, fetchUsers } = useAdmin();
+    const [users, setUsers] = useState<AppUser[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchUsers = useCallback(async () => {
+         if (!adminUser) return;
+        setLoading(true);
+        const result = await getAllUsers(adminUser.uid);
+        if (Array.isArray(result)) {
+            setUsers(result as AppUser[]);
+        } else {
+            toast({ variant: 'destructive', title: "Error fetching users", description: result.error });
+            setUsers([]);
+        }
+        setLoading(false);
+    }, [adminUser, toast]);
 
     useEffect(() => {
         fetchUsers();

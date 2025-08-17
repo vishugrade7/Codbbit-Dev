@@ -64,6 +64,7 @@ export async function upsertProblemToFirestore(userId: string, categoryName: str
         });
 
         revalidatePath('/apex-problems');
+        revalidatePath(`/apex-problems/${encodeURIComponent(categoryName)}`);
         return { success: true, problemId: problemId };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -132,6 +133,7 @@ export async function deleteProblemFromFirestore(userId: string, categoryName: s
         });
         
         revalidatePath('/apex-problems');
+        revalidatePath(`/apex-problems/${encodeURIComponent(categoryName)}`);
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -248,7 +250,7 @@ export async function upsertCourseToFirestore(userId: string, course: z.infer<ty
     const courseId = id || doc(collection(db, 'courses')).id;
 
     try {
-        await setDoc(doc(db, 'courses', courseId), courseData, { merge: true });
+        await setDoc(doc(db, 'courses', courseId), { ...courseData, createdAt: serverTimestamp() }, { merge: true });
         revalidatePath('/courses');
         return { success: true, courseId };
     } catch (error: any) {
@@ -342,7 +344,8 @@ export async function upsertBadge(userId: string, badge: z.infer<typeof badgeFor
 export async function deleteBadge(userId: string, badgeId: string) {
     await getAdminUser(userId);
     try {
-        await db.collection('badges').doc(badgeId).delete();
+        const badgeDocRef = doc(db, 'badges', badgeId);
+        await deleteDoc(badgeDocRef);
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };
