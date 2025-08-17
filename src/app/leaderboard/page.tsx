@@ -267,11 +267,11 @@ export default function Leaderboard() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[80px] text-center">Rank</TableHead>
+                        <TableHead className="w-[80px]">Rank</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead className="hidden md:table-cell">Company</TableHead>
-                        <TableHead className="hidden md:table-cell text-center">Country</TableHead>
-                        <TableHead className="text-right">Points</TableHead>
+                        <TableHead className="hidden md:table-cell">Country</TableHead>
+                        <TableHead>Points</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -280,7 +280,7 @@ export default function Leaderboard() {
                           key={user.id} 
                           className={cn(user.id === authUser?.uid && "bg-primary/10 hover:bg-primary/20")}
                         >
-                            <TableCell className="font-bold text-center text-xl">{getMedal(user.rank)}</TableCell>
+                            <TableCell className="font-bold text-xl">{getMedal(user.rank)}</TableCell>
                             <TableCell>
                                 <Link href={`/profile/${user.username}`} className="flex items-center gap-4 group">
                                     <Avatar>
@@ -311,8 +311,8 @@ export default function Leaderboard() {
                                     </div>
                                 ) : null}
                             </TableCell>
-                            <TableCell className="hidden md:table-cell text-center">{user.country}</TableCell>
-                            <TableCell className="text-right font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
+                            <TableCell className="hidden md:table-cell">{user.country}</TableCell>
+                            <TableCell className="font-mono font-semibold">{user.points.toLocaleString()}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -336,3 +336,5 @@ export default function Leaderboard() {
     </main>
   );
 }
+
+    
