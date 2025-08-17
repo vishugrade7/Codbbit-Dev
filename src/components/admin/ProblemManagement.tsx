@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -56,6 +55,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 
 type AdminContextType = {
@@ -943,160 +943,179 @@ const BrandingManager = () => {
     );
 };
 
+const pricingFormSchema = z.object({
+    plans: z.array(pricingPlanSchema)
+});
+
 const PricingManager = () => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [loading, setLoading] = useState(true);
-    const [plans, setPlans] = useState<PricingPlan[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
     
+    const form = useForm<z.infer<typeof pricingFormSchema>>({
+        defaultValues: {
+            plans: []
+        }
+    });
+
     useEffect(() => {
         if (!user) return;
         const fetchPlans = async () => {
-            setLoading(true);
+            setIsSaving(true);
             const result = await getPricingPlans(user.uid);
-             if (result.success && result.plans) {
-                setPlans(result.plans);
+            if (result.success && result.plans) {
+                // Ensure plans are sorted correctly
+                const planOrder = ['monthly', 'biannually', 'annually'];
+                const sortedPlans = result.plans.sort((a, b) => planOrder.indexOf(a.id) - planOrder.indexOf(b.id));
+                form.reset({ plans: sortedPlans });
             } else {
                 toast({ variant: 'destructive', title: 'Error fetching plans', description: result.error });
             }
-            setLoading(false);
+            setIsSaving(false);
         };
         fetchPlans();
-    }, [user, toast]);
-    
-    const handleSave = async (plan: z.infer<typeof pricingPlanSchema>) => {
+    }, [user, toast, form]);
+
+    const { fields } = useFieldArray({
+        control: form.control,
+        name: "plans",
+    });
+
+    const onSubmit = async (data: z.infer<typeof pricingFormSchema>) => {
         if (!user) return;
-        const result = await upsertPricingPlan(user.uid, plan);
-        if (result.success) {
-            toast({ title: 'Plan saved successfully!' });
-            const updatedPlans = await getPricingPlans(user.uid);
-            if (updatedPlans.success && updatedPlans.plans) {
-                setPlans(updatedPlans.plans);
-            }
+        setIsSaving(true);
+        
+        const results = await Promise.all(data.plans.map(plan => upsertPricingPlan(user.uid, plan)));
+        
+        const hasError = results.some(r => !r.success);
+        
+        if (hasError) {
+            toast({ variant: 'destructive', title: 'Error saving one or more plans.' });
         } else {
-            toast({ variant: 'destructive', title: 'Error saving plan', description: result.error });
+            toast({ title: 'All prices saved successfully!' });
         }
+
+        setIsSaving(false);
     };
     
+    if (isSaving && !form.formState.isDirty) {
+        return <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin"/></div>
+    }
+
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold">Pricing Management</h1>
-                <p className="text-muted-foreground">Manage your subscription plans and prices.</p>
+                <p className="text-muted-foreground">Set the prices for your subscription plans in INR and USD.</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {loading ? (
-                    <div className="lg:col-span-3 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>
-                ) : (
-                    plans.map(plan => (
-                        <PricingPlanForm key={plan.id} plan={plan} onSave={handleSave} />
-                    ))
-                )}
-            </div>
-        </div>
-    );
-};
-
-
-const PricingPlanForm = ({ plan, onSave }: { plan: PricingPlan, onSave: (data: PricingPlan) => Promise<void>}) => {
-    const { toast } = useToast();
-    const [isSaving, setIsSaving] = useState(false);
-    const form = useForm<z.infer<typeof pricingPlanSchema>>({
-        resolver: zodResolver(pricingPlanSchema),
-        defaultValues: plan
-    });
-    
-    const { fields, append, remove } = useFieldArray({
-        control: form.control,
-        name: "features",
-    });
-
-    const onSubmit = async (data: z.infer<typeof pricingPlanSchema>) => {
-        setIsSaving(true);
-        await onSave(data);
-        setIsSaving(false);
-    };
-    
-    return (
-        <Card>
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <CardHeader>
-                        <CardTitle className="capitalize">{plan.id}</CardTitle>
-                        <FormField
-                            control={form.control}
-                            name="active"
-                            render={({ field }) => (
-                                <FormItem className="flex items-center gap-2 pt-2">
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="!mt-0">Active</FormLabel>
-                                </FormItem>
-                            )}
-                        />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                             <FormField
-                                control={form.control}
-                                name="prices.inr"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Price (INR)</FormLabel>
-                                        <div className="relative">
-                                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} className="pl-8"/>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="prices.usd"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Price (USD)</FormLabel>
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} className="pl-8"/>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <div>
-                            <Label className="text-sm font-medium">Features</Label>
-                            <div className="space-y-2 mt-2">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">INR Pricing (₹)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                             <Accordion type="single" collapsible className="w-full">
                                 {fields.map((field, index) => (
-                                    <div key={field.id} className="flex items-center gap-2">
-                                        <FormField
-                                            control={form.control}
-                                            name={`features.${index}.value`}
-                                            render={({ field }) => (
-                                                 <Input {...field} />
-                                            )}
-                                        />
-                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(index)}><Trash className="w-4 h-4 text-destructive"/></Button>
-                                    </div>
+                                    <AccordionItem key={field.id} value={field.id}>
+                                        <AccordionTrigger className="capitalize font-medium">{field.id}</AccordionTrigger>
+                                        <AccordionContent>
+                                            <FormField
+                                                control={form.control}
+                                                name={`plans.${index}.prices.inr`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Price (₹)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                                                        </FormControl>
+                                                         <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </AccordionContent>
+                                    </AccordionItem>
                                 ))}
-                                <Button type="button" variant="outline" size="sm" onClick={() => append({value: ""})}><PlusCircle className="mr-2 h-4 w-4"/> Add Feature</Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="submit" className="w-full" disabled={isSaving}>
+                            </Accordion>
+                        </CardContent>
+                    </Card>
+
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">USD Pricing ($)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Accordion type="single" collapsible className="w-full">
+                                {fields.map((field, index) => (
+                                    <AccordionItem key={field.id} value={field.id}>
+                                        <AccordionTrigger className="capitalize font-medium">{field.id}</AccordionTrigger>
+                                        <AccordionContent>
+                                            <FormField
+                                                control={form.control}
+                                                name={`plans.${index}.prices.usd`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Price ($)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                                                        </FormControl>
+                                                         <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        </CardContent>
+                    </Card>
+                    
+                    <div className="flex justify-end">
+                        <Button type="submit" disabled={isSaving}>
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                            Save Plan
+                            Save Prices
                         </Button>
-                    </CardFooter>
+                    </div>
                 </form>
             </Form>
-        </Card>
+            
+            <div className="space-y-6 mt-12">
+                 <div>
+                    <h1 className="text-2xl font-bold">Voucher Management</h1>
+                    <p className="text-muted-foreground">Create and manage discount vouchers.</p>
+                </div>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                         <CardTitle className="text-lg">Vouchers</CardTitle>
+                         <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/> Add Voucher</Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Code</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Value</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Expires</TableHead>
+                                        <TableHead className="w-[80px]">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                            Voucher management coming soon.
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     );
 };
 
