@@ -93,8 +93,8 @@ export default function CategoryProblemsPage() {
   }
 
   return (
-    <main className="flex-1 py-8">
-      <div className="container">
+    <main className="flex-1 container py-8">
+      <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => router.push('/apex-problems')}>
@@ -157,7 +157,6 @@ export default function CategoryProblemsPage() {
                 </Popover>
             </div>
         </div>
-      </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
@@ -226,6 +225,7 @@ export default function CategoryProblemsPage() {
             <p className="text-muted-foreground">No problems found for the selected criteria.</p>
           </div>
         )}
+      </div>
       </main>
   );
 }
