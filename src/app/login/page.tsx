@@ -11,11 +11,10 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/aut
 import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { updateActiveSession } from "@/app/profile/actions";
+import AuthImage from "@/components/auth-image";
 
 
 const formSchema = z.object({
@@ -71,7 +71,6 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // Force a new session to be created to log out other devices.
       const newSessionId = crypto.randomUUID();
       sessionStorage.setItem('appSessionId', newSessionId);
       await updateActiveSession(user.uid, newSessionId);
@@ -88,7 +87,7 @@ export default function LoginPage() {
         title: "Login failed",
         description: "Invalid email or password. Please try again.",
       });
-      sessionStorage.removeItem('isLoggingIn'); // Remove flag on failure
+      sessionStorage.removeItem('isLoggingIn');
     } finally {
       setIsLoading(false);
     }
@@ -142,31 +141,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Welcome back</CardTitle>
-          <CardDescription>
-            Don't have an account?{" "}
-            <Link href="/signup" className="underline text-primary hover:text-primary/80">
-              Sign up
-            </Link>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2">
+            <h1 className="text-3xl font-bold">Welcome back!</h1>
+            <p className="text-balance text-muted-foreground">
+              Simplify your workflow and boost your productivity.
+            </p>
+          </div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input placeholder="user@example.com" {...field} className="pl-10" />
-                      </div>
+                        <Input placeholder="your@email.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -221,11 +214,9 @@ export default function LoginPage() {
                     </div>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input 
                             type={showPassword ? "text" : "password"} 
                             {...field}
-                            className="pl-10 pr-10"
                             placeholder="Your password"
                         />
                          <Button
@@ -250,8 +241,15 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+          <div className="mt-4 text-center text-sm">
+            Not a member?{' '}
+            <Link href="/signup" className="underline text-primary hover:text-primary/80">
+              Register now
+            </Link>
+          </div>
+        </div>
+      </div>
+      <AuthImage />
     </div>
   );
 }
