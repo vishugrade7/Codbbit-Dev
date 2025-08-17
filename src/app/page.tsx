@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, KeyRound, Code, BookOpen, Award } from "lucide-react";
+import { ArrowRight, Trophy, Code, BookOpen, Award } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
@@ -46,7 +46,7 @@ export default function Home() {
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/leaderboard">
-                View Leaderboard <KeyRound className="ml-2 h-5 w-5" />
+                View Leaderboard <Trophy className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>
