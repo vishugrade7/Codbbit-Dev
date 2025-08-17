@@ -38,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <div className="flex-1">{children}</div>
-      <Footer />
+      {!user && <Footer />}
     </div>
   );
 }
