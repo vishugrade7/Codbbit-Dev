@@ -5,8 +5,7 @@ import ActivityCalendar, { type Activity } from 'react-activity-calendar';
 import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flame } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useMemo } from 'react';
 
 type HeatmapProps = {
   data: { [date: string]: number };
@@ -16,25 +15,9 @@ type HeatmapProps = {
 
 export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak = 0 }: HeatmapProps) {
   const { theme } = useTheme();
-  const [duration, setDuration] = useState('1y'); // '6m' or '1y'
 
   const activityData = useMemo(() => {
-    const now = new Date();
-    let startDate: Date;
-
-    if (duration === '6m') {
-      const sixMonthsAgo = new Date(now);
-      sixMonthsAgo.setMonth(now.getMonth() - 6);
-      startDate = sixMonthsAgo;
-    } else {
-      const oneYearAgo = new Date(now);
-      oneYearAgo.setFullYear(now.getFullYear() - 1);
-      startDate = oneYearAgo;
-    }
-    
-    const filteredEntries = Object.entries(data).filter(([date]) => new Date(date) >= startDate);
-
-    return filteredEntries.map(([date, count]) => {
+    return Object.entries(data).map(([date, count]) => {
       let level = 0;
       if (count > 0 && count <= 2) level = 1;
       if (count > 2 && count <= 5) level = 2;
@@ -47,7 +30,7 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
         level,
       };
     });
-  }, [data, duration]);
+  }, [data]);
 
   const totalSubmissions = React.useMemo(() => {
     return activityData.reduce((sum, activity) => sum + activity.count, 0);
@@ -58,7 +41,7 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
         <div className="flex-1">
           <h3 className="text-xl font-semibold">
-            {totalSubmissions.toLocaleString()} submissions in {duration === '1y' ? 'the last year' : 'the last 6 months'}
+            {totalSubmissions.toLocaleString()} submissions in the last year
           </h3>
           <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
              <div className="flex items-center gap-1.5 font-medium">
@@ -69,15 +52,6 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
              </div>
           </div>
         </div>
-        <Select value={duration} onValueChange={setDuration}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Select duration" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1y">Last Year</SelectItem>
-            <SelectItem value="6m">Last 6 Months</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <ActivityCalendar
