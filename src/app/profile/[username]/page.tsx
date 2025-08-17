@@ -150,7 +150,7 @@ export default function UserProfilePage() {
         solvedDetails.sort((a, b) => {
             const dateA = a.solvedAt?.toDate ? a.solvedAt.toDate() : new Date(0);
             const dateB = b.solvedAt?.toDate ? b.solvedAt.toDate() : new Date(0);
-            return dateB.getTime() - a.getTime();
+            return dateB.getTime() - dateA.getTime();
         });
         
         return solvedDetails.slice(0, 5).map(solved => {
