@@ -262,9 +262,9 @@ export default function UserProfilePage() {
     <>
     <main className="flex-1 bg-muted/40">
         <div className="container mx-auto px-4 md:px-6 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                 {/* Left Column */}
-                <div className="md:col-span-1 lg:col-span-1 space-y-8 sticky top-24">
+                <div className="md:col-span-1 space-y-8 sticky top-24">
                      <Card>
                         <CardContent className="pt-6">
                             <div className="flex flex-col items-center text-center">
@@ -349,7 +349,7 @@ export default function UserProfilePage() {
                 </div>
 
                 {/* Right Column */}
-                <div className="md:col-span-2 lg:col-span-3 space-y-8">
+                <div className="md:col-span-2 space-y-8">
                      <Card>
                         <CardHeader>
                             <CardTitle>Contribution Stats</CardTitle>
@@ -372,7 +372,7 @@ export default function UserProfilePage() {
                             <CardDescription>Badges earned from your activity.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             <ScrollArea className="h-60">
+                            <ScrollArea className="h-60">
                                 {achievements.length > 0 ? (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                                         {achievements.map((achievement: Achievement) => (
@@ -430,4 +430,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
