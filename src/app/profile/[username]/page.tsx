@@ -398,24 +398,26 @@ export default function UserProfilePage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Recent Activity</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            {recentlySolvedProblems.length > 0 ? (
-                                <div className="space-y-2">
-                                    {recentlySolvedProblems.map(problem => (
-                                        <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
-                                            <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
-                                                <div>
-                                                    <p className="font-medium">{problem.title}</p>
-                                                    <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</p>
+                        <CardContent className="p-0">
+                            <ScrollArea className="h-72">
+                                {recentlySolvedProblems.length > 0 ? (
+                                    <div className="space-y-2 p-4">
+                                        {recentlySolvedProblems.map(problem => (
+                                            <Link key={problem.id} href={`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`} className="block">
+                                                <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
+                                                    <div>
+                                                        <p className="font-medium">{problem.title}</p>
+                                                        <p className="text-sm text-muted-foreground">Solved {formatDistanceToNow(new Date(problem.solvedAt), { addSuffix: true })}</p>
+                                                    </div>
+                                                    <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
                                                 </div>
-                                                <Badge variant="outline" className={getDifficultyClass(problem.difficulty || '')}>{problem.difficulty}</Badge>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
-                            )}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground text-center py-4 text-sm">No problems solved yet. Get started!</p>
+                                )}
+                            </ScrollArea>
                         </CardContent>
                     </Card>
                 </div>
