@@ -25,9 +25,10 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
     const today = new Date();
     const yearAgo = new Date();
     yearAgo.setFullYear(today.getFullYear() - 1);
+    yearAgo.setDate(yearAgo.getDate() + 1); // Start from exactly one year ago
     
     const dates: Activity[] = [];
-    let currentDate = yearAgo;
+    let currentDate = new Date(yearAgo);
 
     // Create an entry for every day in the last year
     while (currentDate <= today) {
@@ -84,7 +85,6 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
         blockMargin={4}
         blockRadius={2}
         fontSize={14}
-        hideTotalCount
         showWeekdayLabels
         renderBlock={(block, activity) => (
           <TooltipProvider delayDuration={100}>
