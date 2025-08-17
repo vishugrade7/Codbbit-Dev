@@ -19,7 +19,7 @@ type ProgressCardProps = {
 const chartConfig = {
   progress: {
     label: "Progress",
-    color: "hsl(142.1 76.2% 41%)", // green-500
+    color: "hsl(var(--primary))",
   },
 } satisfies ChartConfig;
 
@@ -71,25 +71,26 @@ export function ProgressCard({
           </ChartContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-4xl font-bold">{Math.round(progressPercentage)}%</span>
+            <span className="text-sm text-muted-foreground">Solved</span>
           </div>
         </div>
 
         <div className="w-full flex-1 space-y-2 text-sm">
-            <div className="flex justify-between">
+            <div className="grid grid-cols-2 justify-between">
                 <span className="text-muted-foreground">Total Solved</span>
-                <span className="font-semibold">{totalSolved} / {totalAvailable}</span>
+                <span className="font-semibold text-right">{totalSolved} / {totalAvailable}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="grid grid-cols-2 justify-between">
                 <span className="text-muted-foreground">Easy</span>
-                <span className="font-semibold">{easySolved} / {easyTotal}</span>
+                <span className="font-semibold text-right">{easySolved} / {easyTotal}</span>
             </div>
-             <div className="flex justify-between">
+             <div className="grid grid-cols-2 justify-between">
                 <span className="text-muted-foreground">Medium</span>
-                <span className="font-semibold">{mediumSolved} / {mediumTotal}</span>
+                <span className="font-semibold text-right">{mediumSolved} / {mediumTotal}</span>
             </div>
-             <div className="flex justify-between">
+             <div className="grid grid-cols-2 justify-between">
                 <span className="text-muted-foreground">Hard</span>
-                <span className="font-semibold">{hardSolved} / {hardTotal}</span>
+                <span className="font-semibold text-right">{hardSolved} / {hardTotal}</span>
             </div>
         </div>
       </CardContent>
