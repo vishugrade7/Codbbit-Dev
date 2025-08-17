@@ -32,6 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Checkbox } from '../ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type AdminContextType = {
     problemsByCategory: { [category: string]: Problem[] };
@@ -187,7 +188,7 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline"><Edit className="mr-2" /> Manage Categories</Button>
+                <Button variant="outline"><Edit className="mr-2 h-4 w-4" /> Manage Categories</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -369,39 +370,46 @@ const ProblemList = () => {
             </div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div className="flex items-center gap-2 flex-wrap">
-                    {categories.map(cat => (
-                        <Button 
-                            key={cat.name}
-                            variant={activeCategory === cat.name ? "default" : "outline"}
-                            onClick={() => setActiveCategory(cat.name)}
-                        >
-                            {cat.name}
-                        </Button>
-                    ))}
                      <CategoryManager onSelectCategory={setActiveCategory} activeCategory={activeCategory} />
                 </div>
                 <div className="flex items-center gap-2">
                     <input type="file" ref={fileInputRef} onChange={handleBulkUpload} accept=".json" className="hidden" />
-                    <Button variant="outline"><Download className="mr-2"/> Download Sample</Button>
-                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2"/> Bulk Upload</Button>
-                    <Button onClick={() => setIsFormOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Problem</Button>
+                    <Button variant="outline"><Download className="mr-2 h-4 w-4"/> Download Sample</Button>
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Upload className="mr-2 h-4 w-4"/>}
+                         Bulk Upload
+                    </Button>
+                    <Button onClick={() => setIsFormOpen(true)} disabled={!activeCategory}><PlusCircle className="mr-2 h-4 w-4" /> Add New Problem</Button>
                 </div>
             </div>
              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search problems..."
-                        className="w-full max-w-md pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex-1 flex gap-4">
+                    <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search problems..."
+                            className="w-full pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                     <Select value={activeCategory ?? ''} onValueChange={(value) => setActiveCategory(value)} disabled={categories.length === 0}>
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select a category..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map(cat => (
+                                <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
+
                 <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-                    <Button variant={difficultyFilter === 'All' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('All')} className="shadow-sm">All</Button>
-                    <Button variant={difficultyFilter === 'Easy' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Easy')}>Easy</Button>
-                    <Button variant={difficultyFilter === 'Medium' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Medium')}>Medium</Button>
-                    <Button variant={difficultyFilter === 'Hard' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Hard')}>Hard</Button>
+                    <Button variant={difficultyFilter === 'All' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('All')} className="shadow-sm">All</Button>
+                    <Button variant={difficultyFilter === 'Easy' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Easy')}>Easy</Button>
+                    <Button variant={difficultyFilter === 'Medium' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Medium')}>Medium</Button>
+                    <Button variant={difficultyFilter === 'Hard' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Hard')}>Hard</Button>
                 </div>
              </div>
             <div className="rounded-md border">
