@@ -200,7 +200,7 @@ export default function CategoryProblemsPage() {
                            {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
                            <div className="flex flex-col">
                             <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
-                            <Badge variant="outline" className={cn("w-20 justify-center mt-1", getDifficultyBadgeClass(problem.difficulty))}>
+                            <Badge variant="outline" className={cn("w-20 justify-center mt-1 hidden md:flex", getDifficultyBadgeClass(problem.difficulty))}>
                                 {problem.difficulty}
                             </Badge>
                            </div>
