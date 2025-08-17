@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import type { NavLink } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { getQuickTip } from "@/ai/flows/quick-tip-flow";
+import { getQuickTipAction } from "@/app/actions";
 import { getNavigationSettings } from "@/app/upload-problem/actions";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "./theme-toggle";
@@ -47,7 +47,7 @@ export default function Header() {
         sessionStorage.removeItem('showWelcomeTip');
         const fetchAndShowTip = async () => {
             try {
-                const { tip } = await getQuickTip();
+                const { tip } = await getQuickTipAction();
                 toast({
                     title: (
                         <div className="flex items-center gap-2">
