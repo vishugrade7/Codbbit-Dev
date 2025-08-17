@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from "@/components/ui/input";
+import { Separator } from '@/components/ui/separator';
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
 
