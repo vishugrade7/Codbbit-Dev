@@ -502,7 +502,6 @@ export default function ProblemWorkspacePage() {
             </div>
         </header>
 
-        {/* Desktop View */}
         <ResizablePanelGroup direction="horizontal" className="flex-1 hidden lg:flex">
             <ResizablePanel 
                 ref={leftPanelRef}
@@ -590,7 +589,6 @@ export default function ProblemWorkspacePage() {
             </ResizablePanel>
         </ResizablePanelGroup>
         
-        {/* Mobile/Tablet View */}
         <div className="flex-1 lg:hidden">
             <Tabs defaultValue="problem" className="w-full h-full flex flex-col">
                 <div className="flex-shrink-0 px-4">
@@ -646,4 +644,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
