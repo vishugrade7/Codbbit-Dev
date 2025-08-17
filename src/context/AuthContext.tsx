@@ -75,7 +75,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               sessionStorage.removeItem('isLoggingIn');
           }
 
-          setUserData(currentData);
+          const serializableData = { ...currentData };
+          if (currentData.subscriptionEndDate?.toDate) {
+            serializableData.subscriptionEndDate = currentData.subscriptionEndDate.toDate();
+          }
+
+          setUserData(serializableData);
 
           const isAdmin = currentData.isAdmin || false;
           const status = currentData.razorpaySubscriptionStatus;

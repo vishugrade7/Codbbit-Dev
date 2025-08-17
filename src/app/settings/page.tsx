@@ -92,6 +92,8 @@ export default function Settings() {
     );
   }
 
+  const subscriptionEndDate = userData?.subscriptionEndDate ? new Date(userData.subscriptionEndDate) : null;
+
   return (
     <main className="flex-1 container py-8">
       <div className="max-w-2xl mx-auto">
@@ -114,8 +116,8 @@ export default function Settings() {
                       <div>
                           <p className="font-semibold">{isPro ? "Pro Plan" : "Free Plan"}</p>
                           <p className="text-sm text-muted-foreground">
-                          {isPro && userData?.subscriptionEndDate
-                              ? `Your plan renews on ${format(userData.subscriptionEndDate.toDate(), "PPP")}.`
+                          {isPro && subscriptionEndDate
+                              ? `Your plan renews on ${format(subscriptionEndDate, "PPP")}.`
                               : "Access to free problems and core features."}
                           </p>
                       </div>
