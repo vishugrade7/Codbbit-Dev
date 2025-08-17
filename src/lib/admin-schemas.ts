@@ -121,4 +121,36 @@ export const pricingPlanSchema = z.object({
     features: z.array(z.object({ value: z.string() })),
 });
 
+
+export const voucherSchema = z.object({
+    id: z.string().optional(),
+    code: z.string().min(3, 'Code must be at least 3 characters.'),
+    type: z.enum(['percentage', 'fixed']),
+    value: z.number().min(0, 'Value cannot be negative.'),
+    status: z.enum(['active', 'inactive']),
+    expiresAt: z.date().optional(),
+}).refine(data => {
+    if (data.type === 'percentage' && (data.value < 0 || data.value > 100)) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Percentage value must be between 0 and 100.',
+    path: ['value'],
+});
+
+export const pricingSettingsSchema = z.object({
+    inr: z.object({
+        monthly: z.object({ price: z.number(), total: z.number() }),
+        biannually: z.object({ price: z.number(), total: z.number() }),
+        annually: z.object({ price: z.number(), total: z.number() }),
+    }),
+    usd: z.object({
+        monthly: z.object({ price: z.number(), total: z.number() }),
+        biannually: z.object({ price: z.number(), total: z.number() }),
+        annually: z.object({ price: z.number(), total: z.number() }),
+    }),
+    vouchers: z.array(voucherSchema).optional(),
+});
+
 // #endregion

@@ -6,7 +6,7 @@ import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayU
 import { db } from '@/lib/firebase';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData, PricingPlan } from '@/types';
 import { z } from 'zod';
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingPlanSchema } from '@/lib/admin-schemas';
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema } from '@/lib/admin-schemas';
 import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
@@ -459,19 +459,24 @@ export async function getPricingPlans(userId: string): Promise<{ success: boolea
         if (docSnap.exists()) {
             return { success: true, plans: docSnap.data() };
         } else {
-             return { success: false, error: "Pricing document not found." };
+             return { success: true, plans: {} }; // Return empty object if not found
         }
     } catch (error: any) {
         return { success: false, error: error.message };
     }
 }
 
-export async function updatePricingPlans(userId: string, plansData: any): Promise<{ success: boolean; error?: string }> {
+export async function updatePricingPlans(userId: string, plansData: z.infer<typeof pricingSettingsSchema>): Promise<{ success: boolean; error?: string }> {
     await getAdminUser(userId);
     if (!db) return { success: false, error: 'DB not available' };
+
+    const validation = pricingSettingsSchema.safeParse(plansData);
+    if (!validation.success) {
+        return { success: false, error: validation.error.errors.map(e => e.message).join(', ') };
+    }
     
     try {
-        await setDoc(doc(db, 'settings', 'pricing'), plansData, { merge: true });
+        await setDoc(doc(db, 'settings', 'pricing'), validation.data, { merge: true });
         revalidatePath('/admin?tab=pricing');
         revalidatePath('/pricing');
         return { success: true };

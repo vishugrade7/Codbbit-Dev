@@ -198,7 +198,18 @@ This collection stores global application settings. It contains documents for di
     - `monthly` (map): `price` (number), `total` (number)
     - `biannually` (map): `price` (number), `total` (number)
     - `annually` (map): `price` (number), `total` (number)
-
+  - `vouchers` (array of voucher objects)
+    - **Voucher Object:**
+      ```json
+      {
+        "id": "string",
+        "code": "string",
+        "type": "string", // "percentage" or "fixed"
+        "value": "number",
+        "status": "string", // "active" or "inactive"
+        "expiresAt": "timestamp"
+      }
+      ```
 ```
 - `pricing` document example:
 {
@@ -211,6 +222,16 @@ This collection stores global application settings. It contains documents for di
     "monthly": { "price": 5, "total": 5 },
     "biannually": { "price": 25, "total": 25 },
     "annually": { "price": 40, "total": 40 }
-  }
+  },
+  "vouchers": [
+    {
+      "id": "xyz123",
+      "code": "SUMMER50",
+      "type": "percentage",
+      "value": 50,
+      "status": "active",
+      "expiresAt": "2024-08-31T23:59:59Z"
+    }
+  ]
 }
 ```

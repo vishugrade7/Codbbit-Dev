@@ -5,9 +5,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from '@/lib/firebase';
-import type { Problem, ApexProblemsData, Course, User as AppUser, NavLink, Badge, PricingPlan } from '@/types';
+import type { Problem, ApexProblemsData, Course, User as AppUser, NavLink, Badge } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { 
     upsertProblemToFirestore, 
@@ -29,15 +29,16 @@ import {
     getPricingPlans,
     updatePricingPlans
 } from "@/app/upload-problem/actions";
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingPlanSchema } from '@/lib/admin-schemas';
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema, voucherSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { format } from "date-fns";
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -57,6 +58,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
 
 
 type AdminContextType = {
@@ -944,37 +947,23 @@ const BrandingManager = () => {
     );
 };
 
-const pricingFormSchema = z.object({
-    inr: z.object({
-        monthly: z.object({ price: z.number(), total: z.number() }),
-        biannually: z.object({ price: z.number(), total: z.number() }),
-        annually: z.object({ price: z.number(), total: z.number() }),
-    }),
-    usd: z.object({
-        monthly: z.object({ price: z.number(), total: z.number() }),
-        biannually: z.object({ price: z.number(), total: z.number() }),
-        annually: z.object({ price: z.number(), total: z.number() }),
-    }),
-});
-
 const PricingManager = () => {
     const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    const form = useForm<z.infer<typeof pricingFormSchema>>({
+    const form = useForm<z.infer<typeof pricingSettingsSchema>>({
+        resolver: zodResolver(pricingSettingsSchema),
         defaultValues: {
-            inr: {
-                monthly: { price: 0, total: 0 },
-                biannually: { price: 0, total: 0 },
-                annually: { price: 0, total: 0 },
-            },
-            usd: {
-                monthly: { price: 0, total: 0 },
-                biannually: { price: 0, total: 0 },
-                annually: { price: 0, total: 0 },
-            },
+            inr: { monthly: { price: 0, total: 0 }, biannually: { price: 0, total: 0 }, annually: { price: 0, total: 0 }, },
+            usd: { monthly: { price: 0, total: 0 }, biannually: { price: 0, total: 0 }, annually: { price: 0, total: 0 }, },
+            vouchers: [],
         }
+    });
+
+    const { fields: voucherFields, append: appendVoucher, remove: removeVoucher, update: updateVoucher } = useFieldArray({
+        control: form.control,
+        name: "vouchers"
     });
 
     useEffect(() => {
@@ -983,7 +972,14 @@ const PricingManager = () => {
             setIsSaving(true);
             const result = await getPricingPlans(user.uid);
             if (result.success && result.plans) {
-                form.reset(result.plans);
+                const data = result.plans;
+                 if (data.vouchers) {
+                    data.vouchers = data.vouchers.map((v: any) => ({
+                        ...v,
+                        expiresAt: v.expiresAt instanceof Timestamp ? v.expiresAt.toDate() : undefined,
+                    }));
+                }
+                form.reset(data);
             } else {
                 toast({ variant: 'destructive', title: 'Error fetching plans', description: result.error });
             }
@@ -992,17 +988,34 @@ const PricingManager = () => {
         fetchPlans();
     }, [user, toast, form]);
     
-    const onSubmit = async (data: z.infer<typeof pricingFormSchema>) => {
+    const onSubmit = async (data: z.infer<typeof pricingSettingsSchema>) => {
         if (!user) return;
         setIsSaving(true);
         const result = await updatePricingPlans(user.uid, data);
         if (result.success) {
-            toast({ title: 'Prices saved successfully!' });
+            toast({ title: 'Settings saved successfully!' });
         } else {
-            toast({ variant: 'destructive', title: 'Error saving prices.', description: result.error });
+            toast({ variant: 'destructive', title: 'Error saving settings.', description: result.error });
         }
         setIsSaving(false);
     };
+
+    const onVoucherSave = (voucherData: z.infer<typeof voucherSchema>) => {
+        const index = voucherFields.findIndex(v => v.id === voucherData.id);
+        if (index > -1) {
+            updateVoucher(index, voucherData);
+        } else {
+            appendVoucher({ ...voucherData, id: `new-${Date.now()}` });
+        }
+        // Immediately trigger form save
+        form.handleSubmit(onSubmit)();
+    };
+
+    const onVoucherDelete = (index: number) => {
+        removeVoucher(index);
+         // Immediately trigger form save
+        form.handleSubmit(onSubmit)();
+    }
     
     if (isSaving && !form.formState.isDirty) {
         return <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin"/></div>
@@ -1029,7 +1042,7 @@ const PricingManager = () => {
                                         <AccordionContent className="p-4 grid grid-cols-2 gap-4">
                                              <FormField
                                                 control={form.control}
-                                                name={`inr.${plan}.price`}
+                                                name={`inr.${plan as 'monthly' | 'biannually' | 'annually'}.price`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Price per month (₹)</FormLabel>
@@ -1042,7 +1055,7 @@ const PricingManager = () => {
                                             />
                                             <FormField
                                                 control={form.control}
-                                                name={`inr.${plan}.total`}
+                                                name={`inr.${plan as 'monthly' | 'biannually' | 'annually'}.total`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Total Price (₹)</FormLabel>
@@ -1072,7 +1085,7 @@ const PricingManager = () => {
                                         <AccordionContent className="p-4 grid grid-cols-2 gap-4">
                                             <FormField
                                                 control={form.control}
-                                                name={`usd.${plan}.price`}
+                                                name={`usd.${plan as 'monthly' | 'biannually' | 'annually'}.price`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Price per month ($)</FormLabel>
@@ -1085,7 +1098,7 @@ const PricingManager = () => {
                                             />
                                              <FormField
                                                 control={form.control}
-                                                name={`usd.${plan}.total`}
+                                                name={`usd.${plan as 'monthly' | 'biannually' | 'annually'}.total`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Total Price ($)</FormLabel>
@@ -1120,7 +1133,9 @@ const PricingManager = () => {
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                          <CardTitle className="text-lg">Vouchers</CardTitle>
-                         <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/> Add Voucher</Button>
+                         <VoucherFormDialog onSave={onVoucherSave}>
+                            <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/> Add Voucher</Button>
+                         </VoucherFormDialog>
                     </CardHeader>
                     <CardContent>
                         <div className="rounded-md border">
@@ -1136,11 +1151,35 @@ const PricingManager = () => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                                            Voucher management coming soon.
-                                        </TableCell>
-                                    </TableRow>
+                                    {voucherFields.length > 0 ? voucherFields.map((voucher, index) => (
+                                        <TableRow key={voucher.id}>
+                                            <TableCell className="font-mono">{voucher.code}</TableCell>
+                                            <TableCell className="capitalize">{voucher.type}</TableCell>
+                                            <TableCell>{voucher.type === 'percentage' ? `${voucher.value}%` : `₹${voucher.value}`}</TableCell>
+                                            <TableCell><UiBadge variant={voucher.status === 'active' ? 'secondary' : 'outline'}>{voucher.status}</UiBadge></TableCell>
+                                            <TableCell>{voucher.expiresAt ? format(voucher.expiresAt, 'PPP') : 'Never'}</TableCell>
+                                            <TableCell>
+                                                <div className="flex gap-1">
+                                                <VoucherFormDialog onSave={onVoucherSave} voucher={voucher}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                                                </VoucherFormDialog>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader><AlertDialogTitle>Delete Voucher?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete the voucher `{voucher.code}`?</AlertDialogDescription></AlertDialogHeader>
+                                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => onVoucherDelete(index)}>Delete</AlertDialogAction></AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                                No vouchers created yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </div>
@@ -1151,6 +1190,113 @@ const PricingManager = () => {
     );
 };
 
+
+const VoucherFormDialog = ({ children, onSave, voucher }: { children: React.ReactNode; onSave: (data: z.infer<typeof voucherSchema>) => void; voucher?: z.infer<typeof voucherSchema> }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const form = useForm<z.infer<typeof voucherSchema>>({
+        resolver: zodResolver(voucherSchema),
+        defaultValues: voucher || {
+            code: '',
+            type: 'percentage',
+            value: 10,
+            status: 'active',
+            expiresAt: undefined,
+        }
+    });
+
+    const onSubmit = (data: z.infer<typeof voucherSchema>) => {
+        onSave(data);
+        setIsOpen(false);
+        form.reset();
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{voucher ? 'Edit Voucher' : 'Add New Voucher'}</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                        <FormField control={form.control} name="code" render={({ field }) => (
+                            <FormItem><FormLabel>Voucher Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="type" render={({ field }) => (
+                                <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="percentage">Percentage</SelectItem>
+                                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                                    </SelectContent>
+                                </Select><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="value" render={({ field }) => (
+                                <FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                        <FormField control={form.control} name="status" render={({ field }) => (
+                            <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select><FormMessage /></FormItem>
+                        )} />
+                        <FormField
+                            control={form.control}
+                            name="expiresAt"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Expiration Date</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, "PPP")
+                                        ) : (
+                                            <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormDescription>
+                                    Leave blank for no expiration.
+                                </FormDescription>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                            <Button type="submit">Save Voucher</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export const AdminDashboard = () => {
     const searchParams = useSearchParams();
