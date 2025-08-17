@@ -88,12 +88,12 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
         fontSize={12}
         showWeekdayLabels
         renderBlock={(block, activity) => (
-          <TooltipProvider delayDuration={100}>
+          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>{block}</TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm font-medium">
-                  {activity.count} submissions on {format(new Date(activity.date), 'MMMM d, yyyy')}
+                  {activity.count} submissions on {format(new Date(activity.date), 'PPP')}
                 </p>
               </TooltipContent>
             </Tooltip>
