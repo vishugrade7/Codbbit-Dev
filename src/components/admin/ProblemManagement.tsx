@@ -55,7 +55,7 @@ import { Textarea } from '../ui/textarea';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -880,7 +880,7 @@ const BrandingManager = () => {
             colors: {
                 primary: '231 59% 48%',
                 accent: '174 100% 29%',
-                background: '231 60% 96%',
+                background: '0 0% 0%',
             },
             fonts: {
                 headline: 'Poppins',
@@ -1295,6 +1295,9 @@ const VoucherFormDialog = ({ children, onSave, voucher }: { children: React.Reac
                                     />
                                     </PopoverContent>
                                 </Popover>
+                                <FormDescription>
+                                    Leave blank for no expiration.
+                                </FormDescription>
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -1334,5 +1337,6 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
 
