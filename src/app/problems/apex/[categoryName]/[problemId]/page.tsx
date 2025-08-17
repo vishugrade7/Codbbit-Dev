@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -466,17 +466,19 @@ export default function ProblemWorkspacePage() {
                                     key={p.id}
                                     href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
                                     className={cn(
-                                        "flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-accent",
+                                        "flex items-center gap-3 w-full px-4 py-2 text-sm hover:bg-accent",
                                         p.id === problemId && "bg-accent"
                                     )}
                                 >
-                                    <span className="truncate pr-4">{p.title}</span>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <Badge variant="outline" className={cn("w-20 justify-center", getDifficultyClass(p.difficulty))}>
-                                            {p.difficulty}
-                                        </Badge>
-                                        {(userData?.solvedProblems?.[p.id]) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                                    </div>
+                                    {userData?.solvedProblems?.[p.id] ? (
+                                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                    ) : (
+                                      <Circle className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
+                                    )}
+                                    <span className="truncate flex-1">{p.title}</span>
+                                    <Badge variant="outline" className={cn("w-20 justify-center shrink-0", getDifficultyClass(p.difficulty))}>
+                                        {p.difficulty}
+                                    </Badge>
                                 </Link>
                             )) : (
                                 <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
@@ -646,4 +648,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
