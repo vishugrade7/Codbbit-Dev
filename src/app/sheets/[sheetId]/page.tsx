@@ -414,8 +414,8 @@ export default function SheetDisplayPage() {
                                     <TableRow>
                                         <TableHead className="w-[50px]">#</TableHead>
                                         <TableHead>Title</TableHead>
-                                        <TableHead>Category</TableHead>
-                                        <TableHead>Difficulty</TableHead>
+                                        <TableHead className="hidden md:table-cell">Category</TableHead>
+                                        <TableHead className="hidden md:table-cell">Difficulty</TableHead>
                                         <TableHead className="w-[80px] text-center">Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -443,8 +443,8 @@ export default function SheetDisplayPage() {
                                                     <span className={cn("font-medium", isLocked && "filter blur-sm")}>{problem.title}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell><Badge variant="outline">{problem.categoryName}</Badge></TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden md:table-cell"><Badge variant="outline">{problem.categoryName}</Badge></TableCell>
+                                            <TableCell className="hidden md:table-cell">
                                                 <Badge variant="outline" className={cn("font-medium", getDifficultyBadgeClass(problem.difficulty))}>
                                                     {problem.difficulty}
                                                 </Badge>
