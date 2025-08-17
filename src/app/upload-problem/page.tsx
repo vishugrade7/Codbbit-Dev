@@ -29,6 +29,7 @@ export function ProblemForm({ onSubmit, isLoading, categories, initialData, onCa
     defaultValues: {
       id: initialData?.id || '',
       title: initialData?.title || '',
+      categoryName: initialData?.categoryName || '',
       description: initialData?.description || '',
       difficulty: initialData?.difficulty || 'Easy',
       examples: initialData?.examples?.length ? initialData.examples : [{ input: '', output: '', explanation: '' }],
@@ -74,6 +75,28 @@ export function ProblemForm({ onSubmit, isLoading, categories, initialData, onCa
                     </FormItem>
                 )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="categoryName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {categories.map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                  <FormField
                 control={form.control}
                 name="description"

@@ -310,9 +310,11 @@ const ProblemList = () => {
     }, [problemsByCategory, activeCategory]);
 
     const handleUpsertProblem = async (values: z.infer<typeof problemFormSchema>) => {
-        if (!user || !activeCategory) return;
+        if (!user) return;
         setLoading(true);
-        const result = await upsertProblemToFirestore(user.uid, activeCategory, values);
+        const { categoryName, ...problemData } = values;
+
+        const result = await upsertProblemToFirestore(user.uid, categoryName, problemData);
         if (result.success) {
             toast({ title: `Problem ${editingProblem ? 'updated' : 'added'} successfully!` });
             setIsFormOpen(false);
@@ -372,7 +374,7 @@ const ProblemList = () => {
                     onSubmit={handleUpsertProblem} 
                     isLoading={loading} 
                     categories={categories.map(c => c.name)}
-                    initialData={editingProblem ? { ...editingProblem, categoryName: activeCategory! } : undefined}
+                    initialData={editingProblem ? { ...editingProblem, categoryName: activeCategory! } : { categoryName: activeCategory! } as any}
                     onCancel={() => { setIsFormOpen(false); setEditingProblem(null); }}
                 />;
     }
@@ -1337,6 +1339,4 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
-
-
 

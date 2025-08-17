@@ -17,6 +17,7 @@ export const hintSchema = z.object({
 const baseProblemSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
+  categoryName: z.string({ required_error: "Category is required."}).min(1, "Category is required."),
   description: z.string().min(1, "Description is required."),
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
   examples: z.array(exampleSchema).min(1, "At least one example is required."),

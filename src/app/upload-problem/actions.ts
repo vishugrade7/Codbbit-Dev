@@ -24,11 +24,11 @@ async function getAdminUser(userId: string) {
 }
 
 // #region Problem Actions
-export async function upsertProblemToFirestore(userId: string, categoryName: string, problem: z.infer<typeof problemFormSchema>) {
+export async function upsertProblemToFirestore(userId: string, categoryName: string, problem: Omit<z.infer<typeof problemFormSchema>, 'categoryName'>) {
     await getAdminUser(userId);
     if (!db) return { success: false, error: 'DB not available' };
 
-    const validation = problemFormSchema.safeParse(problem);
+    const validation = problemFormSchema.omit({ categoryName: true }).safeParse(problem);
     if (!validation.success) {
         return { success: false, error: validation.error.message };
     }
