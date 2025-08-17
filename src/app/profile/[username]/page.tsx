@@ -350,7 +350,7 @@ export default function UserProfilePage() {
                 <div className="md:col-span-12 lg:col-span-8 space-y-8">
                      <Card>
                         <CardHeader>
-                            <CardTitle>Contribution Stats</CardTitle>
+                            <CardTitle>Contribution Graph</CardTitle>
                         </CardHeader>
                         <CardContent>
                              {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
