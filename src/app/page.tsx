@@ -1,81 +1,66 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Rocket, BarChart, Database, Code, Trophy } from "lucide-react";
-import Testimonials from "@/components/testimonials";
+import { ArrowRight, KeyRound } from "lucide-react";
 import Image from "next/image";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 
 export default function Home() {
   return (
-    <>
+    <main>
       <section className="w-full py-20 md:py-32 lg:py-40">
         <div className="container px-4 md:px-6 text-center">
-          <div className="max-w-3xl mx-auto space-y-4">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl font-headline">
-              Master Salesforce Development
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <div className="flex -space-x-2 overflow-hidden">
+                <Avatar className="h-6 w-6 border-2 border-background">
+                    <AvatarImage src="https://placehold.co/40x40.png" alt="User 1" data-ai-hint="woman face" />
+                    <AvatarFallback>U1</AvatarFallback>
+                </Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background">
+                    <AvatarImage src="https://placehold.co/40x40.png" alt="User 2" data-ai-hint="man face" />
+                    <AvatarFallback>U2</AvatarFallback>
+                </Avatar>
+                <Avatar className="h-6 w-6 border-2 border-background">
+                    <AvatarImage src="https://placehold.co/40x40.png" alt="User 3" data-ai-hint="woman portrait" />
+                    <AvatarFallback>U3</AvatarFallback>
+                </Avatar>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">Trusted by 503+ developers</p>
+          </div>
+          <div className="max-w-4xl mx-auto space-y-4">
+            <p className="text-primary font-semibold">Codbbit – Build Your Code Habit</p>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl font-headline">
+              Practice <span className="text-primary">{'{Apex}'}</span> Coding Problems
             </h1>
-            <p className="text-lg text-muted-foreground md:text-xl">
-              Build, test, and deploy Salesforce solutions faster with our comprehensive platform for SOQL queries, Apex code, and Lightning Web Components.
+            <p className="text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
+              Join thousands of developers building skills, cracking interviews, and landing internships. Kickstart your coding journey—no boring lectures, just real practice!
             </p>
           </div>
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 px-8 sm:px-0">
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
             <Button asChild size="lg">
               <Link href="/apex-problems">
-                <Rocket className="mr-2 h-5 w-5" />
-                Get Started
+                Get Started <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/leaderboard">
-                <BarChart className="mr-2 h-5 w-5" />
-                View Leaderboard
+                View Leaderboard <KeyRound className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
-
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-card/50">
-        <div className="container px-4 md:px-6">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="bg-card">
-              <CardHeader className="items-center text-center">
-                <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <Database className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle>SOQL Mastery</CardTitle>
-                <CardDescription>
-                  Practice complex queries with real-time validation and feedback.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader className="items-center text-center">
-                <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <Code className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle>Apex Development</CardTitle>
-                <CardDescription>
-                  Write and execute Apex code with instant testing on live Salesforce orgs.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader className="items-center text-center">
-                 <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <Trophy className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle>Competitive Learning</CardTitle>
-                <CardDescription>
-                  Compete with developers worldwide and track your progress.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
+      <section className="container px-4 md:px-6">
+        <div className="relative aspect-[16/9] md:aspect-[2.4/1] overflow-hidden rounded-t-xl border">
+          <Image
+            src="https://placehold.co/1200x500.png"
+            alt="Hero Image"
+            fill
+            className="object-cover"
+            data-ai-hint="person teaching"
+          />
         </div>
       </section>
-
-      <Testimonials />
-    </>
+    </main>
   );
 }
