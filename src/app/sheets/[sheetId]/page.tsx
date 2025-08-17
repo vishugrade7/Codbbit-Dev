@@ -149,7 +149,12 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
             <Separator />
 
             <section>
-                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">Topics Covered</h2>
+                    {topicFilter !== 'All Topics' && (
+                        <Button variant="ghost" size="sm" onClick={() => setTopicFilter('All Topics')} className="flex items-center gap-1 text-xs">Clear Filter <X className="h-3 w-3"/></Button>
+                    )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant={topicFilter === "All Topics" ? 'default' : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
                     {uniqueCategories.map(category => (
@@ -349,7 +354,7 @@ export default function SheetDisplayPage() {
                         </Button>
                         <div className="flex items-center gap-2">
                             {isSearchOpen ? (
-                                <div className="relative w-48">
+                                <div className="relative w-full md:w-64">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         ref={searchInputRef}
@@ -456,24 +461,22 @@ export default function SheetDisplayPage() {
                 </div>
             </div>
              {/* Mobile "View Details" button */}
-             <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t rounded-t-2xl">
-                <p className="text-center font-bold mb-2">{sheet.name}</p>
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button size="lg" className="w-full font-bold">
-                            View Details
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="bottom" className="h-[90vh]">
-                        <SheetHeader>
-                            <SheetTitle>Sheet Details</SheetTitle>
-                        </SheetHeader>
-                        <ScrollArea className="h-[calc(90vh-4rem)] mt-4">
-                            <SheetDetails sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
-                        </ScrollArea>
-                    </SheetContent>
-                </Sheet>
-            </div>
+            <Sheet>
+                 <SheetTrigger asChild>
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t rounded-t-2xl flex items-center justify-between cursor-pointer">
+                        <p className="font-bold">{sheet.name}</p>
+                        <ChevronsUp className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[90vh]">
+                    <SheetHeader>
+                        <SheetTitle>Sheet Details</SheetTitle>
+                    </SheetHeader>
+                    <ScrollArea className="h-[calc(90vh-4rem)] mt-4">
+                        <SheetDetails sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
+                    </ScrollArea>
+                </SheetContent>
+            </Sheet>
         </main>
     );
 }
