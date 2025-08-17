@@ -107,17 +107,6 @@ export default function Header() {
                 </Link>
                 ))
             )}
-            {user && userData?.isAdmin && (
-                <Link
-                    href='/admin'
-                    className={cn(
-                    "transition-colors hover:text-foreground/80",
-                    pathname.startsWith('/admin') ? "text-foreground" : "text-foreground/60"
-                    )}
-                >
-                    Admin
-                </Link>
-            )}
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -157,6 +146,12 @@ export default function Header() {
                             <Settings className="mr-2 h-4 w-4" />
                             <span>Settings</span>
                         </DropdownMenuItem>
+                         {userData?.isAdmin && (
+                            <DropdownMenuItem onClick={() => router.push('/admin')}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                <span>Admin</span>
+                            </DropdownMenuItem>
+                        )}
                         {!isPro && (
                             <DropdownMenuItem onClick={() => router.push('/pricing')}>
                                 <Rocket className="mr-2 h-4 w-4" />
