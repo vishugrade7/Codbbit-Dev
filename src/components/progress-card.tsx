@@ -17,9 +17,17 @@ type ProgressCardProps = {
 };
 
 const chartConfig = {
-  progress: {
-    label: "Progress",
-    color: "hsl(var(--primary))",
+  easy: {
+    label: "Easy",
+    color: "hsl(var(--chart-2))",
+  },
+  medium: {
+    label: "Medium",
+    color: "hsl(var(--chart-3))",
+  },
+  hard: {
+    label: "Hard",
+    color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
 
@@ -33,9 +41,15 @@ export function ProgressCard({
   hardSolved,
   hardTotal,
 }: ProgressCardProps) {
-  const progressPercentage = totalAvailable > 0 ? (totalSolved / totalAvailable) * 100 : 0;
+  const easyPercentage = easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0;
+  const mediumPercentage = mediumTotal > 0 ? (mediumSolved / mediumTotal) * 100 : 0;
+  const hardPercentage = hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0;
 
-  const chartData = [{ name: "progress", value: progressPercentage, fill: "var(--color-progress)" }];
+  const chartData = [
+    { difficulty: "easy", value: easyPercentage, fill: "var(--color-easy)" },
+    { difficulty: "medium", value: mediumPercentage, fill: "var(--color-medium)" },
+    { difficulty: "hard", value: hardPercentage, fill: "var(--color-hard)" },
+  ];
 
   return (
     <Card>
@@ -51,10 +65,11 @@ export function ProgressCard({
             <RadialBarChart
               data={chartData}
               startAngle={90}
-              endAngle={-270}
-              innerRadius="70%"
+              endAngle={450}
+              innerRadius="30%"
               outerRadius="100%"
-              barSize={12}
+              barSize={8}
+              barGap={4}
             >
               <PolarAngleAxis
                 type="number"
@@ -66,11 +81,12 @@ export function ProgressCard({
                 dataKey="value"
                 background={{ fill: 'hsl(var(--muted))' }}
                 cornerRadius={10}
+                stackId="a"
               />
             </RadialBarChart>
           </ChartContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-bold">{Math.round(progressPercentage)}%</span>
+            <span className="text-4xl font-bold">{totalSolved}</span>
             <span className="text-sm text-muted-foreground">Solved</span>
           </div>
         </div>
@@ -81,15 +97,15 @@ export function ProgressCard({
                 <span className="font-semibold text-right">{totalSolved} / {totalAvailable}</span>
             </div>
             <div className="grid grid-cols-2 justify-between">
-                <span className="text-muted-foreground">Easy</span>
+                <span className="text-muted-foreground flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-green-500" />Easy</span>
                 <span className="font-semibold text-right">{easySolved} / {easyTotal}</span>
             </div>
              <div className="grid grid-cols-2 justify-between">
-                <span className="text-muted-foreground">Medium</span>
+                <span className="text-muted-foreground flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" />Medium</span>
                 <span className="font-semibold text-right">{mediumSolved} / {mediumTotal}</span>
             </div>
              <div className="grid grid-cols-2 justify-between">
-                <span className="text-muted-foreground">Hard</span>
+                <span className="text-muted-foreground flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500" />Hard</span>
                 <span className="font-semibold text-right">{hardSolved} / {hardTotal}</span>
             </div>
         </div>
