@@ -50,6 +50,7 @@ import { Textarea } from '../ui/textarea';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 
 type AdminContextType = {
@@ -804,37 +805,39 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                 <DialogHeader>
                     <DialogTitle>{badge ? 'Edit Badge' : 'Add Badge'}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                     <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="description" render={({ field }) => (
-                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="type" render={({ field }) => (
-                        <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="STREAK">STREAK</SelectItem>
-                                <SelectItem value="POINTS">POINTS</SelectItem>
-                                <SelectItem value="TOTAL_SOLVED">TOTAL_SOLVED</SelectItem>
-                                <SelectItem value="CATEGORY_SOLVED">CATEGORY_SOLVED</SelectItem>
-                                <SelectItem value="ACTIVE_DAYS">ACTIVE_DAYS</SelectItem>
-                            </SelectContent>
-                        </Select><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="value" render={({ field }) => (
-                        <FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     {form.watch('type') === 'CATEGORY_SOLVED' && (
-                         <FormField control={form.control} name="category" render={({ field }) => (
-                            <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                            <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                     )}
-                     <DialogFooter>
-                         <Button type="submit">Save</Button>
-                     </DialogFooter>
-                </form>
+                        <FormField control={form.control} name="description" render={({ field }) => (
+                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="type" render={({ field }) => (
+                            <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    <SelectItem value="STREAK">STREAK</SelectItem>
+                                    <SelectItem value="POINTS">POINTS</SelectItem>
+                                    <SelectItem value="TOTAL_SOLVED">TOTAL_SOLVED</SelectItem>
+                                    <SelectItem value="CATEGORY_SOLVED">CATEGORY_SOLVED</SelectItem>
+                                    <SelectItem value="ACTIVE_DAYS">ACTIVE_DAYS</SelectItem>
+                                </SelectContent>
+                            </Select><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="value" render={({ field }) => (
+                            <FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        {form.watch('type') === 'CATEGORY_SOLVED' && (
+                            <FormField control={form.control} name="category" render={({ field }) => (
+                                <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        )}
+                        <DialogFooter>
+                            <Button type="submit">Save</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     )
