@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, CheckCircle2, Circle, Search, Lock, Filter } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, CheckCircle2, Circle, Search, Lock, Filter, ChevronsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -24,9 +24,144 @@ import { Input } from "@/components/ui/input";
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
+
+const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniqueCategories, topicFilter, setTopicFilter }: { sheet: ProblemSheet, totalProgress: number, solvedStats: any, difficultyStats: any, uniqueCategories: string[], topicFilter: string, setTopicFilter: (filter: string) => void }) => {
+    const { toast } = useToast();
+    const { authUser } = useAuth();
+    const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [subscribersCount, setSubscribersCount] = useState(sheet.subscribers?.length || 0);
+
+     useEffect(() => {
+        const subscribers = sheet.subscribers || [];
+        setSubscribersCount(subscribers.length);
+        if (authUser) {
+            setIsSubscribed(subscribers.includes(authUser.uid));
+        } else {
+            setIsSubscribed(false);
+        }
+    }, [sheet.subscribers, authUser]);
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        toast({ title: 'Link copied to clipboard!' });
+    };
+
+    const handleToggleSubscription = async () => {
+        if (!authUser) {
+            toast({ variant: 'destructive', title: 'Please log in to follow.' });
+            return;
+        }
+        if (isSubscribing || !db) return;
+    
+        setIsSubscribing(true);
+    
+        const result = await toggleSheetSubscription(authUser.uid, sheet.id, isSubscribed);
+
+        if (result.success) {
+            toast({
+                title: isSubscribed ? 'Unfollowed successfully' : 'Followed successfully',
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'An error occurred',
+                description: result.error,
+            });
+        }
+        setIsSubscribing(false);
+    };
+
+     const timeAgo = useMemo(() => {
+        if (!sheet?.createdAt) return '';
+        try {
+            if (sheet.createdAt && typeof sheet.createdAt.toDate === 'function') {
+                return formatDistanceToNow(sheet.createdAt.toDate(), { addSuffix: true });
+            }
+        } catch (e) {
+            console.error("Error formatting date:", e);
+        }
+        return '';
+    }, [sheet]);
+
+    return (
+        <aside className="space-y-8">
+            <section>
+                <h1 className="text-3xl font-bold font-headline mb-2">{sheet.name}</h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
+                    <Button size="sm" onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
+                        {isSubscribing ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : isSubscribed ? (
+                            <UserCheck className="mr-2 h-4 w-4" />
+                        ) : (
+                            <UserPlus className="mr-2 h-4 w-4" />
+                        )}
+                        {isSubscribed ? 'Following' : 'Follow'}
+                    </Button>
+                    <Button size="sm" onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <Avatar className="h-6 w-6">
+                        <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                        <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span>Created by {sheet.creatorName} {timeAgo}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{subscribersCount} {subscribersCount === 1 ? 'follower' : 'followers'}</span>
+                </div>
+            </section>
+            
+            <Separator />
+
+            <section>
+                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Progress</h2>
+                <div className="flex items-center justify-between mb-2">
+                <span className="font-semibold">{Math.round(totalProgress)}%</span>
+                <span className="text-sm text-muted-foreground">{solvedStats.total} / {difficultyStats.total} solved</span>
+                </div>
+                <Progress value={totalProgress} className="h-2 mb-4" />
+                <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-3">
+                        <span className="w-14 shrink-0 text-muted-foreground">Easy</span>
+                        <Progress value={(solvedStats.Easy / (difficultyStats.Easy || 1)) * 100} className="h-1.5 [&>div]:bg-green-500" />
+                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Easy}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="w-14 shrink-0 text-muted-foreground">Medium</span>
+                        <Progress value={(solvedStats.Medium / (difficultyStats.Medium || 1)) * 100} className="h-1.5 [&>div]:bg-amber-500" />
+                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Medium}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="w-14 shrink-0 text-muted-foreground">Hard</span>
+                        <Progress value={(solvedStats.Hard / (difficultyStats.Hard || 1)) * 100} className="h-1.5 [&>div]:bg-red-500" />
+                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Hard}</span>
+                    </div>
+                </div>
+            </section>
+            
+            <Separator />
+
+            <section>
+                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
+                <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant={topicFilter === "All Topics" ? "secondary" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
+                    {uniqueCategories.map(category => (
+                        <Button key={category} size="sm" variant={topicFilter === category ? "secondary" : "outline"} onClick={() => setTopicFilter(category)}>
+                            {category}
+                        </Button>
+                    ))}
+                </div>
+            </section>
+        </aside>
+    );
+};
 
 
 export default function SheetDisplayPage() {
@@ -39,9 +174,6 @@ export default function SheetDisplayPage() {
     const [sheet, setSheet] = useState<ProblemSheet | null>(null);
     const [problems, setProblems] = useState<ProblemDetailWithCategory[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isSubscribed, setIsSubscribed] = useState(false);
-    const [subscribersCount, setSubscribersCount] = useState(0);
-    const [isSubscribing, setIsSubscribing] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
@@ -64,14 +196,6 @@ export default function SheetDisplayPage() {
             
             const sheetData = { id: sheetSnap.id, ...sheetSnap.data() } as ProblemSheet;
             setSheet(sheetData);
-
-            const subscribers = sheetData.subscribers || [];
-            setSubscribersCount(subscribers.length);
-            if (authUser) {
-                setIsSubscribed(subscribers.includes(authUser.uid));
-            } else {
-                setIsSubscribed(false);
-            }
             
             if (sheetData.problemIds && sheetData.problemIds.length > 0) {
                 const apexDocRef = doc(db, "problems", "Apex");
@@ -101,7 +225,7 @@ export default function SheetDisplayPage() {
         });
 
         return () => unsubscribe();
-    }, [sheetId, toast, authUser]);
+    }, [sheetId, toast]);
 
     const filteredProblems = useMemo(() => {
         return problems
@@ -162,36 +286,6 @@ export default function SheetDisplayPage() {
         return { ...stats, total: problems.length };
     }, [problems]);
 
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href);
-        toast({ title: 'Link copied to clipboard!' });
-    };
-
-    const handleToggleSubscription = async () => {
-        if (!authUser) {
-            toast({ variant: 'destructive', title: 'Please log in to follow.' });
-            return;
-        }
-        if (isSubscribing || !db) return;
-    
-        setIsSubscribing(true);
-    
-        const result = await toggleSheetSubscription(authUser.uid, sheetId, isSubscribed);
-
-        if (result.success) {
-            toast({
-                title: isSubscribed ? 'Unfollowed successfully' : 'Followed successfully',
-            });
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'An error occurred',
-                description: result.error,
-            });
-        }
-        setIsSubscribing(false);
-    };
-
     const getDifficultyBadgeClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
           case 'easy': return 'bg-green-100 text-green-800 border-green-200/80 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700/60';
@@ -201,18 +295,6 @@ export default function SheetDisplayPage() {
         }
     };
     
-    const timeAgo = useMemo(() => {
-        if (!sheet?.createdAt) return '';
-        try {
-            if (sheet.createdAt && typeof sheet.createdAt.toDate === 'function') {
-                return formatDistanceToNow(sheet.createdAt.toDate(), { addSuffix: true });
-            }
-        } catch (e) {
-            console.error("Error formatting date:", e);
-        }
-        return '';
-    }, [sheet]);
-
     const statusOptions = ['All Statuses', 'Solved', 'Unsolved'];
     const getStatusValue = (option: string) => {
         if (option === 'All Statuses') return 'All';
@@ -246,86 +328,16 @@ export default function SheetDisplayPage() {
                 Back to All Sheets
             </Button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
-                {/* --- Left Column --- */}
-                <div className="lg:col-span-1 h-full overflow-hidden flex flex-col">
-                    <ScrollArea className="pr-4">
-                        <aside className="space-y-8">
-                            <section>
-                                <h1 className="text-3xl font-bold font-headline mb-2">{sheet.name}</h1>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-                                    <Button size="sm" onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
-                                        {isSubscribing ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : isSubscribed ? (
-                                            <UserCheck className="mr-2 h-4 w-4" />
-                                        ) : (
-                                            <UserPlus className="mr-2 h-4 w-4" />
-                                        )}
-                                        {isSubscribed ? 'Following' : 'Follow'}
-                                    </Button>
-                                    <Button size="sm" onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                                    <Avatar className="h-6 w-6">
-                                        <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                        <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <span>Created by {sheet.creatorName} {timeAgo}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Users className="h-4 w-4" />
-                                    <span>{subscribersCount} {subscribersCount === 1 ? 'follower' : 'followers'}</span>
-                                </div>
-                            </section>
-                            
-                            <Separator />
-
-                            <section>
-                                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Progress</h2>
-                                <div className="flex items-center justify-between mb-2">
-                                <span className="font-semibold">{Math.round(totalProgress)}%</span>
-                                <span className="text-sm text-muted-foreground">{solvedStats.total} / {difficultyStats.total} solved</span>
-                                </div>
-                                <Progress value={totalProgress} className="h-2 mb-4" />
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-14 shrink-0 text-muted-foreground">Easy</span>
-                                        <Progress value={(solvedStats.Easy / (difficultyStats.Easy || 1)) * 100} className="h-1.5 [&>div]:bg-green-500" />
-                                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Easy}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-14 shrink-0 text-muted-foreground">Medium</span>
-                                        <Progress value={(solvedStats.Medium / (difficultyStats.Medium || 1)) * 100} className="h-1.5 [&>div]:bg-amber-500" />
-                                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Medium}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-14 shrink-0 text-muted-foreground">Hard</span>
-                                        <Progress value={(solvedStats.Hard / (difficultyStats.Hard || 1)) * 100} className="h-1.5 [&>div]:bg-red-500" />
-                                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Hard}</span>
-                                    </div>
-                                </div>
-                            </section>
-                            
-                            <Separator />
-
-                            <section>
-                                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
-                                <div className="flex flex-wrap gap-2">
-                                    <Button size="sm" variant={topicFilter === "All Topics" ? "secondary" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
-                                    {uniqueCategories.map(category => (
-                                        <Button key={category} size="sm" variant={topicFilter === category ? "secondary" : "outline"} onClick={() => setTopicFilter(category)}>
-                                            {category}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </section>
-                        </aside>
+                {/* --- Left Column (Desktop) --- */}
+                <div className="hidden lg:block lg:col-span-1 h-full overflow-hidden">
+                    <ScrollArea className="h-full pr-4">
+                        <SheetDetails sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
                     </ScrollArea>
                 </div>
 
                 {/* --- Right Column --- */}
                 <div className="lg:col-span-2 flex flex-col overflow-hidden">
-                     <div className="flex justify-end items-center mb-4 gap-2 shrink-0">
+                    <div className="flex justify-between items-center mb-4 gap-2 shrink-0">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -335,28 +347,46 @@ export default function SheetDisplayPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                         <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
-                                    <Filter className="h-4 w-4" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-56 p-0" align="end">
-                                <div className="py-2">
-                                    <p className="text-sm font-medium px-4 mb-2">Status</p>
-                                    {statusOptions.map(option => (
-                                        <button
-                                            key={option}
-                                            className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
-                                            onClick={() => setStatusFilter(getStatusValue(option))}
-                                        >
-                                            <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
-                                            {option}
-                                        </button>
-                                    ))}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                        <div className="flex items-center gap-2">
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                                        <Filter className="h-4 w-4" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-56 p-0" align="end">
+                                    <div className="py-2">
+                                        <p className="text-sm font-medium px-4 mb-2">Status</p>
+                                        {statusOptions.map(option => (
+                                            <button
+                                                key={option}
+                                                className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                                onClick={() => setStatusFilter(getStatusValue(option))}
+                                            >
+                                                <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                             {/* Mobile "View Details" button */}
+                            <Sheet>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" className="lg:hidden">
+                                        <ChevronsUp className="mr-2 h-4 w-4" /> View Details
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="bottom" className="h-[90vh]">
+                                    <SheetHeader>
+                                        <SheetTitle>Sheet Details</SheetTitle>
+                                    </SheetHeader>
+                                    <ScrollArea className="h-[calc(90vh-4rem)] mt-4">
+                                        <SheetDetails sheet={sheet} totalProgress={totalProgress} solvedStats={solvedStats} difficultyStats={difficultyStats} uniqueCategories={uniqueCategories} topicFilter={topicFilter} setTopicFilter={setTopicFilter} />
+                                    </ScrollArea>
+                                </SheetContent>
+                            </Sheet>
+                        </div>
                     </div>
 
                     <ScrollArea className="flex-1">
