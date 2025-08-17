@@ -101,7 +101,7 @@ export function ProgressCard({
             </RadialBarChart>
           </ChartContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold">{totalSolved}</span>
+            <span className="text-3xl font-bold">{totalSolved}<span className="text-xl text-muted-foreground">/{totalAvailable}</span></span>
             <span className="text-sm text-muted-foreground">Solved</span>
           </div>
         </div>
