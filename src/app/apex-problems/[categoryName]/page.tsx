@@ -14,15 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock, Filter } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 export default function CategoryProblemsPage() {
   const params = useParams();
@@ -84,6 +77,18 @@ export default function CategoryProblemsPage() {
       default: return 'bg-muted';
     }
   };
+  
+  const statusOptions = ['All Statuses', 'Solved', 'Unsolved'];
+  const difficultyOptions = ['All Difficulties', 'Easy', 'Medium', 'Hard'];
+
+  const getStatusValue = (option: string) => {
+      if (option === 'All Statuses') return 'All';
+      return option;
+  }
+   const getDifficultyValue = (option: string) => {
+      if (option === 'All Difficulties') return 'All';
+      return option;
+  }
 
   return (
     <main className="flex-1 container py-8">
@@ -112,50 +117,40 @@ export default function CategoryProblemsPage() {
           </div>
           <div className="flex items-center gap-2">
             <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="h-10 w-10">
-                  <Filter className="h-5 w-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64" align="end">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Filters</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Refine your problem search.
-                    </p>
-                  </div>
-                  <div className="grid gap-2">
-                    <div className="grid grid-cols-3 items-center gap-4">
-                      <Label htmlFor="status-filter">Status</Label>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className="col-span-2 h-8">
-                              <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="All">All Statuses</SelectItem>
-                              <SelectItem value="Solved">Solved</SelectItem>
-                              <SelectItem value="Unsolved">Unsolved</SelectItem>
-                          </SelectContent>
-                      </Select>
+                <PopoverTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
+                        <Filter className="h-5 w-5" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-0" align="end">
+                    <div className="py-2">
+                        <p className="text-sm font-medium px-4 mb-2">Status</p>
+                        {statusOptions.map(option => (
+                             <button
+                                key={option}
+                                className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                onClick={() => setStatusFilter(getStatusValue(option))}
+                            >
+                                <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                {option}
+                            </button>
+                        ))}
                     </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                       <Label htmlFor="difficulty-filter">Difficulty</Label>
-                       <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                          <SelectTrigger className="col-span-2 h-8">
-                              <SelectValue placeholder="Difficulty" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="All">All Difficulties</SelectItem>
-                              <SelectItem value="Easy">Easy</SelectItem>
-                              <SelectItem value="Medium">Medium</SelectItem>
-                              <SelectItem value="Hard">Hard</SelectItem>
-                          </SelectContent>
-                      </Select>
+                    <Separator />
+                     <div className="py-2">
+                        <p className="text-sm font-medium px-4 mb-2">Difficulty</p>
+                        {difficultyOptions.map(option => (
+                             <button
+                                key={option}
+                                className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                onClick={() => setDifficultyFilter(getDifficultyValue(option))}
+                            >
+                                <span className={cn("h-2 w-2 rounded-full mr-3", getDifficultyValue(difficultyFilter) === getDifficultyValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                {option}
+                            </button>
+                        ))}
                     </div>
-                  </div>
-                </div>
-              </PopoverContent>
+                </PopoverContent>
             </Popover>
           </div>
         </div>

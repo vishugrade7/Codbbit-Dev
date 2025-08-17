@@ -24,8 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type ProblemDetailWithCategory = Problem & { categoryName: string };
@@ -46,7 +44,6 @@ export default function SheetDisplayPage() {
     const [isSubscribing, setIsSubscribing] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
     const [topicFilter, setTopicFilter] = useState("All Topics");
 
@@ -216,6 +213,12 @@ export default function SheetDisplayPage() {
         return '';
     }, [sheet]);
 
+    const statusOptions = ['All Statuses', 'Solved', 'Unsolved'];
+    const getStatusValue = (option: string) => {
+        if (option === 'All Statuses') return 'All';
+        return option;
+    }
+
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -244,80 +247,81 @@ export default function SheetDisplayPage() {
             </Button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
                 {/* --- Left Column --- */}
-                <ScrollArea className="lg:col-span-1">
-                    <aside className="space-y-8 pr-4">
-                        <section>
-                             <h1 className="text-3xl font-bold font-headline mb-2">{sheet.name}</h1>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-                                <Button size="sm" onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
-                                    {isSubscribing ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : isSubscribed ? (
-                                        <UserCheck className="mr-2 h-4 w-4" />
-                                    ) : (
-                                        <UserPlus className="mr-2 h-4 w-4" />
-                                    )}
-                                    {isSubscribed ? 'Following' : 'Follow'}
-                                </Button>
-                                <Button size="sm" onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
-                                    <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <span>Created by {sheet.creatorName} {timeAgo}</span>
-                            </div>
-                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Users className="h-4 w-4" />
-                                <span>{subscribersCount} {subscribersCount === 1 ? 'follower' : 'followers'}</span>
-                            </div>
-                        </section>
-                        
-                        <Separator />
-
-                        <section>
-                            <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Progress</h2>
-                            <div className="flex items-center justify-between mb-2">
-                               <span className="font-semibold">{Math.round(totalProgress)}%</span>
-                               <span className="text-sm text-muted-foreground">{solvedStats.total} / {difficultyStats.total} solved</span>
-                            </div>
-                            <Progress value={totalProgress} className="h-2 mb-4" />
-                            <div className="space-y-3 text-sm">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-14 shrink-0 text-muted-foreground">Easy</span>
-                                    <Progress value={(solvedStats.Easy / (difficultyStats.Easy || 1)) * 100} className="h-1.5 [&>div]:bg-green-500" />
-                                    <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Easy}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="w-14 shrink-0 text-muted-foreground">Medium</span>
-                                    <Progress value={(solvedStats.Medium / (difficultyStats.Medium || 1)) * 100} className="h-1.5 [&>div]:bg-amber-500" />
-                                    <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Medium}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="w-14 shrink-0 text-muted-foreground">Hard</span>
-                                    <Progress value={(solvedStats.Hard / (difficultyStats.Hard || 1)) * 100} className="h-1.5 [&>div]:bg-red-500" />
-                                    <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Hard}</span>
-                                </div>
-                            </div>
-                        </section>
-                        
-                        <Separator />
-
-                         <section>
-                            <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
-                            <div className="flex flex-wrap gap-2">
-                                <Button size="sm" variant={topicFilter === "All Topics" ? "secondary" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
-                                {uniqueCategories.map(category => (
-                                    <Button key={category} size="sm" variant={topicFilter === category ? "secondary" : "outline"} onClick={() => setTopicFilter(category)}>
-                                        {category}
+                <div className="lg:col-span-1 h-full overflow-hidden flex flex-col">
+                    <ScrollArea className="pr-4">
+                        <aside className="space-y-8">
+                            <section>
+                                <h1 className="text-3xl font-bold font-headline mb-2">{sheet.name}</h1>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
+                                    <Button size="sm" onClick={handleToggleSubscription} disabled={!authUser || isSubscribing}>
+                                        {isSubscribing ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : isSubscribed ? (
+                                            <UserCheck className="mr-2 h-4 w-4" />
+                                        ) : (
+                                            <UserPlus className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isSubscribed ? 'Following' : 'Follow'}
                                     </Button>
-                                ))}
-                            </div>
-                        </section>
+                                    <Button size="sm" onClick={handleCopyLink} variant="outline"><Copy className="mr-2 h-4 w-4" /> Copy Link</Button>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                                    <Avatar className="h-6 w-6">
+                                        <AvatarImage src={sheet.creatorAvatarUrl} alt={sheet.creatorName} />
+                                        <AvatarFallback>{sheet.creatorName.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <span>Created by {sheet.creatorName} {timeAgo}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Users className="h-4 w-4" />
+                                    <span>{subscribersCount} {subscribersCount === 1 ? 'follower' : 'followers'}</span>
+                                </div>
+                            </section>
+                            
+                            <Separator />
 
-                    </aside>
-                </ScrollArea>
+                            <section>
+                                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Progress</h2>
+                                <div className="flex items-center justify-between mb-2">
+                                <span className="font-semibold">{Math.round(totalProgress)}%</span>
+                                <span className="text-sm text-muted-foreground">{solvedStats.total} / {difficultyStats.total} solved</span>
+                                </div>
+                                <Progress value={totalProgress} className="h-2 mb-4" />
+                                <div className="space-y-3 text-sm">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-14 shrink-0 text-muted-foreground">Easy</span>
+                                        <Progress value={(solvedStats.Easy / (difficultyStats.Easy || 1)) * 100} className="h-1.5 [&>div]:bg-green-500" />
+                                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Easy}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-14 shrink-0 text-muted-foreground">Medium</span>
+                                        <Progress value={(solvedStats.Medium / (difficultyStats.Medium || 1)) * 100} className="h-1.5 [&>div]:bg-amber-500" />
+                                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Medium}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-14 shrink-0 text-muted-foreground">Hard</span>
+                                        <Progress value={(solvedStats.Hard / (difficultyStats.Hard || 1)) * 100} className="h-1.5 [&>div]:bg-red-500" />
+                                        <span className="w-8 shrink-0 text-right font-medium">{solvedStats.Hard}</span>
+                                    </div>
+                                </div>
+                            </section>
+                            
+                            <Separator />
+
+                            <section>
+                                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button size="sm" variant={topicFilter === "All Topics" ? "secondary" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
+                                    {uniqueCategories.map(category => (
+                                        <Button key={category} size="sm" variant={topicFilter === category ? "secondary" : "outline"} onClick={() => setTopicFilter(category)}>
+                                            {category}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </section>
+                        </aside>
+                    </ScrollArea>
+                </div>
 
                 {/* --- Right Column --- */}
                 <div className="lg:col-span-2 flex flex-col overflow-hidden">
@@ -333,30 +337,23 @@ export default function SheetDisplayPage() {
                         </div>
                          <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-9 w-9">
+                                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
                                     <Filter className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64" align="end">
-                                <div className="grid gap-4">
-                                <div className="space-y-2">
-                                    <h4 className="font-medium leading-none">Filters</h4>
-                                </div>
-                                <div className="grid gap-2">
-                                    <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label>Status</Label>
-                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                        <SelectTrigger className="col-span-2 h-8">
-                                            <SelectValue placeholder="Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="All">All Statuses</SelectItem>
-                                            <SelectItem value="Solved">Solved</SelectItem>
-                                            <SelectItem value="Unsolved">Unsolved</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    </div>
-                                </div>
+                            <PopoverContent className="w-56 p-0" align="end">
+                                <div className="py-2">
+                                    <p className="text-sm font-medium px-4 mb-2">Status</p>
+                                    {statusOptions.map(option => (
+                                        <button
+                                            key={option}
+                                            className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                            onClick={() => setStatusFilter(getStatusValue(option))}
+                                        >
+                                            <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                            {option}
+                                        </button>
+                                    ))}
                                 </div>
                             </PopoverContent>
                         </Popover>
@@ -429,5 +426,3 @@ export default function SheetDisplayPage() {
         </main>
     );
 }
-
-    
