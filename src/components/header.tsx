@@ -30,6 +30,7 @@ export default function Header() {
   
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const [loadingNav, setLoadingNav] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchNav = async () => {
@@ -177,7 +178,7 @@ export default function Header() {
 
               {/* Mobile view with Sheet */}
               <div className="flex items-center gap-2 md:hidden">
-                <Sheet>
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon">
                       <Menu className="h-6 w-6" />
@@ -186,7 +187,7 @@ export default function Header() {
                   </SheetTrigger>
                   <SheetContent side="right">
                     <div className="grid gap-6 py-6">
-                      <Link href="/" className="flex items-center gap-2 mb-4">
+                      <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                         <CodeXml className="h-6 w-6" />
                         <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
                       </Link>
@@ -206,16 +207,16 @@ export default function Header() {
                             </div>
                           </DropdownMenuTrigger>
                            <DropdownMenuContent className="w-56" align="end" forceMount>
-                            <DropdownMenuItem onClick={() => router.push('/profile')}>
+                            <DropdownMenuItem onClick={() => {router.push('/profile'); setIsMobileMenuOpen(false);}}>
                               <UserIcon className="mr-2 h-4 w-4" />
                               <span>Profile</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push('/settings')}>
+                            <DropdownMenuItem onClick={() => {router.push('/settings'); setIsMobileMenuOpen(false);}}>
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Settings</span>
                             </DropdownMenuItem>
                             {!isPro && (
-                                <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                                <DropdownMenuItem onClick={() => {router.push('/pricing'); setIsMobileMenuOpen(false);}}>
                                     <Rocket className="mr-2 h-4 w-4" />
                                     <span>Upgrade</span>
                                 </DropdownMenuItem>
@@ -228,6 +229,7 @@ export default function Header() {
                           <Link
                             key={link.href}
                             href={link.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
                               "text-lg font-medium transition-colors hover:text-foreground/80",
                               pathname === link.href ? "text-foreground" : "text-foreground/60"
@@ -239,6 +241,7 @@ export default function Header() {
                          {userData?.isAdmin && (
                             <Link
                                 href='/admin'
+                                onClick={() => setIsMobileMenuOpen(false)}
                                 className={cn(
                                 "text-lg font-medium transition-colors hover:text-foreground/80",
                                 pathname.startsWith('/admin') ? "text-foreground" : "text-foreground/60"
@@ -252,7 +255,7 @@ export default function Header() {
                         <ThemeToggle />
                       </div>
                       <div className="absolute bottom-4 left-4 right-4">
-                        <Button variant="secondary" onClick={handleLogout} className="w-full">
+                        <Button variant="secondary" onClick={() => {handleLogout(); setIsMobileMenuOpen(false);}} className="w-full">
                            <LogOut className="mr-2 h-4 w-4" /> Logout
                         </Button>
                       </div>
@@ -276,7 +279,7 @@ export default function Header() {
 
               {/* Mobile Sheet (triggered by Menu icon) */}
               <div className="md:hidden">
-                <Sheet>
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon">
                       <Menu className="h-6 w-6" />
@@ -285,7 +288,7 @@ export default function Header() {
                   </SheetTrigger>
                   <SheetContent side="right">
                     <div className="grid gap-6 py-6">
-                      <Link href="/" className="flex items-center gap-2 mb-4">
+                      <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 mb-4">
                         <CodeXml className="h-6 w-6" />
                         <span className="text-lg font-bold font-headline">Codbbit</span>
                       </Link>
@@ -294,6 +297,7 @@ export default function Header() {
                           <Link
                             key={link.href}
                             href={link.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
                               "text-lg font-medium transition-colors hover:text-foreground/80",
                               pathname === link.href ? "text-foreground" : "text-foreground/60"
@@ -307,8 +311,8 @@ export default function Header() {
                         <ThemeToggle />
                       </div>
                       <div className="flex flex-col gap-4 mt-4 absolute bottom-4 left-4 right-4">
-                         <Button variant="ghost" asChild><Link href="/login">Login</Link></Button>
-                         <Button asChild><Link href="/signup">Sign Up</Link></Button>
+                         <Button variant="ghost" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
+                         <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
                       </div>
                     </div>
                   </SheetContent>
