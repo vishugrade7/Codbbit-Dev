@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
 import { ProgressCard } from "@/components/progress-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type StarredProblemDetail = Problem & { categoryName: string };
@@ -372,19 +373,28 @@ export default function UserProfilePage() {
                         <CardContent>
                             <ScrollArea className="h-60">
                                 {achievements.length > 0 ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-1">
-                                        {achievements.map((achievement: Achievement) => (
-                                            <div key={achievement.name} className="flex flex-col items-center text-center gap-2 p-4 bg-muted/50 rounded-lg" title={`${achievement.name}: ${achievement.description}`}>
-                                                <div className="p-3 bg-amber-400/10 rounded-full">
-                                                    <Award className="h-8 w-8 text-amber-500" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold leading-tight text-sm">{achievement.name}</p>
-                                                    <p className="text-xs text-muted-foreground mt-1">Earned {formatDistanceToNow(new Date(achievement.date), { addSuffix: true })}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                     <TooltipProvider>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-1">
+                                            {achievements.map((achievement: Achievement) => (
+                                                <Tooltip key={achievement.name}>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex flex-col items-center text-center gap-2 p-4 bg-muted/50 rounded-lg">
+                                                            <div className="p-3 bg-amber-400/10 rounded-full">
+                                                                <Award className="h-8 w-8 text-amber-500" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-semibold leading-tight text-sm">{achievement.name}</p>
+                                                                <p className="text-xs text-muted-foreground mt-1">Earned {formatDistanceToNow(new Date(achievement.date), { addSuffix: true })}</p>
+                                                            </div>
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{achievement.description}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ))}
+                                        </div>
+                                    </TooltipProvider>
                                 ) : (
                                     <div className="flex items-center justify-center h-full py-10">
                                         <p className="text-muted-foreground text-center text-sm">No achievements yet. Keep coding!</p>
