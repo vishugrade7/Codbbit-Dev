@@ -191,10 +191,13 @@ export default function Header() {
                   </SheetTrigger>
                   <SheetContent side="right">
                     <div className="grid gap-6 py-6">
-                      <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                        <CodeXml className="h-6 w-6" />
-                        <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
-                      </Link>
+                      <div className="flex items-center justify-between mb-4">
+                        <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                          <CodeXml className="h-6 w-6" />
+                          <span className="text-lg font-bold font-headline">{isPro ? 'Codbbit Pro' : 'Codbbit'}</span>
+                        </Link>
+                        <ThemeToggle />
+                      </div>
                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                              <div className="relative flex items-center gap-4 text-left p-2 rounded-lg hover:bg-muted">
@@ -255,9 +258,6 @@ export default function Header() {
                             </Link>
                          )}
                       </nav>
-                      <div className="absolute bottom-20 left-4 right-4">
-                        <ThemeToggle />
-                      </div>
                       <div className="absolute bottom-4 left-4 right-4">
                         <Button variant="secondary" onClick={() => {handleLogout(); setIsMobileMenuOpen(false);}} className="w-full">
                            <LogOut className="mr-2 h-4 w-4" /> Logout
@@ -292,10 +292,13 @@ export default function Header() {
                   </SheetTrigger>
                   <SheetContent side="right">
                     <div className="grid gap-6 py-6">
-                      <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 mb-4">
-                        <CodeXml className="h-6 w-6" />
-                        <span className="text-lg font-bold font-headline">Codbbit</span>
-                      </Link>
+                      <div className="flex items-center justify-between mb-4">
+                        <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
+                          <CodeXml className="h-6 w-6" />
+                          <span className="text-lg font-bold font-headline">Codbbit</span>
+                        </Link>
+                        <ThemeToggle />
+                      </div>
                       <nav className="grid gap-4">
                         {navLinks.map((link) => (
                           <Link
@@ -311,9 +314,6 @@ export default function Header() {
                           </Link>
                         ))}
                       </nav>
-                       <div className="absolute bottom-24 left-4 right-4">
-                        <ThemeToggle />
-                      </div>
                       <div className="flex flex-col gap-4 mt-4 absolute bottom-4 left-4 right-4">
                          <Button variant="ghost" asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/login">Login</Link></Button>
                          <Button asChild onClick={() => setIsMobileMenuOpen(false)}><Link href="/signup">Sign Up</Link></Button>
