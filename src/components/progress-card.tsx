@@ -17,17 +17,9 @@ type ProgressCardProps = {
 };
 
 const chartConfig = {
-  easy: {
-    label: "Easy",
+  progress: {
+    label: "Progress",
     color: "hsl(142.1 76.2% 41%)", // green-500
-  },
-  medium: {
-    label: "Medium",
-    color: "hsl(var(--primary))",
-  },
-  hard: {
-    label: "Hard",
-    color: "hsl(var(--destructive))",
   },
 } satisfies ChartConfig;
 
@@ -41,22 +33,17 @@ export function ProgressCard({
   hardSolved,
   hardTotal,
 }: ProgressCardProps) {
-  const chartData = [
-    {
-      name: "progress",
-      easy: easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0,
-      medium: mediumTotal > 0 ? (mediumSolved / mediumTotal) * 100 : 0,
-      hard: hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0,
-    },
-  ];
+  const progressPercentage = totalAvailable > 0 ? (totalSolved / totalAvailable) * 100 : 0;
+
+  const chartData = [{ name: "progress", value: progressPercentage, fill: "var(--color-progress)" }];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Progress</CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 flex flex-col md:flex-row items-center gap-6">
-        <div className="relative h-32 w-32 shrink-0">
+      <CardContent className="pt-0 flex flex-col items-center gap-6">
+        <div className="relative h-40 w-40">
           <ChartContainer
             config={chartConfig}
             className="mx-auto aspect-square h-full"
@@ -65,71 +52,43 @@ export function ProgressCard({
               data={chartData}
               startAngle={90}
               endAngle={-270}
-              barSize={8}
-              innerRadius="30%"
+              innerRadius="70%"
+              outerRadius="100%"
+              barSize={12}
             >
               <PolarAngleAxis
                 type="number"
                 domain={[0, 100]}
-                angleAxisId={0}
+                dataKey="value"
                 tick={false}
               />
               <RadialBar
-                background
-                dataKey="hard"
-                fill="var(--color-hard)"
-                cornerRadius={5}
-                innerRadius="40%"
-                outerRadius="55%"
-              />
-              <RadialBar
-                background
-                dataKey="medium"
-                fill="var(--color-medium)"
-                cornerRadius={5}
-                innerRadius="65%"
-                outerRadius="80%"
-              />
-               <RadialBar
-                background
-                dataKey="easy"
-                fill="var(--color-easy)"
-                cornerRadius={5}
-                innerRadius="90%"
-                outerRadius="105%"
+                dataKey="value"
+                background={{ fill: 'hsl(var(--muted))' }}
+                cornerRadius={10}
               />
             </RadialBarChart>
           </ChartContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold">{totalSolved}<span className="text-xl text-muted-foreground">/{totalAvailable}</span></span>
-            <span className="text-sm text-muted-foreground">Solved</span>
+            <span className="text-4xl font-bold">{Math.round(progressPercentage)}%</span>
           </div>
         </div>
 
-        <div className="w-full flex-1 space-y-2" style={{
-            '--color-easy': 'hsl(142.1 76.2% 41%)',
-            '--color-medium': 'hsl(var(--primary))',
-            '--color-hard': 'hsl(var(--destructive))',
-        } as React.CSSProperties}>
-            <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--color-easy)' }} />
-                    <span className="font-medium text-muted-foreground">Easy</span>
-                </div>
+        <div className="w-full flex-1 space-y-2 text-sm">
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Solved</span>
+                <span className="font-semibold">{totalSolved} / {totalAvailable}</span>
+            </div>
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Easy</span>
                 <span className="font-semibold">{easySolved} / {easyTotal}</span>
             </div>
-             <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--color-medium)' }} />
-                    <span className="font-medium text-muted-foreground">Medium</span>
-                </div>
+             <div className="flex justify-between">
+                <span className="text-muted-foreground">Medium</span>
                 <span className="font-semibold">{mediumSolved} / {mediumTotal}</span>
             </div>
-             <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--color-hard)' }} />
-                    <span className="font-medium text-muted-foreground">Hard</span>
-                </div>
+             <div className="flex justify-between">
+                <span className="text-muted-foreground">Hard</span>
                 <span className="font-semibold">{hardSolved} / {hardTotal}</span>
             </div>
         </div>
