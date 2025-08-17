@@ -491,7 +491,7 @@ export default function ProblemWorkspacePage() {
             </div>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5 font-semibold">
-                    <Flame className="h-5 w-5 text-orange-500" />
+                    <Flame className="h-5 w-5 text-primary" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
