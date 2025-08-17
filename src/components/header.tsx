@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getQuickTip } from "@/ai/flows/quick-tip-flow";
 import { getNavigationSettings } from "@/app/upload-problem/actions";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "./theme-toggle";
 
 
 export default function Header() {
@@ -117,6 +118,7 @@ export default function Header() {
             <>
               {/* Desktop view */}
               <div className="hidden md:flex items-center gap-4">
+                 <ThemeToggle />
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className='w-9 h-9 rounded-full'>
@@ -238,6 +240,9 @@ export default function Header() {
                             </Link>
                          )}
                       </nav>
+                      <div className="absolute bottom-20 left-4 right-4">
+                        <ThemeToggle />
+                      </div>
                       <div className="absolute bottom-4 left-4 right-4">
                         <Button variant="secondary" onClick={handleLogout} className="w-full">
                            <LogOut className="mr-2 h-4 w-4" /> Logout
@@ -252,6 +257,7 @@ export default function Header() {
             <>
               {/* Desktop Logged-out Buttons */}
               <div className="hidden md:flex items-center gap-2">
+                <ThemeToggle />
                 <Button variant="ghost" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
@@ -289,7 +295,10 @@ export default function Header() {
                           </Link>
                         ))}
                       </nav>
-                      <div className="flex flex-col gap-4 mt-4">
+                       <div className="absolute bottom-24 left-4 right-4">
+                        <ThemeToggle />
+                      </div>
+                      <div className="flex flex-col gap-4 mt-4 absolute bottom-4 left-4 right-4">
                          <Button variant="ghost" asChild><Link href="/login">Login</Link></Button>
                          <Button asChild><Link href="/signup">Sign Up</Link></Button>
                       </div>
@@ -304,5 +313,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
