@@ -172,30 +172,6 @@ export default function Settings() {
                      {userData?.sfdcAuth?.connected ? "Reconnect" : "Connect"}
                   </Button>
                </div>
-               <div className="flex items-center justify-between">
-                 <div className="flex flex-col">
-                    <Label className="text-destructive">Delete Account</Label>
-                    <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data.</p>
-                 </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                       <Button variant="destructive">Delete</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your account
-                          and remove your data from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => toast({ title: "Action not implemented."})}>Continue</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-               </div>
             </CardContent>
           </Card>
 
