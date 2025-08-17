@@ -2,6 +2,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -177,3 +178,13 @@ export type Badge = {
   value: number;
   category?: string;
 };
+
+export type PricingPlan = {
+  id: 'monthly' | 'biannually' | 'annually';
+  active: boolean;
+  prices: {
+    inr: number;
+    usd: number;
+  };
+  features: { value: string }[];
+}

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -11,6 +12,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createRazorpayOrder, verifyAndSavePayment, isRazorpayConfigured } from '@/app/razorpay/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { PricingPlan } from "@/types";
+import { getDocs, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -37,6 +41,8 @@ export default function PricingPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isRazorpayReady, setIsRazorpayReady] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(true);
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
 
   useEffect(() => {
     const checkConfig = async () => {
@@ -46,66 +52,51 @@ export default function PricingPage() {
       setLoadingConfig(false);
     };
     checkConfig();
-  }, []);
 
-
-  const plans = useMemo(() => {
-    const priceData = {
-        inr: {
-            monthly: { price: 499, total: 499 },
-            biannually: { price: 415, total: 2490 },
-            annually: { price: 333, total: 3996 },
-        },
-        usd: {
-            monthly: { price: 12, total: 12 },
-            biannually: { price: 10, total: 60 },
-            annually: { price: 8, total: 96 },
+    const fetchPlans = async () => {
+        if (!db) return;
+        setLoadingPlans(true);
+        try {
+            const querySnapshot = await getDocs(collection(db, 'pricing'));
+            const fetchedPlans = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PricingPlan)).filter(p => p.active);
+            setPlans(fetchedPlans);
+        } catch (error) {
+            console.error("Failed to fetch pricing plans:", error);
+            toast({ variant: 'destructive', title: 'Could not load pricing plans.' });
         }
+        setLoadingPlans(false);
+    }
+    fetchPlans();
+  }, [toast]);
+
+  const getPlanDetails = (planId: 'monthly' | 'biannually' | 'annually') => {
+        const plan = plans.find(p => p.id === planId);
+        if (!plan) return null;
+
+        const currency = isIndianUser ? 'inr' : 'usd';
+        const currencySymbol = isIndianUser ? '₹' : '$';
+        const price = plan.prices[currency];
+
+        return {
+            ...plan,
+            price,
+            currency: currencySymbol,
+            currencyCode: currency.toUpperCase() as 'INR' | 'USD',
+        };
     };
 
-    const currency = isIndianUser ? "₹" : "$";
-    const currencyCode = isIndianUser ? "INR" : "USD";
-    const prices = isIndianUser ? priceData.inr : priceData.usd;
+    const monthlyPlan = getPlanDetails('monthly');
+    const biannualPlan = getPlanDetails('biannually');
+    const annualPlan = getPlanDetails('annually');
 
-    return {
-      monthly: {
-        id: 'monthly' as const,
-        price: prices.monthly.price,
-        total: prices.monthly.total,
-        suffix: "/month",
-        billDesc: "Billed monthly.",
-        currency: currency,
-        currencyCode,
-        save: null,
-      },
-      biannually: {
-        id: 'biannually' as const,
-        price: prices.biannually.price,
-        total: prices.biannually.total,
-        suffix: "/month",
-        billDesc: `Billed ${currency}${prices.biannually.total} every 6 months.`,
-        save: "16%",
-        currency: currency,
-        currencyCode,
-      },
-      annually: {
-        id: 'annually' as const,
-        price: prices.annually.price,
-        total: prices.annually.total,
-        suffix: "/month",
-        billDesc: `Billed ${currency}${prices.annually.total} annually.`,
-        save: "33%",
-        currency: currency,
-        currencyCode,
-      },
-      free: {
-        currency: currency,
+  const selectedPlan = useMemo(() => {
+      switch (billingCycle) {
+          case 'annually': return annualPlan;
+          case 'biannually': return biannualPlan;
+          default: return monthlyPlan;
       }
-    };
-  }, [isIndianUser]);
+  }, [billingCycle, annualPlan, biannualPlan, monthlyPlan]);
 
-  const currentPlan = plans[billingCycle];
-  const freePlan = plans.free;
 
   const handleUpgrade = async () => {
     if (!user || !userData) {
@@ -115,6 +106,10 @@ export default function PricingPage() {
     }
     if (!isRazorpayReady) {
         toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment processing is not configured on the server. Please contact the site administrator.' });
+        return;
+    }
+     if (!selectedPlan) {
+        toast({ variant: 'destructive', title: 'Plan not available', description: 'The selected billing cycle is not available.' });
         return;
     }
     
@@ -127,7 +122,7 @@ export default function PricingPage() {
       return;
     }
 
-    const orderResponse = await createRazorpayOrder(currentPlan.total, currentPlan.currencyCode);
+    const orderResponse = await createRazorpayOrder(selectedPlan.price, selectedPlan.currencyCode);
 
     if (orderResponse.error || !orderResponse.orderId) {
         toast({ variant: 'destructive', title: 'Checkout Error', description: orderResponse.error || 'Could not create an order.' });
@@ -141,15 +136,15 @@ export default function PricingPage() {
         currency: orderResponse.currency,
         name: "Codbbit",
         description: "Pro Plan Subscription",
-        image: "https://placehold.co/128x128.png", // You should have a logo in your public folder
+        image: "https://placehold.co/128x128.png",
         order_id: orderResponse.orderId,
         handler: async function (response: any) {
             const verificationResult = await verifyAndSavePayment(
               response,
               user.uid,
-              currentPlan.total * 100, // Pass amount in subunits
-              currentPlan.currencyCode,
-              currentPlan.id
+              selectedPlan.price * 100, // Pass amount in subunits
+              selectedPlan.currencyCode,
+              selectedPlan.id as 'monthly' | 'biannually' | 'annually'
             );
             if (verificationResult.success) {
                 toast({ title: 'Payment Successful!', description: 'Welcome to Pro! Your profile is being updated.' });
@@ -164,7 +159,7 @@ export default function PricingPage() {
             email: userData.email,
         },
         theme: {
-            color: "#1976D2" // A blue shade similar to your primary color
+            color: "#1976D2"
         },
         modal: {
             ondismiss: function() {
@@ -186,6 +181,33 @@ export default function PricingPage() {
     }
   };
 
+  const getBillingDescription = (plan: ReturnType<typeof getPlanDetails>) => {
+      if (!plan) return '';
+      const total = plan.price;
+      switch(plan.id) {
+          case 'monthly': return 'Billed monthly.';
+          case 'biannually': return `Billed ${plan.currency}${(total * 6).toLocaleString()} every 6 months.`;
+          case 'annually': return `Billed ${plan.currency}${(total * 12).toLocaleString()} annually.`;
+          default: return '';
+      }
+  };
+
+  const getSavings = (plan: ReturnType<typeof getPlanDetails>) => {
+      if (!plan || !monthlyPlan || plan.id === 'monthly') return null;
+      const monthlyPrice = monthlyPlan.price;
+      const currentMonthlyEquivalent = plan.price;
+      const savings = 100 - (currentMonthlyEquivalent / monthlyPrice * 100);
+      return Math.round(savings);
+  }
+
+  if (loadingPlans) {
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+  }
+
 
   return (
     <main className="flex-1 container py-12">
@@ -201,9 +223,9 @@ export default function PricingPage() {
       <div className="flex justify-center mb-10">
           <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="w-auto">
               <TabsList>
-                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                  <TabsTrigger value="biannually">6 Months</TabsTrigger>
-                  <TabsTrigger value="annually">Yearly</TabsTrigger>
+                  {monthlyPlan && <TabsTrigger value="monthly">Monthly</TabsTrigger>}
+                  {biannualPlan && <TabsTrigger value="biannually">6 Months</TabsTrigger>}
+                  {annualPlan && <TabsTrigger value="annually">Yearly</TabsTrigger>}
               </TabsList>
           </Tabs>
       </div>
@@ -216,7 +238,7 @@ export default function PricingPage() {
             <CardDescription>For individuals starting their Salesforce journey.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-4xl font-bold">{freePlan.currency}0<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <div className="text-4xl font-bold">{isIndianUser ? '₹' : '$'}0<span className="text-lg font-normal text-muted-foreground">/month</span></div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Access to free problems</li>
               <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Basic profile stats</li>
@@ -230,54 +252,58 @@ export default function PricingPage() {
 
         {/* Pro Plan */}
         <Card className="border-primary shadow-lg relative">
-           <div className="absolute top-0 -translate-y-1/2 w-full flex justify-center">
-               <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
-                  Most Popular
-                  {currentPlan.save && <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs">Save {currentPlan.save}</span>}
-               </div>
-           </div>
-          <CardHeader className="pt-8">
-            <CardTitle>Pro</CardTitle>
-            <CardDescription>For professionals aiming to master their skills.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col">
-              <div className="flex items-baseline">
-                  <span className="text-4xl font-bold">{currentPlan.currency}{currentPlan.price}</span>
-                  <span className="text-lg font-normal text-muted-foreground">{currentPlan.suffix}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{currentPlan.billDesc}</p>
-            </div>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Everything in Free</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Access to all premium problems</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Advanced analytics & insights</li>
-              <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Priority support</li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {!isRazorpayReady && !loadingConfig ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="w-full" tabIndex={0}>
-                      <Button className="w-full" disabled>
-                        Upgrade to Pro
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Payment processing is not available.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig}>
-                {(isCheckingOut || loadingConfig) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {loadingConfig ? 'Initializing...' : 'Upgrade to Pro'}
-              </Button>
+            {selectedPlan && (
+                <>
+                <div className="absolute top-0 -translate-y-1/2 w-full flex justify-center">
+                    <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
+                        Most Popular
+                        {getSavings(selectedPlan) && <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs">Save {getSavings(selectedPlan)}%</span>}
+                    </div>
+                </div>
+                <CardHeader className="pt-8">
+                    <CardTitle>Pro</CardTitle>
+                    <CardDescription>For professionals aiming to master their skills.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex flex-col">
+                    <div className="flex items-baseline">
+                        <span className="text-4xl font-bold">{selectedPlan.currency}{selectedPlan.price}</span>
+                        <span className="text-lg font-normal text-muted-foreground">/month</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{getBillingDescription(selectedPlan)}</p>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Everything in Free</li>
+                         {selectedPlan.features.map(feature => (
+                            <li key={feature.value} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {feature.value}</li>
+                        ))}
+                    </ul>
+                </CardContent>
+                <CardFooter>
+                    {!isRazorpayReady && !loadingConfig ? (
+                    <TooltipProvider>
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="w-full" tabIndex={0}>
+                            <Button className="w-full" disabled>
+                                Upgrade to Pro
+                            </Button>
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Payment processing is not available.</p>
+                        </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    ) : (
+                    <Button className="w-full" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig}>
+                        {(isCheckingOut || loadingConfig) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loadingConfig ? 'Initializing...' : 'Upgrade to Pro'}
+                    </Button>
+                    )}
+                </CardFooter>
+                </>
             )}
-          </CardFooter>
         </Card>
 
         {/* Enterprise Plan */}

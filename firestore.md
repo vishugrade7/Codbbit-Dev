@@ -10,6 +10,7 @@ This document outlines the data structure used in Firebase Firestore for this ap
 -   `/problem-sheets`
 -   `/badges`
 -   `/settings`
+-   `/pricing`
 
 ---
 
@@ -201,3 +202,27 @@ This collection stores global application settings.
       }
     ]
     ```
+
+---
+
+## 7. `pricing`
+
+This collection stores the subscription plans. Each document represents a billing cycle.
+
+**Document ID:** `monthly` | `biannually` | `annually`
+
+**Fields:**
+
+```json
+{
+  "active": "boolean",
+  "prices": {
+    "inr": "number",
+    "usd": "number"
+  },
+  "features": [
+    { "value": "string" },
+    { "value": "string" }
+  ]
+}
+```

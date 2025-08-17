@@ -1,4 +1,5 @@
 
+
 import { z } from "zod";
 
 // #region Problem Schemas
@@ -108,6 +109,16 @@ export const brandingSchema = z.object({
         headline: z.string().min(1, "Headline font is required."),
         body: z.string().min(1, "Body font is required."),
     }),
+});
+
+export const pricingPlanSchema = z.object({
+    id: z.string(),
+    active: z.boolean(),
+    prices: z.object({
+        inr: z.number().min(0),
+        usd: z.number().min(0),
+    }),
+    features: z.array(z.object({ value: z.string() })),
 });
 
 // #endregion

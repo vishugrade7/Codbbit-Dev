@@ -1,11 +1,12 @@
 
+
 'use server';
 
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction, DocumentData, WithFieldValue } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction, DocumentData, WithFieldValue, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, NavLink, Badge, ApexProblemsData } from '@/types';
+import type { Problem, Course, NavLink, Badge, ApexProblemsData, PricingPlan } from '@/types';
 import { z } from 'zod';
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema } from '@/lib/admin-schemas';
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingPlanSchema } from '@/lib/admin-schemas';
 import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
@@ -444,4 +445,46 @@ const ${newBodyFontName.toLowerCase()} = ${newBodyFontName}({
         return { success: false, error: error.message };
     }
 }
+// #endregion
+
+// #region Pricing Actions
+export async function getPricingPlans(userId: string): Promise<{ success: boolean; plans?: PricingPlan[]; error?: string }> {
+    await getAdminUser(userId);
+    if (!db) return { success: false, error: 'DB not available' };
+    
+    try {
+        const plansRef = collection(db, 'pricing');
+        const q = query(plansRef);
+        const querySnapshot = await getDocs(q);
+        const plans = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PricingPlan));
+        return { success: true, plans };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function upsertPricingPlan(userId: string, plan: z.infer<typeof pricingPlanSchema>): Promise<{ success: boolean; error?: string }> {
+    await getAdminUser(userId);
+    if (!db) return { success: false, error: 'DB not available' };
+
+    const validation = pricingPlanSchema.safeParse(plan);
+    if (!validation.success) {
+        return { success: false, error: validation.error.message };
+    }
+
+    const { id, ...planData } = validation.data;
+    if (!id) {
+        return { success: false, error: 'Plan ID is required.' };
+    }
+    
+    try {
+        await setDoc(doc(db, 'pricing', id), planData, { merge: true });
+        revalidatePath('/admin?tab=pricing');
+        revalidatePath('/pricing');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
 // #endregion
