@@ -596,19 +596,22 @@ export default function ProblemWorkspacePage() {
         </ResizablePanelGroup>
         
         {/* Mobile Layout */}
-        <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
-            <ResizablePanelGroup direction="vertical" className="flex-1">
-                <ResizablePanel defaultSize={40} minSize={25}>
-                    <ScrollArea className="h-full">
-                        <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
-                    </ScrollArea>
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={60} minSize={25}>
+         <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
+            <Tabs defaultValue="problem" className="flex-1 flex flex-col">
+                <TabsList className="shrink-0 rounded-none border-b bg-transparent justify-start px-2">
+                    <TabsTrigger value="problem">Problem</TabsTrigger>
+                    <TabsTrigger value="code">Code</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="problem" className="flex-1 overflow-auto mt-0">
+                    <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
+                </TabsContent>
+
+                <TabsContent value="code" className="flex-1 flex flex-col overflow-hidden mt-0">
                     <ResizablePanelGroup direction="vertical" className="h-full">
                         <ResizablePanel defaultSize={60} minSize={20}>
-                             <div className="flex flex-col h-full">
-                                 <div className="editor-container flex-1 w-full h-full overflow-auto">
+                            <div className="flex flex-col h-full">
+                                <div className="editor-container flex-1 w-full h-full overflow-auto">
                                     <MonacoEditor
                                         height="100%"
                                         language="java"
@@ -626,7 +629,7 @@ export default function ProblemWorkspacePage() {
                                 </div>
                             </div>
                         </ResizablePanel>
-                         <ResizableHandle withHandle />
+                        <ResizableHandle withHandle />
                         <ResizablePanel defaultSize={40} minSize={15}>
                              <div className="flex flex-col h-full">
                                 <div className="p-2 border-b border-t flex items-center justify-between">
@@ -642,8 +645,8 @@ export default function ProblemWorkspacePage() {
                             </div>
                         </ResizablePanel>
                     </ResizablePanelGroup>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+                </TabsContent>
+            </Tabs>
         </div>
     </div>
     )
