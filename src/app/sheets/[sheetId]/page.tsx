@@ -151,9 +151,9 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
             <section>
                 <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
                 <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant={topicFilter === "All Topics" ? "secondary" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
+                    <Button size="sm" variant={topicFilter === "All Topics" ? "default" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
                     {uniqueCategories.map(category => (
-                        <Button key={category} size="sm" variant={topicFilter === category ? "secondary" : "outline"} onClick={() => setTopicFilter(category)}>
+                        <Button key={category} size="sm" variant={topicFilter === category ? "default" : "outline"} onClick={() => setTopicFilter(category)}>
                             {category}
                         </Button>
                     ))}
