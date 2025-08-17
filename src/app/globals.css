@@ -32,7 +32,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 231 59% 48%;
  
-    --radius: 0.5rem;
+    --radius: 9999px;
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -79,7 +79,7 @@
     --chart-4: 280 75% 60%;
     --chart-5: 340 85% 60%;
 
-    --sidebar-background: 224 71.4% 4.1%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 210 20% 98%;
   }
 }
