@@ -185,31 +185,23 @@ export default function Leaderboard() {
       {currentUserEntry && (
         <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
-            <Card className="bg-primary/10 border-primary/20 shadow-lg h-full flex flex-col">
-              <CardContent className="p-6 flex flex-col flex-grow">
-                <Link href={`/profile/${currentUserEntry.username}`} className="block">
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12 border-2 border-primary">
-                                <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
-                                <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold text-lg">{currentUserEntry.name}</p>
-                                <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
-                            </div>
+            <Link href={`/profile/${currentUserEntry.username}`} className="block h-full">
+              <Card className="bg-primary/10 border-primary/20 shadow-lg h-full">
+                <CardContent className="p-6 h-full grid grid-cols-2 gap-4">
+                  <div className="flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border-2 border-primary">
+                            <AvatarImage src={currentUserEntry.avatarUrl} alt={currentUserEntry.name} />
+                            <AvatarFallback>{currentUserEntry.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold text-lg">{currentUserEntry.name}</p>
+                            <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                         </div>
-                        <div className="text-right">
-                            <div className="flex items-center gap-2 font-bold text-2xl">
-                                <Trophy className="h-7 w-7 text-yellow-400" />
-                                <span>{currentUserEntry.rank}</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Rank</p>
-                        </div>
+                      </div>
                     </div>
-                </Link>
-                <div className="mt-auto pt-4 flex justify-between items-end">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           {currentUserEntry.company && (
                               <div className="flex items-center gap-1.5">
                                   {currentUserEntry.companyLogoUrl ? (
@@ -233,13 +225,23 @@ export default function Leaderboard() {
                               </div>
                           )}
                     </div>
-                    <div className="text-right">
+                  </div>
+                  <div className="flex flex-col justify-between items-end text-right">
+                    <div>
+                      <div className="flex items-center gap-2 font-bold text-2xl">
+                          <Trophy className="h-6 w-6 text-yellow-400" />
+                          <span>{currentUserEntry.rank}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Rank</p>
+                    </div>
+                    <div>
                       <p className="font-mono font-semibold text-2xl">{currentUserEntry.points.toLocaleString()}</p>
                       <p className="text-sm text-muted-foreground">Points</p>
                     </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
           <div className="lg:col-span-2">
             {suggestedProblem ? (
