@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -178,6 +178,15 @@ export default function SheetDisplayPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
     const [topicFilter, setTopicFilter] = useState("All Topics");
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isSearchOpen) {
+            searchInputRef.current?.focus();
+        }
+    }, [isSearchOpen]);
+
 
     useEffect(() => {
         if (!sheetId || !db) return;
@@ -338,16 +347,25 @@ export default function SheetDisplayPage() {
                 {/* --- Right Column --- */}
                 <div className="lg:col-span-2 flex flex-col overflow-hidden">
                     <div className="flex justify-between items-center mb-4 gap-2 shrink-0">
-                        <div className="relative flex-1 md:w-auto">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                            placeholder="Search problems..."
-                            className="w-full md:w-64 pl-9 h-9"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+                         <div className="flex-1" />
                         <div className="flex items-center gap-2">
+                             {isSearchOpen ? (
+                                <div className="relative flex-1 md:w-auto">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        ref={searchInputRef}
+                                        placeholder="Search problems..."
+                                        className="w-full md:w-64 pl-9 h-9"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onBlur={() => setIsSearchOpen(false)}
+                                    />
+                                </div>
+                            ) : (
+                                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setIsSearchOpen(true)}>
+                                    <Search className="h-4 w-4" />
+                                </Button>
+                            )}
                              <Popover>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
