@@ -260,7 +260,7 @@ export default function UserProfilePage() {
 
   return (
     <>
-    <main className="flex-1 bg-muted/40">
+    <main className="flex-1 bg-muted/40 dark:bg-black">
         <div className="container mx-auto px-4 md:px-6 py-8">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
                 <div className="md:col-span-12 lg:col-span-4 space-y-8">
