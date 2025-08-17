@@ -55,7 +55,7 @@ import { Textarea } from '../ui/textarea';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -420,7 +420,7 @@ const ProblemList = () => {
                     </Select>
                 </div>
 
-                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                <div className="flex items-center gap-2 bg-muted p-1 rounded-full">
                     <Button variant={difficultyFilter === 'All' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('All')} className="shadow-sm">All</Button>
                     <Button variant={difficultyFilter === 'Easy' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Easy')}>Easy</Button>
                     <Button variant={difficultyFilter === 'Medium' ? 'secondary' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Medium')}>Medium</Button>
@@ -593,32 +593,49 @@ const UserList = () => {
     );
 }
 
-const DraggableNavLink = ({link, index}: {link: NavLink, index: number}) => {
-    const {attributes, listeners, setNodeRef, transform, transition} = useSortable({id: link.id});
+const DraggableNavLinkItem = ({ index, control, remove, isProtected }: { index: number, control: any, remove: (index: number) => void, isProtected: boolean }) => {
+    const { fields } = useFieldArray({ control, name: "links" });
+    const field = fields[index];
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id, disabled: isProtected });
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
     };
+    
     return (
-        <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 border rounded-md bg-card">
-            <Button variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...listeners} {...attributes}><GripVertical className="h-4 w-4" /></Button>
-            <div className="flex-1 grid grid-cols-2 gap-4">
-                <Input value={link.label} disabled/>
-                <Input value={link.href} disabled/>
-            </div>
-        </div>
-    )
-}
+        <TableRow ref={setNodeRef} style={style} className={cn(isProtected && "bg-muted/50")}>
+            <TableCell>
+                <Button variant="ghost" size="icon" className={cn("cursor-grab h-8 w-8", isProtected && "cursor-not-allowed text-muted-foreground")} {...listeners} {...attributes} disabled={isProtected}>
+                    <GripVertical className="h-4 w-4" />
+                </Button>
+            </TableCell>
+            <TableCell>
+                <Controller name={`links.${index}.label`} control={control} render={({field}) => <Input placeholder="Label" {...field} disabled={isProtected}/>} />
+            </TableCell>
+            <TableCell>
+                <Controller name={`links.${index}.href`} control={control} render={({field}) => <Input placeholder="/href" {...field} disabled={isProtected}/>} />
+            </TableCell>
+            <TableCell>
+                 <Controller name={`links.${index}.isEnabled`} control={control} render={({field}) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />
+            </TableCell>
+            <TableCell className="text-right">
+                 <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => remove(index)} disabled={isProtected}>
+                     <Trash className="h-4 w-4" />
+                </Button>
+            </TableCell>
+        </TableRow>
+    );
+};
 
 const NavigationEditor = () => {
-    const {user} = useAuth();
-    const {toast} = useToast();
-    const [links, setLinks] = useState<NavLink[]>([]);
+    const { user } = useAuth();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
 
-    const {control, handleSubmit, setValue} = useForm({
-        resolver: zodResolver(z.object({links: navLinksSchema})),
-        defaultValues: { links: [] }
+    const { control, handleSubmit, setValue } = useForm({
+        resolver: zodResolver(z.object({ links: navLinksSchema })),
+        defaultValues: { links: [] as NavLink[] }
     });
     const { fields, append, remove, move } = useFieldArray({ control, name: "links" });
 
@@ -626,30 +643,35 @@ const NavigationEditor = () => {
         const fetchNav = async () => {
             setLoading(true);
             const navLinks = await getNavigationSettings();
-            setLinks(navLinks);
-            setValue('links', navLinks);
+            // Add a temporary unique ID for dnd-kit if it's missing
+            const linksWithIds = navLinks.map(link => ({ ...link, id: link.id || `nav-${Math.random()}` }));
+            setValue('links', linksWithIds);
             setLoading(false);
         };
         fetchNav();
     }, [setValue]);
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-        if (active.id !== over?.id) {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
             const oldIndex = fields.findIndex((field) => field.id === active.id);
-            const newIndex = fields.findIndex((field) => field.id === over?.id);
+            const newIndex = fields.findIndex((field) => field.id === over.id);
+            if (fields[oldIndex]?.isProtected || fields[newIndex]?.isProtected) {
+                toast({ variant: 'destructive', title: "Protected links cannot be reordered." });
+                return;
+            }
             move(oldIndex, newIndex);
         }
     };
 
-    const onSave = async (data: {links: NavLink[]}) => {
+    const onSave = async (data: { links: NavLink[] }) => {
         if (!user) return;
         setLoading(true);
         const result = await updateNavigationSettings(user.uid, data.links);
-        if(result.success) {
-            toast({title: "Navigation saved!"});
+        if (result.success) {
+            toast({ title: "Navigation saved!" });
         } else {
-            toast({variant: 'destructive', title: 'Error', description: result.error});
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
         setLoading(false);
     }
@@ -658,47 +680,41 @@ const NavigationEditor = () => {
          <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold">Navigation Management</h1>
-                <p className="text-muted-foreground">Control the main site navigation links.</p>
+                <p className="text-muted-foreground">Control the main site navigation links. Drag and drop to reorder.</p>
             </div>
              <form onSubmit={handleSubmit(onSave)}>
-                <DndContext sensors={[]} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-                    <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-2">
-                         {fields.map((field, index) => (
-                              <DraggableNavLinkItem key={field.id} index={index} control={control} remove={remove} />
-                          ))}
-                        </div>
-                    </SortableContext>
-                </DndContext>
+                <Card>
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-12"></TableHead>
+                                    <TableHead>Label</TableHead>
+                                    <TableHead>URL Path</TableHead>
+                                    <TableHead>Enabled</TableHead>
+                                    <TableHead className="w-12 text-right">Delete</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <DndContext sensors={[]} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+                                <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                                    <TableBody>
+                                    {fields.map((field, index) => (
+                                        <DraggableNavLinkItem key={field.id} index={index} control={control} remove={remove} isProtected={field.isProtected} />
+                                    ))}
+                                    </TableBody>
+                                </SortableContext>
+                            </DndContext>
+                        </Table>
+                    </CardContent>
+                </Card>
                 <div className="flex justify-between mt-4">
-                    <Button type="button" variant="outline" onClick={() => append({id: `new-${Date.now()}`, label: '', href: '', isEnabled: true, isProtected: false})}><PlusCircle className="mr-2 h-4 w-4"/> Add Link</Button>
+                    <Button type="button" variant="outline" onClick={() => append({ id: `new-${Date.now()}`, label: '', href: '', isEnabled: true, isProtected: false })}><PlusCircle className="mr-2 h-4 w-4"/> Add Link</Button>
                     <Button type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : "Save Navigation"}</Button>
                 </div>
             </form>
         </div>
     )
 }
-
-const DraggableNavLinkItem = ({ index, control, remove }: { index: number, control: any, remove: (index: number) => void }) => {
-    const { fields } = useFieldArray({ control, name: "links" });
-    const field = fields[index];
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-    
-    return (
-        <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 border rounded-md bg-card">
-            <Button variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...listeners} {...attributes}><GripVertical className="h-4 w-4" /></Button>
-            <Controller name={`links.${index}.label`} control={control} render={({field}) => <Input placeholder="Label" {...field}/>} />
-            <Controller name={`links.${index}.href`} control={control} render={({field}) => <Input placeholder="/href" {...field}/>} />
-            <Controller name={`links.${index}.isEnabled`} control={control} render={({field}) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />
-             <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash className="h-4 w-4" /></Button>
-        </div>
-    );
-};
 
 const BadgeManager = () => {
     const [badges, setBadges] = useState<Badge[]>([]);
@@ -1279,9 +1295,6 @@ const VoucherFormDialog = ({ children, onSave, voucher }: { children: React.Reac
                                     />
                                     </PopoverContent>
                                 </Popover>
-                                <FormDescription>
-                                    Leave blank for no expiration.
-                                </FormDescription>
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -1321,4 +1334,5 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
