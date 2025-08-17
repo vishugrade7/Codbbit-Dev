@@ -20,7 +20,7 @@ export default {
       fontFamily: {
         sans: ["var(--font-body)"],
         mono: ["var(--font-source-code-pro)"],
-        headline: ["var(--font-headline)"],
+        headline: ["var(--font-body)"],
         body: ["var(--font-body)"],
         code: ["var(--font-source-code-pro)"],
       },

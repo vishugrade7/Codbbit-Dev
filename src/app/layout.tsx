@@ -1,5 +1,6 @@
+
 import type {Metadata} from 'next';
-import { Poppins, PT_Sans } from 'next/font/google'
+import { Mona_Sans } from 'next/font/google'
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
@@ -7,19 +8,13 @@ import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/app-shell';
 
-const poppins = Poppins({ 
+const monaSans = Mona_Sans({ 
   subsets: ['latin'],
-  variable: '--font-headline',
+  variable: '--font-body',
   display: 'swap',
   weight: ['400', '500', '600', '700']
 })
 
-const ptSans = PT_Sans({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
-  weight: ['400', '700']
-})
 
 export const metadata: Metadata = {
   title: 'Codbbit: Master Apex, LWC & Salesforce Development',
@@ -34,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(poppins.variable, ptSans.variable, "bg-background font-body text-foreground select-none no-print")}>
+      <body className={cn(monaSans.variable, "bg-background font-body text-foreground select-none no-print")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
