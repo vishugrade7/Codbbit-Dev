@@ -6,15 +6,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from '@/lib/firebase';
-import type { Problem, ApexProblemsData, User as AppUser } from '@/types';
+import type { Problem, ApexProblemsData } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { 
     upsertProblemToFirestore, 
     bulkUpsertProblemsFromJSON, 
     deleteProblemFromFirestore, 
     addCategory, 
-    getAllUsers, 
-    setAdminStatus, 
     getProblemCategories, 
     updateCategoryDetails, 
     deleteCategory 
@@ -23,18 +21,17 @@ import { problemFormSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2 } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Checkbox } from '../ui/checkbox';
 import { cn } from '@/lib/utils';
-
+import { Label } from '../ui/label';
 
 type AdminContextType = {
     problems: Problem[];
@@ -117,10 +114,155 @@ export const useAdmin = () => {
 };
 
 // #region Sub-components
+const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategory: (name: string) => void; activeCategory: string | null }) => {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const { categories, fetchCategories } = useAdmin();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [newImageUrl, setNewImageUrl] = useState("");
+    const [editingCategory, setEditingCategory] = useState<Awaited<ReturnType<typeof getProblemCategories>>[0] | null>(null);
+    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+
+    const handleAddCategory = async () => {
+        if (!user || !newCategoryName) return;
+        setIsSubmitting(true);
+        const result = await addCategory(user.uid, newCategoryName, newImageUrl);
+        if (result.success) {
+            toast({ title: "Category added!" });
+            fetchCategories();
+            setIsAddOpen(false);
+            setNewCategoryName("");
+            setNewImageUrl("");
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsSubmitting(false);
+    };
+
+    const handleUpdateCategory = async () => {
+        if (!user || !editingCategory || !newCategoryName) return;
+        setIsSubmitting(true);
+        const result = await updateCategoryDetails(user.uid, editingCategory.name, newCategoryName, newImageUrl);
+        if (result.success) {
+            toast({ title: "Category updated!" });
+            fetchCategories();
+            setIsEditOpen(false);
+            setEditingCategory(null);
+            setNewCategoryName("");
+            setNewImageUrl("");
+            if (activeCategory === editingCategory.name && editingCategory.name !== newCategoryName) {
+                onSelectCategory(newCategoryName);
+            }
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsSubmitting(false);
+    }
+    
+    const handleDeleteCategory = async (categoryName: string) => {
+        if (!user) return;
+        setIsSubmitting(true);
+        const result = await deleteCategory(user.uid, categoryName);
+        if (result.success) {
+            toast({ title: "Category deleted!" });
+            fetchCategories();
+            if (activeCategory === categoryName) {
+                onSelectCategory(categories.length > 1 ? categories.filter(c => c.name !== categoryName)[0].name : "");
+            }
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsSubmitting(false);
+    };
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline"><Edit className="mr-2" /> Manage Categories</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Manage Categories</DialogTitle>
+                    <DialogDescription>Add, edit, or remove problem categories.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 max-h-[60vh] overflow-y-auto">
+                    <ul className="space-y-2">
+                        {categories.map(category => (
+                            <li key={category.name} className="flex items-center justify-between p-2 rounded-md border">
+                                <span className="font-medium">{category.name} ({category.problemCount})</span>
+                                <div className='flex items-center gap-2'>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                                        setEditingCategory(category);
+                                        setNewCategoryName(category.name);
+                                        setNewImageUrl(category.imageUrl);
+                                        setIsEditOpen(true);
+                                    }}><Pencil className="h-4 w-4" /></Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash className="h-4 w-4" /></Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete the category and all problems within it. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteCategory(category.name)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                <DialogFooter>
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button><PlusCircle className="mr-2 h-4 w-4" /> Add New Category</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Add New Category</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="category-name" className="text-right">Name</Label>
+                                    <Input id="category-name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="col-span-3" />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="image-url" className="text-right">Image URL</Label>
+                                    <Input id="image-url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} className="col-span-3" />
+                                </div>
+                            </div>
+                            <DialogFooter><Button onClick={handleAddCategory} disabled={isSubmitting}>{isSubmitting ? <Loader2 className='animate-spin'/> : 'Save'}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    {/* Edit Dialog */}
+                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Edit Category: {editingCategory?.name}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="edit-category-name" className="text-right">Name</Label>
+                                    <Input id="edit-category-name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="col-span-3" />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="edit-image-url" className="text-right">Image URL</Label>
+                                    <Input id="edit-image-url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} className="col-span-3" />
+                                </div>
+                            </div>
+                            <DialogFooter><Button onClick={handleUpdateCategory} disabled={isSubmitting}>{isSubmitting ? <Loader2 className='animate-spin'/> : 'Update'}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 const ProblemList = () => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { problems, categories, loading: contextLoading, fetchProblems, fetchCategories } = useAdmin();
+    const { problems, categories, loading: contextLoading, fetchProblems } = useAdmin();
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
@@ -130,7 +272,6 @@ const ProblemList = () => {
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
     useEffect(() => {
         if (categories.length > 0 && !activeCategory) {
@@ -176,11 +317,6 @@ const ProblemList = () => {
         setLoading(false);
     };
     
-    const handleAddCategoryClick = () => {
-        // A bit of a hack: open the manage modal and trigger the "add" state within it.
-        setIsManageModalOpen(true);
-    };
-
     const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!user || !activeCategory) return;
         const file = event.target.files?.[0];
@@ -224,151 +360,118 @@ const ProblemList = () => {
     }
     
     return (
-        <Card className="h-full flex flex-col">
-            <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                    <div>
-                        <CardTitle className="text-2xl">Problem Management</CardTitle>
-                        <CardDescription>View, edit, or add new Apex coding challenges to the platform.</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <input type="file" ref={fileInputRef} onChange={handleBulkUpload} accept=".json" className="hidden" />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk Upload</Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}><FileJson2 className="mr-2"/>Paste JSON</DropdownMenuItem>
-                                <DropdownMenuItem><Download className="mr-2"/>Download Sample</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button onClick={() => setIsFormOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Problem</Button>
-                    </div>
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">Problem Management</h1>
+                <p className="text-muted-foreground">View, edit, or add new Apex coding challenges to the platform.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                     <CategoryManager onSelectCategory={setActiveCategory} activeCategory={activeCategory} />
                 </div>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search problems..."
-                            className="w-full max-w-md pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant={difficultyFilter === 'All' ? 'default' : 'outline'} onClick={() => setDifficultyFilter('All')} className="rounded-full">All</Button>
-                        <Button variant={difficultyFilter === 'Easy' ? 'default' : 'outline'} onClick={() => setDifficultyFilter('Easy')} className="rounded-full">Easy</Button>
-                        <Button variant={difficultyFilter === 'Medium' ? 'default' : 'outline'} onClick={() => setDifficultyFilter('Medium')} className="rounded-full">Medium</Button>
-                        <Button variant={difficultyFilter === 'Hard' ? 'default' : 'outline'} onClick={() => setDifficultyFilter('Hard')} className="rounded-full">Hard</Button>
-                    </div>
-                 </div>
-                <div className="rounded-md border flex-1">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]"><Checkbox/></TableHead>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead>Difficulty</TableHead>
-                                <TableHead>Tested</TableHead>
-                                <TableHead className="w-[80px]">Actions</TableHead>
+                <div className="flex items-center gap-2">
+                    <input type="file" ref={fileInputRef} onChange={handleBulkUpload} accept=".json" className="hidden" />
+                    <Button variant="outline"><Download className="mr-2"/> Download Sample</Button>
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2"/> Bulk Upload</Button>
+                    <Button onClick={() => setIsFormOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Problem</Button>
+                </div>
+            </div>
+             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search problems..."
+                        className="w-full max-w-md pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                    <Button variant={difficultyFilter === 'All' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('All')} className="shadow-sm">All</Button>
+                    <Button variant={difficultyFilter === 'Easy' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Easy')}>Easy</Button>
+                    <Button variant={difficultyFilter === 'Medium' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Medium')}>Medium</Button>
+                    <Button variant={difficultyFilter === 'Hard' ? 'default' : 'ghost'} size="sm" onClick={() => setDifficultyFilter('Hard')}>Hard</Button>
+                </div>
+             </div>
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]"><Checkbox/></TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Difficulty</TableHead>
+                            <TableHead>Tested</TableHead>
+                            <TableHead className="w-[80px]">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {contextLoading ? (
+                            <TableRow><TableCell colSpan={6} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                        ) : filteredProblems.length > 0 ? (
+                            filteredProblems.map((problem) => (
+                            <TableRow key={problem.id}>
+                                <TableCell><Checkbox /></TableCell>
+                                <TableCell className="font-medium">{problem.title}</TableCell>
+                                <TableCell>{activeCategory}</TableCell>
+                                <TableCell>
+                                    <UiBadge 
+                                        variant='outline' 
+                                        className={cn(
+                                            problem.difficulty === 'Easy' && 'text-green-600 border-green-300 bg-green-50 dark:text-green-400 dark:border-green-600/60 dark:bg-green-500/10',
+                                            problem.difficulty === 'Medium' && 'text-blue-600 border-blue-300 bg-blue-50 dark:text-blue-400 dark:border-blue-600/60 dark:bg-blue-500/10',
+                                            problem.difficulty === 'Hard' && 'text-red-600 border-red-300 bg-red-50 dark:text-red-400 dark:border-red-600/60 dark:bg-red-500/10',
+                                        )}
+                                    >
+                                        {problem.difficulty}
+                                    </UiBadge>
+                                </TableCell>
+                                <TableCell>
+                                    {/* Placeholder for 'Tested' status */}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => { setEditingProblem(problem); setIsFormOpen(true); }}>
+                                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                                        <Trash className="mr-2 h-4 w-4" /> 
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete the problem.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteProblem(problem.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {contextLoading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
-                            ) : filteredProblems.length > 0 ? (
-                                filteredProblems.map((problem) => (
-                                <TableRow key={problem.id}>
-                                    <TableCell><Checkbox /></TableCell>
-                                    <TableCell className="font-medium">{problem.title}</TableCell>
-                                    <TableCell>{activeCategory}</TableCell>
-                                    <TableCell>
-                                        <UiBadge 
-                                            variant='outline' 
-                                            className={cn(
-                                                problem.difficulty === 'Easy' && 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700',
-                                                problem.difficulty === 'Medium' && 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700',
-                                                problem.difficulty === 'Hard' && 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700'
-                                            )}
-                                        >
-                                            {problem.difficulty}
-                                        </UiBadge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {/* Placeholder for 'Tested' status */}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => { setEditingProblem(problem); setIsFormOpen(true); }}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> Edit
-                                                </DropdownMenuItem>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                            <Trash className="mr-2 h-4 w-4 text-destructive" /> 
-                                                            <span className="text-destructive">Delete</span>
-                                                        </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This action cannot be undone. This will permanently delete the problem.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteProblem(problem.id)}>Delete</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))) : (
-                                <TableRow><TableCell colSpan={6} className="text-center h-24">No problems found in {activeCategory}.</TableCell></TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-// Other components like CourseList, UserManagement, SiteSettings remain unchanged for now
-const CourseList = () => {
-    return (
-        <Card>
-            <CardHeader><CardTitle>Coming Soon</CardTitle></CardHeader>
-            <CardContent><p>Course management will be available here.</p></CardContent>
-        </Card>
-    );
-}
-const UserManagement = () => {
-    return (
-        <Card>
-            <CardHeader><CardTitle>Coming Soon</CardTitle></CardHeader>
-            <CardContent><p>User management will be available here.</p></CardContent>
-        </Card>
-    );
-};
-const SiteSettings = () => {
-    return (
-        <Card>
-            <CardHeader><CardTitle>Coming Soon</CardTitle></CardHeader>
-            <CardContent><p>Site settings will be available here.</p></CardContent>
-        </Card>
+                        ))) : (
+                            <TableRow><TableCell colSpan={6} className="text-center h-24">No problems found for &quot;{activeCategory}&quot;.</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
     );
 };
 

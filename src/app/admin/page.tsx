@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Loader2, LayoutDashboard, FileText, BookOpen, Users, Settings, Award, Palette, CreditCard } from 'lucide-react';
 import { AdminProvider, AdminDashboard } from '@/components/admin/ProblemManagement';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ const AdminSidebar = () => {
     const pathname = usePathname();
     const navItems = [
         // { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/admin/problems', label: 'Problems', icon: FileText },
+        { href: '/admin', label: 'Problems', icon: FileText },
         { href: '/admin/courses', label: 'Courses', icon: BookOpen },
         { href: '/admin/users', label: 'Users', icon: Users },
         { href: '/admin/navigation', label: 'Navigation', icon: Settings },
@@ -26,7 +26,7 @@ const AdminSidebar = () => {
     ];
 
     // For now, we only have one active page. This logic can be expanded later.
-    const currentPath = '/admin/problems';
+    const currentPath = '/admin';
 
     return (
         <aside className="w-64 flex-shrink-0 bg-sidebar border-r">
@@ -46,8 +46,8 @@ const AdminSidebar = () => {
                                 : "text-sidebar-foreground hover:bg-muted"
                             )}
                             // Prevent navigation for disabled items
-                            onClick={(e) => { if(item.href !== '/admin/problems') e.preventDefault(); }}
-                            aria-disabled={item.href !== '/admin/problems'}
+                            onClick={(e) => { if(item.href !== '/admin') e.preventDefault(); }}
+                            aria-disabled={item.href !== '/admin'}
                          >
                             <item.icon className="h-5 w-5" />
                             {item.label}
@@ -85,14 +85,16 @@ export default function AdminPage() {
                 <div className="flex-1 flex flex-col">
                      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card/80 backdrop-blur-sm px-6">
                         <div className="flex items-center gap-2">
-                            <CodeXml className="h-6 w-6" />
-                            <span className="text-lg font-bold font-headline">Codbbit</span>
+                           {/* This space can be used for breadcrumbs or page title */}
                         </div>
                         <div className="flex items-center gap-4 text-sm font-medium">
                             <Link href="/apex-problems" className="text-muted-foreground hover:text-foreground">Practice Problems</Link>
                             <Link href="/leaderboard" className="text-muted-foreground hover:text-foreground">Leaderboard</Link>
                             <Link href="/problem-sheets" className="text-muted-foreground hover:text-foreground">Problem Sheets</Link>
                             <Link href="/admin" className="font-semibold text-primary">Admin</Link>
+                             <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                {userData.name.charAt(0)}
+                            </div>
                         </div>
                     </header>
                     <main className="flex-1 p-6">
