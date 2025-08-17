@@ -23,12 +23,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -129,6 +130,62 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
   );
 };
 
+const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSolved: boolean }) => {
+    const getDifficultyClass = (difficulty: string) => {
+        switch (difficulty?.toLowerCase()) {
+        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+        case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+        case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+        default: return 'bg-muted';
+        }
+    };
+    return (
+        <div className="p-4 h-full overflow-y-auto space-y-6">
+            <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
+            <div className="flex items-center gap-4 flex-wrap">
+               <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+               <Badge variant="secondary">{problem.categoryName}</Badge>
+               {problem.company && (
+                    <div className="flex items-center gap-1.5">
+                        {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
+                        <span className="text-sm font-medium">{problem.company}</span>
+                    </div>
+                )}
+               {isSolved && (
+                <div className="flex items-center gap-1.5 text-sm text-green-400">
+                   <CheckCircle2 className="h-4 w-4" />
+                   <span>Solved</span>
+                </div>
+               )}
+            </div>
+            <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
+            
+            {problem.examples.map((example, index) => (
+                <div key={index}>
+                    <h3 className="font-semibold mb-2">Example {index + 1}</h3>
+                    <Card className="bg-card/50">
+                        <CardContent className="p-4 font-code text-sm">
+                            {example.input && <p><strong>Input:</strong> {example.input}</p>}
+                            <p><strong>Output:</strong> {example.output}</p>
+                            {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
+                        </CardContent>
+                    </Card>
+                </div>
+            ))}
+
+             {problem.hints && problem.hints.length > 0 && (
+                <div>
+                    <h3 className="font-semibold mb-2">Constraints</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {problem.hints.map((hint, index) => (
+                            <li key={index}>{hint}</li>
+                        ))}
+                    </ul>
+                </div>
+             )}
+        </div>
+    );
+}
 
 export default function ProblemWorkspacePage() {
     const router = useRouter();
@@ -345,7 +402,7 @@ export default function ProblemWorkspacePage() {
     };
 
     return (
-    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-16 md:pt-0">
+    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-14 md:pt-0">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
         {showSuccess && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
@@ -361,7 +418,7 @@ export default function ProblemWorkspacePage() {
                 </div>
             </div>
         )}
-        <header className="flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0">
+        <header className="fixed md:relative top-0 left-0 right-0 flex h-14 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
@@ -433,10 +490,6 @@ export default function ProblemWorkspacePage() {
                     <Flame className="h-5 w-5 text-orange-500" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
                 </div>
-                <div className="flex items-center gap-1.5 font-semibold">
-                    <Award className="h-5 w-5 text-yellow-400" />
-                    <span>{userData?.achievements ? Object.keys(userData.achievements).length : 0}</span>
-                </div>
                 <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarring}>
                     {isStarring ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -449,7 +502,8 @@ export default function ProblemWorkspacePage() {
             </div>
         </header>
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* Desktop View */}
+        <ResizablePanelGroup direction="horizontal" className="flex-1 hidden lg:flex">
             <ResizablePanel 
                 ref={leftPanelRef}
                 defaultSize={33}
@@ -460,50 +514,7 @@ export default function ProblemWorkspacePage() {
                 onExpand={() => setIsFullScreen(false)}
                 className={cn(isFullScreen && "transition-all duration-300 ease-in-out")}
             >
-                <div className="p-4 h-full overflow-y-auto space-y-6">
-                    <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
-                    <div className="flex items-center gap-4 flex-wrap">
-                       <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-                       <Badge variant="secondary">{categoryName}</Badge>
-                       {problem.company && (
-                            <div className="flex items-center gap-1.5">
-                                {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
-                                <span className="text-sm font-medium">{problem.company}</span>
-                            </div>
-                        )}
-                       {isSolved && (
-                        <div className="flex items-center gap-1.5 text-sm text-green-400">
-                           <CheckCircle2 className="h-4 w-4" />
-                           <span>Solved</span>
-                        </div>
-                       )}
-                    </div>
-                    <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
-                    
-                    {problem.examples.map((example, index) => (
-                        <div key={index}>
-                            <h3 className="font-semibold mb-2">Example {index + 1}</h3>
-                            <Card className="bg-card/50">
-                                <CardContent className="p-4 font-code text-sm">
-                                    {example.input && <p><strong>Input:</strong> {example.input}</p>}
-                                    <p><strong>Output:</strong> {example.output}</p>
-                                    {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
-                                </CardContent>
-                            </Card>
-                        </div>
-                    ))}
-
-                     {problem.hints && problem.hints.length > 0 && (
-                        <div>
-                            <h3 className="font-semibold mb-2">Constraints</h3>
-                            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                {problem.hints.map((hint, index) => (
-                                    <li key={index}>{hint}</li>
-                                ))}
-                            </ul>
-                        </div>
-                     )}
-                </div>
+                <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={67} minSize={30}>
@@ -578,6 +589,61 @@ export default function ProblemWorkspacePage() {
                  </ResizablePanelGroup>
             </ResizablePanel>
         </ResizablePanelGroup>
+        
+        {/* Mobile/Tablet View */}
+        <div className="flex-1 lg:hidden">
+            <Tabs defaultValue="problem" className="w-full h-full flex flex-col">
+                <div className="flex-shrink-0 px-4">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="problem"><FileText className="mr-2 h-4 w-4"/> Problem</TabsTrigger>
+                        <TabsTrigger value="code"><Code className="mr-2 h-4 w-4"/> Code</TabsTrigger>
+                    </TabsList>
+                </div>
+                <TabsContent value="problem" className="flex-1 overflow-y-auto">
+                     <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
+                </TabsContent>
+                <TabsContent value="code" className="flex-1 flex flex-col overflow-hidden">
+                    <ResizablePanelGroup direction="vertical" className="flex-1">
+                        <ResizablePanel defaultSize={60} minSize={25}>
+                            <div className="flex flex-col h-full">
+                                 <div className="editor-container flex-1 w-full h-full overflow-auto">
+                                    <MonacoEditor
+                                        height="100%"
+                                        language="java"
+                                        value={code}
+                                        onChange={(newValue) => setCode(newValue || "")}
+                                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                        options={{
+                                            fontSize: 14,
+                                            minimap: { enabled: false },
+                                            scrollBeyondLastLine: false,
+                                            padding: { top: 16, bottom: 16 },
+                                            fontFamily: 'var(--font-source-code-pro)',
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </ResizablePanel>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={40} minSize={15}>
+                            <div className="flex flex-col h-full">
+                                <div className="p-2 border-b border-t flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm">Test Results</h3>
+                                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                        Run
+                                    </Button>
+                                </div>
+                                <div className="flex-1 p-4 overflow-auto">
+                                    <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                                </div>
+                            </div>
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                </TabsContent>
+            </Tabs>
+        </div>
     </div>
     )
 }
+
