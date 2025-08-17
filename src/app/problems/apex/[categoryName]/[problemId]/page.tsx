@@ -421,7 +421,7 @@ export default function ProblemWorkspacePage() {
                 </div>
             </div>
         )}
-        <header className="fixed md:relative top-0 left-0 right-0 flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40">
+        <header className="fixed md:relative top-0 left-0 right-0 flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40 lg:hidden">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
@@ -490,7 +490,7 @@ export default function ProblemWorkspacePage() {
                     </SheetContent>
                 </Sheet>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 lg:hidden">
                 <div className="flex items-center gap-1.5 font-semibold">
                     <Flame className="h-5 w-5 text-primary" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
@@ -526,7 +526,7 @@ export default function ProblemWorkspacePage() {
                  <ResizablePanelGroup direction="vertical">
                     <ResizablePanel defaultSize={65} minSize={25}>
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between py-1 px-2 border-b">
+                            <div className="flex items-center justify-between p-1 px-2 border-b">
                                 <div className="flex items-center gap-2 font-semibold text-sm">
                                     <Code className="h-4 w-4" />
                                     <span>Apex Code</span>
@@ -596,8 +596,8 @@ export default function ProblemWorkspacePage() {
         </ResizablePanelGroup>
         
         {/* Mobile Layout */}
-        <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
-            <Tabs defaultValue="problem" className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+            <Tabs defaultValue="problem" className="flex-1 flex flex-col h-full">
                 <TabsList className="shrink-0 rounded-none border-b bg-transparent justify-start px-2">
                     <TabsTrigger value="problem">Problem</TabsTrigger>
                     <TabsTrigger value="code">Code</TabsTrigger>
