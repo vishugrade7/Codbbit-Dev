@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flame } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { format } from 'date-fns';
 
 type HeatmapProps = {
   data: { [date: string]: number };
@@ -77,8 +78,8 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
       <ActivityCalendar
         data={activityData}
         theme={{
-          light: ['#ebedf0', '#99c0ff', '#66a0ff', '#3380ff', '#0058e6'],
-          dark: ['#161b22', '#0d419d', '#006dff', '#58a6ff', '#b3d1ff'],
+          light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+          dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
         }}
         colorScheme={theme === 'dark' ? 'dark' : 'light'}
         blockSize={12}
@@ -91,8 +92,8 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
             <Tooltip>
               <TooltipTrigger asChild>{block}</TooltipTrigger>
               <TooltipContent>
-                <p className="text-sm font-semibold">
-                  {activity.count === 0 ? 'No' : activity.count} {activity.count === 1 ? 'submission' : 'submissions'} on {new Date(activity.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                <p className="text-sm font-medium">
+                  {activity.count} submissions on {format(new Date(activity.date), 'MMMM d, yyyy')}
                 </p>
               </TooltipContent>
             </Tooltip>
