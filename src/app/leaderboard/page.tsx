@@ -185,7 +185,7 @@ export default function Leaderboard() {
             </div>
             
             {currentUserEntry && (
-              <div className="w-full md:w-auto md:min-w-[400px]">
+              <div className="w-full md:w-auto md:min-w-[350px]">
                 <Link href={`/profile/${currentUserEntry.username}`} className="block h-full">
                   <Card className="bg-muted/50 border-border shadow-sm h-full">
                     <CardContent className="p-4 h-full grid grid-cols-2 gap-4">
@@ -199,7 +199,7 @@ export default function Leaderboard() {
                             <p className="text-sm text-muted-foreground">@{currentUserEntry.username}</p>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center text-right">
+                      <div className="flex justify-between items-center text-left">
                         <div>
                           <p className="font-bold text-lg">{currentUserEntry.rank}th</p>
                           <p className="text-xs text-muted-foreground">Rank</p>
