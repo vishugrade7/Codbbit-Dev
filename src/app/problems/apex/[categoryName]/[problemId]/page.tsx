@@ -618,7 +618,7 @@ export default function ProblemWorkspacePage() {
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
                                     options={{
                                         fontSize: fontSize,
-                                        minimap: { enabled: false },
+                                        minimap: { enabled: true },
                                         scrollBeyondLastLine: false,
                                         padding: {
                                             top: 16,
@@ -668,7 +668,7 @@ export default function ProblemWorkspacePage() {
                                 theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
                                 options={{
                                     fontSize: 14,
-                                    minimap: { enabled: false },
+                                    minimap: { enabled: true },
                                     scrollBeyondLastLine: false,
                                     padding: { top: 16, bottom: 16 },
                                     fontFamily: 'var(--font-source-code-pro)',

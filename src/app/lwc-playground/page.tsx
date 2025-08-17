@@ -104,7 +104,7 @@ export default function LwcPlaygroundPage() {
                                     value={htmlCode}
                                     onChange={(v) => setHtmlCode(v || '')}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{ fontSize: 14, minimap: { enabled: false } }}
+                                    options={{ fontSize: 14, minimap: { enabled: true } }}
                                 />
                             </TabsContent>
                             <TabsContent value="js" className="flex-1 overflow-auto">
@@ -114,7 +114,7 @@ export default function LwcPlaygroundPage() {
                                     value={jsCode}
                                     onChange={(v) => setJsCode(v || '')}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{ fontSize: 14, minimap: { enabled: false } }}
+                                    options={{ fontSize: 14, minimap: { enabled: true } }}
                                 />
                             </TabsContent>
                             <TabsContent value="css" className="flex-1 overflow-auto">
@@ -124,7 +124,7 @@ export default function LwcPlaygroundPage() {
                                     value={cssCode}
                                     onChange={(v) => setCssCode(v || '')}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{ fontSize: 14, minimap: { enabled: false } }}
+                                    options={{ fontSize: 14, minimap: { enabled: true } }}
                                 />
                             </TabsContent>
                         </Tabs>

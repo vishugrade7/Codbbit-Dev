@@ -72,7 +72,7 @@ const ContentBlockRenderer = ({ block, problemMap }: { block: ContentBlock; prob
                 options={{
                     readOnly: true,
                     fontSize: 14,
-                    minimap: { enabled: false },
+                    minimap: { enabled: true },
                     scrollBeyondLastLine: false,
                     padding: { top: 16, bottom: 16 },
                     fontFamily: 'var(--font-source-code-pro)',
