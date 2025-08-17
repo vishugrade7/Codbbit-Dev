@@ -24,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
+  username: z.string().min(3, { message: "Username must be at least 3 characters." }).regex(/^[a-z0-9_.]+$/, { message: "Username can only contain lowercase letters, numbers, underscores, and periods." }),
   company: z.string().optional(),
   country: z.string({ required_error: "Please select a country." }),
   email: z.string().email({ message: "Invalid email address." }),
@@ -85,6 +86,7 @@ export default function SignupPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
+      username: "",
       company: "",
       email: "",
       password: "",
@@ -169,7 +171,7 @@ export default function SignupPage() {
           uid: user.uid,
           email: user.email,
           name: values.fullName,
-          username: values.email?.split('@')[0] || `user${user.uid.substring(0,5)}`,
+          username: values.username,
           company: values.company || '',
           country: values.country,
           points: 0,
@@ -230,6 +232,19 @@ export default function SignupPage() {
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
                         <Input placeholder="e.g. Tim Cook" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g. tim_cook" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
