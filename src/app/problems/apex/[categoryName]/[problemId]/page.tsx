@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -34,6 +34,7 @@ import { useProModal } from "@/components/pro-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -223,6 +224,10 @@ export default function ProblemWorkspacePage() {
     const [isClient, setIsClient] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [awardedPoints, setAwardedPoints] = useState(0);
+
+    const [fontSize, setFontSize] = useState(14);
+    const MIN_FONT_SIZE = 10;
+    const MAX_FONT_SIZE = 24;
 
     useEffect(() => {
         setIsClient(true);
@@ -567,6 +572,16 @@ export default function ProblemWorkspacePage() {
                                     <span>Apex Code</span>
                                 </div>
                                 <div className="flex items-center gap-1">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Text className="h-4 w-4"/></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => setFontSize(prev => Math.max(MIN_FONT_SIZE, prev - 1))}><ZoomOut className="mr-2 h-4 w-4" />Decrease Font Size</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setFontSize(prev => Math.min(MAX_FONT_SIZE, prev + 1))}><ZoomIn className="mr-2 h-4 w-4" />Increase Font Size</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setFontSize(14)}><RefreshCw className="mr-2 h-4 w-4" />Reset Font Size</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
@@ -602,7 +617,7 @@ export default function ProblemWorkspacePage() {
                                     onChange={(newValue) => setCode(newValue || "")}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
                                     options={{
-                                        fontSize: 14,
+                                        fontSize: fontSize,
                                         minimap: { enabled: false },
                                         scrollBeyondLastLine: false,
                                         padding: {
