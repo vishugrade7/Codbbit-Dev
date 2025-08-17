@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -32,6 +32,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProModal } from "@/components/pro-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -213,6 +215,7 @@ export default function ProblemWorkspacePage() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     const [isFullScreen, setIsFullScreen] = useState(false);
     const leftPanelRef = useRef<ImperativePanelHandle>(null);
@@ -300,10 +303,17 @@ export default function ProblemWorkspacePage() {
                 if (difficultyFilter === "All") return true;
                 return p.difficulty === difficultyFilter;
             })
+             .filter((p) => {
+                if (statusFilter === "All") return true;
+                const isSolved = !!userData?.solvedProblems?.[p.id];
+                if (statusFilter === "Solved") return isSolved;
+                if (statusFilter === "Unsolved") return !isSolved;
+                return true;
+             })
             .filter((p) => {
                 return p.title.toLowerCase().includes(searchTerm.toLowerCase());
             });
-    }, [allProblems, searchTerm, difficultyFilter]);
+    }, [allProblems, searchTerm, difficultyFilter, statusFilter, userData]);
 
     const handleSubmit = async () => {
         if (!user) {
@@ -403,6 +413,9 @@ export default function ProblemWorkspacePage() {
         default: return 'bg-muted';
         }
     };
+    
+    const statusOptions = ['All', 'Solved', 'Unsolved'];
+    const difficultyOptions = ['All', 'Easy', 'Medium', 'Hard'];
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
@@ -421,7 +434,7 @@ export default function ProblemWorkspacePage() {
                 </div>
             </div>
         )}
-        <header className="fixed md:relative top-0 left-0 right-0 flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40 lg:hidden">
+        <header className="fixed md:relative top-0 left-0 right-0 flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
@@ -437,31 +450,53 @@ export default function ProblemWorkspacePage() {
                             <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
                         <div className="p-4 border-b space-y-4 shrink-0">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search problems..."
-                                    className="w-full pl-9 h-9"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <span className="text-xs font-medium text-muted-foreground">DIFFICULTY</span>
-                                <div className="flex gap-2 mt-2">
-                                    {["All", "Easy", "Medium", "Hard"].map((diff) => (
-                                        <Button
-                                            key={diff}
-                                            variant={difficultyFilter === diff ? "default" : "outline"}
-                                            size="sm"
-                                            onClick={() => setDifficultyFilter(diff)}
-                                            className="flex-1"
-                                        >
-                                            {diff}
-                                        </Button>
-                                    ))}
+                           <div className="flex items-center gap-2">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search problems..."
+                                        className="w-full pl-9 h-9"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
                                 </div>
-                            </div>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                                            <Filter className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-0" align="end">
+                                        <div className="py-2">
+                                            <p className="text-sm font-medium px-4 mb-2">Status</p>
+                                            {statusOptions.map(option => (
+                                                <button
+                                                    key={option}
+                                                    className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                                    onClick={() => setStatusFilter(option)}
+                                                >
+                                                    <span className={cn("h-2 w-2 rounded-full mr-3", statusFilter === option ? "bg-primary" : "bg-transparent")}></span>
+                                                    {option}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <Separator />
+                                        <div className="py-2">
+                                            <p className="text-sm font-medium px-4 mb-2">Difficulty</p>
+                                            {difficultyOptions.map(option => (
+                                                <button
+                                                    key={option}
+                                                    className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                                    onClick={() => setDifficultyFilter(option)}
+                                                >
+                                                    <span className={cn("h-2 w-2 rounded-full mr-3", difficultyFilter === option ? "bg-primary" : "bg-transparent")}></span>
+                                                    {option}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                           </div>
                         </div>
                         <div className="py-2 overflow-y-auto flex-1">
                             {filteredProblems.length > 0 ? filteredProblems.map((p) => (
@@ -490,7 +525,7 @@ export default function ProblemWorkspacePage() {
                     </SheetContent>
                 </Sheet>
             </div>
-            <div className="flex items-center gap-4 lg:hidden">
+            <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5 font-semibold">
                     <Flame className="h-5 w-5 text-primary" />
                     <span>{userData?.points?.toLocaleString() ?? 0}</span>
@@ -596,7 +631,7 @@ export default function ProblemWorkspacePage() {
         </ResizablePanelGroup>
         
         {/* Mobile Layout */}
-        <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+        <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
             <Tabs defaultValue="problem" className="flex-1 flex flex-col h-full">
                 <TabsList className="shrink-0 rounded-none border-b bg-transparent justify-start px-2">
                     <TabsTrigger value="problem">Problem</TabsTrigger>
