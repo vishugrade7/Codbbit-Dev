@@ -30,6 +30,7 @@ import { submitApexSolution } from "@/app/salesforce/actions";
 import { toggleStarProblem } from "@/app/profile/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useProModal } from "@/components/pro-modal";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -191,6 +192,7 @@ export default function ProblemWorkspacePage() {
     const router = useRouter();
     const params = useParams();
     const { resolvedTheme } = useTheme();
+    const proModal = useProModal();
 
     const { categoryName, problemId } = useMemo(() => ({
         categoryName: params?.categoryName ? decodeURIComponent(params.categoryName as string) : null,
@@ -253,7 +255,7 @@ export default function ProblemWorkspacePage() {
                     const currentProblem = allQuestions.find(p => p.id === problemId);
                     if (currentProblem) {
                         if (currentProblem.isPremium && !isPro) {
-                            router.push('/pricing');
+                            proModal.setIsOpen(true);
                             return;
                         }
                         setProblem({...currentProblem, categoryName});
@@ -276,7 +278,7 @@ export default function ProblemWorkspacePage() {
         });
 
         return () => unsubscribe();
-    }, [categoryName, problemId, isPro, router]);
+    }, [categoryName, problemId, isPro, router, proModal]);
     
     useEffect(() => {
         if (userData?.starredProblems && problemId) {

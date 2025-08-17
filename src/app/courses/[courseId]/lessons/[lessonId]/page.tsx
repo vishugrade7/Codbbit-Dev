@@ -21,6 +21,7 @@ import { useTheme } from "next-themes";
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { markLessonAsComplete } from '@/app/profile/actions';
+import { useProModal } from '@/components/pro-modal';
 
 type ProblemWithCategory = Problem & { categoryName: string };
 
@@ -157,6 +158,7 @@ export default function LessonPage() {
     const params = useParams();
     const router = useRouter();
     const { user, userData, loading: authLoading, isPro } = useAuth();
+    const proModal = useProModal();
 
     const courseId = params.courseId as string;
     const lessonId = params.lessonId as string;
@@ -219,7 +221,7 @@ export default function LessonPage() {
                         const isLessonLocked = (courseData.isPremium && !isPro) || (!lesson.isFree && !isPro);
 
                         if(isLessonLocked) {
-                            router.push('/pricing');
+                            proModal.setIsOpen(true);
                             return; 
                         }
 
@@ -242,7 +244,7 @@ export default function LessonPage() {
         };
 
         fetchCourse();
-    }, [courseId, lessonId, router, isPro, user, authLoading]);
+    }, [courseId, lessonId, router, isPro, user, authLoading, proModal]);
 
     const { progressPercentage, completedLessonsCount, totalLessonsCount } = useMemo(() => {
         if (!course || !course.modules) {
@@ -316,7 +318,13 @@ export default function LessonPage() {
                                                 return (
                                                  <li key={lesson.id}>
                                                     <Link 
-                                                        href={isLessonLocked ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                        href={isLessonLocked ? '#' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                        onClick={(e) => {
+                                                            if (isLessonLocked) {
+                                                                e.preventDefault();
+                                                                proModal.setIsOpen(true);
+                                                            }
+                                                        }}
                                                         className={cn(
                                                             "flex items-center justify-between p-3 rounded-md transition-colors group",
                                                             lesson.id === lessonId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'

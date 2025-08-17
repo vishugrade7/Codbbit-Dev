@@ -16,11 +16,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Search, CheckCircle2, ArrowLeft, Circle, Lock, Filter } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { useProModal } from "@/components/pro-modal";
 
 export default function CategoryProblemsPage() {
   const params = useParams();
   const router = useRouter();
   const { userData, isPro } = useAuth();
+  const proModal = useProModal();
   
   const categoryName = useMemo(() => params?.categoryName ? decodeURIComponent(params.categoryName as string) : null, [params]);
 
@@ -182,7 +184,7 @@ export default function CategoryProblemsPage() {
                     )} 
                     onClick={() => {
                         if (isLocked) {
-                            router.push('/pricing');
+                            proModal.setIsOpen(true);
                         } else {
                             router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${problem.id}`)
                         }

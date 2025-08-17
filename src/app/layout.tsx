@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/app-shell';
+import { ProModalProvider } from '@/components/pro-modal';
 
 const monaSans = Mona_Sans({ 
   subsets: ['latin'],
@@ -37,10 +38,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <AppShell>
-              {children}
-            </AppShell>
-            <Toaster />
+            <ProModalProvider>
+                <AppShell>
+                {children}
+                </AppShell>
+                <Toaster />
+            </ProModalProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

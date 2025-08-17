@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Loader2, ArrowLeft, PlayCircle, BookOpen, Lock, BrainCircuit, MousePointerClick, Code, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { useProModal } from '@/components/pro-modal';
 
 // Helper function to determine the icon based on the first content block
 const getLessonIcon = (lesson: Lesson) => {
@@ -35,6 +36,7 @@ export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
     const { user, userData, loading: authLoading, isPro } = useAuth();
+    const proModal = useProModal();
     const courseId = params.courseId as string;
 
     const [course, setCourse] = useState<Course | null>(null);
@@ -170,7 +172,13 @@ export default function CourseDetailPage() {
                                                         return (
                                                         <li key={lesson.id} className="ml-6">
                                                             <Link 
-                                                                href={isLessonLocked ? '/pricing' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                                href={isLessonLocked ? '#' : `/courses/${courseId}/lessons/${lesson.id}`} 
+                                                                onClick={(e) => {
+                                                                    if (isLessonLocked) {
+                                                                        e.preventDefault();
+                                                                        proModal.setIsOpen(true);
+                                                                    }
+                                                                }}
                                                                 className={cn(
                                                                     "flex items-center justify-between p-3 rounded-md transition-colors group",
                                                                     isLessonLocked ? "cursor-pointer" : "hover:bg-muted"
