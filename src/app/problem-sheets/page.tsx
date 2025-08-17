@@ -9,20 +9,23 @@ import type { ProblemSheet } from "@/types";
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, PlusCircle, Users, Search } from "lucide-react";
+import { Loader2, PlusCircle, Users, Search, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+
 
 const cardColorClasses = [
-  "bg-sky-100/50 dark:bg-sky-900/20 border-sky-500/20 hover:border-sky-500/50",
-  "bg-amber-100/50 dark:bg-amber-900/20 border-amber-500/20 hover:border-amber-500/50",
-  "bg-emerald-100/50 dark:bg-emerald-900/20 border-emerald-500/20 hover:border-emerald-500/50",
-  "bg-violet-100/50 dark:bg-violet-900/20 border-violet-500/20 hover:border-violet-500/50",
-  "bg-rose-100/50 dark:bg-rose-900/20 border-rose-500/20 hover:border-rose-500/50",
-  "bg-fuchsia-100/50 dark:bg-fuchsia-900/20 border-fuchsia-500/20 hover:border-fuchsia-500/50",
+  "bg-[#15803d] text-white border-green-400/30 hover:border-green-400", // Dark Green
+  "bg-[#b45309] text-white border-amber-400/30 hover:border-amber-400", // Amber
+  "bg-[#6d28d9] text-white border-violet-400/30 hover:border-violet-400", // Violet
+  "bg-[#0369a1] text-white border-sky-400/30 hover:border-sky-400", // Sky
+  "bg-[#be185d] text-white border-rose-400/30 hover:border-rose-400", // Rose
+  "bg-[#86198f] text-white border-fuchsia-400/30 hover:border-fuchsia-400", // Fuchsia
 ];
+
 
 export default function ProblemSheetsListPage() {
   const [sheets, setSheets] = useState<ProblemSheet[]>([]);
@@ -125,26 +128,35 @@ export default function ProblemSheetsListPage() {
 
             return (
               <Link key={sheet.id} href={`/sheets/${sheet.id}`} className="block group">
-                <Card className={cn(
-                    "flex flex-col transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 border-2 h-48",
-                    colorClass
-                )}>
-                  <CardContent className="p-5 flex flex-col h-full">
-                      <div className="flex-grow">
-                          <h3 className="font-semibold text-lg text-foreground">{sheet.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{sheet.description || "No description provided."}</p>
-                      </div>
-                      <div className="flex justify-between items-center text-sm text-muted-foreground mt-4">
-                          <div className="flex items-center gap-2">
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                              <span>{sheet.problemIds.length} questions</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              <span>{subscribersCount} Followers</span>
-                          </div>
-                      </div>
-                  </CardContent>
+                <Card className={cn("transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border h-full", colorClass)}>
+                    <CardContent className="p-5 flex flex-col h-full text-white/90">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-2 rounded-lg bg-white/20">
+                               <ClipboardList className="h-6 w-6" />
+                            </div>
+                            <h3 className="font-semibold text-xl flex-1">{sheet.name}</h3>
+                        </div>
+
+                        <div className="flex-grow grid grid-cols-2 gap-4 my-4">
+                            <div>
+                                <p className="text-sm opacity-80">Questions</p>
+                                <p className="text-2xl font-bold">{sheet.problemIds.length}</p>
+                            </div>
+                             <div>
+                                <p className="text-sm opacity-80">Followers</p>
+                                <p className="text-2xl font-bold">{subscribersCount}</p>
+                            </div>
+                        </div>
+
+                        <Separator className="bg-white/20 my-2" />
+
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="opacity-80">Created by {sheet.creatorName}</span>
+                             <div className="px-4 py-1.5 rounded-full bg-white/20 font-semibold hover:bg-white/30 transition-colors">
+                                View
+                            </div>
+                        </div>
+                    </CardContent>
                 </Card>
               </Link>
             );
