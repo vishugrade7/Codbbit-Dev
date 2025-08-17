@@ -128,8 +128,8 @@ export default function ProblemSheetsListPage() {
 
             return (
               <Link key={sheet.id} href={`/sheets/${sheet.id}`} className="block group">
-                <Card className={cn("transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border h-full", colorClass)}>
-                    <CardContent className="p-5 flex flex-col h-full text-white/90">
+                <Card className={cn("transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border", colorClass)}>
+                    <CardContent className="p-5 flex flex-col text-white/90">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="p-2 rounded-lg bg-white/20">
                                <ClipboardList className="h-6 w-6" />
