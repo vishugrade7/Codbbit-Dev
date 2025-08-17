@@ -79,7 +79,7 @@ export default function Header() {
   };
 
   return (
-    <header className={cn("sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60", user && "md:hidden")}>
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
@@ -107,6 +107,17 @@ export default function Header() {
                 </Link>
                 ))
             )}
+            {user && userData?.isAdmin && (
+                <Link
+                    href='/admin'
+                    className={cn(
+                    "transition-colors hover:text-foreground/80",
+                    pathname.startsWith('/admin') ? "text-foreground" : "text-foreground/60"
+                    )}
+                >
+                    Admin
+                </Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -117,9 +128,48 @@ export default function Header() {
             </div>
           ) : user ? (
             <>
-              {/* This desktop view is now handled by the sidebar */}
+              {/* Desktop view */}
               <div className="hidden md:flex items-center gap-4">
-                {/* Kept empty for spacing consistency if needed, but sidebar takes over */}
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className='w-9 h-9 rounded-full'>
+                            <Avatar className="h-9 w-9 border-2 border-primary/50">
+                                <AvatarImage src={userData?.avatarUrl} alt={userData?.name} />
+                                <AvatarFallback>{getInitials(userData?.name ?? '')}</AvatarFallback>
+                            </Avatar>
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="bottom" align="end" className="w-56">
+                        <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                            <p className="text-xs leading-none text-muted-foreground">
+                                {user?.email}
+                            </p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => router.push(`/profile/${userData?.username}`)}>
+                            <UserIcon className="mr-2 h-4 w-4" />
+                            <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/settings')}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                        </DropdownMenuItem>
+                        {!isPro && (
+                            <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                                <Rocket className="mr-2 h-4 w-4" />
+                                <span>Upgrade</span>
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Mobile view with Sheet */}
