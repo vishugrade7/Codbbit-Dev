@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, CheckCircle2, Circle, Search, Lock, Filter, ChevronsUp } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, UserCheck, CheckCircle2, Circle, Search, Lock, Filter, ChevronsUp, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -151,7 +151,7 @@ const SheetDetails = ({ sheet, totalProgress, solvedStats, difficultyStats, uniq
             <section>
                 <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Topics Covered</h2>
                 <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant={topicFilter === "All Topics" ? "default" : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
+                    <Button size="sm" variant={topicFilter === "All Topics" ? 'default' : "outline"} onClick={() => setTopicFilter("All Topics")}>All Topics</Button>
                     {uniqueCategories.map(category => (
                         <Button key={category} size="sm" variant={topicFilter === category ? "default" : "outline"} onClick={() => setTopicFilter(category)}>
                             {category}
@@ -178,6 +178,15 @@ export default function SheetDisplayPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
     const [topicFilter, setTopicFilter] = useState("All Topics");
+    
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isSearchOpen) {
+            searchInputRef.current?.focus();
+        }
+    }, [isSearchOpen]);
 
     useEffect(() => {
         if (!sheetId || !db) return;
@@ -333,45 +342,54 @@ export default function SheetDisplayPage() {
 
                 {/* --- Right Column --- */}
                 <div className="lg:col-span-2 flex flex-col overflow-hidden">
-                    <div className="flex items-center gap-4 mb-6">
+                    <header className="flex items-center justify-between gap-4 mb-4">
                         <Button variant="ghost" onClick={() => router.push('/problem-sheets')} className="text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to All Sheets
+                            Back
                         </Button>
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input
-                                placeholder="Search in sheet..."
-                                className="w-full pl-10 h-11 rounded-full"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-full">
-                                    <Filter className="h-5 w-5" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-56 p-0" align="end">
-                                <div className="py-2">
-                                    <p className="text-sm font-medium px-4 mb-2">Status</p>
-                                    {statusOptions.map(option => (
-                                        <button
-                                            key={option}
-                                            className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
-                                            onClick={() => setStatusFilter(getStatusValue(option))}
-                                        >
-                                            <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
-                                            {option}
-                                        </button>
-                                    ))}
+                        <div className="flex items-center gap-2">
+                            {isSearchOpen ? (
+                                <div className="relative w-48">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        ref={searchInputRef}
+                                        placeholder="Search..."
+                                        className="w-full pl-9 h-9 rounded-full bg-background"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onBlur={() => setIsSearchOpen(false)}
+                                    />
                                 </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
+                            ) : (
+                                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+                                    <Search className="h-5 w-5" />
+                                </Button>
+                            )}
+
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <Filter className="h-5 w-5" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-56 p-0" align="end">
+                                    <div className="py-2">
+                                        <p className="text-sm font-medium px-4 mb-2">Status</p>
+                                        {statusOptions.map(option => (
+                                            <button
+                                                key={option}
+                                                className="flex items-center w-full px-4 py-1.5 text-sm text-left hover:bg-accent"
+                                                onClick={() => setStatusFilter(getStatusValue(option))}
+                                            >
+                                                <span className={cn("h-2 w-2 rounded-full mr-3", getStatusValue(statusFilter) === getStatusValue(option) ? "bg-primary" : "bg-transparent")}></span>
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </header>
 
                     <ScrollArea className="flex-1 -mx-4 md:mx-0 pb-24 lg:pb-0">
                         <div className="rounded-none md:rounded-lg border-y md:border-x">
@@ -438,7 +456,7 @@ export default function SheetDisplayPage() {
                 </div>
             </div>
              {/* Mobile "View Details" button */}
-             <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
+             <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t rounded-t-2xl">
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button size="lg" className="w-full text-lg font-bold">
@@ -458,5 +476,3 @@ export default function SheetDisplayPage() {
         </main>
     );
 }
-
-    
