@@ -34,10 +34,9 @@ import { cn } from '@/lib/utils';
 import { Label } from '../ui/label';
 
 type AdminContextType = {
-    problems: Problem[];
+    problemsByCategory: { [category: string]: Problem[] };
     categories: Awaited<ReturnType<typeof getProblemCategories>>;
     loading: boolean;
-    fetchProblems: (category: string) => void;
     fetchCategories: () => void;
 };
 
@@ -47,7 +46,7 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, userData } = useAuth();
     const router = useRouter();
 
-    const [problems, setProblems] = useState<Problem[]>([]);
+    const [problemsByCategory, setProblemsByCategory] = useState<{ [category: string]: Problem[] }>({});
     const [categories, setCategories] = useState<Awaited<ReturnType<typeof getProblemCategories>>>([]);
     const [loading, setLoading] = useState(true);
     
@@ -56,31 +55,45 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
             setLoading(true);
         } else if (!user || !userData?.isAdmin) {
              router.replace('/');
-        } else {
-            setLoading(false);
         }
     }, [user, userData, router]);
+    
+    // Fetch all problems and categories at once
+    useEffect(() => {
+        if (!db || !user || !userData?.isAdmin) return;
 
-    const fetchProblems = useCallback((category: string) => {
-        if (!db) return;
         setLoading(true);
         const apexDocRef = doc(db, "problems", "Apex");
         const unsubscribe = onSnapshot(apexDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data().Category as ApexProblemsData;
-                setProblems(data[category]?.Questions || []);
+                const problemMap: { [category: string]: Problem[] } = {};
+                const categoryList = Object.entries(data).map(([name, details]) => {
+                    problemMap[name] = details.Questions || [];
+                    return {
+                        name,
+                        imageUrl: details.imageUrl || '',
+                        problemCount: details.Questions?.length || 0
+                    };
+                }).sort((a,b) => a.name.localeCompare(b.name));
+                
+                setProblemsByCategory(problemMap);
+                setCategories(categoryList);
             } else {
-                setProblems([]);
+                setProblemsByCategory({});
+                setCategories([]);
             }
             setLoading(false);
         }, (error) => {
-            console.error("Error fetching problems:", error);
-            setProblems([]);
+            console.error("Error fetching problems data:", error);
+            setProblemsByCategory({});
+            setCategories([]);
             setLoading(false);
         });
         
         return unsubscribe;
-    }, []);
+    }, [user, userData?.isAdmin]);
+
 
     const fetchCategories = useCallback(async () => {
         setLoading(true);
@@ -88,17 +101,11 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         setCategories(fetchedCategories);
         setLoading(false);
     }, []);
-    
-    useEffect(() => {
-        fetchCategories();
-    }, [fetchCategories]);
-
 
     const value = {
-        problems,
+        problemsByCategory,
         categories,
         loading,
-        fetchProblems,
         fetchCategories,
     };
 
@@ -262,7 +269,7 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
 const ProblemList = () => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { problems, categories, loading: contextLoading, fetchProblems } = useAdmin();
+    const { problemsByCategory, categories, loading: contextLoading } = useAdmin();
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
@@ -276,20 +283,15 @@ const ProblemList = () => {
     useEffect(() => {
         if (categories.length > 0 && !activeCategory) {
             setActiveCategory(categories[0].name);
+        } else if (categories.length === 0 && activeCategory) {
+            setActiveCategory(null);
         }
     }, [categories, activeCategory]);
 
-    useEffect(() => {
-        let unsubscribe: (() => void) | undefined;
-        if (activeCategory) {
-            unsubscribe = fetchProblems(activeCategory);
-        }
-        return () => {
-            if (unsubscribe) {
-                unsubscribe();
-            }
-        };
-    }, [activeCategory, fetchProblems]);
+    const problems = useMemo(() => {
+        if (!activeCategory) return [];
+        return problemsByCategory[activeCategory] || [];
+    }, [problemsByCategory, activeCategory]);
 
     const handleUpsertProblem = async (values: z.infer<typeof problemFormSchema>) => {
         if (!user || !activeCategory) return;
@@ -366,7 +368,16 @@ const ProblemList = () => {
                 <p className="text-muted-foreground">View, edit, or add new Apex coding challenges to the platform.</p>
             </div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    {categories.map(cat => (
+                        <Button 
+                            key={cat.name}
+                            variant={activeCategory === cat.name ? "default" : "outline"}
+                            onClick={() => setActiveCategory(cat.name)}
+                        >
+                            {cat.name}
+                        </Button>
+                    ))}
                      <CategoryManager onSelectCategory={setActiveCategory} activeCategory={activeCategory} />
                 </div>
                 <div className="flex items-center gap-2">

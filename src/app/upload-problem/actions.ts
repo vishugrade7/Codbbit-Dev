@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction, DocumentData, WithFieldValue } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData } from '@/types';
 import { z } from 'zod';
@@ -63,6 +63,7 @@ export async function upsertProblemToFirestore(userId: string, categoryName: str
             }
         });
 
+        revalidatePath('/admin');
         revalidatePath('/apex-problems');
         revalidatePath(`/apex-problems/${encodeURIComponent(categoryName)}`);
         return { success: true, problemId: problemId };
@@ -101,6 +102,7 @@ export async function bulkUpsertProblemsFromJSON(userId: string, categoryName: s
             transaction.update(apexDocRef, { [`Category.${categoryName}.Questions`]: updatedQuestions });
         });
 
+        revalidatePath('/admin');
         revalidatePath('/apex-problems');
         return { success: true, message: `${problems.length} problems processed for category ${categoryName}.` };
     } catch (error: any) {
@@ -128,10 +130,16 @@ export async function deleteProblemFromFirestore(userId: string, categoryName: s
                 throw new Error(`Category "${categoryName}" does not exist.`);
             }
 
-            const updatedQuestions = category.Questions.filter(p => p.id !== problemId);
-            transaction.update(apexDocRef, { [`Category.${categoryName}.Questions`]: updatedQuestions });
+            const problemToRemove = category.Questions.find(p => p.id === problemId);
+            if (!problemToRemove) {
+                console.warn(`Problem with ID ${problemId} not found in category ${categoryName}. Nothing to delete.`);
+                return;
+            }
+            
+            transaction.update(apexDocRef, { [`Category.${categoryName}.Questions`]: arrayRemove(problemToRemove) });
         });
         
+        revalidatePath('/admin');
         revalidatePath('/apex-problems');
         revalidatePath(`/apex-problems/${encodeURIComponent(categoryName)}`);
         return { success: true };
@@ -174,6 +182,7 @@ export async function addCategory(userId: string, categoryName: string, imageUrl
                 imageUrl: imageUrl
             }
         });
+        revalidatePath('/admin');
         revalidatePath('/apex-problems');
         return { success: true };
     } catch (error: any) {
@@ -204,7 +213,7 @@ export async function updateCategoryDetails(userId: string, oldName: string, new
             const categoryData = currentData[oldName];
             const updatedData = { ...categoryData, imageUrl: newImageUrl };
             
-            let updatePayload: any = {};
+            let updatePayload: Record<string, WithFieldValue<DocumentData> | undefined> = {};
             if (oldName !== newName) {
                 updatePayload[`Category.${oldName}`] = deleteField();
                 updatePayload[`Category.${newName}`] = updatedData;
@@ -215,6 +224,7 @@ export async function updateCategoryDetails(userId: string, oldName: string, new
             transaction.update(apexDocRef, updatePayload);
         });
 
+        revalidatePath('/admin');
         revalidatePath('/apex-problems');
         return { success: true };
     } catch (error: any) {
@@ -230,6 +240,7 @@ export async function deleteCategory(userId: string, categoryName: string) {
         await updateDoc(apexDocRef, {
             [`Category.${categoryName}`]: deleteField()
         });
+        revalidatePath('/admin');
         revalidatePath('/apex-problems');
         return { success: true };
     } catch (error: any) {
