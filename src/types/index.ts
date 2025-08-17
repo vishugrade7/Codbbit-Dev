@@ -1,6 +1,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -11,7 +12,7 @@ export type SolvedProblemDetail = {
 export type Achievement = {
   name: string;
   description: string;
-  date: any; // Firestore Timestamp
+  date: any; // Firestore Timestamp, but will be string on client
 };
 
 export type User = {
@@ -27,7 +28,7 @@ export type User = {
   companyLogoUrl?: string;
   points: number;
   rank: number;
-  achievements?: { [badgeName: string]: Achievement };
+  achievements?: { [badgeName: string]: Omit<Achievement, 'date'> & { date: any } }; // Stored as Timestamp
   contributions: Contribution[];
   sfdcAuth?: {
     accessToken: string;

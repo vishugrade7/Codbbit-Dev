@@ -14,7 +14,7 @@ import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
-import type { Problem, ApexProblemsData, User as AppUser, Achievement, SolvedProblemDetail as SolvedProblemType } from "@/types";
+import type { Problem, ApexProblemsData, User as AppUser, Achievement as AchievementType, SolvedProblemDetail as SolvedProblemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
@@ -33,6 +33,7 @@ type RecentlySolvedProblem = Omit<SolvedProblemType, 'solvedAt'> & {
     categoryName?: string;
     solvedAt: string; // Serialized date
 };
+type Achievement = Omit<AchievementType, 'date'> & { date: string };
 
 
 // This is the new public profile page
@@ -163,6 +164,16 @@ export default function UserProfilePage() {
             };
         });
     }, [profileUser?.solvedProblems, allProblems]);
+
+     const achievements: Achievement[] = useMemo(() => {
+        if (!profileUser?.achievements) return [];
+        return Object.values(profileUser.achievements)
+            .map(ach => ({
+                ...ach,
+                date: ach.date.toDate().toISOString(),
+            }))
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [profileUser?.achievements]);
 
 
     const handleAvatarClick = () => {
@@ -385,9 +396,9 @@ export default function UserProfilePage() {
                       <CardDescription>Badges earned from your activity.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      {profileUser.achievements && Object.keys(profileUser.achievements).length > 0 ? (
+                      {achievements.length > 0 ? (
                           <div className="grid grid-cols-3 gap-4">
-                              {Object.values(profileUser.achievements).sort((a, b) => b.date.seconds - a.date.seconds).slice(0, 9).map((achievement: Achievement) => (
+                              {achievements.slice(0, 9).map((achievement: Achievement) => (
                                   <div key={achievement.name} className="flex flex-col items-center text-center gap-1.5" title={`${achievement.name}: ${achievement.description}`}>
                                       <div className="p-3 bg-amber-400/10 rounded-full">
                                           <Award className="h-6 w-6 text-amber-500" />
