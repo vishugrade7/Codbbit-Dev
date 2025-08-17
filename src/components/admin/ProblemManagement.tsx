@@ -3,10 +3,10 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from '@/lib/firebase';
-import type { Problem, ApexProblemsData } from '@/types';
+import type { Problem, ApexProblemsData, Course, User as AppUser, NavLink, Badge } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { 
     upsertProblemToFirestore, 
@@ -15,13 +15,25 @@ import {
     addCategory, 
     getProblemCategories, 
     updateCategoryDetails, 
-    deleteCategory 
+    deleteCategory,
+    upsertCourseToFirestore,
+    getAllUsers,
+    setAdminStatus,
+    getNavigationSettings,
+    updateNavigationSettings,
+    getBadges,
+    upsertBadge,
+    deleteBadge
 } from "@/app/upload-problem/actions";
-import { problemFormSchema } from '@/lib/admin-schemas';
+import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -33,12 +45,17 @@ import { Checkbox } from '../ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
+import { Textarea } from '../ui/textarea';
+import { useFieldArray, useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
 
 type AdminContextType = {
     problemsByCategory: { [category: string]: Problem[] };
     categories: Awaited<ReturnType<typeof getProblemCategories>>;
     loading: boolean;
-    fetchCategories: () => void;
 };
 
 const AdminContext = createContext<AdminContextType | null>(null);
@@ -95,19 +112,10 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         return unsubscribe;
     }, [user, userData?.isAdmin]);
 
-
-    const fetchCategories = useCallback(async () => {
-        setLoading(true);
-        const fetchedCategories = await getProblemCategories();
-        setCategories(fetchedCategories);
-        setLoading(false);
-    }, []);
-
     const value = {
         problemsByCategory,
         categories,
         loading,
-        fetchCategories,
     };
 
     return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
@@ -125,7 +133,7 @@ export const useAdmin = () => {
 const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategory: (name: string) => void; activeCategory: string | null }) => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { categories, fetchCategories } = useAdmin();
+    const { categories, loading, problemsByCategory } = useAdmin();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
     const [newImageUrl, setNewImageUrl] = useState("");
@@ -139,7 +147,6 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
         const result = await addCategory(user.uid, newCategoryName, newImageUrl);
         if (result.success) {
             toast({ title: "Category added!" });
-            fetchCategories();
             setIsAddOpen(false);
             setNewCategoryName("");
             setNewImageUrl("");
@@ -155,7 +162,6 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
         const result = await updateCategoryDetails(user.uid, editingCategory.name, newCategoryName, newImageUrl);
         if (result.success) {
             toast({ title: "Category updated!" });
-            fetchCategories();
             setIsEditOpen(false);
             setEditingCategory(null);
             setNewCategoryName("");
@@ -175,7 +181,6 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
         const result = await deleteCategory(user.uid, categoryName);
         if (result.success) {
             toast({ title: "Category deleted!" });
-            fetchCategories();
             if (activeCategory === categoryName) {
                 onSelectCategory(categories.length > 1 ? categories.filter(c => c.name !== categoryName)[0].name : "");
             }
@@ -199,7 +204,7 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
                     <ul className="space-y-2">
                         {categories.map(category => (
                             <li key={category.name} className="flex items-center justify-between p-2 rounded-md border">
-                                <span className="font-medium">{category.name} ({category.problemCount})</span>
+                                <span className="font-medium">{category.name} ({problemsByCategory[category.name]?.length || 0})</span>
                                 <div className='flex items-center gap-2'>
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                                         setEditingCategory(category);
@@ -494,6 +499,376 @@ const ProblemList = () => {
     );
 };
 
+const CourseList = () => {
+    return <div>Course Management Coming Soon</div>;
+};
+
+const UserList = () => {
+    const {user} = useAuth();
+    const {toast} = useToast();
+    const [users, setUsers] = useState<AppUser[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user) return;
+        const fetchUsers = async () => {
+            setLoading(true);
+            const result = await getAllUsers(user.uid);
+            if (Array.isArray(result)) {
+                setUsers(result as AppUser[]);
+            } else {
+                toast({variant: 'destructive', title: 'Error fetching users', description: result.error});
+            }
+            setLoading(false);
+        };
+        fetchUsers();
+    }, [user, toast]);
+
+    const handleAdminToggle = async (targetUserId: string, isAdmin: boolean) => {
+        if (!user) return;
+        const result = await setAdminStatus(user.uid, targetUserId, isAdmin);
+        if (result.success) {
+            toast({title: 'Admin status updated'});
+            setUsers(users.map(u => u.id === targetUserId ? {...u, isAdmin} : u));
+        } else {
+            toast({variant: 'destructive', title: 'Error', description: result.error});
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">User Management</h1>
+                <p className="text-muted-foreground">Manage user roles and permissions.</p>
+            </div>
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Company</TableHead>
+                            <TableHead className="text-center">Is Admin</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                             <TableRow><TableCell colSpan={4} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                        ) : users.map(u => (
+                            <TableRow key={u.id}>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src={u.avatarUrl} alt={u.name} />
+                                            <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="font-medium">{u.name}</div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>{u.email}</TableCell>
+                                <TableCell>{u.company}</TableCell>
+                                <TableCell className="text-center">
+                                    <Switch
+                                        checked={u.isAdmin}
+                                        onCheckedChange={(checked) => handleAdminToggle(u.id, checked)}
+                                        disabled={u.id === user?.uid}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
+}
+
+const DraggableNavLink = ({link, index}: {link: NavLink, index: number}) => {
+    const {attributes, listeners, setNodeRef, transform, transition} = useSortable({id: link.id});
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+    return (
+        <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 border rounded-md bg-card">
+            <Button variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...listeners} {...attributes}><GripVertical className="h-4 w-4" /></Button>
+            <div className="flex-1 grid grid-cols-2 gap-4">
+                <Input value={link.label} disabled/>
+                <Input value={link.href} disabled/>
+            </div>
+        </div>
+    )
+}
+
+const NavigationEditor = () => {
+    const {user} = useAuth();
+    const {toast} = useToast();
+    const [links, setLinks] = useState<NavLink[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const {control, handleSubmit, setValue} = useForm({
+        resolver: zodResolver(z.object({links: navLinksSchema})),
+        defaultValues: { links: [] }
+    });
+    const { fields, append, remove, move } = useFieldArray({ control, name: "links" });
+
+    useEffect(() => {
+        const fetchNav = async () => {
+            setLoading(true);
+            const navLinks = await getNavigationSettings();
+            setLinks(navLinks);
+            setValue('links', navLinks);
+            setLoading(false);
+        };
+        fetchNav();
+    }, [setValue]);
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const {active, over} = event;
+        if (active.id !== over?.id) {
+            const oldIndex = fields.findIndex((field) => field.id === active.id);
+            const newIndex = fields.findIndex((field) => field.id === over?.id);
+            move(oldIndex, newIndex);
+        }
+    };
+
+    const onSave = async (data: {links: NavLink[]}) => {
+        if (!user) return;
+        setLoading(true);
+        const result = await updateNavigationSettings(user.uid, data.links);
+        if(result.success) {
+            toast({title: "Navigation saved!"});
+        } else {
+            toast({variant: 'destructive', title: 'Error', description: result.error});
+        }
+        setLoading(false);
+    }
+    
+    return (
+         <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">Navigation Management</h1>
+                <p className="text-muted-foreground">Control the main site navigation links.</p>
+            </div>
+             <form onSubmit={handleSubmit(onSave)}>
+                <DndContext sensors={[]} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+                    <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-2">
+                         {fields.map((field, index) => (
+                              <DraggableNavLinkItem key={field.id} index={index} control={control} remove={remove} />
+                          ))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
+                <div className="flex justify-between mt-4">
+                    <Button type="button" variant="outline" onClick={() => append({id: `new-${Date.now()}`, label: '', href: '', isEnabled: true, isProtected: false})}><PlusCircle className="mr-2 h-4 w-4"/> Add Link</Button>
+                    <Button type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : "Save Navigation"}</Button>
+                </div>
+            </form>
+        </div>
+    )
+}
+
+const DraggableNavLinkItem = ({ index, control, remove }: { index: number, control: any, remove: (index: number) => void }) => {
+    const { fields } = useFieldArray({ control, name: "links" });
+    const field = fields[index];
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+    
+    return (
+        <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 border rounded-md bg-card">
+            <Button variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...listeners} {...attributes}><GripVertical className="h-4 w-4" /></Button>
+            <Controller name={`links.${index}.label`} control={control} render={({field}) => <Input placeholder="Label" {...field}/>} />
+            <Controller name={`links.${index}.href`} control={control} render={({field}) => <Input placeholder="/href" {...field}/>} />
+            <Controller name={`links.${index}.isEnabled`} control={control} render={({field}) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />
+             <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash className="h-4 w-4" /></Button>
+        </div>
+    );
+};
+
+const BadgeManager = () => {
+    const [badges, setBadges] = useState<Badge[]>([]);
+    const [loading, setLoading] = useState(true);
+    const {user} = useAuth();
+    const {toast} = useToast();
+
+    useEffect(() => {
+        const fetchBadges = async () => {
+            setLoading(true);
+            const data = await getBadges();
+            setBadges(data);
+            setLoading(false);
+        };
+        fetchBadges();
+    }, []);
+
+    const handleUpsert = async (badge: z.infer<typeof badgeFormSchema>) => {
+        if (!user) return;
+        const result = await upsertBadge(user.uid, badge);
+        if (result.success) {
+            toast({title: 'Badge saved'});
+            const newBadges = await getBadges();
+            setBadges(newBadges);
+        } else {
+            toast({variant: 'destructive', title: 'Error', description: result.error});
+        }
+    }
+
+    const handleDelete = async (badgeId: string) => {
+        if (!user) return;
+        const result = await deleteBadge(user.uid, badgeId);
+         if (result.success) {
+            toast({title: 'Badge deleted'});
+            setBadges(badges.filter(b => b.id !== badgeId));
+        } else {
+            toast({variant: 'destructive', title: 'Error', description: result.error});
+        }
+    }
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">Badge Management</h1>
+                <p className="text-muted-foreground">Create and manage achievement badges.</p>
+            </div>
+            <div className="text-right">
+                <BadgeFormDialog onSave={handleUpsert}><Button><PlusCircle className="mr-2 h-4 w-4"/> Add Badge</Button></BadgeFormDialog>
+            </div>
+             <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Value</TableHead>
+                            <TableHead className="w-[80px]">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow><TableCell colSpan={5} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                        ) : badges.map((badge) => (
+                            <TableRow key={badge.id}>
+                                <TableCell className="font-medium">{badge.name}</TableCell>
+                                <TableCell>{badge.description}</TableCell>
+                                <TableCell><UiBadge variant="secondary">{badge.type}</UiBadge></TableCell>
+                                <TableCell>{badge.value} {badge.category && `(${badge.category})`}</TableCell>
+                                 <TableCell className="text-right">
+                                     <BadgeFormDialog onSave={handleUpsert} badge={badge}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                                     </BadgeFormDialog>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash className="h-4 w-4" /></Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDelete(badge.id)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                 </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+             </div>
+        </div>
+    );
+};
+
+const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, onSave: (data: z.infer<typeof badgeFormSchema>) => void, badge?: Badge}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const form = useForm<z.infer<typeof badgeFormSchema>>({
+        resolver: zodResolver(badgeFormSchema),
+        defaultValues: badge || { name: '', description: '', type: 'POINTS', value: 0, category: ''}
+    });
+
+    const onSubmit = (data: z.infer<typeof badgeFormSchema>) => {
+        onSave({...data, value: Number(data.value)});
+        setIsOpen(false);
+        form.reset();
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{badge ? 'Edit Badge' : 'Add Badge'}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                     <FormField control={form.control} name="name" render={({ field }) => (
+                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="description" render={({ field }) => (
+                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="type" render={({ field }) => (
+                        <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                <SelectItem value="STREAK">STREAK</SelectItem>
+                                <SelectItem value="POINTS">POINTS</SelectItem>
+                                <SelectItem value="TOTAL_SOLVED">TOTAL_SOLVED</SelectItem>
+                                <SelectItem value="CATEGORY_SOLVED">CATEGORY_SOLVED</SelectItem>
+                                <SelectItem value="ACTIVE_DAYS">ACTIVE_DAYS</SelectItem>
+                            </SelectContent>
+                        </Select><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="value" render={({ field }) => (
+                        <FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     {form.watch('type') === 'CATEGORY_SOLVED' && (
+                         <FormField control={form.control} name="category" render={({ field }) => (
+                            <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                     )}
+                     <DialogFooter>
+                         <Button type="submit">Save</Button>
+                     </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
+const BrandingManager = () => {
+    return <div>Branding Management Coming Soon</div>;
+}
+
+const PricingManager = () => {
+    return <div>Pricing Management Coming Soon</div>;
+}
+
 export const AdminDashboard = () => {
-    return <ProblemList />;
+    const searchParams = useSearchParams();
+    const tab = searchParams.get('tab') || 'problems';
+
+    switch (tab) {
+        case 'problems':
+            return <ProblemList />;
+        case 'courses':
+            return <CourseList />;
+        case 'users':
+            return <UserList />;
+        case 'navigation':
+            return <NavigationEditor />;
+        case 'badges':
+            return <BadgeManager />;
+        case 'branding':
+            return <BrandingManager />;
+        case 'pricing':
+            return <PricingManager />;
+        default:
+            return <ProblemList />;
+    }
 };
