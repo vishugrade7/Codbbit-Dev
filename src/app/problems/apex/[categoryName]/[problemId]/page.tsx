@@ -405,7 +405,7 @@ export default function ProblemWorkspacePage() {
     };
 
     return (
-    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden pt-12 md:pt-0">
+    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
         {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
         {showSuccess && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
@@ -526,16 +526,16 @@ export default function ProblemWorkspacePage() {
                  <ResizablePanelGroup direction="vertical">
                     <ResizablePanel defaultSize={65} minSize={25}>
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-2 border-b">
-                                <div className="flex items-center gap-2 font-semibold">
-                                    <Code className="h-5 w-5" />
+                            <div className="flex items-center justify-between py-1 px-2 border-b">
+                                <div className="flex items-center gap-2 font-semibold text-sm">
+                                    <Code className="h-4 w-4" />
                                     <span>Apex Code</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>Reset Code</p></TooltipContent>
                                         </Tooltip>
@@ -543,8 +543,8 @@ export default function ProblemWorkspacePage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen}>
-                                                    {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleFullScreen}>
+                                                    {isFullScreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                                                     <span className="sr-only">{isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}</span>
                                                 </Button>
                                             </TooltipTrigger>
@@ -596,7 +596,7 @@ export default function ProblemWorkspacePage() {
         </ResizablePanelGroup>
         
         {/* Mobile Layout */}
-        <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+        <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
             <ResizablePanelGroup direction="vertical" className="flex-1">
                 <ResizablePanel defaultSize={40} minSize={25}>
                     <ScrollArea className="h-full">
