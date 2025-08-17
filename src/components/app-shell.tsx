@@ -14,6 +14,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isCallbackPage = pathname === '/salesforce-callback';
   const isAdminPage = pathname.startsWith('/admin');
+  const isProblemPage = pathname.startsWith('/problems/apex');
+  const isLwcPlayground = pathname.startsWith('/lwc-playground');
+
 
   // Don't render any layout on auth or callback pages
   if (isAuthPage || isCallbackPage) {
@@ -32,13 +35,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (user && isAdminPage) {
     return <>{children}</>;
   }
+  
+  const showHeader = !isProblemPage && !isLwcPlayground;
 
   // Render public layout for all users (logged in or out)
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
+      {showHeader && <Header />}
       <div className="flex-1">{children}</div>
-      {!user && <Footer />}
+      {showHeader && !user && <Footer />}
     </div>
   );
 }
