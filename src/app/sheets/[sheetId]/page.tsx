@@ -332,10 +332,12 @@ export default function SheetDisplayPage() {
 
     return (
         <main className="flex-1 container mx-auto px-4 md:px-6 py-8 flex flex-col h-screen">
-            <Button variant="ghost" onClick={() => router.push('/problem-sheets')} className="mb-4 text-muted-foreground hover:text-foreground self-start">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to All Sheets
-            </Button>
+            <div className="px-4 md:px-0">
+                <Button variant="ghost" onClick={() => router.push('/problem-sheets')} className="mb-4 text-muted-foreground hover:text-foreground self-start -ml-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to All Sheets
+                </Button>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
                 {/* --- Left Column (Desktop) --- */}
                 <div className="hidden lg:block lg:col-span-1 h-full overflow-hidden">
@@ -346,7 +348,7 @@ export default function SheetDisplayPage() {
 
                 {/* --- Right Column --- */}
                 <div className="lg:col-span-2 flex flex-col overflow-hidden">
-                    <div className="flex justify-between items-center mb-4 gap-2 shrink-0">
+                    <div className="flex justify-between items-center mb-4 gap-2 shrink-0 px-4 md:px-0">
                          <div className="flex-1" />
                         <div className="flex items-center gap-2">
                              {isSearchOpen ? (
@@ -407,16 +409,16 @@ export default function SheetDisplayPage() {
                         </div>
                     </div>
 
-                    <ScrollArea className="flex-1">
-                        <div className="rounded-lg border">
+                    <ScrollArea className="flex-1 -mx-4 md:mx-0">
+                        <div className="rounded-none md:rounded-lg border-y md:border-x">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[50px]">#</TableHead>
+                                        <TableHead className="w-[50px] pl-4 md:pl-auto">#</TableHead>
                                         <TableHead>Title</TableHead>
                                         <TableHead className="hidden md:table-cell">Category</TableHead>
                                         <TableHead className="hidden md:table-cell">Difficulty</TableHead>
-                                        <TableHead className="w-[80px] text-center">Status</TableHead>
+                                        <TableHead className="w-[80px] text-center pr-4 md:pr-auto">Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -436,7 +438,7 @@ export default function SheetDisplayPage() {
                                                     router.push(`/problems/apex/${encodeURIComponent(problem.categoryName || '')}/${problem.id}`)
                                                 }
                                             }}>
-                                            <TableCell className="font-medium text-muted-foreground">{problems.findIndex(p => p.id === problem.id) + 1}</TableCell>
+                                            <TableCell className="font-medium text-muted-foreground pl-4 md:pl-auto">{problems.findIndex(p => p.id === problem.id) + 1}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     {isLocked && <Lock className="h-4 w-4 text-primary shrink-0" />}
@@ -449,7 +451,7 @@ export default function SheetDisplayPage() {
                                                     {problem.difficulty}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="pr-4 md:pr-auto">
                                                 <div className="flex justify-center">
                                                     {userData?.solvedProblems?.[problem.id] ? (
                                                         <CheckCircle2 className="h-5 w-5 text-green-500" />
