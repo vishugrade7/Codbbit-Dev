@@ -34,6 +34,14 @@ const testimonials = [
   },
 ];
 
+const proFeatures = [
+    "Access to all premium problems and courses",
+    "Detailed submission analytics and insights",
+    "Create and share unlimited problem sheets",
+    "Unlock exclusive Pro badges and achievements",
+    "Priority support from our team",
+];
+
 
 const loadRazorpayScript = () => {
   return new Promise(resolve => {
@@ -220,41 +228,52 @@ export const ProModal = () => {
             <DialogContent className="max-w-4xl p-0">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                     <div className="p-8 flex flex-col">
-                        <h2 className="text-2xl font-bold font-headline">Plan Details</h2>
-                        <p className="text-muted-foreground mt-2 mb-6">Upgrade to Pro to unlock all features and accelerate your learning.</p>
-                        
-                        <RadioGroup value={billingCycle} onValueChange={(v) => setBillingCycle(v as any)} className="space-y-4">
-                            {monthlyPlan && (
-                                <Label htmlFor="monthly" className={cn("flex items-center gap-4 p-4 border rounded-lg cursor-pointer", billingCycle === 'monthly' && "border-primary ring-2 ring-primary")}>
-                                     <RadioGroupItem value="monthly" id="monthly" />
-                                     <div className="flex-1">
-                                        <p className="font-semibold">Monthly</p>
-                                        <p className="text-muted-foreground text-sm">{monthlyPlan.currency}{monthlyPlan.price} per month</p>
-                                     </div>
-                                </Label>
-                            )}
-                             {biannualPlan && (
-                                <Label htmlFor="biannually" className={cn("flex items-center gap-4 p-4 border rounded-lg cursor-pointer", billingCycle === 'biannually' && "border-primary ring-2 ring-primary")}>
-                                     <RadioGroupItem value="biannually" id="biannually" />
-                                     <div className="flex-1">
-                                        <p className="font-semibold">6 Months</p>
-                                        <p className="text-muted-foreground text-sm">{biannualPlan.currency}{biannualPlan.total} billed every 6 months</p>
-                                     </div>
-                                     {getSavings(biannualPlan) && <div className="bg-foreground text-background text-xs font-bold px-2 py-1 rounded-full">{getSavings(biannualPlan)}% off</div>}
-                                </Label>
-                            )}
-                             {annualPlan && (
-                                <Label htmlFor="annually" className={cn("flex items-center gap-4 p-4 border rounded-lg cursor-pointer", billingCycle === 'annually' && "border-primary ring-2 ring-primary")}>
-                                     <RadioGroupItem value="annually" id="annually" />
-                                     <div className="flex-1">
-                                        <p className="font-semibold">Yearly</p>
-                                        <p className="text-muted-foreground text-sm">{annualPlan.currency}{annualPlan.total} billed annually</p>
-                                     </div>
-                                     {getSavings(annualPlan) && <div className="bg-foreground text-background text-xs font-bold px-2 py-1 rounded-full">{getSavings(annualPlan)}% off</div>}
-                                </Label>
-                            )}
-                        </RadioGroup>
-                        <Button className="mt-auto" size="lg" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig || loadingPlans}>
+                        <div className="flex-1">
+                            <h2 className="text-2xl font-bold font-headline">Upgrade to Pro</h2>
+                            <p className="text-muted-foreground mt-2 mb-6">Unlock all features and accelerate your learning.</p>
+                            
+                            <ul className="space-y-2 text-sm text-foreground/90 mb-8">
+                                {proFeatures.map(feature => (
+                                    <li key={feature} className="flex items-center gap-3">
+                                        <Check className="h-5 w-5 text-primary" />
+                                        <span>{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <RadioGroup value={billingCycle} onValueChange={(v) => setBillingCycle(v as any)} className="space-y-4">
+                                {monthlyPlan && (
+                                    <Label htmlFor="monthly" className={cn("flex items-center gap-4 p-4 border rounded-lg cursor-pointer", billingCycle === 'monthly' && "border-primary ring-2 ring-primary")}>
+                                        <RadioGroupItem value="monthly" id="monthly" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold">Monthly</p>
+                                            <p className="text-muted-foreground text-sm">{monthlyPlan.currency}{monthlyPlan.price} per month</p>
+                                        </div>
+                                    </Label>
+                                )}
+                                {biannualPlan && (
+                                    <Label htmlFor="biannually" className={cn("flex items-center gap-4 p-4 border rounded-lg cursor-pointer", billingCycle === 'biannually' && "border-primary ring-2 ring-primary")}>
+                                        <RadioGroupItem value="biannually" id="biannually" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold">6 Months</p>
+                                            <p className="text-muted-foreground text-sm">{biannualPlan.currency}{biannualPlan.total} billed every 6 months</p>
+                                        </div>
+                                        {getSavings(biannualPlan) && <div className="bg-foreground text-background text-xs font-bold px-2 py-1 rounded-full">{getSavings(biannualPlan)}% off</div>}
+                                    </Label>
+                                )}
+                                {annualPlan && (
+                                    <Label htmlFor="annually" className={cn("flex items-center gap-4 p-4 border rounded-lg cursor-pointer", billingCycle === 'annually' && "border-primary ring-2 ring-primary")}>
+                                        <RadioGroupItem value="annually" id="annually" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold">Yearly</p>
+                                            <p className="text-muted-foreground text-sm">{annualPlan.currency}{annualPlan.total} billed annually</p>
+                                        </div>
+                                        {getSavings(annualPlan) && <div className="bg-foreground text-background text-xs font-bold px-2 py-1 rounded-full">{getSavings(annualPlan)}% off</div>}
+                                    </Label>
+                                )}
+                            </RadioGroup>
+                        </div>
+                        <Button className="mt-8 w-full" size="lg" onClick={handleUpgrade} disabled={isCheckingOut || loadingConfig || loadingPlans}>
                             {(isCheckingOut || loadingConfig || loadingPlans) && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                             Continue to Payment
                         </Button>
