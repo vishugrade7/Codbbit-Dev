@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -363,6 +362,34 @@ const ProblemList = () => {
         reader.readAsText(file);
     };
 
+    const handleDownloadSample = () => {
+        const sampleProblem = [{
+            id: "sample-problem-1",
+            title: "Sample: Add Two Numbers",
+            description: "Given two integers, return their sum.",
+            difficulty: "Easy",
+            metadataType: "Class",
+            sampleCode: "public class Solution {\n    public static Integer add(Integer a, Integer b) {\n        // Your code here\n        return null;\n    }\n}",
+            testcases: "@isTest\nprivate class SolutionTest {\n    @isTest\n    static void testPositiveNumbers() {\n        System.assertEquals(5, Solution.add(2, 3), 'Test with positive numbers failed.');\n    }\n\n    @isTest\n    static void testNegativeNumbers() {\n        System.assertEquals(-5, Solution.add(-2, -3), 'Test with negative numbers failed.');\n    }\n}",
+            examples: [{
+                input: "a = 2, b = 3",
+                output: "5",
+                explanation: "2 + 3 = 5"
+            }],
+            hints: ["Use the '+' operator."],
+            isPremium: false
+        }];
+
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+            JSON.stringify(sampleProblem, null, 2)
+        )}`;
+
+        const link = document.createElement("a");
+        link.href = jsonString;
+        link.download = "sample-problems.json";
+        link.click();
+    };
+
     const filteredProblems = useMemo(() => {
         return problems
           .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
@@ -391,7 +418,7 @@ const ProblemList = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <input type="file" ref={fileInputRef} onChange={handleBulkUpload} accept=".json" className="hidden" />
-                    <Button variant="outline"><Download className="mr-2 h-4 w-4"/> Download Sample</Button>
+                    <Button variant="outline" onClick={handleDownloadSample}><Download className="mr-2 h-4 w-4"/> Download Sample</Button>
                     <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Upload className="mr-2 h-4 w-4"/>}
                          Bulk Upload
@@ -1340,3 +1367,4 @@ export const AdminDashboard = () => {
     }
 };
 
+    
