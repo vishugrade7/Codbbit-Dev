@@ -6,7 +6,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Tag, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { PricingPlan } from "@/types";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 // Function to load the Razorpay script
 const loadRazorpayScript = () => {
@@ -43,6 +45,10 @@ export default function PricingPage() {
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [allPlans, setAllPlans] = useState<any>(null); // Will hold the single pricing document data
   const [loadingPlans, setLoadingPlans] = useState(true);
+  const [voucherCode, setVoucherCode] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState<{code: string; type: 'percentage' | 'fixed'; value: number} | null>(null);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+
 
   useEffect(() => {
     const checkConfig = async () => {
@@ -109,6 +115,27 @@ export default function PricingPage() {
       }
   }, [billingCycle, annualPlan, biannualPlan, monthlyPlan]);
 
+  const discountedTotal = useMemo(() => {
+    if (!appliedVoucher || !selectedPlan) {
+        return selectedPlan?.total;
+    }
+    if (appliedVoucher.type === 'percentage') {
+        const discount = (selectedPlan.total * appliedVoucher.value) / 100;
+        return selectedPlan.total - discount;
+    }
+    if (appliedVoucher.type === 'fixed') {
+        return Math.max(0, selectedPlan.total - appliedVoucher.value);
+    }
+    return selectedPlan.total;
+  }, [appliedVoucher, selectedPlan]);
+
+  useEffect(() => {
+    // Reset voucher when billing cycle changes
+    setAppliedVoucher(null);
+    setVoucherCode('');
+    setVoucherError(null);
+  }, [billingCycle]);
+
 
   const handleUpgrade = async () => {
     if (!user || !userData) {
@@ -120,7 +147,7 @@ export default function PricingPage() {
         toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment processing is not configured on the server. Please contact the site administrator.' });
         return;
     }
-     if (!selectedPlan) {
+     if (!selectedPlan || discountedTotal === undefined) {
         toast({ variant: 'destructive', title: 'Plan not available', description: 'The selected billing cycle is not available.' });
         return;
     }
@@ -134,7 +161,7 @@ export default function PricingPage() {
       return;
     }
 
-    const orderResponse = await createRazorpayOrder(selectedPlan.total, selectedPlan.currencyCode);
+    const orderResponse = await createRazorpayOrder(discountedTotal, selectedPlan.currencyCode);
 
     if (orderResponse.error || !orderResponse.orderId) {
         toast({ variant: 'destructive', title: 'Checkout Error', description: orderResponse.error || 'Could not create an order.' });
@@ -154,7 +181,7 @@ export default function PricingPage() {
             const verificationResult = await verifyAndSavePayment(
               response,
               user.uid,
-              selectedPlan.total * 100, // Pass amount in subunits
+              discountedTotal! * 100, // Pass amount in subunits
               selectedPlan.currencyCode,
               selectedPlan.id as 'monthly' | 'biannually' | 'annually'
             );
@@ -210,6 +237,42 @@ export default function PricingPage() {
       return Math.round(savings);
   }
 
+  const handleApplyVoucher = () => {
+    setVoucherError(null);
+    setAppliedVoucher(null);
+    if (!voucherCode) {
+        setVoucherError('Please enter a voucher code.');
+        return;
+    }
+    const availableVouchers = allPlans?.vouchers || [];
+    const voucher = availableVouchers.find((v: any) => v.code.toLowerCase() === voucherCode.toLowerCase());
+
+    if (!voucher) {
+        setVoucherError('This voucher code is not valid.');
+        return;
+    }
+
+    if (voucher.status !== 'active') {
+        setVoucherError('This voucher is no longer active.');
+        return;
+    }
+
+    if (voucher.expiresAt && new Date() > voucher.expiresAt.toDate()) {
+        setVoucherError('This voucher has expired.');
+        return;
+    }
+
+    setAppliedVoucher({ code: voucher.code, type: voucher.type, value: voucher.value });
+    toast({ title: 'Voucher applied successfully!' });
+  };
+  
+  const removeVoucher = () => {
+    setVoucherCode('');
+    setAppliedVoucher(null);
+    setVoucherError(null);
+  }
+
+
   if (loadingPlans) {
       return (
         <div className="flex h-screen w-full items-center justify-center">
@@ -231,7 +294,7 @@ export default function PricingPage() {
       </div>
 
       <div className="flex justify-center mb-10">
-          <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="w-auto">
+          <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)}>
             <TabsList>
               {monthlyPlan && <TabsTrigger value="monthly">Monthly</TabsTrigger>}
               {biannualPlan && <TabsTrigger value="biannually">6 Months</TabsTrigger>}
@@ -276,11 +339,14 @@ export default function PricingPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex flex-col">
-                    <div className="flex items-baseline">
-                        <span className="text-4xl font-bold">{selectedPlan.currency}{selectedPlan.price}</span>
-                        <span className="text-lg font-normal text-muted-foreground">/month</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{getBillingDescription(selectedPlan)}</p>
+                        <div className="flex items-baseline gap-2">
+                            {appliedVoucher && (
+                                <span className="text-2xl font-bold text-muted-foreground line-through">{selectedPlan.currency}{selectedPlan.price}</span>
+                            )}
+                            <span className="text-4xl font-bold">{selectedPlan.currency}{appliedVoucher ? (discountedTotal! / (billingCycle === 'annually' ? 12 : billingCycle === 'biannually' ? 6 : 1)).toFixed(2) : selectedPlan.price}</span>
+                            <span className="text-lg font-normal text-muted-foreground">/month</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{getBillingDescription(selectedPlan)}</p>
                     </div>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Everything in Free</li>
@@ -288,6 +354,24 @@ export default function PricingPage() {
                             <li key={feature.value} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {feature.value}</li>
                         ))}
                     </ul>
+                    <Separator />
+                    <div className="space-y-2">
+                        <Label htmlFor="voucher">Have a voucher code?</Label>
+                        {appliedVoucher ? (
+                            <div className="flex items-center justify-between p-2 rounded-md bg-green-500/10 border border-green-500/20">
+                                <p className="text-sm font-medium text-green-700 dark:text-green-300">Voucher <span className="font-mono">`{appliedVoucher.code}`</span> applied!</p>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-green-700 dark:text-green-300" onClick={removeVoucher}><X className="h-4 w-4"/></Button>
+                            </div>
+                        ) : (
+                             <>
+                             <div className="flex gap-2">
+                                <Input id="voucher" placeholder="Enter code" value={voucherCode} onChange={e => setVoucherCode(e.target.value)} disabled={!!appliedVoucher} />
+                                <Button variant="outline" onClick={handleApplyVoucher} disabled={!voucherCode}>Apply</Button>
+                            </div>
+                            {voucherError && <p className="text-sm text-destructive">{voucherError}</p>}
+                            </>
+                        )}
+                    </div>
                 </CardContent>
                 <CardFooter>
                     {!isRazorpayReady && !loadingConfig ? (
@@ -332,7 +416,7 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full">Contact Sales</Button>
+            <Button variant="outline" className="w-full" asChild><Link href="/contact">Contact Sales</Link></Button>
           </CardFooter>
         </Card>
       </div>
