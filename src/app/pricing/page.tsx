@@ -232,9 +232,11 @@ export default function PricingPage() {
 
       <div className="flex justify-center mb-10">
           <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="w-auto">
+            <TabsList>
               {monthlyPlan && <TabsTrigger value="monthly">Monthly</TabsTrigger>}
               {biannualPlan && <TabsTrigger value="biannually">6 Months</TabsTrigger>}
               {annualPlan && <TabsTrigger value="annually">Yearly</TabsTrigger>}
+            </TabsList>
           </Tabs>
       </div>
 
