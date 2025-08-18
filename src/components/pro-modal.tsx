@@ -281,10 +281,10 @@ export const ProModal = () => {
                     <div className="hidden md:flex flex-col items-center justify-center bg-primary/10 p-8 text-center">
                         <Image
                             src="https://placehold.co/600x400.png"
-                            alt="Team illustration"
+                            alt="An illustration showing people working together to achieve a goal."
                             width={300}
                             height={200}
-                            data-ai-hint="team working illustration"
+                            data-ai-hint="teamwork illustration"
                             className="mb-8"
                         />
                         <Carousel className="w-full max-w-xs" opts={{loop: true}}>
