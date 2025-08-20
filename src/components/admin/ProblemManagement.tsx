@@ -509,7 +509,7 @@ const ProblemList = () => {
             examples: [{
                 input: "a = 2, b = 3",
                 output: "5",
-                explanation: "2 + 3 = 5"
+                explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]."
             }],
             hints: ["Use the '+' operator."],
             isPremium: false
@@ -960,20 +960,15 @@ const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson, a
                           <AccordionContent className="p-4 pt-0">
                                 <DndContext sensors={useSensors(useSensor(PointerSensor))} onDragEnd={handleBlockDragEnd}>
                                 <SortableContext items={blockFields.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                                    <div className="space-y-4">
+                                    <div className="space-y-2">
                                         {blockFields.map((block, blockIndex) => (
-                                            <ContentBlockForm key={block.id} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} allProblems={allProblems} />
+                                            <ContentBlockForm key={block.id} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} allProblems={allProblems} form={form} />
                                         ))}
                                     </div>
                                 </SortableContext>
                             </DndContext>
-                             <div className="mt-4 flex flex-wrap gap-2">
-                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'text', content: ''})}><BookOpen className="mr-2 h-4 w-4"/> Text</Button>
-                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'image', content: '', caption: ''})}><ImageIcon className="mr-2 h-4 w-4"/> Image</Button>
-                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'code', content: '', language: 'apex'})}><Code className="mr-2 h-4 w-4"/> Code</Button>
-                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'video', content: ''})}><Video className="mr-2 h-4 w-4"/> Video</Button>
-                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'problem', content: ''})}><BrainCircuit className="mr-2 h-4 w-4"/> Problem</Button>
-                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'interactive', content: ''})}><MousePointerClick className="mr-2 h-4 w-4"/> Interactive</Button>
+                             <div className="mt-4">
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'text', content: ''})}><PlusCircle className="mr-2 h-4 w-4"/> Add Text Block</Button>
                              </div>
                          </AccordionContent>
                      </Card>
@@ -983,16 +978,37 @@ const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson, a
     )
 };
 
-const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock, allProblems }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
+const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock, allProblems, form }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; allProblems: ProblemWithCategoryName[], form: any }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
-    const type = block.type;
     const [isProblemSelectorOpen, setIsProblemSelectorOpen] = useState(false);
     
     // Image upload state
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isSlashMenuOpen, setIsSlashMenuOpen] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>, field: any) => {
+        field.onChange(e);
+        if (e.target.value.endsWith('/')) {
+            setIsSlashMenuOpen(true);
+        } else {
+            setIsSlashMenuOpen(false);
+        }
+    }
+    
+    const handleSlashCommand = (newType: ContentBlock['type']) => {
+        const fieldName = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`;
+        const currentContent = form.getValues(`${fieldName}.content`);
+        const newContent = currentContent.slice(0, -1); // remove the '/'
+        
+        form.setValue(`${fieldName}.type`, newType);
+        form.setValue(`${fieldName}.content`, newContent);
+
+        setIsSlashMenuOpen(false);
+    }
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
         const file = e.target.files?.[0];
@@ -1053,22 +1069,43 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
         reader.readAsDataURL(file);
     };
 
+    const blockName = `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`;
+    const blockType = block.type;
+
     return (
-        <div ref={setNodeRef} style={style} className="ml-8">
-            <Card className="bg-card/50">
-                <CardHeader className="flex flex-row items-center p-2">
-                    <Button type="button" variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...attributes} {...listeners}><GripVertical className="h-5 w-5" /></Button>
-                    <p className="font-semibold text-sm capitalize flex-1">{type} Block</p>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeBlock(blockIndex)}><Trash className="h-4 w-4" /></Button>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-4">
-                    {type === 'text' && (
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter markdown text..." rows={5}/>} />
+        <div ref={setNodeRef} style={style} className="ml-8 relative group/block">
+            <div className="flex items-start gap-2">
+                 <Button type="button" variant="ghost" size="icon" className="cursor-grab h-8 w-8 mt-1 text-muted-foreground group-hover/block:opacity-100 opacity-0 transition-opacity" {...attributes} {...listeners}><GripVertical className="h-5 w-5" /></Button>
+                 <div className="flex-1">
+                    {blockType === 'text' && (
+                        <FormField control={control} name={`${blockName}.content`} render={({field}) => (
+                           <div className="relative">
+                             <Textarea 
+                                {...field} 
+                                ref={textareaRef}
+                                onChange={(e) => handleTextChange(e, field)}
+                                placeholder="Type '/' for commands..." 
+                                rows={3}
+                                className="bg-transparent border-0 focus-visible:ring-0 px-0"
+                             />
+                             {isSlashMenuOpen && (
+                                <Card className="absolute z-10 p-2 shadow-lg">
+                                    <p className="text-xs font-semibold px-2 py-1">Add Block</p>
+                                    <CommandList>
+                                        <CommandItem onSelect={() => handleSlashCommand('image')}><ImageIcon className="mr-2 h-4 w-4"/>Image</CommandItem>
+                                        <CommandItem onSelect={() => handleSlashCommand('code')}><Code className="mr-2 h-4 w-4"/>Code</CommandItem>
+                                        <CommandItem onSelect={() => handleSlashCommand('video')}><Video className="mr-2 h-4 w-4"/>Video</CommandItem>
+                                        <CommandItem onSelect={() => handleSlashCommand('problem')}><BrainCircuit className="mr-2 h-4 w-4"/>Problem</CommandItem>
+                                        <CommandItem onSelect={() => handleSlashCommand('interactive')}><MousePointerClick className="mr-2 h-4 w-4"/>Interactive</CommandItem>
+                                    </CommandList>
+                                </Card>
+                             )}
+                           </div>
+                        )} />
                     )}
-                     {type === 'image' && (
-                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                     {blockType === 'image' && (
+                         <FormField control={control} name={`${blockName}.content`} render={({ field }) => (
                             <div className="space-y-2">
-                                <FormLabel>Image</FormLabel>
                                 <div className="p-4 border-2 border-dashed rounded-lg text-center">
                                     {field.value && <Image src={field.value} alt="Uploaded image" width={200} height={112} className="mx-auto rounded-md mb-4 object-cover" />}
                                     
@@ -1083,31 +1120,27 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
                                 <FormControl>
                                     <Input {...field} placeholder="Image URL (or upload)" className="hidden" />
                                 </FormControl>
-                                <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.caption`} render={({field}) => (
-                                    <FormItem className="mt-2">
-                                        <FormLabel>Caption (optional)</FormLabel>
-                                        <FormControl><Input {...field} placeholder="Optional image caption"/></FormControl>
-                                    </FormItem>
+                                <FormField control={control} name={`${blockName}.caption`} render={({field}) => (
+                                    <FormControl><Input {...field} placeholder="Optional image caption" className="bg-transparent border-0 focus-visible:ring-0 text-center"/></FormControl>
                                 )} />
                             </div>
                         )} />
                     )}
-                     {type === 'code' && (
-                        <div className="space-y-2">
-                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.language`} render={({field}) => <Input {...field} placeholder="Language (e.g. apex)"/>} />
-                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter code snippet..." rows={8}/>} />
+                     {blockType === 'code' && (
+                        <div className="space-y-2 p-2 rounded-md bg-muted/80">
+                            <FormField control={control} name={`${blockName}.language`} render={({field}) => <Input {...field} placeholder="Language (e.g. apex)" className="text-xs h-7"/>} />
+                             <FormField control={control} name={`${blockName}.content`} render={({field}) => <Textarea {...field} placeholder="Enter code snippet..." rows={8} className="font-mono text-sm leading-relaxed"/>} />
                         </div>
                     )}
-                     {type === 'video' && (
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Video URL (YouTube, Vimeo, etc.)"/>} />
+                     {blockType === 'video' && (
+                        <FormField control={control} name={`${blockName}.content`} render={({field}) => <Input {...field} placeholder="Video URL (YouTube, Vimeo, etc.)"/>} />
                     )}
-                    {type === 'problem' && (
+                    {blockType === 'problem' && (
                         <FormField
                             control={control}
-                            name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`}
+                            name={`${blockName}.content`}
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                <FormLabel>Problem</FormLabel>
                                 <Popover open={isProblemSelectorOpen} onOpenChange={setIsProblemSelectorOpen}>
                                     <PopoverTrigger asChild>
                                         <FormControl>
@@ -1146,14 +1179,15 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
                             )}
                         />
                     )}
-                    {type === 'interactive' && (
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter embed HTML code..." rows={8}/>} />
+                    {blockType === 'interactive' && (
+                        <FormField control={control} name={`${blockName}.content`} render={({field}) => <Textarea {...field} placeholder="Enter embed HTML code..." rows={8}/>} />
                     )}
-                </CardContent>
-            </Card>
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 mt-1 text-destructive group-hover/block:opacity-100 opacity-0 transition-opacity" onClick={() => removeBlock(blockIndex)}><Trash className="h-4 w-4" /></Button>
+            </div>
         </div>
     )
-}
+};
 
 const CourseList = () => {
     const { user } = useAuth();
@@ -2104,3 +2138,4 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
