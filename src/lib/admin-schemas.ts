@@ -86,6 +86,7 @@ export const navLinkSchema = z.object({
     id: z.string(),
     label: z.string().min(1, "Label is required"),
     href: z.string().min(1, "URL is required"),
+    icon: z.string().optional(),
     isEnabled: z.boolean(),
     isProtected: z.boolean(),
 });

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb, Shield, Flame } from "lucide-react";
+import { CodeXml, Menu, LogOut, User as UserIcon, Settings, Rocket, Lightbulb, Shield, Flame, icons } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,12 @@ import { getQuickTipAction } from "@/app/actions";
 import { getNavigationSettings } from "@/app/upload-problem/actions";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "./theme-toggle";
+
+
+const DynamicLucideIcon = ({ name, ...props }: { name: string } & React.ComponentProps<typeof CodeXml>) => {
+    const LucideIcon = icons[name as keyof typeof icons] || CodeXml;
+    return <LucideIcon {...props} />;
+};
 
 
 export default function Header() {
@@ -102,10 +108,11 @@ export default function Header() {
                         <Link
                             href={link.href}
                             className={cn(
-                            "transition-colors hover:text-foreground/80",
-                            pathname === link.href ? "text-foreground" : "text-foreground/60"
+                            "transition-colors hover:text-foreground/80 flex items-center gap-2",
+                            pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
                             )}
                         >
+                            {link.icon && <DynamicLucideIcon name={link.icon} className="h-4 w-4" />}
                             {link.label}
                         </Link>
                         {index < navLinks.length - 1 && (
@@ -238,10 +245,11 @@ export default function Header() {
                             href={link.href}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
-                              "text-lg font-medium transition-colors hover:text-foreground/80",
-                              pathname === link.href ? "text-foreground" : "text-foreground/60"
+                              "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-3",
+                              pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
                             )}
                           >
+                            {link.icon && <DynamicLucideIcon name={link.icon} className="h-5 w-5" />}
                             {link.label}
                           </Link>
                         ))}
@@ -250,10 +258,11 @@ export default function Header() {
                                 href='/admin'
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className={cn(
-                                "text-lg font-medium transition-colors hover:text-foreground/80",
+                                "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-3",
                                 pathname.startsWith('/admin') ? "text-foreground" : "text-foreground/60"
                                 )}
                             >
+                                <Shield className="h-5 w-5" />
                                 Admin
                             </Link>
                          )}
@@ -306,10 +315,11 @@ export default function Header() {
                             href={link.href}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
-                              "text-lg font-medium transition-colors hover:text-foreground/80",
-                              pathname === link.href ? "text-foreground" : "text-foreground/60"
+                              "text-lg font-medium transition-colors hover:text-foreground/80 flex items-center gap-3",
+                              pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
                             )}
                           >
+                             {link.icon && <DynamicLucideIcon name={link.icon} className="h-5 w-5" />}
                             {link.label}
                           </Link>
                         ))}
