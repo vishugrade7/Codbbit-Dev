@@ -67,8 +67,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import shortid from 'shortid';
 
 
+type ProblemWithCategoryName = Problem & { categoryName: string };
+
 type AdminContextType = {
     problemsByCategory: { [category: string]: Problem[] };
+    allProblems: ProblemWithCategoryName[];
     categories: Awaited<ReturnType<typeof getProblemCategories>>;
     loading: boolean;
 };
@@ -80,6 +83,7 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     const [problemsByCategory, setProblemsByCategory] = useState<{ [category: string]: Problem[] }>({});
+    const [allProblems, setAllProblems] = useState<ProblemWithCategoryName[]>([]);
     const [categories, setCategories] = useState<Awaited<ReturnType<typeof getProblemCategories>>>([]);
     const [loading, setLoading] = useState(true);
     
@@ -101,25 +105,33 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
             if (docSnap.exists()) {
                 const data = docSnap.data().Category as ApexProblemsData;
                 const problemMap: { [category: string]: Problem[] } = {};
+                const flatProblems: ProblemWithCategoryName[] = [];
+                
                 const categoryList = Object.entries(data).map(([name, details]) => {
-                    problemMap[name] = details.Questions || [];
+                    const questions = details.Questions || [];
+                    problemMap[name] = questions;
+                    questions.forEach(q => flatProblems.push({ ...q, categoryName: name }));
+
                     return {
                         name,
                         imageUrl: details.imageUrl || '',
-                        problemCount: details.Questions?.length || 0
+                        problemCount: questions.length
                     };
                 }).sort((a,b) => a.name.localeCompare(b.name));
                 
                 setProblemsByCategory(problemMap);
+                setAllProblems(flatProblems);
                 setCategories(categoryList);
             } else {
                 setProblemsByCategory({});
+                setAllProblems([]);
                 setCategories([]);
             }
             setLoading(false);
         }, (error) => {
             console.error("Error fetching problems data:", error);
             setProblemsByCategory({});
+            setAllProblems([]);
             setCategories([]);
             setLoading(false);
         });
@@ -129,6 +141,7 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
 
     const value = {
         problemsByCategory,
+        allProblems,
         categories,
         loading,
     };
@@ -761,6 +774,7 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
     const { user } = useAuth();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const { allProblems } = useAdmin();
     
     const form = useForm<z.infer<typeof courseFormSchema>>({
         resolver: zodResolver(courseFormSchema),
@@ -837,7 +851,7 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
                             <SortableContext items={moduleFields.map(m => m.id)} strategy={verticalListSortingStrategy}>
                                 <div className="space-y-4">
                                     {moduleFields.map((module, moduleIndex) => (
-                                        <ModuleForm key={module.id} module={module} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule}/>
+                                        <ModuleForm key={module.id} module={module} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule} allProblems={allProblems} />
                                     ))}
                                 </div>
                             </SortableContext>
@@ -857,7 +871,7 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
     );
 };
 
-const ModuleForm = ({ module, moduleIndex, control, removeModule }: { module: Module; moduleIndex: number; control: any, removeModule: (index: number) => void }) => {
+const ModuleForm = ({ module, moduleIndex, control, removeModule, allProblems }: { module: Module; moduleIndex: number; control: any, removeModule: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
     const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons` });
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: module.id });
 
@@ -892,7 +906,7 @@ const ModuleForm = ({ module, moduleIndex, control, removeModule }: { module: Mo
                                 <SortableContext items={lessonFields.map(l => l.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-4">
                                         {lessonFields.map((lesson, lessonIndex) => (
-                                            <LessonForm key={lesson.id} lesson={lesson} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson}/>
+                                            <LessonForm key={lesson.id} lesson={lesson} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson} allProblems={allProblems} />
                                         ))}
                                     </div>
                                 </SortableContext>
@@ -908,7 +922,7 @@ const ModuleForm = ({ module, moduleIndex, control, removeModule }: { module: Mo
     );
 };
 
-const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson }: { lesson: Lesson; moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void }) => {
+const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson, allProblems }: { lesson: Lesson; moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
      const { fields: blockFields, append: appendBlock, remove: removeBlock, move: moveBlock } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
      const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
      const style = { transform: CSS.Transform.toString(transform), transition };
@@ -945,7 +959,7 @@ const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson }:
                                 <SortableContext items={blockFields.map(b => b.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-4">
                                         {blockFields.map((block, blockIndex) => (
-                                            <ContentBlockForm key={block.id} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} />
+                                            <ContentBlockForm key={block.id} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} allProblems={allProblems} />
                                         ))}
                                     </div>
                                 </SortableContext>
@@ -966,10 +980,11 @@ const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson }:
     )
 };
 
-const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; }) => {
+const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock, allProblems }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const type = block.type;
+    const [isProblemSelectorOpen, setIsProblemSelectorOpen] = useState(false);
     
     return (
         <div ref={setNodeRef} style={style} className="ml-8">
@@ -999,7 +1014,48 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Video URL (YouTube, Vimeo, etc.)"/>} />
                     )}
                     {type === 'problem' && (
-                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Problem ID"/>} />
+                        <FormField
+                            control={control}
+                            name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`}
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <Popover open={isProblemSelectorOpen} onOpenChange={setIsProblemSelectorOpen}>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                                {field.value ? allProblems.find((p) => p.id === field.value)?.title : "Select problem"}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[400px] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search problems..." />
+                                            <CommandEmpty>No problem found.</CommandEmpty>
+                                            <CommandList>
+                                                <CommandGroup>
+                                                    {allProblems.map((problem) => (
+                                                        <CommandItem
+                                                            value={problem.title}
+                                                            key={problem.id}
+                                                            onSelect={() => {
+                                                                field.onChange(problem.id);
+                                                                setIsProblemSelectorOpen(false);
+                                                            }}
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4", problem.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                            {problem.title}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     )}
                     {type === 'interactive' && (
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter embed HTML code..." rows={8}/>} />
