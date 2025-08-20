@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, runTransaction, collection, where, query, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export async function toggleStarProblem(userId: string, problemId: string, isCurrentlyStarred: boolean) {
@@ -42,16 +42,26 @@ export async function updateAvatar(userId: string, newAvatarUrl: string) {
     const userDocRef = doc(db, 'users', userId);
 
     try {
-        // Just update Firestore with the new URL.
-        // The file in Storage is overwritten by the client-side upload.
-        await updateDoc(userDocRef, {
-            avatarUrl: newAvatarUrl
+        await runTransaction(db, async (transaction) => {
+            // 1. Update the user's main document
+            transaction.update(userDocRef, { avatarUrl: newAvatarUrl });
+
+            // 2. Query for problem sheets created by this user
+            const sheetsQuery = query(collection(db, 'problem-sheets'), where('createdBy', '==', userId));
+            const sheetsSnapshot = await getDocs(sheetsQuery);
+
+            // 3. Update each problem sheet
+            sheetsSnapshot.forEach(sheetDoc => {
+                const sheetRef = doc(db, 'problem-sheets', sheetDoc.id);
+                transaction.update(sheetRef, { creatorAvatarUrl: newAvatarUrl });
+            });
         });
 
         return { success: true };
     } catch (error) {
-        console.error("Error updating avatar URL in Firestore:", error);
-        return { success: false, error: 'Failed to update profile picture URL.' };
+        console.error("Error updating avatar URL:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, error: `Failed to update profile picture: ${errorMessage}` };
     }
 }
 
