@@ -3,6 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { Target } from "lucide-react";
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 
 type ProgressCardProps = {
@@ -54,7 +55,7 @@ export function ProgressCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Progress</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Progress</CardTitle>
       </CardHeader>
       <CardContent className="pt-0 flex flex-col md:flex-row items-center gap-6">
         <div className="relative h-40 w-40">
