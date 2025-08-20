@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
@@ -63,7 +62,7 @@ export default function UserProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
-    const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
+    const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: number });
     const [allBadges, setAllBadges] = useState<Map<string, BadgeType>>(new Map());
     const [loadingProblems, setLoadingProblems] = useState(true);
 
@@ -403,7 +402,10 @@ export default function UserProfilePage() {
                 <div className="md:col-span-12 lg:col-span-8 space-y-6">
                      <Card>
                         <CardHeader>
-                            <CardTitle>Contribution Graph</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                                <PieChartIcon className="h-5 w-5" />
+                                Contribution Graph
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                              {profileUser.submissionHeatmap && Object.keys(profileUser.submissionHeatmap).length > 0 ? (
@@ -497,3 +499,5 @@ export default function UserProfilePage() {
     </>
   );
 }
+
+    
