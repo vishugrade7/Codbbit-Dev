@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -836,7 +837,7 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
                             <SortableContext items={moduleFields.map(m => m.id)} strategy={verticalListSortingStrategy}>
                                 <div className="space-y-4">
                                     {moduleFields.map((module, moduleIndex) => (
-                                        <ModuleForm key={module.id} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule}/>
+                                        <ModuleForm key={module.id} module={module} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule}/>
                                     ))}
                                 </div>
                             </SortableContext>
@@ -856,9 +857,9 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
     );
 };
 
-const ModuleForm = ({ moduleIndex, control, removeModule }: { moduleIndex: number; control: any, removeModule: (index: number) => void }) => {
+const ModuleForm = ({ module, moduleIndex, control, removeModule }: { module: Module; moduleIndex: number; control: any, removeModule: (index: number) => void }) => {
     const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons` });
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}`) as Module).id });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: module.id });
 
     const style = { transform: CSS.Transform.toString(transform), transition };
     
@@ -891,7 +892,7 @@ const ModuleForm = ({ moduleIndex, control, removeModule }: { moduleIndex: numbe
                                 <SortableContext items={lessonFields.map(l => l.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-4">
                                         {lessonFields.map((lesson, lessonIndex) => (
-                                            <LessonForm key={lesson.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson}/>
+                                            <LessonForm key={lesson.id} lesson={lesson} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson}/>
                                         ))}
                                     </div>
                                 </SortableContext>
@@ -907,9 +908,9 @@ const ModuleForm = ({ moduleIndex, control, removeModule }: { moduleIndex: numbe
     );
 };
 
-const LessonForm = ({ moduleIndex, lessonIndex, control, removeLesson }: { moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void }) => {
+const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson }: { lesson: Lesson; moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void }) => {
      const { fields: blockFields, append: appendBlock, remove: removeBlock, move: moveBlock } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
-     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson).id });
+     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
      const style = { transform: CSS.Transform.toString(transform), transition };
      
      const handleBlockDragEnd = (event: DragEndEvent) => {
@@ -944,7 +945,7 @@ const LessonForm = ({ moduleIndex, lessonIndex, control, removeLesson }: { modul
                                 <SortableContext items={blockFields.map(b => b.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-4">
                                         {blockFields.map((block, blockIndex) => (
-                                            <ContentBlockForm key={block.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} />
+                                            <ContentBlockForm key={block.id} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} />
                                         ))}
                                     </div>
                                 </SortableContext>
@@ -965,8 +966,8 @@ const LessonForm = ({ moduleIndex, lessonIndex, control, removeLesson }: { modul
     )
 };
 
-const ContentBlockForm = ({ moduleIndex, lessonIndex, blockIndex, control, removeBlock }: { moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`) as ContentBlock).id });
+const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const type = control.watch(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.type`);
     
