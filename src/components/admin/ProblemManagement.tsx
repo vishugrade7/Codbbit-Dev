@@ -28,6 +28,7 @@ import {
     getPricingPlans,
     updatePricingPlans
 } from "@/app/upload-problem/actions";
+import { validateProblemInSalesforce } from '@/app/salesforce/actions';
 import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema, voucherSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
@@ -37,7 +38,7 @@ import { format } from "date-fns";
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2 } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -294,6 +295,10 @@ const ProblemList = () => {
     const [difficultyFilter, setDifficultyFilter] = useState("All");
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    const [isTestModalOpen, setIsTestModalOpen] = useState(false);
+    const [testResult, setTestResult] = useState("");
+    const [isTesting, setIsTesting] = useState(false);
 
     useEffect(() => {
         if (categories.length > 0 && !activeCategory) {
@@ -336,6 +341,19 @@ const ProblemList = () => {
         setLoading(false);
     };
     
+    const handleTestProblem = async (problem: Problem) => {
+        if (!user) return;
+        setIsTesting(true);
+        setTestResult("");
+        setIsTestModalOpen(true);
+        
+        const fullProblem = { ...problem, categoryName: activeCategory! };
+        const result = await validateProblemInSalesforce(user.uid, fullProblem);
+        
+        setTestResult(result.details || result.message);
+        setIsTesting(false);
+    };
+    
     const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!user || !activeCategory) return;
         const file = event.target.files?.[0];
@@ -346,6 +364,7 @@ const ProblemList = () => {
         reader.onload = async (e) => {
             try {
                 const problemsJSON = JSON.parse(e.target?.result as string);
+                // Schema validation can be added here if needed
                 const result = await bulkUpsertProblemsFromJSON(user.uid, activeCategory!, problemsJSON);
                 if (result.success) {
                     toast({ title: 'Bulk Upload Successful', description: result.message });
@@ -376,7 +395,7 @@ const ProblemList = () => {
                 output: "5",
                 explanation: "2 + 3 = 5"
             }],
-            hints: ["Use the '+' operator."],
+            hints: [{ value: "Use the '+' operator."} ],
             isPremium: false
         }];
 
@@ -464,7 +483,7 @@ const ProblemList = () => {
                             <TableHead>Title</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Difficulty</TableHead>
-                            <TableHead>Tested</TableHead>
+                            <TableHead>Premium</TableHead>
                             <TableHead className="w-[80px]">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -489,9 +508,7 @@ const ProblemList = () => {
                                         {problem.difficulty}
                                     </UiBadge>
                                 </TableCell>
-                                <TableCell>
-                                    {/* Placeholder for 'Tested' status */}
-                                </TableCell>
+                                <TableCell>{problem.isPremium ? 'Yes' : 'No'}</TableCell>
                                 <TableCell className="text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -502,6 +519,9 @@ const ProblemList = () => {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={() => { setEditingProblem(problem); setIsFormOpen(true); }}>
                                                 <Pencil className="mr-2 h-4 w-4" /> Edit
+                                            </DropdownMenuItem>
+                                             <DropdownMenuItem onClick={() => handleTestProblem(problem)}>
+                                                <TestTube2 className="mr-2 h-4 w-4" /> Test
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <AlertDialog>
@@ -534,6 +554,28 @@ const ProblemList = () => {
                     </TableBody>
                 </Table>
             </div>
+            
+            <Dialog open={isTestModalOpen} onOpenChange={setIsTestModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Test Results</DialogTitle>
+                        <DialogDescription>Validation results from Salesforce org.</DialogDescription>
+                    </DialogHeader>
+                    <div className="my-4 max-h-[60vh] overflow-y-auto bg-muted/50 p-4 rounded-md">
+                        {isTesting ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>Running tests in Salesforce...</span>
+                            </div>
+                        ) : (
+                           <pre className="text-sm text-foreground whitespace-pre-wrap font-code">{testResult}</pre>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsTestModalOpen(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
@@ -1366,5 +1408,3 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
-
-    

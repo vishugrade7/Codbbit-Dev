@@ -353,12 +353,15 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
     }
 }
 
-export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
-    const log: string[] = [];
-    
-    try {
+async function runApexTest(
+    log: string[],
+    auth: SfdcAuth,
+    problem: Problem,
+    codeToTest: string
+): Promise<{ success: boolean; message: string; details: string }> {
+     try {
         log.push("--- Starting Submission ---");
-        const codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
+        const codeTypeKeywordMatch = codeToTest.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
         const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
         const problemTypeKeyword = problem.metadataType.toLowerCase();
 
@@ -375,22 +378,15 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
             return { success: false, message: 'Problem Configuration Error', details: msg };
         }
-        
-        const userDocRefCheck = await getDoc(doc(db, "users", userId));
-        if (userDocRefCheck.exists() && userDocRefCheck.data().solvedProblems?.[problem.id]) {
-            return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
-        }
 
-        const auth = await getSfdcConnection(userId);
-        
-        const mainObjectName = getClassName(userCode);
+        const mainObjectName = getClassName(codeToTest);
         const testObjectName = getClassName(problem.testcases);
         
         if (!mainObjectName || !testObjectName) {
             throw new Error('Could not determine class/trigger names from the provided code.');
         }
 
-        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, userCode, problem.triggerSObject);
+        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, codeToTest, problem.triggerSObject);
         const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
 
         log.push("\n--- Running Tests ---");
@@ -442,15 +438,61 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
             log.push("> Could not retrieve code coverage information.");
         }
 
-        const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
-        
-        return { success: true, message: successMessage, details: log.join('\n') };
+        return { success: true, message: 'All tests passed.', details: log.join('\n') };
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         log.push(`\n--- ERROR ---`);
         log.push(errorMessage);
         return { success: false, message: 'An error occurred during submission.', details: log.join('\n') };
+    }
+}
+
+
+export async function submitApexSolution(userId: string, problem: Problem, userCode: string): Promise<SubmissionResult> {
+    const log: string[] = [];
+    try {
+        const auth = await getSfdcConnection(userId);
+        
+        const userDocRefCheck = await getDoc(doc(db, "users", userId));
+        if (userDocRefCheck.exists() && userDocRefCheck.data().solvedProblems?.[problem.id]) {
+            return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
+        }
+        
+        const testRunResult = await runApexTest(log, auth, problem, userCode);
+        
+        if (testRunResult.success) {
+            const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
+            return { success: true, message: successMessage, details: log.join('\n') };
+        } else {
+            return testRunResult;
+        }
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        log.push(`\n--- ERROR ---`);
+        log.push(errorMessage);
+        return { success: false, message: 'An error occurred during submission.', details: log.join('\n') };
+    }
+}
+
+export async function validateProblemInSalesforce(userId: string, problem: Problem): Promise<SubmissionResult> {
+    const log: string[] = [];
+    try {
+        log.push("--- Starting Admin Validation ---");
+        const auth = await getSfdcConnection(userId);
+        const testRunResult = await runApexTest(log, auth, problem, problem.sampleCode);
+        
+        if(testRunResult.success) {
+            log.push("\n--- VALIDATION SUCCEEDED ---");
+        }
+        
+        return testRunResult;
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        log.push(`\n--- ERROR ---`);
+        log.push(errorMessage);
+        return { success: false, message: 'An error occurred during validation.', details: log.join('\n') };
     }
 }
 
