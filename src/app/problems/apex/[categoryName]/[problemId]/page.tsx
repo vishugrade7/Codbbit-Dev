@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -8,7 +9,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import type { Problem, ApexProblemsData } from "@/types";
+import type { Problem, ApexProblemsData, Achievement } from "@/types";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
@@ -35,6 +36,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import BadgeUnlockedModal from "@/components/badge-unlocked-modal";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -224,6 +226,8 @@ export default function ProblemWorkspacePage() {
     const [isClient, setIsClient] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [awardedPoints, setAwardedPoints] = useState(0);
+    const [unlockedBadge, setUnlockedBadge] = useState<Omit<Achievement, 'date'> | null>(null);
+
 
     const [fontSize, setFontSize] = useState(14);
     const MIN_FONT_SIZE = 10;
@@ -348,6 +352,12 @@ export default function ProblemWorkspacePage() {
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
+            
+            if (response.awardedBadges && response.awardedBadges.length > 0) {
+                // For simplicity, we show the first awarded badge in the modal.
+                setUnlockedBadge(response.awardedBadges[0]);
+            }
+
             const pointsMatch = response.message.match(/You've earned (\d+) points/);
             const points = pointsMatch ? parseInt(pointsMatch[1], 10) : 0;
             if (points > 0) {
@@ -424,8 +434,10 @@ export default function ProblemWorkspacePage() {
 
     return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
-        {showSuccess && isClient && <ReactConfetti recycle={false} numberOfPieces={500} />}
-        {showSuccess && (
+        {isClient && <BadgeUnlockedModal badge={unlockedBadge} user={userData} onOpenChange={() => setUnlockedBadge(null)} />}
+
+        {showSuccess && isClient && !unlockedBadge && <ReactConfetti recycle={false} numberOfPieces={500} />}
+        {showSuccess && !unlockedBadge && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
                 <div className="text-center">
                     <div className="animate-points-animation">

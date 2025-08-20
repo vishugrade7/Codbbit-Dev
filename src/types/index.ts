@@ -1,5 +1,11 @@
 
 
+export type SubmissionResult = {
+  success: boolean;
+  message: string;
+  details?: string;
+  awardedBadges?: Omit<Achievement, 'date'>[];
+};
 
 
 

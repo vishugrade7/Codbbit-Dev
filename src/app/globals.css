@@ -98,6 +98,10 @@
   .hexagon-clip {
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   }
+  .animate-badge-glow {
+    box-shadow: 0 0 10px var(--glow-color), 0 0 20px var(--glow-color);
+    animation: badge-glow 3s infinite;
+  }
 }
 
 @media print {

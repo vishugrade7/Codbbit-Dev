@@ -1,10 +1,11 @@
 
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Problem, SolvedProblemDetail, Badge, Achievement } from '@/types';
+import type { User, Problem, SolvedProblemDetail, Badge, Achievement, SubmissionResult } from '@/types';
 
 
 type SalesforceTokenResponse = {
@@ -20,7 +21,6 @@ type SalesforceTokenResponse = {
 };
 
 type SfdcAuth = NonNullable<User['sfdcAuth']>;
-type SubmissionResult = { success: boolean, message: string, details?: string };
 const POINTS_MAP: { [key: string]: number } = { Easy: 5, Medium: 10, Hard: 15 };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const getClassName = (code: string) => code.match(/(?:class|trigger)\s+([A-Za-z0-9_]+)/i)?.[1];
@@ -215,14 +215,13 @@ async function deployMetadata(log: string[], auth: SfdcAuth, objectType: 'ApexCl
     return newRecord.id;
 }
 
-async function _awardPointsAndLogProgress(log: string[], userId: string, problem: Problem): Promise<string> {
+async function _awardPointsAndLogProgress(log: string[], userId: string, problem: Problem): Promise<{ message: string; awardedBadges: Omit<Achievement, 'date'>[] }> {
     const userDocRef = doc(db, "users", userId);
     const pointsToAward = POINTS_MAP[problem.difficulty] || 0;
     const categoryName = problem.categoryName || "Uncategorized";
+    let newAwardedBadges: Omit<Achievement, 'date'>[] = [];
 
     try {
-        let awardedBadges: string[] = [];
-
         const badgesCollectionRef = collection(db, 'badges');
         const badgesSnapshot = await getDocs(badgesCollectionRef);
         const badgesToAward = badgesSnapshot.docs.map(doc => doc.data() as Omit<Badge, 'id'>);
@@ -315,14 +314,17 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                     }
                     
                     if (earned) {
-                        newAchievements[badge.name] = {
+                        const awardedBadge: Omit<Achievement, 'date'> = {
                             name: badge.name,
                             description: criteria.description,
-                            date: serverTimestamp(),
                             icon: badge.icon,
                             color: badge.color,
                         };
-                        awardedBadges.push(badge.name);
+                        newAchievements[badge.name] = {
+                            ...awardedBadge,
+                            date: serverTimestamp(),
+                        };
+                        newAwardedBadges.push(awardedBadge);
                     }
                 }
             }
@@ -343,15 +345,16 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
         });
 
         let successMessage = `All tests passed! You've earned ${pointsToAward} points.`;
-        if (awardedBadges.length > 0) {
-            log.push(`\n> New Badges Earned: ${awardedBadges.join(', ')}`);
-            successMessage += ` You've earned new badge(s): ${awardedBadges.join(', ')}!`;
+        if (newAwardedBadges.length > 0) {
+            const badgeNames = newAwardedBadges.map(b => b.name).join(', ');
+            log.push(`\n> New Badges Earned: ${badgeNames}`);
+            successMessage += ` You've earned new badge(s): ${badgeNames}!`;
         }
-        return successMessage;
+        return { message: successMessage, awardedBadges: newAwardedBadges };
     } catch (e: any) {
         console.error("Error in award points transaction:", e);
         log.push(`\n> Error updating profile: ${e.message}`);
-        return "All tests passed, but there was an error updating your profile.";
+        return { message: "All tests passed, but there was an error updating your profile.", awardedBadges: [] };
     }
 }
 
@@ -464,8 +467,8 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
         const testRunResult = await runApexTest(log, auth, problem, userCode);
         
         if (testRunResult.success) {
-            const successMessage = await _awardPointsAndLogProgress(log, userId, problem);
-            return { success: true, message: successMessage, details: log.join('\n') };
+            const { message, awardedBadges } = await _awardPointsAndLogProgress(log, userId, problem);
+            return { success: true, message, details: log.join('\n'), awardedBadges };
         } else {
             return testRunResult;
         }

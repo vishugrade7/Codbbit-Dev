@@ -105,6 +105,10 @@ export default {
           'from': { opacity: '0', transform: 'translateY(10px)' },
           'to': { opacity: '1', transform: 'translateY(0)' },
         },
+        'badge-glow': {
+          '0%, 100%': { 'box-shadow': '0 0 10px var(--glow-color), 0 0 20px var(--glow-color)' },
+          '50%': { 'box-shadow': '0 0 20px var(--glow-color), 0 0 40px var(--glow-color)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -112,6 +116,7 @@ export default {
         'points-animation': 'points-animation 2s ease-in-out forwards',
         'marquee': 'marquee 60s linear infinite',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+        'badge-glow': 'badge-glow 3s infinite',
       },
     },
   },
