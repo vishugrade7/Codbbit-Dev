@@ -1035,11 +1035,12 @@ const BadgeManager = () => {
 
 const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, onSave: (data: z.infer<typeof badgeFormSchema>) => void, badge?: Badge}) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
     const form = useForm<z.infer<typeof badgeFormSchema>>({
         resolver: zodResolver(badgeFormSchema),
         defaultValues: badge || { name: '', description: '', type: 'POINTS', value: 0, category: '', icon: 'Award', color: '#fbbf24' }
     });
-    const { toast } = useToast();
+
     const iconNames = Object.keys(icons);
 
     const watchedIcon = form.watch('icon');
@@ -1080,7 +1081,7 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                              <FormField control={form.control} name="icon" render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                 <FormLabel>Icon</FormLabel>
-                                <Popover>
+                                <Popover open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen}>
                                     <PopoverTrigger asChild>
                                         <FormControl>
                                             <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
@@ -1100,7 +1101,8 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                                                             value={iconName}
                                                             key={iconName}
                                                             onSelect={() => {
-                                                                form.setValue("icon", iconName)
+                                                                form.setValue("icon", iconName);
+                                                                setIsIconPopoverOpen(false);
                                                             }}
                                                         >
                                                             <Check className={cn("mr-2 h-4 w-4", iconName === field.value ? "opacity-100" : "opacity-0")} />
@@ -1632,4 +1634,5 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
