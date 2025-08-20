@@ -40,7 +40,7 @@ import { format } from "date-fns";
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers, Award, AppWindow } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers, Award, AppWindow, icons, ChevronsUpDown, Check } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -62,6 +62,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 
 
 type AdminContextType = {
@@ -492,7 +493,7 @@ const ProblemList = () => {
                 output: "5",
                 explanation: "2 + 3 = 5"
             }],
-            hints: [{ value: "Use the '+' operator."} ],
+            hints: ["Use the '+' operator."],
             isPremium: false
         }];
 
@@ -928,6 +929,11 @@ const NavigationEditor = () => {
     )
 }
 
+const DynamicLucideIcon = ({ name, ...props }: { name: string } & React.ComponentProps<typeof Award>) => {
+    const LucideIcon = icons[name as keyof typeof icons] || Award;
+    return <LucideIcon {...props} />;
+};
+
 const BadgeManager = () => {
     const [badges, setBadges] = useState<Badge[]>([]);
     const [loading, setLoading] = useState(true);
@@ -994,7 +1000,7 @@ const BadgeManager = () => {
                             <TableRow key={badge.id}>
                                 <TableCell className="font-medium flex items-center gap-3">
                                     <div className="p-2 rounded-full" style={{ backgroundColor: badge.color ? `${badge.color}20` : '#88888820' }}>
-                                        <Award className="h-5 w-5" style={{ color: badge.color || '#888' }} />
+                                        <DynamicLucideIcon name={badge.icon || 'Award'} className="h-5 w-5" style={{ color: badge.color || '#888' }} />
                                     </div>
                                     {badge.name}
                                 </TableCell>
@@ -1033,6 +1039,11 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
         resolver: zodResolver(badgeFormSchema),
         defaultValues: badge || { name: '', description: '', type: 'POINTS', value: 0, category: '', icon: 'Award', color: '#fbbf24' }
     });
+    const { toast } = useToast();
+    const iconNames = Object.keys(icons);
+
+    const watchedIcon = form.watch('icon');
+    const watchedColor = form.watch('color');
 
     const onSubmit = (data: z.infer<typeof badgeFormSchema>) => {
         onSave({...data, value: Number(data.value)});
@@ -1043,26 +1054,82 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{badge ? 'Edit Badge' : 'Add Badge'}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                         <div className="flex flex-col items-center justify-center p-6 bg-muted rounded-lg border border-dashed">
+                             <div className="flex flex-col items-center text-center gap-2 p-4 rounded-lg">
+                                <div className="p-3 rounded-full" style={{ backgroundColor: watchedColor ? `${watchedColor}20` : '#fbbf2420' }}>
+                                    <DynamicLucideIcon name={watchedIcon || 'Award'} className="h-8 w-8" style={{ color: watchedColor || '#fbbf24' }}/>
+                                </div>
+                                <p className="font-semibold leading-tight">{form.watch('name') || 'Badge Name'}</p>
+                            </div>
+                        </div>
+
                         <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="description" render={({ field }) => (
                             <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="icon" render={({ field }) => (
-                                <FormItem><FormLabel>Icon Name</FormLabel><FormControl><Input {...field} placeholder="e.g., Award" /></FormControl><FormDescription>Lucide icon name</FormDescription><FormMessage /></FormItem>
+                             <FormField control={form.control} name="icon" render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Icon</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                                {field.value ? <><DynamicLucideIcon name={field.value} className="mr-2 h-4 w-4" /> {field.value}</> : "Select icon"}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[300px] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search icon..." />
+                                            <CommandEmpty>No icon found.</CommandEmpty>
+                                            <CommandList>
+                                                <CommandGroup>
+                                                    {iconNames.map((iconName) => (
+                                                        <CommandItem
+                                                            value={iconName}
+                                                            key={iconName}
+                                                            onSelect={() => {
+                                                                form.setValue("icon", iconName)
+                                                            }}
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4", iconName === field.value ? "opacity-100" : "opacity-0")} />
+                                                            <DynamicLucideIcon name={iconName} className="mr-2 h-4 w-4" />
+                                                            {iconName}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
                             )} />
                             <FormField control={form.control} name="color" render={({ field }) => (
-                                <FormItem><FormLabel>Color</FormLabel><FormControl><Input {...field} placeholder="e.g., #fbbf24" /></FormControl><FormMessage /></FormItem>
+                                <FormItem>
+                                    <FormLabel>Color</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <Input {...field} placeholder="e.g., #fbbf24" className="pr-12"/>
+                                            <Input type="color" value={field.value} onChange={field.onChange} className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 p-1 bg-transparent border-none cursor-pointer"/>
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
                             )} />
                         </div>
+
                         <FormField control={form.control} name="type" render={({ field }) => (
                             <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
@@ -1075,14 +1142,17 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                                 </SelectContent>
                             </Select><FormMessage /></FormItem>
                         )} />
+
                         <FormField control={form.control} name="value" render={({ field }) => (
                             <FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl><FormMessage /></FormItem>
                         )} />
+
                         {form.watch('type') === 'CATEGORY_SOLVED' && (
                             <FormField control={form.control} name="category" render={({ field }) => (
                                 <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                         )}
+
                         <DialogFooter>
                             <Button type="submit">Save</Button>
                         </DialogFooter>
@@ -1562,3 +1632,4 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
