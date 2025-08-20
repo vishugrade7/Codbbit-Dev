@@ -62,7 +62,7 @@ export default function UserProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
-    const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: number });
+    const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
     const [allBadges, setAllBadges] = useState<Map<string, BadgeType>>(new Map());
     const [loadingProblems, setLoadingProblems] = useState(true);
 
