@@ -969,7 +969,7 @@ const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson }:
 const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
-    const type = control.watch(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.type`);
+    const type = block.type;
     
     return (
         <div ref={setNodeRef} style={style} className="ml-8">
