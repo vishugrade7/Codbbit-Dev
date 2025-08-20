@@ -111,26 +111,26 @@ export default function UserProfilePage() {
         fetchAllProblemsAndBadges();
     }, []);
 
-    // Effect to fetch the profile data based on username from URL using a real-time listener
+    // Effect to fetch the profile data based on username from URL or from context for own profile
     useEffect(() => {
-        if (!username || !db) return;
-        
-        // If we are viewing our own profile, use the real-time data from context.
-        if(isOwnProfile && userData) {
+        if (!username) return;
+
+        setLoadingProfile(true);
+        setError(null);
+
+        // If viewing own profile, use the real-time data from AuthContext
+        if (isOwnProfile && userData) {
             setProfileUser(userData);
             setLoadingProfile(false);
             return;
         }
-
-        // Otherwise, fetch the public profile data
-        setLoadingProfile(true);
-        setError(null);
         
+        // If viewing another user's profile, fetch public data
+        if (!db) return;
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), limit(1));
         
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            setLoadingProfile(false);
             if (querySnapshot.empty) {
                 setError("Profile not found.");
                 setProfileUser(null);
@@ -139,6 +139,7 @@ export default function UserProfilePage() {
                 setProfileUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
                 setError(null);
             }
+             setLoadingProfile(false);
         }, (err) => {
             console.error("Error fetching user profile:", err);
             setError("Could not load profile data.");
