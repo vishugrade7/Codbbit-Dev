@@ -67,10 +67,10 @@ export default function ContributionHeatmap({ data, currentStreak = 0, maxStreak
         </div>
          <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
              <div className="flex items-center gap-1.5 font-medium">
-                <Flame className="h-4 w-4 text-orange-500" /> Max Streak: <span className="text-foreground">{maxStreak}</span>
+                <Flame className="h-4 w-4 text-primary" /> Max Streak: <span className="text-foreground">{maxStreak}</span>
              </div>
              <div className="flex items-center gap-1.5 font-medium">
-                <Flame className="h-4 w-4 text-amber-500" /> Current Streak: <span className="text-foreground">{currentStreak}</span>
+                <Flame className="h-4 w-4 text-primary" /> Current Streak: <span className="text-foreground">{currentStreak}</span>
              </div>
           </div>
       </div>
