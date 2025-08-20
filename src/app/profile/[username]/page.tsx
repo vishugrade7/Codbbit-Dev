@@ -24,6 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ProgressCard } from "@/components/progress-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Image from "next/image";
 
 
 type StarredProblemDetail = Problem & { categoryName: string };
@@ -320,7 +321,11 @@ export default function UserProfilePage() {
                                     <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                                         {profileUser.company && (
                                             <div className="flex items-center justify-center sm:justify-start gap-2">
-                                                <Building className="h-4 w-4 shrink-0" />
+                                                {profileUser.companyLogoUrl ? (
+                                                    <Image src={profileUser.companyLogoUrl} alt={profileUser.company} width={16} height={16} className="rounded-sm object-contain" />
+                                                ) : (
+                                                    <Building className="h-4 w-4 shrink-0" />
+                                                )}
                                                 <span>{profileUser.company}</span>
                                             </div>
                                         )}
