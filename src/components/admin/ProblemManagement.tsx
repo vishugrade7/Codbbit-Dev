@@ -6,7 +6,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { doc, onSnapshot, Timestamp, collection, getDocs, deleteDoc, addDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import type { Problem, ApexProblemsData, Course, User as AppUser, NavLink, Badge, Module, Lesson, ContentBlock } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -65,6 +66,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import shortid from 'shortid';
+import Image from 'next/image';
+import { Progress } from '../ui/progress';
 
 
 type ProblemWithCategoryName = Problem & { categoryName: string };
@@ -986,6 +989,70 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
     const type = block.type;
     const [isProblemSelectorOpen, setIsProblemSelectorOpen] = useState(false);
     
+    // Image upload state
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+        const file = e.target.files?.[0];
+        if (!file || !storage) {
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast({ variant: 'destructive', title: 'File too large', description: 'Please select an image smaller than 5MB.' });
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            const img = document.createElement('img');
+            img.onload = () => {
+                const MAX_WIDTH = 1200;
+                const scaleFactor = MAX_WIDTH / img.width;
+                const newWidth = img.width > MAX_WIDTH ? MAX_WIDTH : img.width;
+                const newHeight = img.width > MAX_WIDTH ? img.height * scaleFactor : img.height;
+
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                ctx?.drawImage(img, 0, 0, newWidth, newHeight);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) return;
+                    
+                    const storagePath = `course-images/${Date.now()}_${file.name}`;
+                    const imageRef = storageRef(storage, storagePath);
+                    const uploadTask = uploadBytesResumable(imageRef, blob);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            setUploadProgress(progress);
+                        },
+                        (error) => {
+                            console.error("Upload failed:", error);
+                            toast({ variant: 'destructive', title: 'Upload failed', description: 'Please try again.' });
+                            setUploadProgress(null);
+                        },
+                        () => {
+                            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                                field.onChange(downloadURL);
+                                setUploadProgress(null);
+                                toast({ title: 'Image uploaded successfully!' });
+                            });
+                        }
+                    );
+                }, 'image/jpeg', 0.9);
+            };
+            img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
     return (
         <div ref={setNodeRef} style={style} className="ml-8">
             <Card className="bg-card/50">
@@ -999,10 +1066,31 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter markdown text..." rows={5}/>} />
                     )}
                      {type === 'image' && (
-                        <div className="space-y-2">
-                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Image URL"/>} />
-                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.caption`} render={({field}) => <Input {...field} placeholder="Optional caption"/>} />
-                        </div>
+                         <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({ field }) => (
+                            <div className="space-y-2">
+                                <FormLabel>Image</FormLabel>
+                                <div className="p-4 border-2 border-dashed rounded-lg text-center">
+                                    {field.value && <Image src={field.value} alt="Uploaded image" width={200} height={112} className="mx-auto rounded-md mb-4 object-cover" />}
+                                    
+                                    <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e, field)} accept="image/*" className="hidden"/>
+                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadProgress !== null}>
+                                        {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Upload className="mr-2 h-4 w-4"/>}
+                                        {field.value ? 'Change Image' : 'Upload Image'}
+                                    </Button>
+                                    
+                                    {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2 h-2" />}
+                                </div>
+                                <FormControl>
+                                    <Input {...field} placeholder="Image URL (or upload)" className="hidden" />
+                                </FormControl>
+                                <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.caption`} render={({field}) => (
+                                    <FormItem className="mt-2">
+                                        <FormLabel>Caption (optional)</FormLabel>
+                                        <FormControl><Input {...field} placeholder="Optional image caption"/></FormControl>
+                                    </FormItem>
+                                )} />
+                            </div>
+                        )} />
                     )}
                      {type === 'code' && (
                         <div className="space-y-2">
@@ -1019,6 +1107,7 @@ const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control
                             name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`}
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
+                                <FormLabel>Problem</FormLabel>
                                 <Popover open={isProblemSelectorOpen} onOpenChange={setIsProblemSelectorOpen}>
                                     <PopoverTrigger asChild>
                                         <FormControl>
