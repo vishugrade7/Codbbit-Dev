@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, runTransaction, collection, where, query, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, runTransaction, collection, where, query, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export async function toggleStarProblem(userId: string, problemId: string, isCurrentlyStarred: boolean) {
@@ -42,12 +42,19 @@ export async function updateAvatar(userId: string, newAvatarUrl: string) {
     const userDocRef = doc(db, 'users', userId);
 
     try {
+        // Fetch user data before starting the transaction to avoid read/write conflicts.
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists()) {
+            throw new Error("User not found.");
+        }
+        
         await runTransaction(db, async (transaction) => {
             // 1. Update the user's main document
             transaction.update(userDocRef, { avatarUrl: newAvatarUrl });
 
             // 2. Query for problem sheets created by this user
             const sheetsQuery = query(collection(db, 'problem-sheets'), where('createdBy', '==', userId));
+            // The reads must happen before the writes in a transaction.
             const sheetsSnapshot = await getDocs(sheetsQuery);
 
             // 3. Update each problem sheet
