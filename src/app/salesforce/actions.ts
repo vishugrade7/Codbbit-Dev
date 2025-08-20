@@ -4,7 +4,7 @@
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Problem, SolvedProblemDetail, Badge } from '@/types';
+import type { User, Problem, SolvedProblemDetail, Badge, Achievement } from '@/types';
 
 
 type SalesforceTokenResponse = {
@@ -319,6 +319,8 @@ async function _awardPointsAndLogProgress(log: string[], userId: string, problem
                             name: badge.name,
                             description: criteria.description,
                             date: serverTimestamp(),
+                            icon: badge.icon,
+                            color: badge.color,
                         };
                         awardedBadges.push(badge.name);
                     }

@@ -4,7 +4,7 @@
 
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayUnion, arrayRemove, deleteField, runTransaction, DocumentData, WithFieldValue, query, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Problem, Course, NavLink, Badge, ApexProblemsData, PricingPlan } from '@/types';
+import type { Problem, Course, NavLink, Badge, ApexProblemsData, PricingPlan, Achievement } from '@/types';
 import { z } from 'zod';
 import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema } from '@/lib/admin-schemas';
 import { revalidatePath } from 'next/cache';
@@ -424,6 +424,8 @@ export async function upsertBadge(userId: string, badge: z.infer<typeof badgeFor
 
     try {
         await setDoc(doc(db, 'badges', badgeId), badgeData, { merge: true });
+        revalidatePath('/admin?tab=badges');
+        revalidatePath('/profile');
         return { success: true, badgeId };
     } catch (error: any) {
         return { success: false, error: error.message };

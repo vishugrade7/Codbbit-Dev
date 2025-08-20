@@ -8,7 +8,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy, icons } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
@@ -36,6 +36,11 @@ type RecentlySolvedProblem = Omit<SolvedProblemType, 'solvedAt'> & {
     solvedAt: string; // Serialized date
 };
 type Achievement = Omit<AchievementType, 'date'> & { date: string };
+
+const DynamicLucideIcon = ({ name, ...props }: { name: string } & React.ComponentProps<typeof Award>) => {
+    const LucideIcon = icons[name as keyof typeof icons] || Award;
+    return <LucideIcon {...props} />;
+};
 
 
 // This is the new public profile page
@@ -379,8 +384,8 @@ export default function UserProfilePage() {
                                                 <Tooltip key={achievement.name}>
                                                     <TooltipTrigger asChild>
                                                         <div className="flex flex-col items-center text-center gap-2 p-4 bg-muted/50 rounded-lg">
-                                                            <div className="p-3 bg-amber-400/10 rounded-full">
-                                                                <Award className="h-8 w-8 text-amber-500" />
+                                                            <div className="p-3 rounded-full" style={{ backgroundColor: achievement.color ? `${achievement.color}20` : '#fbbf2420' }}>
+                                                                <DynamicLucideIcon name={achievement.icon || 'Award'} className="h-8 w-8" style={{ color: achievement.color || '#fbbf24' }}/>
                                                             </div>
                                                             <div className="flex-1">
                                                                 <p className="font-semibold leading-tight text-sm">{achievement.name}</p>

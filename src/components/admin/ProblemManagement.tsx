@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -39,7 +40,7 @@ import { format } from "date-fns";
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers, Award, AppWindow } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -991,7 +992,12 @@ const BadgeManager = () => {
                             <TableRow><TableCell colSpan={5} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
                         ) : badges.map((badge) => (
                             <TableRow key={badge.id}>
-                                <TableCell className="font-medium">{badge.name}</TableCell>
+                                <TableCell className="font-medium flex items-center gap-3">
+                                    <div className="p-2 rounded-full" style={{ backgroundColor: badge.color ? `${badge.color}20` : '#88888820' }}>
+                                        <Award className="h-5 w-5" style={{ color: badge.color || '#888' }} />
+                                    </div>
+                                    {badge.name}
+                                </TableCell>
                                 <TableCell>{badge.description}</TableCell>
                                 <TableCell><UiBadge variant="secondary">{badge.type}</UiBadge></TableCell>
                                 <TableCell>{badge.value} {badge.category && `(${badge.category})`}</TableCell>
@@ -1025,7 +1031,7 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
     const [isOpen, setIsOpen] = useState(false);
     const form = useForm<z.infer<typeof badgeFormSchema>>({
         resolver: zodResolver(badgeFormSchema),
-        defaultValues: badge || { name: '', description: '', type: 'POINTS', value: 0, category: ''}
+        defaultValues: badge || { name: '', description: '', type: 'POINTS', value: 0, category: '', icon: 'Award', color: '#fbbf24' }
     });
 
     const onSubmit = (data: z.infer<typeof badgeFormSchema>) => {
@@ -1049,6 +1055,14 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                         <FormField control={form.control} name="description" render={({ field }) => (
                             <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="icon" render={({ field }) => (
+                                <FormItem><FormLabel>Icon Name</FormLabel><FormControl><Input {...field} placeholder="e.g., Award" /></FormControl><FormDescription>Lucide icon name</FormDescription><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="color" render={({ field }) => (
+                                <FormItem><FormLabel>Color</FormLabel><FormControl><Input {...field} placeholder="e.g., #fbbf24" /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
                         <FormField control={form.control} name="type" render={({ field }) => (
                             <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>

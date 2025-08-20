@@ -5,6 +5,7 @@
 
 
 
+
 export type SolvedProblemDetail = {
   solvedAt: any; // Firestore Timestamp
   points: number;
@@ -16,6 +17,8 @@ export type Achievement = {
   name: string;
   description: string;
   date: any; // Firestore Timestamp, but will be string on client
+  icon?: string;
+  color?: string;
 };
 
 export type User = {
@@ -180,6 +183,8 @@ export type Badge = {
   type: 'STREAK' | 'POINTS' | 'TOTAL_SOLVED' | 'CATEGORY_SOLVED' | 'ACTIVE_DAYS';
   value: number;
   category?: string;
+  icon?: string;
+  color?: string;
 };
 
 export type PricingPlan = {

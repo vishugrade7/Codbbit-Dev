@@ -98,6 +98,8 @@ export const badgeFormSchema = z.object({
     type: z.enum(['STREAK', 'POINTS', 'TOTAL_SOLVED', 'CATEGORY_SOLVED', 'ACTIVE_DAYS']),
     value: z.number().min(1, "Value must be positive"),
     category: z.string().optional(),
+    icon: z.string().optional(),
+    color: z.string().optional(),
 });
 
 export const brandingSchema = z.object({
