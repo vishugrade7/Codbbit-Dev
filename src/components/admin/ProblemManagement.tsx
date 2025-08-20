@@ -1067,14 +1067,20 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                         <div className="flex flex-col items-center justify-center p-6 bg-muted rounded-lg border border-dashed">
-                             <div className="flex flex-col items-center text-center gap-2">
-                                <div className="relative w-24 h-28 flex items-center justify-center">
-                                    <div className="hexagon-clip absolute inset-0" style={{ backgroundColor: watchedColor ? `${watchedColor}20` : '#fbbf2420' }}/>
-                                    <DynamicLucideIcon name={watchedIcon || 'Award'} className="h-8 w-8 relative" style={{ color: watchedColor || '#fbbf24' }}/>
+                         <div className="flex items-center justify-center p-6 bg-muted rounded-lg border border-dashed">
+                             <Card className="p-4 flex flex-col items-center gap-2 shadow-md w-32">
+                                <div className="w-16 h-16 flex items-center justify-center">
+                                    <div
+                                    className="hexagon-clip w-full h-full flex items-center justify-center"
+                                    style={{ backgroundColor: watchedColor ? `${watchedColor}20` : '#fbbf2420' }}
+                                    >
+                                    <DynamicLucideIcon name={watchedIcon || 'Award'} className="h-8 w-8" style={{ color: watchedColor || '#fbbf24' }} />
+                                    </div>
                                 </div>
-                                <p className="font-semibold leading-tight -mt-2">{watchedName || 'Badge Name'}</p>
-                            </div>
+                                <div className="text-center">
+                                    <p className="font-bold text-sm truncate">{watchedName || 'Badge Name'}</p>
+                                </div>
+                            </Card>
                         </div>
 
                         <FormField control={form.control} name="name" render={({ field }) => (
@@ -1638,6 +1644,7 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
 
 

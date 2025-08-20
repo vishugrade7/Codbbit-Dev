@@ -376,23 +376,29 @@ export default function UserProfilePage() {
                             <CardDescription>Badges earned from your activity.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-60">
+                            <ScrollArea className="h-60 -mx-4">
                                 {achievements.length > 0 ? (
                                      <TooltipProvider>
-                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-1">
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
                                             {achievements.map((achievement: Achievement) => (
                                                 <Tooltip key={achievement.name}>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="flex flex-col items-center text-center gap-2">
-                                                            <div className="relative w-24 h-28 flex items-center justify-center">
-                                                                <div className="hexagon-clip absolute inset-0 bg-muted" style={{ backgroundColor: achievement.color ? `${achievement.color}20` : '#fbbf2420' }}/>
-                                                                <DynamicLucideIcon name={achievement.icon || 'Award'} className="h-8 w-8 relative" style={{ color: achievement.color || '#fbbf24' }}/>
+                                                    <TooltipTrigger>
+                                                        <Card className="p-4 flex flex-col items-center gap-2 shadow-sm aspect-square justify-center">
+                                                            <div className="w-16 h-16 flex items-center justify-center">
+                                                                <div
+                                                                className="hexagon-clip w-full h-full flex items-center justify-center"
+                                                                style={{ backgroundColor: achievement.color ? `${achievement.color}20` : '#fbbf2420' }}
+                                                                >
+                                                                <DynamicLucideIcon name={achievement.icon || 'Award'} className="h-8 w-8" style={{ color: achievement.color || '#fbbf24' }} />
+                                                                </div>
                                                             </div>
-                                                            <div className="flex-1 -mt-2">
-                                                                <p className="font-semibold leading-tight text-sm">{achievement.name}</p>
-                                                                <p className="text-xs text-muted-foreground mt-1">Earned {formatDistanceToNow(new Date(achievement.date), { addSuffix: true })}</p>
+                                                            <div className="text-center">
+                                                                <p className="font-bold text-sm truncate">{achievement.name}</p>
+                                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                                    {formatDistanceToNow(new Date(achievement.date), { addSuffix: true })}
+                                                                </p>
                                                             </div>
-                                                        </div>
+                                                        </Card>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                         <p>{achievement.description}</p>
@@ -444,3 +450,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
