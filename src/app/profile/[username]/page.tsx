@@ -42,15 +42,17 @@ const DynamicLucideIcon = ({ name, ...props }: { name: string } & React.Componen
     return <LucideIcon {...props} />;
 };
 
+type ProblemWithCategory = Problem & { categoryName: string };
 
 // This is the new public profile page
 export default function UserProfilePage() {
-    const { user: authUser, userData } = useAuth(); // Logged-in user
+    const { user: authUser, userData, loading: authLoading } = useAuth(); // Logged-in user
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
 
     const username = params.username as string;
+    const isOwnProfile = useMemo(() => userData?.username === username, [userData, username]);
 
     const [profileUser, setProfileUser] = useState<AppUser | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
@@ -66,8 +68,6 @@ export default function UserProfilePage() {
     const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
     const [allBadges, setAllBadges] = useState<Map<string, BadgeType>>(new Map());
     const [loadingProblems, setLoadingProblems] = useState(true);
-
-    type ProblemWithCategory = Problem & { categoryName: string };
 
     // Effect to fetch all problem counts and details
     useEffect(() => {
@@ -94,7 +94,6 @@ export default function UserProfilePage() {
                     setTotalProblemsByDifficulty(counts);
                 }
 
-                // Fetch all badges
                 const badgesSnapshot = await getDocs(collection(db, 'badges'));
                 const badgesMap = new Map<string, BadgeType>();
                 badgesSnapshot.forEach(doc => {
@@ -115,7 +114,15 @@ export default function UserProfilePage() {
     // Effect to fetch the profile data based on username from URL using a real-time listener
     useEffect(() => {
         if (!username || !db) return;
+        
+        // If we are viewing our own profile, use the real-time data from context.
+        if(isOwnProfile && userData) {
+            setProfileUser(userData);
+            setLoadingProfile(false);
+            return;
+        }
 
+        // Otherwise, fetch the public profile data
         setLoadingProfile(true);
         setError(null);
         
@@ -139,7 +146,7 @@ export default function UserProfilePage() {
         });
 
         return () => unsubscribe();
-    }, [username]);
+    }, [username, isOwnProfile, userData]);
 
     // Effect to fetch starred problems for the profile being viewed
     useEffect(() => {
@@ -155,7 +162,7 @@ export default function UserProfilePage() {
         setStarredProblems(details);
         setLoadingStarred(false);
 
-    }, [profileUser, allProblems]);
+    }, [profileUser?.starredProblems, allProblems]);
     
     const recentlySolvedProblems: RecentlySolvedProblem[] = useMemo(() => {
         if (!profileUser?.solvedProblems || allProblems.length === 0) return [];
@@ -168,7 +175,7 @@ export default function UserProfilePage() {
         solvedDetails.sort((a, b) => {
             const dateA = a.solvedAt?.toDate ? a.solvedAt.toDate() : new Date(0);
             const dateB = b.solvedAt?.toDate ? b.solvedAt.toDate() : new Date(0);
-            return dateB.getTime() - new Date(a.date).getTime();
+            return dateB.getTime() - dateA.getTime();
         });
         
         return solvedDetails.slice(0, 5).map(solved => {
@@ -190,7 +197,6 @@ export default function UserProfilePage() {
                 const masterBadge = allBadges.get(ach.name);
                 return {
                     ...ach,
-                    // If the achievement doesn't have icon/color, use the master one
                     icon: ach.icon || masterBadge?.icon,
                     color: ach.color || masterBadge?.color,
                     date: ach.date.toDate().toISOString(),
@@ -210,16 +216,15 @@ export default function UserProfilePage() {
 
 
     const handleAvatarClick = () => {
-        if (!isUploading) {
+        if (isOwnProfile && !isUploading) {
             fileInputRef.current?.click();
         }
     };
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !authUser || !storage) return;
-        if (authUser.uid !== profileUser?.uid) return;
-
+        if (!file || !authUser || !storage || !isOwnProfile) return;
+        
         if (!file.type.startsWith('image/')) {
             toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please select an image.' });
             return;
@@ -253,7 +258,7 @@ export default function UserProfilePage() {
     };
 
 
-    if (loadingProfile || loadingProblems) {
+    if (authLoading || loadingProfile || loadingProblems) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -274,11 +279,11 @@ export default function UserProfilePage() {
     }
 
     if (!profileUser) {
-        return <div>User not found.</div>
+        return <div className="flex h-screen w-full items-center justify-center bg-background">
+                <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+            </div>
     }
     
-    const isOwnProfile = authUser?.uid === profileUser.uid;
-
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
         case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
@@ -299,7 +304,7 @@ export default function UserProfilePage() {
                      <Card>
                         <CardContent className="pt-6 relative">
                             <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
-                                <div className="relative group shrink-0" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                                <div className="relative group shrink-0" onClick={handleAvatarClick}>
                                     <Avatar className="h-28 w-28 border-4 border-background ring-2 ring-primary/50">
                                         <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                                         <AvatarFallback className="text-4xl">
@@ -504,5 +509,7 @@ export default function UserProfilePage() {
     </>
   );
 }
+
+    
 
     
