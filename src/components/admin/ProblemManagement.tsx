@@ -1,13 +1,12 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, onSnapshot, Timestamp } from "firebase/firestore";
+import { doc, onSnapshot, Timestamp, collection, getDocs, deleteDoc, addDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from '@/lib/firebase';
-import type { Problem, ApexProblemsData, Course, User as AppUser, NavLink, Badge } from '@/types';
+import type { Problem, ApexProblemsData, Course, User as AppUser, NavLink, Badge, Module, Lesson, ContentBlock } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { 
     upsertProblemToFirestore, 
@@ -18,6 +17,7 @@ import {
     updateCategoryDetails, 
     deleteCategory,
     upsertCourseToFirestore,
+    deleteCourseFromFirestore,
     getAllUsers,
     setAdminStatus,
     getNavigationSettings,
@@ -33,14 +33,14 @@ import {
 import { validateProblemInSalesforce } from '@/app/salesforce/actions';
 import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, pricingSettingsSchema, voucherSchema } from '@/lib/admin-schemas';
 import { z } from 'zod';
-import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { format } from "date-fns";
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers, Award, AppWindow, icons, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers, Award, AppWindow, icons, ChevronsUpDown, Check, Code, BookOpen, BrainCircuit, MousePointerClick, Video } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -63,6 +63,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+import shortid from 'shortid';
 
 
 type AdminContextType = {
@@ -722,8 +723,413 @@ const ProblemList = () => {
     );
 };
 
+const DraggableItem = ({ item, index, control, remove, parentName, parentIndex, children, type }: { item: any; index: number; control: any; remove: (index: number) => void; parentName?: string; parentIndex?: number; children: React.ReactNode; type: 'module' | 'lesson' | 'block' }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+    
+    return (
+        <div ref={setNodeRef} style={style} className="bg-card p-4 border rounded-md relative group/item">
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 left-2 cursor-grab h-8 w-8 text-muted-foreground group-hover/item:text-foreground"
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical className="h-5 w-5" />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-8 w-8 text-destructive"
+                onClick={() => remove(index)}
+            >
+                <Trash className="h-4 w-4" />
+            </Button>
+            {children}
+        </div>
+    );
+};
+
+const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel: () => void }) => {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const form = useForm<z.infer<typeof courseFormSchema>>({
+        resolver: zodResolver(courseFormSchema),
+        defaultValues: initialData || {
+            title: '',
+            description: '',
+            category: '',
+            thumbnailUrl: '',
+            isPublished: false,
+            isPremium: false,
+            modules: [],
+        },
+    });
+
+    const { fields: moduleFields, append: appendModule, remove: removeModule, move: moveModule } = useFieldArray({ control: form.control, name: "modules" });
+
+    const handleModuleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = moduleFields.findIndex((m) => m.id === active.id);
+            const newIndex = moduleFields.findIndex((m) => m.id === over.id);
+            moveModule(oldIndex, newIndex);
+        }
+    };
+    
+    const onSubmit = async (data: z.infer<typeof courseFormSchema>) => {
+        if (!user) return;
+        setIsLoading(true);
+        const result = await upsertCourseToFirestore(user.uid, data);
+        if (result.success) {
+            toast({ title: `Course ${initialData ? 'updated' : 'created'} successfully!` });
+            onCancel();
+        } else {
+            toast({ variant: 'destructive', title: 'Error saving course', description: result.error });
+        }
+        setIsLoading(false);
+    };
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <Card>
+                    <CardHeader><CardTitle>Course Details</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={form.control} name="title" render={({ field }) => (
+                            <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={form.control} name="description" render={({ field }) => (
+                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="category" render={({ field }) => (
+                                <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="thumbnailUrl" render={({ field }) => (
+                                <FormItem><FormLabel>Thumbnail URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                        </div>
+                        <div className="flex items-center gap-8">
+                            <FormField control={form.control} name="isPublished" render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormLabel>Published</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange}/></FormControl></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="isPremium" render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormLabel>Premium</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange}/></FormControl></FormItem>
+                            )}/>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader><CardTitle>Course Content</CardTitle></CardHeader>
+                    <CardContent>
+                        <DndContext sensors={useSensors(useSensor(PointerSensor))} onDragEnd={handleModuleDragEnd}>
+                            <SortableContext items={moduleFields.map(m => m.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-4">
+                                    {moduleFields.map((module, moduleIndex) => (
+                                        <ModuleForm key={module.id} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule}/>
+                                    ))}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                        <Button type="button" variant="outline" className="mt-4" onClick={() => appendModule({ id: shortid.generate(), title: `New Module ${moduleFields.length + 1}`, lessons: [] })}>
+                            <PlusCircle className="mr-2 h-4 w-4"/> Add Module
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-4">
+                    <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save Course'}</Button>
+                </div>
+            </form>
+        </Form>
+    );
+};
+
+const ModuleForm = ({ moduleIndex, control, removeModule }: { moduleIndex: number; control: any, removeModule: (index: number) => void }) => {
+    const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons` });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}`) as Module).id });
+
+    const style = { transform: CSS.Transform.toString(transform), transition };
+    
+    const handleLessonDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = lessonFields.findIndex((l) => l.id === active.id);
+            const newIndex = lessonFields.findIndex((l) => l.id === over.id);
+            moveLesson(oldIndex, newIndex);
+        }
+    };
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            <Accordion type="single" collapsible defaultValue="item-1">
+                <AccordionItem value="item-1" className="border-none">
+                    <Card className="bg-muted/50">
+                        <CardHeader className="flex flex-row items-center p-4">
+                            <Button type="button" variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...attributes} {...listeners}><GripVertical className="h-5 w-5" /></Button>
+                            <div className="flex-1">
+                                <FormField control={control} name={`modules.${moduleIndex}.title`} render={({ field }) => (
+                                    <Input {...field} className="text-lg font-semibold bg-transparent border-0 focus-visible:ring-1 focus-visible:ring-ring"/>
+                                )} />
+                            </div>
+                            <AccordionTrigger className="w-auto p-2" />
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeModule(moduleIndex)}><Trash className="h-4 w-4" /></Button>
+                        </CardHeader>
+                        <AccordionContent className="p-4 pt-0">
+                            <DndContext sensors={useSensors(useSensor(PointerSensor))} onDragEnd={handleLessonDragEnd}>
+                                <SortableContext items={lessonFields.map(l => l.id)} strategy={verticalListSortingStrategy}>
+                                    <div className="space-y-4">
+                                        {lessonFields.map((lesson, lessonIndex) => (
+                                            <LessonForm key={lesson.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson}/>
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                            <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendLesson({ id: shortid.generate(), title: `New Lesson ${lessonFields.length + 1}`, isFree: false, contentBlocks: [] })}>
+                                <PlusCircle className="mr-2 h-4 w-4"/> Add Lesson
+                            </Button>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+            </Accordion>
+        </div>
+    );
+};
+
+const LessonForm = ({ moduleIndex, lessonIndex, control, removeLesson }: { moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void }) => {
+     const { fields: blockFields, append: appendBlock, remove: removeBlock, move: moveBlock } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
+     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}.lessons.${lessonIndex}`) as Lesson).id });
+     const style = { transform: CSS.Transform.toString(transform), transition };
+     
+     const handleBlockDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = blockFields.findIndex((b) => b.id === active.id);
+            const newIndex = blockFields.findIndex((b) => b.id === over.id);
+            moveBlock(oldIndex, newIndex);
+        }
+    };
+     
+    return (
+        <div ref={setNodeRef} style={style} className="ml-8">
+             <Accordion type="single" collapsible defaultValue="item-1">
+                <AccordionItem value="item-1" className="border-none">
+                     <Card className="bg-card">
+                         <CardHeader className="flex flex-row items-center p-3">
+                             <Button type="button" variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...attributes} {...listeners}><GripVertical className="h-5 w-5" /></Button>
+                             <div className="flex-1">
+                                 <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} render={({ field }) => (
+                                    <Input {...field} className="font-medium bg-transparent border-0 focus-visible:ring-1"/>
+                                )}/>
+                             </div>
+                              <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.isFree`} render={({ field }) => (
+                                <FormItem className="flex items-center gap-2 space-y-0"><FormLabel className="text-xs">Free</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange}/></FormControl></FormItem>
+                            )}/>
+                            <AccordionTrigger className="w-auto p-2" />
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLesson(lessonIndex)}><Trash className="h-4 w-4" /></Button>
+                         </CardHeader>
+                          <AccordionContent className="p-4 pt-0">
+                                <DndContext sensors={useSensors(useSensor(PointerSensor))} onDragEnd={handleBlockDragEnd}>
+                                <SortableContext items={blockFields.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                                    <div className="space-y-4">
+                                        {blockFields.map((block, blockIndex) => (
+                                            <ContentBlockForm key={block.id} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} />
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                             <div className="mt-4 flex flex-wrap gap-2">
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'text', content: ''})}><BookOpen className="mr-2 h-4 w-4"/> Text</Button>
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'image', content: '', caption: ''})}><ImageIcon className="mr-2 h-4 w-4"/> Image</Button>
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'code', content: '', language: 'apex'})}><Code className="mr-2 h-4 w-4"/> Code</Button>
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'video', content: ''})}><Video className="mr-2 h-4 w-4"/> Video</Button>
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'problem', content: ''})}><BrainCircuit className="mr-2 h-4 w-4"/> Problem</Button>
+                                <Button size="sm" variant="outline" type="button" onClick={() => appendBlock({ id: shortid.generate(), type: 'interactive', content: ''})}><MousePointerClick className="mr-2 h-4 w-4"/> Interactive</Button>
+                             </div>
+                         </AccordionContent>
+                     </Card>
+                </AccordionItem>
+            </Accordion>
+        </div>
+    )
+};
+
+const ContentBlockForm = ({ moduleIndex, lessonIndex, blockIndex, control, removeBlock }: { moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: (control.getValues(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}`) as ContentBlock).id });
+    const style = { transform: CSS.Transform.toString(transform), transition };
+    const type = control.watch(`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.type`);
+    
+    return (
+        <div ref={setNodeRef} style={style} className="ml-8">
+            <Card className="bg-card/50">
+                <CardHeader className="flex flex-row items-center p-2">
+                    <Button type="button" variant="ghost" size="icon" className="cursor-grab h-8 w-8" {...attributes} {...listeners}><GripVertical className="h-5 w-5" /></Button>
+                    <p className="font-semibold text-sm capitalize flex-1">{type} Block</p>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeBlock(blockIndex)}><Trash className="h-4 w-4" /></Button>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-4">
+                    {type === 'text' && (
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter markdown text..." rows={5}/>} />
+                    )}
+                     {type === 'image' && (
+                        <div className="space-y-2">
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Image URL"/>} />
+                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.caption`} render={({field}) => <Input {...field} placeholder="Optional caption"/>} />
+                        </div>
+                    )}
+                     {type === 'code' && (
+                        <div className="space-y-2">
+                            <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.language`} render={({field}) => <Input {...field} placeholder="Language (e.g. apex)"/>} />
+                             <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter code snippet..." rows={8}/>} />
+                        </div>
+                    )}
+                     {type === 'video' && (
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Video URL (YouTube, Vimeo, etc.)"/>} />
+                    )}
+                    {type === 'problem' && (
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Input {...field} placeholder="Problem ID"/>} />
+                    )}
+                    {type === 'interactive' && (
+                        <FormField control={control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks.${blockIndex}.content`} render={({field}) => <Textarea {...field} placeholder="Enter embed HTML code..." rows={8}/>} />
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
+
 const CourseList = () => {
-    return <div>Course Management Coming Soon</div>;
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+
+    useEffect(() => {
+        if (!db) return;
+        setLoading(true);
+        const coursesRef = collection(db, "courses");
+        const unsubscribe = onSnapshot(coursesRef, (snapshot) => {
+            const coursesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+            setCourses(coursesData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching courses:", error);
+            setLoading(false);
+        });
+        return unsubscribe;
+    }, []);
+    
+    const handleEdit = (course: Course) => {
+        setEditingCourse(course);
+        setIsFormOpen(true);
+    };
+
+    const handleCreate = () => {
+        setEditingCourse(null);
+        setIsFormOpen(true);
+    };
+    
+    const handleDelete = async (courseId: string) => {
+        if (!user) return;
+        const result = await deleteCourseFromFirestore(user.uid, courseId);
+        if (result.success) {
+            toast({ title: "Course deleted successfully!" });
+        } else {
+            toast({ variant: 'destructive', title: "Error deleting course", description: result.error });
+        }
+    };
+    
+    if (isFormOpen) {
+        return <CourseForm initialData={editingCourse || undefined} onCancel={() => setIsFormOpen(false)} />
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                 <div>
+                    <h1 className="text-2xl font-bold">Course Management</h1>
+                    <p className="text-muted-foreground">Manage all courses on the platform.</p>
+                </div>
+                <Button onClick={handleCreate}><PlusCircle className="mr-2 h-4 w-4"/> Create Course</Button>
+            </div>
+             <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Modules</TableHead>
+                            <TableHead>Lessons</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Premium</TableHead>
+                            <TableHead className="w-[80px]">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                         {loading ? (
+                            <TableRow><TableCell colSpan={7} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                        ) : courses.length > 0 ? (
+                            courses.map((course) => (
+                                <TableRow key={course.id}>
+                                    <TableCell className="font-medium">{course.title}</TableCell>
+                                    <TableCell>{course.category}</TableCell>
+                                    <TableCell>{course.modules?.length || 0}</TableCell>
+                                    <TableCell>{course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0}</TableCell>
+                                    <TableCell>
+                                        <UiBadge variant={course.isPublished ? 'secondary' : 'outline'}>
+                                            {course.isPublished ? 'Published' : 'Draft'}
+                                        </UiBadge>
+                                    </TableCell>
+                                     <TableCell>
+                                        <UiBadge variant={course.isPremium ? 'secondary' : 'outline'}>
+                                            {course.isPremium ? 'Yes' : 'No'}
+                                        </UiBadge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => handleEdit(course)}><Pencil className="mr-2 h-4 w-4"/>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => window.open(`/courses/${course.id}`, '_blank')}><AppWindow className="mr-2 h-4 w-4"/>View</DropdownMenuItem>
+                                                <DropdownMenuSeparator/>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive/10"><Trash className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the course.</AlertDialogDescription></AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDelete(course.id)}>Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                             <TableRow><TableCell colSpan={7} className="text-center h-24">No courses found.</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
 };
 
 const UserList = () => {
@@ -1552,8 +1958,3 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
-
-
-
-
-

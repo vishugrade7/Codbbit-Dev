@@ -1,6 +1,7 @@
 
 
 import { z } from "zod";
+import shortid from 'shortid';
 
 // #region Problem Schemas
 export const exampleSchema = z.object({
@@ -49,7 +50,7 @@ export const bulkUploadSchema = z.array(bulkProblemSchema);
 
 // #region Course Schemas
 export const contentBlockSchema = z.object({
-  id: z.string(),
+  id: z.string().default(() => shortid.generate()),
   type: z.enum(['text', 'image', 'video', 'code', 'problem', 'interactive']),
   content: z.string(),
   language: z.string().optional(),
@@ -57,14 +58,14 @@ export const contentBlockSchema = z.object({
 });
 
 export const lessonSchema = z.object({
-  id: z.string(),
+  id: z.string().default(() => shortid.generate()),
   title: z.string().min(1, "Lesson title is required."),
-  isFree: z.boolean().optional(),
+  isFree: z.boolean().optional().default(false),
   contentBlocks: z.array(contentBlockSchema),
 });
 
 export const moduleSchema = z.object({
-  id: z.string(),
+  id: z.string().default(() => shortid.generate()),
   title: z.string().min(1, "Module title is required."),
   lessons: z.array(lessonSchema),
 });
@@ -75,8 +76,8 @@ export const courseFormSchema = z.object({
   description: z.string().min(1, "Description is required."),
   category: z.string().min(1, "Category is required."),
   thumbnailUrl: z.string().url("Must be a valid URL."),
-  isPublished: z.boolean(),
-  isPremium: z.boolean().optional(),
+  isPublished: z.boolean().default(false),
+  isPremium: z.boolean().optional().default(false),
   modules: z.array(moduleSchema),
 });
 // #endregion

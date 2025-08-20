@@ -337,15 +337,34 @@ export async function upsertCourseToFirestore(userId: string, course: z.infer<ty
 
     const { id, ...courseData } = validation.data;
     const courseId = id || doc(collection(db, 'courses')).id;
+    
+    const finalCourseData = {
+      ...courseData,
+      ...(id ? {} : { createdAt: serverTimestamp(), createdBy: userId }), // Only add createdAt on initial creation
+    };
 
     try {
-        await setDoc(doc(db, 'courses', courseId), { ...courseData, createdAt: serverTimestamp() }, { merge: true });
-        revalidatePath('/courses');
+        await setDoc(doc(db, 'courses', courseId), finalCourseData, { merge: true });
+        revalidatePath('/admin?tab=courses');
+        revalidatePath(`/courses/${courseId}`);
         return { success: true, courseId };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
 }
+
+export async function deleteCourseFromFirestore(userId: string, courseId: string) {
+    await getAdminUser(userId);
+    try {
+        await deleteDoc(doc(db, 'courses', courseId));
+        revalidatePath('/admin?tab=courses');
+        revalidatePath('/courses');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
 // #endregion
 
 // #region User Actions
