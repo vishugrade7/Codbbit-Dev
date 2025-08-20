@@ -2,6 +2,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -631,8 +632,8 @@ export default function ProblemWorkspacePage() {
                                         </Tooltip>
                                     </TooltipProvider>
                                     <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-                                        Run & Next
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                        Run
                                     </Button>
                                 </div>
                             </div>
