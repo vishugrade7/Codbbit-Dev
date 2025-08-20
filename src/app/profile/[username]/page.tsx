@@ -294,8 +294,8 @@ export default function UserProfilePage() {
     <>
     <main className="flex-1 bg-muted/40 dark:bg-black">
         <div className="container mx-auto px-4 md:px-6 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                <div className="md:col-span-12 lg:col-span-4 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                <div className="md:col-span-12 lg:col-span-4 space-y-6">
                      <Card>
                         <CardContent className="pt-6">
                             <div className="flex flex-col items-center text-center">
@@ -398,7 +398,7 @@ export default function UserProfilePage() {
                     </Card>
                 </div>
 
-                <div className="md:col-span-12 lg:col-span-8 space-y-8">
+                <div className="md:col-span-12 lg:col-span-8 space-y-6">
                      <Card>
                         <CardHeader>
                             <CardTitle>Contribution Graph</CardTitle>
