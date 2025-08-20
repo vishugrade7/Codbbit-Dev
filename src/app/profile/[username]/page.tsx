@@ -8,7 +8,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy, icons, FolderKanban } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy, icons, FolderKanban, Camera } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit, getDocs } from "firebase/firestore";
@@ -168,7 +168,7 @@ export default function UserProfilePage() {
         solvedDetails.sort((a, b) => {
             const dateA = a.solvedAt?.toDate ? a.solvedAt.toDate() : new Date(0);
             const dateB = b.solvedAt?.toDate ? b.solvedAt.toDate() : new Date(0);
-            return dateB.getTime() - dateA.getTime();
+            return dateB.getTime() - new Date(a.date).getTime();
         });
         
         return solvedDetails.slice(0, 5).map(solved => {
@@ -297,47 +297,49 @@ export default function UserProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                 <div className="md:col-span-12 lg:col-span-4 space-y-6">
                      <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="relative group" onClick={isOwnProfile ? handleAvatarClick : undefined}>
-                                    <Avatar className="h-28 w-28 border-4 border-primary/50">
+                        <CardContent className="pt-6 relative">
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
+                                <div className="relative group shrink-0" onClick={isOwnProfile ? handleAvatarClick : undefined}>
+                                    <Avatar className="h-28 w-28 border-4 border-background ring-2 ring-primary/50">
                                         <AvatarImage src={profileUser.avatarUrl} alt={profileUser.name} />
                                         <AvatarFallback className="text-4xl">
                                             {profileUser.name.split(' ').map(n => n[0]).join('')}
                                         </AvatarFallback>
                                     </Avatar>
                                     {isOwnProfile && (
-                                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                            {isUploading ? <LoaderCircle className="h-8 w-8 animate-spin text-white" /> : <Pencil className="h-8 w-8 text-white" />}
+                                        <div className="absolute bottom-1 right-1 bg-background rounded-full p-1.5 border border-muted-foreground/30 group-hover:bg-muted transition-colors cursor-pointer">
+                                            {isUploading ? <LoaderCircle className="h-5 w-5 animate-spin text-primary" /> : <Camera className="h-5 w-5 text-muted-foreground" />}
                                         </div>
                                     )}
                                 </div>
                                 {isOwnProfile && <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/gif" disabled={isUploading} />}
 
-                                <h1 className="text-2xl font-bold font-headline mt-4">{profileUser.name}</h1>
-                                <p className="text-muted-foreground">@{profileUser.username}</p>
+                               <div className="flex-1">
+                                    <h1 className="text-2xl font-bold font-headline">{profileUser.name}</h1>
+                                    <p className="text-muted-foreground">@{profileUser.username}</p>
 
-                                <div className="mt-4 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                                    {profileUser.company && (
-                                        <div className="flex items-center gap-2">
-                                            <Building className="h-4 w-4 shrink-0" />
-                                            <span>{profileUser.company}</span>
+                                    <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                                        {profileUser.company && (
+                                            <div className="flex items-center justify-center sm:justify-start gap-2">
+                                                <Building className="h-4 w-4 shrink-0" />
+                                                <span>{profileUser.company}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                                            <Globe className="h-4 w-4 shrink-0" />
+                                            <span>{profileUser.country}</span>
                                         </div>
-                                    )}
-                                    <div className="flex items-center gap-2">
-                                        <Globe className="h-4 w-4 shrink-0" />
-                                        <span>{profileUser.country}</span>
                                     </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-2 mt-4">
-                                  {profileUser.trailheadUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile"><LinkIcon className="h-4 w-4" /></a></Button>)}
-                                  {profileUser.githubUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><Github className="h-4 w-4" /></a></Button>)}
-                                  {profileUser.linkedinUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile"><Linkedin className="h-4 w-4" /></a></Button>)}
-                                  {profileUser.twitterUrl && (<Button variant="outline" size="icon" asChild><a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile"><Twitter className="h-4 w-4" /></a></Button>)}
-                                  {isOwnProfile && <Button variant="outline" onClick={() => setIsEditModalOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>}
-                                </div>
+                                    
+                                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
+                                        {profileUser.trailheadUrl && (<a href={profileUser.trailheadUrl} target="_blank" rel="noopener noreferrer" aria-label="Trailhead Profile" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10"><LinkIcon className="h-4 w-4" /></a>)}
+                                        {profileUser.githubUrl && (<a href={profileUser.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10"><Github className="h-4 w-4" /></a>)}
+                                        {profileUser.linkedinUrl && (<a href={profileUser.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10"><Linkedin className="h-4 w-4" /></a>)}
+                                        {profileUser.twitterUrl && (<a href={profileUser.twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10"><Twitter className="h-4 w-4" /></a>)}
+                                    </div>
+                               </div>
                             </div>
+                            {isOwnProfile && <Button variant="outline" size="icon" onClick={() => setIsEditModalOpen(true)} className="absolute top-4 right-4 h-9 w-9"><Edit className="h-4 w-4" /></Button>}
                         </CardContent>
                      </Card>
                      
@@ -421,14 +423,14 @@ export default function UserProfilePage() {
                             <CardDescription>Badges earned from your activity.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-60 -mx-4">
+                             <ScrollArea className="h-60 -mx-4">
                                 {achievements.length > 0 ? (
                                      <TooltipProvider>
                                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
                                             {achievements.map((achievement: Achievement) => (
                                                 <Tooltip key={achievement.name}>
                                                     <TooltipTrigger>
-                                                        <Card className="p-4 flex flex-col items-center gap-2 shadow-sm aspect-square justify-center">
+                                                        <Card className="p-4 flex flex-col items-center gap-2 shadow-sm aspect-square justify-center hover:shadow-md hover:-translate-y-1 transition-all">
                                                             <div className="w-16 h-16 flex items-center justify-center">
                                                                 <div
                                                                 className="hexagon-clip w-full h-full flex items-center justify-center"
