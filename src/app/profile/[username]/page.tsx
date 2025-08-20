@@ -379,15 +379,16 @@ export default function UserProfilePage() {
                             <ScrollArea className="h-60">
                                 {achievements.length > 0 ? (
                                      <TooltipProvider>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-1">
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-1">
                                             {achievements.map((achievement: Achievement) => (
                                                 <Tooltip key={achievement.name}>
                                                     <TooltipTrigger asChild>
-                                                        <div className="flex flex-col items-center text-center gap-2 p-4 bg-muted/50 rounded-lg">
-                                                            <div className="p-3 rounded-full" style={{ backgroundColor: achievement.color ? `${achievement.color}20` : '#fbbf2420' }}>
-                                                                <DynamicLucideIcon name={achievement.icon || 'Award'} className="h-8 w-8" style={{ color: achievement.color || '#fbbf24' }}/>
+                                                        <div className="flex flex-col items-center text-center gap-2">
+                                                            <div className="relative w-24 h-28 flex items-center justify-center">
+                                                                <div className="hexagon-clip absolute inset-0 bg-muted" style={{ backgroundColor: achievement.color ? `${achievement.color}20` : '#fbbf2420' }}/>
+                                                                <DynamicLucideIcon name={achievement.icon || 'Award'} className="h-8 w-8 relative" style={{ color: achievement.color || '#fbbf24' }}/>
                                                             </div>
-                                                            <div className="flex-1">
+                                                            <div className="flex-1 -mt-2">
                                                                 <p className="font-semibold leading-tight text-sm">{achievement.name}</p>
                                                                 <p className="text-xs text-muted-foreground mt-1">Earned {formatDistanceToNow(new Date(achievement.date), { addSuffix: true })}</p>
                                                             </div>

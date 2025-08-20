@@ -1045,7 +1045,13 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
 
     const watchedIcon = form.watch('icon');
     const watchedColor = form.watch('color');
+    const watchedName = form.watch('name');
 
+    const handleIconSelect = (iconName: string) => {
+        form.setValue("icon", iconName);
+        setIsIconPopoverOpen(false);
+    };
+    
     const onSubmit = (data: z.infer<typeof badgeFormSchema>) => {
         onSave({...data, value: Number(data.value)});
         setIsOpen(false);
@@ -1062,11 +1068,12 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
                          <div className="flex flex-col items-center justify-center p-6 bg-muted rounded-lg border border-dashed">
-                             <div className="flex flex-col items-center text-center gap-2 p-4 rounded-lg">
-                                <div className="p-3 rounded-full" style={{ backgroundColor: watchedColor ? `${watchedColor}20` : '#fbbf2420' }}>
-                                    <DynamicLucideIcon name={watchedIcon || 'Award'} className="h-8 w-8" style={{ color: watchedColor || '#fbbf24' }}/>
+                             <div className="flex flex-col items-center text-center gap-2">
+                                <div className="relative w-24 h-28 flex items-center justify-center">
+                                    <div className="hexagon-clip absolute inset-0" style={{ backgroundColor: watchedColor ? `${watchedColor}20` : '#fbbf2420' }}/>
+                                    <DynamicLucideIcon name={watchedIcon || 'Award'} className="h-8 w-8 relative" style={{ color: watchedColor || '#fbbf24' }}/>
                                 </div>
-                                <p className="font-semibold leading-tight">{form.watch('name') || 'Badge Name'}</p>
+                                <p className="font-semibold leading-tight -mt-2">{watchedName || 'Badge Name'}</p>
                             </div>
                         </div>
 
@@ -1100,10 +1107,7 @@ const BadgeFormDialog = ({children, onSave, badge}: {children: React.ReactNode, 
                                                         <CommandItem
                                                             value={iconName}
                                                             key={iconName}
-                                                            onSelect={() => {
-                                                                form.setValue("icon", iconName);
-                                                                setIsIconPopoverOpen(false);
-                                                            }}
+                                                            onSelect={() => handleIconSelect(iconName)}
                                                         >
                                                             <Check className={cn("mr-2 h-4 w-4", iconName === field.value ? "opacity-100" : "opacity-0")} />
                                                             <DynamicLucideIcon name={iconName} className="mr-2 h-4 w-4" />
@@ -1634,5 +1638,6 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
 
