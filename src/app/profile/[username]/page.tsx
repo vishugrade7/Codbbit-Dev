@@ -8,7 +8,7 @@ import EditProfileModal from "@/components/edit-profile-modal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy, icons } from "lucide-react";
+import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy, icons, FolderKanban } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, onSnapshot, limit, getDocs } from "firebase/firestore";
@@ -199,6 +199,15 @@ export default function UserProfilePage() {
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [profileUser?.achievements, allBadges]);
 
+    const solvedProblemsByCategory = useMemo(() => {
+        if (!profileUser?.solvedProblems) return [];
+        const counts: { [category: string]: number } = {};
+        for (const problem of Object.values(profileUser.solvedProblems)) {
+            counts[problem.categoryName] = (counts[problem.categoryName] || 0) + 1;
+        }
+        return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    }, [profileUser?.solvedProblems]);
+
 
     const handleAvatarClick = () => {
         if (!isUploading) {
@@ -343,6 +352,25 @@ export default function UserProfilePage() {
                         hardTotal={totalProblemsByDifficulty.Hard}
                      />
 
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><FolderKanban className="h-5 w-5" /> Solved Categories</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                             {solvedProblemsByCategory.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {solvedProblemsByCategory.map(([category, count]) => (
+                                        <Badge key={category} variant="secondary" className="text-sm py-1 px-3">
+                                            {category} <span className="ml-2 font-mono text-xs bg-primary/20 text-primary rounded-full h-5 w-5 flex items-center justify-center">{count}</span>
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-4 text-sm">No categories solved yet.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+
                      <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Starred Problems</CardTitle>
@@ -467,4 +495,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
