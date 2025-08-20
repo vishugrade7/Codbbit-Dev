@@ -26,7 +26,8 @@ import {
     deleteBadge,
     updateBrandingSettings,
     getPricingPlans,
-    updatePricingPlans
+    updatePricingPlans,
+    bulkUpdateProblems
 } from "@/app/upload-problem/actions";
 import { validateProblemInSalesforce } from '@/app/salesforce/actions';
 import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema, voucherSchema } from '@/lib/admin-schemas';
@@ -38,7 +39,7 @@ import { format } from "date-fns";
 
 
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2 } from "lucide-react";
+import { Loader2, PlusCircle, Upload, Trash, Pencil, Search, Image as ImageIcon, MoreHorizontal, Download, FileJson2, Edit, GripVertical, Palette, IndianRupee, DollarSign, Calendar as CalendarIcon, TestTube2, Layers } from "lucide-react";
 import { ProblemForm } from '@/app/upload-problem/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -282,6 +283,98 @@ const CategoryManager = ({ onSelectCategory, activeCategory }: { onSelectCategor
     );
 }
 
+const BulkEditDialog = ({ 
+    problemIds, 
+    categories,
+    onClose,
+}: { 
+    problemIds: string[], 
+    categories: string[],
+    onClose: () => void,
+}) => {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [newCategory, setNewCategory] = useState<string | undefined>();
+    const [newDifficulty, setNewDifficulty] = useState<string | undefined>();
+    const [newIsPremium, setNewIsPremium] = useState<boolean | undefined>();
+
+    const handleBulkUpdate = async () => {
+        if (!user || problemIds.length === 0) return;
+        if (newCategory === undefined && newDifficulty === undefined && newIsPremium === undefined) {
+            toast({ variant: 'destructive', title: 'No changes selected', description: 'Please select a field to update.' });
+            return;
+        }
+
+        setIsUpdating(true);
+        const result = await bulkUpdateProblems(user.uid, problemIds, {
+            categoryName: newCategory,
+            difficulty: newDifficulty as any,
+            isPremium: newIsPremium,
+        });
+
+        if (result.success) {
+            toast({ title: 'Bulk update successful!', description: `${problemIds.length} problems have been updated.` });
+            onClose();
+        } else {
+            toast({ variant: 'destructive', title: 'Bulk update failed', description: result.error });
+        }
+        setIsUpdating(false);
+    };
+
+    return (
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Bulk Edit Problems</DialogTitle>
+                    <DialogDescription>
+                        Update {problemIds.length} selected problem(s). Only fill the fields you want to change.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>New Category</Label>
+                        <Select value={newCategory} onValueChange={setNewCategory}>
+                            <SelectTrigger><SelectValue placeholder="- No Change -" /></SelectTrigger>
+                            <SelectContent>
+                                {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>New Difficulty</Label>
+                        <Select value={newDifficulty} onValueChange={setNewDifficulty}>
+                            <SelectTrigger><SelectValue placeholder="- No Change -" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Easy">Easy</SelectItem>
+                                <SelectItem value="Medium">Medium</SelectItem>
+                                <SelectItem value="Hard">Hard</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>New Premium Status</Label>
+                        <Select value={newIsPremium === undefined ? undefined : String(newIsPremium)} onValueChange={(val) => setNewIsPremium(val === 'true' ? true : val === 'false' ? false : undefined)}>
+                            <SelectTrigger><SelectValue placeholder="- No Change -" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="true">Premium</SelectItem>
+                                <SelectItem value="false">Not Premium</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button onClick={handleBulkUpdate} disabled={isUpdating}>
+                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        Update Problems
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 const ProblemList = () => {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -299,6 +392,9 @@ const ProblemList = () => {
     const [isTestModalOpen, setIsTestModalOpen] = useState(false);
     const [testResult, setTestResult] = useState("");
     const [isTesting, setIsTesting] = useState(false);
+    
+    const [selectedProblemIds, setSelectedProblemIds] = useState<string[]>([]);
+    const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
 
     useEffect(() => {
         if (categories.length > 0 && !activeCategory) {
@@ -414,6 +510,22 @@ const ProblemList = () => {
           .filter((p) => difficultyFilter === "All" || p.difficulty === difficultyFilter)
           .filter((p) => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [problems, searchTerm, difficultyFilter]);
+    
+    const handleSelectProblem = (problemId: string, isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedProblemIds(prev => [...prev, problemId]);
+        } else {
+            setSelectedProblemIds(prev => prev.filter(id => id !== problemId));
+        }
+    }
+    
+    const handleSelectAll = (isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedProblemIds(filteredProblems.map(p => p.id));
+        } else {
+            setSelectedProblemIds([]);
+        }
+    }
 
     if (isFormOpen) {
         return <ProblemForm 
@@ -427,6 +539,16 @@ const ProblemList = () => {
     
     return (
         <div className="space-y-6">
+            {isBulkEditOpen && (
+                <BulkEditDialog 
+                    problemIds={selectedProblemIds}
+                    categories={categories.map(c => c.name)}
+                    onClose={() => {
+                        setIsBulkEditOpen(false);
+                        setSelectedProblemIds([]);
+                    }}
+                />
+            )}
             <div>
                 <h1 className="text-2xl font-bold">Problem Management</h1>
                 <p className="text-muted-foreground">View, edit, or add new Apex coding challenges to the platform.</p>
@@ -446,7 +568,7 @@ const ProblemList = () => {
                 </div>
             </div>
              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div className="flex-1 flex gap-4">
+                <div className="flex-1 flex items-center gap-4">
                     <div className="relative w-full max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
@@ -466,6 +588,12 @@ const ProblemList = () => {
                             ))}
                         </SelectContent>
                     </Select>
+                     {selectedProblemIds.length > 0 && (
+                        <Button variant="outline" onClick={() => setIsBulkEditOpen(true)}>
+                            <Layers className="mr-2 h-4 w-4"/>
+                            Bulk Edit ({selectedProblemIds.length})
+                        </Button>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 bg-muted p-1 rounded-full">
@@ -479,7 +607,13 @@ const ProblemList = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[50px]"><Checkbox/></TableHead>
+                            <TableHead className="w-[50px]">
+                                <Checkbox 
+                                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                                    checked={filteredProblems.length > 0 && selectedProblemIds.length === filteredProblems.length}
+                                    aria-label="Select all"
+                                />
+                            </TableHead>
                             <TableHead>Title</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Difficulty</TableHead>
@@ -492,8 +626,14 @@ const ProblemList = () => {
                             <TableRow><TableCell colSpan={6} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
                         ) : filteredProblems.length > 0 ? (
                             filteredProblems.map((problem) => (
-                            <TableRow key={problem.id}>
-                                <TableCell><Checkbox /></TableCell>
+                            <TableRow key={problem.id} data-state={selectedProblemIds.includes(problem.id) ? "selected" : ""}>
+                                <TableCell>
+                                    <Checkbox
+                                        onCheckedChange={(checked) => handleSelectProblem(problem.id, checked as boolean)}
+                                        checked={selectedProblemIds.includes(problem.id)}
+                                        aria-label="Select row"
+                                     />
+                                </TableCell>
                                 <TableCell className="font-medium">{problem.title}</TableCell>
                                 <TableCell>{activeCategory}</TableCell>
                                 <TableCell>

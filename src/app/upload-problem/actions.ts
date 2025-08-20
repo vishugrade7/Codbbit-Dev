@@ -113,6 +113,81 @@ export async function bulkUpsertProblemsFromJSON(userId: string, categoryName: s
     }
 }
 
+export async function bulkUpdateProblems(
+    userId: string,
+    problemIds: string[],
+    updates: {
+        categoryName?: string;
+        difficulty?: 'Easy' | 'Medium' | 'Hard';
+        isPremium?: boolean;
+    }
+) {
+    await getAdminUser(userId);
+    if (!db) return { success: false, error: 'DB not available' };
+    if (problemIds.length === 0) return { success: false, error: 'No problems selected.' };
+
+    try {
+        const apexDocRef = doc(db, 'problems', 'Apex');
+        await runTransaction(db, async (transaction) => {
+            const apexDoc = await transaction.get(apexDocRef);
+            if (!apexDoc.exists()) throw new Error("Apex document does not exist!");
+
+            const allCategories = apexDoc.data().Category as ApexProblemsData;
+            const updatedCategories = JSON.parse(JSON.stringify(allCategories));
+
+            const problemsToMove: Problem[] = [];
+            const problemIdsSet = new Set(problemIds);
+
+            // First, remove problems from their original categories and apply updates
+            for (const categoryName in updatedCategories) {
+                const originalQuestions = updatedCategories[categoryName].Questions;
+                updatedCategories[categoryName].Questions = originalQuestions.filter((p: Problem) => {
+                    if (problemIdsSet.has(p.id)) {
+                        // Apply updates
+                        if (updates.difficulty !== undefined) p.difficulty = updates.difficulty;
+                        if (updates.isPremium !== undefined) p.isPremium = updates.isPremium;
+                        
+                        problemsToMove.push(p);
+                        return false; // Remove from current category
+                    }
+                    return true;
+                });
+            }
+
+            // Now, add the modified problems to the new category (if specified)
+            if (updates.categoryName) {
+                if (!updatedCategories[updates.categoryName]) {
+                    throw new Error(`Target category "${updates.categoryName}" does not exist.`);
+                }
+                updatedCategories[updates.categoryName].Questions.push(...problemsToMove);
+            } else {
+                // If no new category, add them back to their original (but now modified)
+                // This is complex, so let's just re-insert them into the first category they were found in
+                 for (const p of problemsToMove) {
+                    let foundCategory = false;
+                     for (const categoryName in allCategories) {
+                        if (allCategories[categoryName].Questions.some(op => op.id === p.id)) {
+                             updatedCategories[categoryName].Questions.push(p);
+                             foundCategory = true;
+                             break;
+                        }
+                    }
+                     if (!foundCategory) throw new Error(`Could not find original category for problem ID ${p.id}`);
+                }
+            }
+            
+            transaction.update(apexDocRef, { Category: updatedCategories });
+        });
+
+        revalidatePath('/admin');
+        revalidatePath('/apex-problems');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Bulk update error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function deleteProblemFromFirestore(userId: string, categoryName: string, problemId: string) {
     await getAdminUser(userId);
     if (!db) return { success: false, error: 'DB not available' };
