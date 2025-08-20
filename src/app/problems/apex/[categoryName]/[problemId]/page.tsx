@@ -1,6 +1,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -24,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -354,7 +355,6 @@ export default function ProblemWorkspacePage() {
             toast({ title: "Submission Successful!", description: response.message });
             
             if (response.awardedBadges && response.awardedBadges.length > 0) {
-                // For simplicity, we show the first awarded badge in the modal.
                 setUnlockedBadge(response.awardedBadges[0]);
             }
 
@@ -363,10 +363,22 @@ export default function ProblemWorkspacePage() {
             if (points > 0) {
                 setAwardedPoints(points);
                 setShowSuccess(true);
-                setTimeout(() => {
-                    setShowSuccess(false);
-                }, 5000);
             }
+
+            // Auto-navigate after a delay
+            setTimeout(() => {
+                setShowSuccess(false);
+                const currentIndex = allProblems.findIndex(p => p.id === problemId);
+                const nextProblem = allProblems[currentIndex + 1];
+
+                if (nextProblem) {
+                    router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${nextProblem.id}`);
+                } else {
+                    toast({ title: "Category Complete!", description: "You've finished all problems in this category." });
+                    router.push(`/apex-problems/${encodeURIComponent(categoryName || '')}`);
+                }
+            }, 3000); // 3-second delay for celebration
+
         } else {
             toast({ variant: "destructive", title: "Submission Failed", description: response.message, duration: 9000 });
         }
@@ -447,6 +459,9 @@ export default function ProblemWorkspacePage() {
                         <div className="text-3xl font-semibold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
                             Points!
                         </div>
+                    </div>
+                     <div className="mt-8 text-white text-lg font-semibold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                        Moving to next problem...
                     </div>
                 </div>
             </div>
@@ -616,8 +631,8 @@ export default function ProblemWorkspacePage() {
                                         </Tooltip>
                                     </TooltipProvider>
                                     <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                        Run
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+                                        Run & Next
                                     </Button>
                                 </div>
                             </div>
