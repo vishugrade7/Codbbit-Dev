@@ -740,39 +740,6 @@ const ProblemList = () => {
     );
 };
 
-const DraggableItem = ({ item, index, control, remove, parentName, parentIndex, children, type }: { item: any; index: number; control: any; remove: (index: number) => void; parentName?: string; parentIndex?: number; children: React.ReactNode; type: 'module' | 'lesson' | 'block' }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-    
-    return (
-        <div ref={setNodeRef} style={style} className="bg-card p-4 border rounded-md relative group/item">
-            <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 left-2 cursor-grab h-8 w-8 text-muted-foreground group-hover/item:text-foreground"
-                {...attributes}
-                {...listeners}
-            >
-                <GripVertical className="h-5 w-5" />
-            </Button>
-            <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 h-8 w-8 text-destructive"
-                onClick={() => remove(index)}
-            >
-                <Trash className="h-4 w-4" />
-            </Button>
-            {children}
-        </div>
-    );
-};
-
 const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel: () => void }) => {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -854,7 +821,7 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
                             <SortableContext items={moduleFields.map(m => m.id)} strategy={verticalListSortingStrategy}>
                                 <div className="space-y-4">
                                     {moduleFields.map((module, moduleIndex) => (
-                                        <ModuleForm key={module.id} module={module} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule} allProblems={allProblems} />
+                                        <ModuleForm key={module.id} form={form} module={module} moduleIndex={moduleIndex} control={form.control} removeModule={removeModule} allProblems={allProblems} />
                                     ))}
                                 </div>
                             </SortableContext>
@@ -874,7 +841,7 @@ const CourseForm = ({ initialData, onCancel }: { initialData?: Course; onCancel:
     );
 };
 
-const ModuleForm = ({ module, moduleIndex, control, removeModule, allProblems }: { module: Module; moduleIndex: number; control: any, removeModule: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
+const ModuleForm = ({ form, module, moduleIndex, control, removeModule, allProblems }: { form: any; module: Module; moduleIndex: number; control: any, removeModule: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
     const { fields: lessonFields, append: appendLesson, remove: removeLesson, move: moveLesson } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons` });
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: module.id });
 
@@ -909,7 +876,7 @@ const ModuleForm = ({ module, moduleIndex, control, removeModule, allProblems }:
                                 <SortableContext items={lessonFields.map(l => l.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-4">
                                         {lessonFields.map((lesson, lessonIndex) => (
-                                            <LessonForm key={lesson.id} lesson={lesson} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson} allProblems={allProblems} />
+                                            <LessonForm key={lesson.id} form={form} lesson={lesson} moduleIndex={moduleIndex} lessonIndex={lessonIndex} control={control} removeLesson={removeLesson} allProblems={allProblems} />
                                         ))}
                                     </div>
                                 </SortableContext>
@@ -925,7 +892,7 @@ const ModuleForm = ({ module, moduleIndex, control, removeModule, allProblems }:
     );
 };
 
-const LessonForm = ({ lesson, moduleIndex, lessonIndex, control, removeLesson, allProblems }: { lesson: Lesson; moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
+const LessonForm = ({ form, lesson, moduleIndex, lessonIndex, control, removeLesson, allProblems }: { form: any; lesson: Lesson; moduleIndex: number; lessonIndex: number; control: any, removeLesson: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
      const { fields: blockFields, append: appendBlock, remove: removeBlock, move: moveBlock } = useFieldArray({ control, name: `modules.${moduleIndex}.lessons.${lessonIndex}.contentBlocks` });
      const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
      const style = { transform: CSS.Transform.toString(transform), transition };
