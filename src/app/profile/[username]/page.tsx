@@ -11,10 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Building, Globe, Mail, Edit, Award, GitCommit, User as UserIcon, Github, Linkedin, Twitter, Link as LinkIcon, LoaderCircle, Pencil, PieChart as PieChartIcon, Star, Target, History, Trophy, icons } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
-import { doc, getDoc, collection, query, where, onSnapshot, limit } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, onSnapshot, limit, getDocs } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
-import type { Problem, ApexProblemsData, User as AppUser, Achievement as AchievementType, SolvedProblemDetail as SolvedProblemType } from "@/types";
+import type { Problem, ApexProblemsData, User as AppUser, Achievement as AchievementType, SolvedProblemDetail as SolvedProblemType, Badge as BadgeType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateAvatar } from "../actions";
@@ -64,13 +64,14 @@ export default function UserProfilePage() {
 
     const [allProblems, setAllProblems] = useState<ProblemWithCategory[]>([]);
     const [totalProblemsByDifficulty, setTotalProblemsByDifficulty] = useState<{ Easy: number; Medium: number; Hard: number }>({ Easy: 0, Medium: 0, Hard: 0 });
+    const [allBadges, setAllBadges] = useState<Map<string, BadgeType>>(new Map());
     const [loadingProblems, setLoadingProblems] = useState(true);
 
     type ProblemWithCategory = Problem & { categoryName: string };
 
     // Effect to fetch all problem counts and details
     useEffect(() => {
-        const fetchAllProblemsData = async () => {
+        const fetchAllProblemsAndBadges = async () => {
             if (!db) {
                 setLoadingProblems(false);
                 return;
@@ -92,13 +93,23 @@ export default function UserProfilePage() {
                     }, { Easy: 0, Medium: 0, Hard: 0 });
                     setTotalProblemsByDifficulty(counts);
                 }
+
+                // Fetch all badges
+                const badgesSnapshot = await getDocs(collection(db, 'badges'));
+                const badgesMap = new Map<string, BadgeType>();
+                badgesSnapshot.forEach(doc => {
+                    const badgeData = doc.data() as BadgeType;
+                    badgesMap.set(badgeData.name, badgeData);
+                });
+                setAllBadges(badgesMap);
+
             } catch (error) {
                 console.error("Error fetching problem data:", error);
             } finally {
                 setLoadingProblems(false);
             }
         };
-        fetchAllProblemsData();
+        fetchAllProblemsAndBadges();
     }, []);
 
     // Effect to fetch the profile data based on username from URL using a real-time listener
@@ -175,12 +186,18 @@ export default function UserProfilePage() {
      const achievements: Achievement[] = useMemo(() => {
         if (!profileUser?.achievements) return [];
         return Object.values(profileUser.achievements)
-            .map(ach => ({
-                ...ach,
-                date: ach.date.toDate().toISOString(),
-            }))
+            .map(ach => {
+                const masterBadge = allBadges.get(ach.name);
+                return {
+                    ...ach,
+                    // If the achievement doesn't have icon/color, use the master one
+                    icon: ach.icon || masterBadge?.icon,
+                    color: ach.color || masterBadge?.color,
+                    date: ach.date.toDate().toISOString(),
+                };
+            })
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [profileUser?.achievements]);
+    }, [profileUser?.achievements, allBadges]);
 
 
     const handleAvatarClick = () => {
