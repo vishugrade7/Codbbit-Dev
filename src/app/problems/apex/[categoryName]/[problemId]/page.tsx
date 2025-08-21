@@ -5,6 +5,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -28,7 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book, Lightbulb } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -41,6 +42,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BadgeUnlockedModal from "@/components/badge-unlocked-modal";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -186,12 +188,25 @@ const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSo
 
              {problem.hints && problem.hints.length > 0 && (
                 <div>
-                    <h3 className="font-semibold mb-2">Constraints</h3>
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                        {problem.hints.map((hint, index) => (
-                            <li key={index}>{hint}</li>
-                        ))}
-                    </ul>
+                     <Collapsible>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                <Lightbulb className="mr-2 h-4 w-4" /> Show Hints
+                            </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-4">
+                            <Card className="bg-card/50">
+                                <CardContent className="p-4">
+                                     <h3 className="font-semibold mb-2">Hints</h3>
+                                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                        {problem.hints.map((hint, index) => (
+                                            <li key={index}>{hint}</li>
+                                        ))}
+                                    </ul>
+                                </CardContent>
+                            </Card>
+                        </CollapsibleContent>
+                    </Collapsible>
                 </div>
              )}
         </div>
