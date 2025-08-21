@@ -10,6 +10,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -234,7 +235,7 @@ const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSo
                                      <h3 className="font-semibold mb-2">Hints</h3>
                                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
                                         {problem.hints.map((hint, index) => (
-                                            <li key={index}>{hint}</li>
+                                            <li key={index}>{hint.value}</li>
                                         ))}
                                     </ul>
                                 </CardContent>
@@ -884,6 +885,7 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
 
 
 

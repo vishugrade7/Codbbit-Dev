@@ -2,6 +2,7 @@
 
 
 
+
 export type SubmissionResult = {
   success: boolean;
   message: string;
@@ -148,7 +149,7 @@ export type Problem = {
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   examples: Example[];
-  hints: string[];
+  hints: { value: string }[];
   metadataType: 'Class' | 'Trigger' | 'Test Class';
   triggerSObject?: string;
   mermaidDiagram?: string;
