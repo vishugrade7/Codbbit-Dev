@@ -2,6 +2,7 @@
 
 
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -363,37 +364,45 @@ async function runApexTest(
     log: string[],
     auth: SfdcAuth,
     problem: Problem,
-    codeToTest: string
+    userCode: string
 ): Promise<{ success: boolean; message: string; details: string }> {
      try {
         log.push("--- Starting Submission ---");
-        const codeTypeKeywordMatch = codeToTest.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
-        const codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
-        const problemTypeKeyword = problem.metadataType.toLowerCase();
+        const isTestClassProblem = problem.metadataType === 'Test Class';
+        
+        let codeTypeKeyword, problemTypeKeyword;
+        if (!isTestClassProblem) {
+            codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
+            codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
+            problemTypeKeyword = problem.metadataType.toLowerCase();
 
-        if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
-            const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
-            const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
-            log.push(`\n--- ERROR ---`);
-            log.push(errorMessage);
-            return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+            if (codeTypeKeyword && codeTypeKeyword !== problemTypeKeyword) {
+                const userFriendlyCodeType = codeTypeKeyword.charAt(0).toUpperCase() + codeTypeKeyword.slice(1);
+                const errorMessage = `Code Mismatch: This problem expects an Apex ${problem.metadataType}, but the submitted code appears to be an Apex ${userFriendlyCodeType}. Please correct your code.`;
+                log.push(`\n--- ERROR ---`);
+                log.push(errorMessage);
+                return { success: false, message: 'Code submission failed validation.', details: log.join('\n') };
+            }
         }
         
-        const objectType = problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
-        if (objectType === 'ApexTrigger' && !problem.triggerSObject) {
+        const mainCode = isTestClassProblem ? problem.sampleCode : userCode;
+        const testCode = isTestClassProblem ? userCode : problem.testcases;
+        
+        const mainObjectType = isTestClassProblem ? 'Class' : problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        if (mainObjectType === 'ApexTrigger' && !problem.triggerSObject) {
             const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
             return { success: false, message: 'Problem Configuration Error', details: msg };
         }
 
-        const mainObjectName = getClassName(codeToTest);
-        const testObjectName = getClassName(problem.testcases);
+        const mainObjectName = getClassName(mainCode);
+        const testObjectName = getClassName(testCode);
         
         if (!mainObjectName || !testObjectName) {
             throw new Error('Could not determine class/trigger names from the provided code.');
         }
 
-        const mainObjectId = await deployMetadata(log, auth, objectType, mainObjectName, codeToTest, problem.triggerSObject);
-        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, problem.testcases);
+        const mainObjectId = await deployMetadata(log, auth, mainObjectType as any, mainObjectName, mainCode, problem.triggerSObject);
+        const testClassId = await deployMetadata(log, auth, 'ApexClass', testObjectName, testCode);
 
         log.push("\n--- Running Tests ---");
         const testRunResult = await sfdcFetch(auth, '/services/data/v59.0/tooling/runTestsAsynchronous/', {
@@ -429,20 +438,28 @@ async function runApexTest(
         if (failedTest) {
              throw new Error(`Test Failed: ${failedTest.MethodName}\n\n${failedTest.Message}\n${failedTest.StackTrace || ''}`);
         }
+        
+        log.push(`> All ${testResults.length} test method(s) passed successfully.`);
 
         log.push("\n--- Checking Code Coverage ---");
         const coverageQuery = `SELECT NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
         const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
         
+        let percentage = 0;
         if (coverageResult.records && coverageResult.records.length > 0) {
             const coverage = coverageResult.records[0];
             const covered = coverage.NumLinesCovered;
             const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
-            const percentage = total > 0 ? ((covered / total) * 100).toFixed(2) : '100.00';
-            log.push(`> Coverage: ${percentage}% (${covered}/${total} lines covered).`);
+            percentage = total > 0 ? ((covered / total) * 100) : 100;
+            log.push(`> Coverage for ${mainObjectName}: ${percentage.toFixed(2)}% (${covered}/${total} lines covered).`);
         } else {
-            log.push("> Could not retrieve code coverage information.");
+            log.push(`> Could not retrieve code coverage information for ${mainObjectName}.`);
         }
+
+        if (isTestClassProblem && percentage < 75) {
+             throw new Error(`Code coverage for ${mainObjectName} is ${percentage.toFixed(2)}%, which is below the required 75%.`);
+        }
+
 
         return { success: true, message: 'All tests passed.', details: log.join('\n') };
 
@@ -524,7 +541,7 @@ async function deployLwcBundle(
     }
 
     log.push(`> Creating new LightningComponentBundle...`);
-    const bundleRecord = await sfdcFetch(auth, `/services/data/v59.0/tooling/sobjects/LightningComponentBundle/`, {
+    const bundleRecord = await sfdcFetch(auth, `/services/data/v5.0/tooling/sobjects/LightningComponentBundle/`, {
         method: 'POST',
         body: JSON.stringify({
             MasterLabel: name,

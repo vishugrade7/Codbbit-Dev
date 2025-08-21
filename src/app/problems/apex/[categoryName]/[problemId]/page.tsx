@@ -3,6 +3,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -26,7 +27,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -274,7 +275,8 @@ export default function ProblemWorkspacePage() {
                             return;
                         }
                         setProblem({...currentProblem, categoryName});
-                        setCode(currentProblem.sampleCode);
+                        const initialCode = currentProblem.metadataType === 'Test Class' ? currentProblem.testcases : currentProblem.sampleCode;
+                        setCode(initialCode);
                     } else {
                         setProblem(null);
                     }
@@ -416,6 +418,14 @@ export default function ProblemWorkspacePage() {
         }
         setIsStarring(false);
     };
+    
+    const resetCode = () => {
+      if (problem) {
+        const initialCode = problem.metadataType === 'Test Class' ? problem.testcases : problem.sampleCode;
+        setCode(initialCode);
+      }
+    }
+
 
     if (loading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -593,13 +603,65 @@ export default function ProblemWorkspacePage() {
             <ResizablePanel defaultSize={67} minSize={30}>
                  <ResizablePanelGroup direction="vertical">
                     <ResizablePanel defaultSize={65} minSize={25}>
+                        {problem.metadataType === 'Test Class' ? (
+                             <ResizablePanelGroup direction="horizontal">
+                                <ResizablePanel defaultSize={50} minSize={30}>
+                                    <div className="flex flex-col h-full">
+                                         <div className="flex items-center justify-between p-1 px-2 border-b border-r">
+                                            <div className="flex items-center gap-2 font-semibold text-sm">
+                                                <Book className="h-4 w-4" />
+                                                <span>Apex Code (Read-only)</span>
+                                            </div>
+                                         </div>
+                                        <MonacoEditor
+                                            height="100%"
+                                            language="java"
+                                            value={problem.sampleCode}
+                                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                            options={{ readOnly: true, fontSize, minimap: { enabled: true }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                        />
+                                    </div>
+                                </ResizablePanel>
+                                <ResizableHandle withHandle/>
+                                 <ResizablePanel defaultSize={50} minSize={30}>
+                                      <div className="flex flex-col h-full">
+                                         <div className="flex items-center justify-between p-1 px-2 border-b">
+                                            <div className="flex items-center gap-2 font-semibold text-sm">
+                                                <TestTube2 className="h-4 w-4" />
+                                                <span>Your Test Code</span>
+                                            </div>
+                                            {/* Toolbar here */}
+                                        </div>
+                                        <MonacoEditor
+                                            height="100%"
+                                            language="java"
+                                            value={code}
+                                            onChange={(v) => setCode(v || '')}
+                                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                            options={{ fontSize, minimap: { enabled: true }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                        />
+                                    </div>
+                                </ResizablePanel>
+                             </ResizablePanelGroup>
+                        ) : (
+                            <div className="flex flex-col h-full">
+                                <MonacoEditor
+                                    height="100%"
+                                    language="java"
+                                    value={code}
+                                    onChange={(newValue) => setCode(newValue || "")}
+                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                    options={{ fontSize, minimap: { enabled: true }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                />
+                            </div>
+                        )}
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={35} minSize={15}>
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-1 px-2 border-b">
-                                <div className="flex items-center gap-2 font-semibold text-sm">
-                                    <Code className="h-4 w-4" />
-                                    <span>Apex Code</span>
-                                </div>
-                                <div className="flex items-center gap-1">
+                            <div className="p-2 border-b flex items-center justify-between">
+                                <h3 className="font-semibold text-sm">Test Results</h3>
+                                 <div className="flex items-center gap-1">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-7 w-7"><Text className="h-4 w-4"/></Button>
@@ -613,7 +675,7 @@ export default function ProblemWorkspacePage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCode(problem.sampleCode)}><RefreshCw className="h-4 w-4"/></Button>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetCode}><RefreshCw className="h-4 w-4"/></Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>Reset Code</p></TooltipContent>
                                         </Tooltip>
@@ -636,33 +698,6 @@ export default function ProblemWorkspacePage() {
                                         Run
                                     </Button>
                                 </div>
-                            </div>
-                            <div className="editor-container flex-1 w-full h-full overflow-auto">
-                                <MonacoEditor
-                                    height="100%"
-                                    language="java"
-                                    value={code}
-                                    onChange={(newValue) => setCode(newValue || "")}
-                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{
-                                        fontSize: fontSize,
-                                        minimap: { enabled: true },
-                                        scrollBeyondLastLine: false,
-                                        padding: {
-                                            top: 16,
-                                            bottom: 16,
-                                        },
-                                        fontFamily: 'var(--font-source-code-pro)',
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={35} minSize={15}>
-                        <div className="flex flex-col h-full">
-                            <div className="p-2 border-b">
-                                <h3 className="font-semibold text-sm">Test Results</h3>
                             </div>
                             <div className="flex-1 p-4 overflow-auto">
                                 <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
@@ -688,20 +723,29 @@ export default function ProblemWorkspacePage() {
                 <TabsContent value="code" className="flex-1 flex flex-col overflow-hidden mt-0">
                     <ResizablePanelGroup direction="vertical">
                         <ResizablePanel defaultSize={60} minSize={20}>
-                            <MonacoEditor
-                                height="100%"
-                                language="java"
-                                value={code}
-                                onChange={(newValue) => setCode(newValue || "")}
-                                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                options={{
-                                    fontSize: 14,
-                                    minimap: { enabled: true },
-                                    scrollBeyondLastLine: false,
-                                    padding: { top: 16, bottom: 16 },
-                                    fontFamily: 'var(--font-source-code-pro)',
-                                }}
-                            />
+                            {problem.metadataType === 'Test Class' ? (
+                                <Tabs defaultValue="test" className="flex flex-col h-full">
+                                    <TabsList className="shrink-0 rounded-none bg-transparent justify-start px-2 grid grid-cols-2">
+                                        <TabsTrigger value="apex">Apex Code</TabsTrigger>
+                                        <TabsTrigger value="test">Test Code</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="apex" className="flex-1 overflow-auto mt-0">
+                                        <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
+                                    </TabsContent>
+                                     <TabsContent value="test" className="flex-1 overflow-auto mt-0">
+                                        <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
+                                    </TabsContent>
+                                </Tabs>
+                            ) : (
+                                 <MonacoEditor
+                                    height="100%"
+                                    language="java"
+                                    value={code}
+                                    onChange={(newValue) => setCode(newValue || "")}
+                                    theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                    options={{ fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)', }}
+                                />
+                            )}
                         </ResizablePanel>
                         <ResizableHandle withHandle />
                         <ResizablePanel defaultSize={40} minSize={15}>
