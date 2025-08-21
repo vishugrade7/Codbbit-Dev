@@ -1,19 +1,5 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -158,22 +144,22 @@ const MermaidDiagram = ({ chart }: { chart: string }) => {
 
     useEffect(() => {
       const renderMermaid = async () => {
-        const mermaid = (await import('mermaid')).default;
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
-        });
-        const element = document.getElementById(id);
-        if (element) {
-            mermaid.run({
-                nodes: [element],
+        if (typeof window !== 'undefined') {
+            const mermaid = (await import('mermaid')).default;
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
             });
+            const element = document.getElementById(id);
+            if (element) {
+                mermaid.run({
+                    nodes: [element],
+                });
+            }
         }
       };
 
-      if (typeof window !== 'undefined') {
-        renderMermaid();
-      }
+      renderMermaid();
     }, [chart, resolvedTheme, id]);
 
     return <div id={id} className="mermaid w-full flex justify-center">{chart}</div>;
@@ -855,3 +841,5 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
+    
