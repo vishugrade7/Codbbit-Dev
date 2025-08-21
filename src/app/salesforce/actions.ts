@@ -3,6 +3,7 @@
 
 
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -370,7 +371,7 @@ async function runApexTest(
         log.push("--- Starting Submission ---");
         const isTestClassProblem = problem.metadataType === 'Test Class';
         
-        let codeTypeKeyword, problemTypeKeyword;
+        let codeTypeKeyword, problemTypeKeyword, codeTypeKeywordMatch;
         if (!isTestClassProblem) {
             codeTypeKeywordMatch = userCode.match(/^\s*(?:public\s+|global\s+)?(class|trigger)\s+/i);
             codeTypeKeyword = codeTypeKeywordMatch ? codeTypeKeywordMatch[1].toLowerCase() : null;
@@ -388,7 +389,7 @@ async function runApexTest(
         const mainCode = isTestClassProblem ? problem.sampleCode : userCode;
         const testCode = isTestClassProblem ? userCode : problem.testcases;
         
-        const mainObjectType = isTestClassProblem ? 'Class' : problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
+        const mainObjectType = isTestClassProblem ? 'ApexClass' : problem.metadataType === 'Class' ? 'ApexClass' : 'ApexTrigger';
         if (mainObjectType === 'ApexTrigger' && !problem.triggerSObject) {
             const msg = "This trigger problem is missing its associated SObject. An administrator needs to update the problem configuration.";
             return { success: false, message: 'Problem Configuration Error', details: msg };
@@ -476,17 +477,19 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
     const log: string[] = [];
     try {
         const auth = await getSfdcConnection(userId);
-        
-        const userDocRefCheck = await getDoc(doc(db, "users", userId));
-        if (userDocRefCheck.exists() && userDocRefCheck.data().solvedProblems?.[problem.id]) {
-            return { success: true, message: "You have already solved this problem.", details: "You have already solved this problem." };
-        }
-        
         const testRunResult = await runApexTest(log, auth, problem, userCode);
         
         if (testRunResult.success) {
-            const { message, awardedBadges } = await _awardPointsAndLogProgress(log, userId, problem);
-            return { success: true, message, details: log.join('\n'), awardedBadges };
+            const userDoc = await getDoc(doc(db, "users", userId));
+            const isAlreadySolved = userDoc.exists() && userDoc.data().solvedProblems?.[problem.id];
+
+            if (isAlreadySolved) {
+                log.push("\n> Problem already solved. Re-running tests without awarding points.");
+                return { success: true, message: "All tests passed! (Already solved)", details: log.join('\n') };
+            } else {
+                const { message, awardedBadges } = await _awardPointsAndLogProgress(log, userId, problem);
+                return { success: true, message, details: log.join('\n'), awardedBadges };
+            }
         } else {
             return testRunResult;
         }
