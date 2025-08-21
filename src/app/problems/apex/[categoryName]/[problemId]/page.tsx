@@ -151,26 +151,22 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
 
 const MermaidDiagram = ({ chart }: { chart: string }) => {
     const { resolvedTheme } = useTheme();
-    const [isMounted, setIsMounted] = useState(false);
     const id = useMemo(() => `mermaid-chart-${Math.random().toString(36).substr(2, 9)}`, []);
 
     useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (isMounted) {
-            mermaid.initialize({ 
-                startOnLoad: false, 
-                theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
-            });
-            mermaid.run({
-                nodes: [document.getElementById(id)!],
+      if (typeof window !== 'undefined') {
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
+        });
+        const element = document.getElementById(id);
+        if (element) {
+             mermaid.run({
+                nodes: [element],
             });
         }
-    }, [isMounted, chart, resolvedTheme, id]);
-
-    if (!isMounted) return null;
+      }
+    }, [chart, resolvedTheme, id]);
 
     return <div id={id} className="mermaid w-full flex justify-center">{chart}</div>;
 };
@@ -888,6 +884,7 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
 
 
 
