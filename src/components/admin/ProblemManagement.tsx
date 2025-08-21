@@ -1057,14 +1057,16 @@ const ContentBlockForm = ({ form, block, moduleIndex, lessonIndex, blockIndex, c
                              />
                              {isSlashMenuOpen && (
                                 <Card className="absolute z-10 p-2 shadow-lg">
-                                    <p className="text-xs font-semibold px-2 py-1">Add Block</p>
-                                    <CommandList>
-                                        <CommandItem onSelect={() => handleSlashCommand('image')}><ImageIcon className="mr-2 h-4 w-4"/>Image</CommandItem>
-                                        <CommandItem onSelect={() => handleSlashCommand('code')}><Code className="mr-2 h-4 w-4"/>Code</CommandItem>
-                                        <CommandItem onSelect={() => handleSlashCommand('video')}><Video className="mr-2 h-4 w-4"/>Video</CommandItem>
-                                        <CommandItem onSelect={() => handleSlashCommand('problem')}><BrainCircuit className="mr-2 h-4 w-4"/>Problem</CommandItem>
-                                        <CommandItem onSelect={() => handleSlashCommand('interactive')}><MousePointerClick className="mr-2 h-4 w-4"/>Interactive</CommandItem>
-                                    </CommandList>
+                                    <Command>
+                                        <p className="text-xs font-semibold px-2 py-1">Add Block</p>
+                                        <CommandList>
+                                            <CommandItem onSelect={() => handleSlashCommand('image')}><ImageIcon className="mr-2 h-4 w-4"/>Image</CommandItem>
+                                            <CommandItem onSelect={() => handleSlashCommand('code')}><Code className="mr-2 h-4 w-4"/>Code</CommandItem>
+                                            <CommandItem onSelect={() => handleSlashCommand('video')}><Video className="mr-2 h-4 w-4"/>Video</CommandItem>
+                                            <CommandItem onSelect={() => handleSlashCommand('problem')}><BrainCircuit className="mr-2 h-4 w-4"/>Problem</CommandItem>
+                                            <CommandItem onSelect={() => handleSlashCommand('interactive')}><MousePointerClick className="mr-2 h-4 w-4"/>Interactive</CommandItem>
+                                        </CommandList>
+                                    </Command>
                                 </Card>
                              )}
                            </div>
@@ -1092,7 +1094,7 @@ const ContentBlockForm = ({ form, block, moduleIndex, lessonIndex, blockIndex, c
                                 )} />
                             </div>
                         )} />
-                    )}
+                     )}
                      {blockType === 'code' && (
                         <div className="space-y-2 p-2 rounded-md bg-muted/80">
                             <FormField control={control} name={`${blockName}.language`} render={({field}) => <Input {...field} placeholder="Language (e.g. apex)" className="text-xs h-7"/>} />
@@ -2105,5 +2107,6 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
 
