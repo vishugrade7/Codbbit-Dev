@@ -143,23 +143,25 @@ const MermaidDiagram = ({ chart }: { chart: string }) => {
     const id = useMemo(() => `mermaid-chart-${Math.random().toString(36).substr(2, 9)}`, []);
 
     useEffect(() => {
-      const renderMermaid = async () => {
-        if (typeof window !== 'undefined') {
-            const mermaid = (await import('mermaid')).default;
-            mermaid.initialize({
-                startOnLoad: false,
-                theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
-            });
-            const element = document.getElementById(id);
-            if (element) {
-                mermaid.run({
-                    nodes: [element],
-                });
+        const renderMermaid = async () => {
+            if (typeof window !== 'undefined') {
+                try {
+                    const mermaid = (await import('mermaid')).default;
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
+                    });
+                    const element = document.getElementById(id);
+                    if (element && element.getAttribute('data-processed') !== 'true') {
+                       await mermaid.run({ nodes: [element] });
+                    }
+                } catch (e) {
+                    console.error("Failed to load or render mermaid chart", e);
+                }
             }
-        }
-      };
+        };
 
-      renderMermaid();
+        renderMermaid();
     }, [chart, resolvedTheme, id]);
 
     return <div id={id} className="mermaid w-full flex justify-center">{chart}</div>;
@@ -624,7 +626,7 @@ export default function ProblemWorkspacePage() {
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 max-w-sm flex flex-col">
+                    <SheetContent side="left" className="p-0 max-w-md flex flex-col">
                         <SheetHeader className="p-4 border-b shrink-0">
                             <SheetTitle>{categoryName}</SheetTitle>
                         </SheetHeader>
