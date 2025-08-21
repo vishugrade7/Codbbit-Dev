@@ -13,6 +13,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -27,7 +28,6 @@ import MonacoEditor, { type Monaco } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 import Image from "next/image";
-import mermaid from 'mermaid';
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -37,7 +37,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book, Lightbulb } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book, Lightbulb, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -157,17 +157,22 @@ const MermaidDiagram = ({ chart }: { chart: string }) => {
     const id = useMemo(() => `mermaid-chart-${Math.random().toString(36).substr(2, 9)}`, []);
 
     useEffect(() => {
-      if (typeof window !== 'undefined') {
-        mermaid.initialize({ 
-            startOnLoad: false, 
+      const renderMermaid = async () => {
+        const mermaid = (await import('mermaid')).default;
+        mermaid.initialize({
+            startOnLoad: false,
             theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
         });
         const element = document.getElementById(id);
         if (element) {
-             mermaid.run({
+            mermaid.run({
                 nodes: [element],
             });
         }
+      };
+
+      if (typeof window !== 'undefined') {
+        renderMermaid();
       }
     }, [chart, resolvedTheme, id]);
 
@@ -283,7 +288,7 @@ const NextProblemCard = ({
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">{nextProblem ? "Next Up" : "Category Complete!"}</p>
                 <h4 className="font-semibold">{nextProblem ? nextProblem.title : categoryName}</h4>
              </div>
-             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 -mr-2 -mt-2" onClick={onClose}><XCircle className="h-5 w-5"/></Button>
+             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 -mr-2 -mt-2" onClick={onClose}><X className="h-5 w-5"/></Button>
           </div>
            
            {nextProblem && (
@@ -720,7 +725,9 @@ export default function ProblemWorkspacePage() {
                         <SheetHeader className="p-4 border-b">
                             <SheetTitle>Problem Description</SheetTitle>
                         </SheetHeader>
-                        <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
+                        <div className="flex-1 overflow-y-auto">
+                            <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
+                        </div>
                     </SheetContent>
                 </Sheet>
             </div>
@@ -848,10 +855,3 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
-
-
-
-
-
-
-
