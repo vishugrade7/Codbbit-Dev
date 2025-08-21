@@ -1,6 +1,7 @@
 
 
 
+
 export type SubmissionResult = {
   success: boolean;
   message: string;
@@ -150,6 +151,7 @@ export type Problem = {
   hints: string[];
   metadataType: 'Class' | 'Trigger' | 'Test Class';
   triggerSObject?: string;
+  mermaidDiagram?: string;
   sampleCode: string;
   testcases: string;
   categoryName?: string; // Added for convenience

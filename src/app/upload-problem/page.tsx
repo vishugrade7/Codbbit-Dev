@@ -36,6 +36,7 @@ export function ProblemForm({ onSubmit, isLoading, categories, initialData, onCa
       hints: initialData?.hints?.length ? initialData.hints.map(h => ({ value: h })) : [{value: ''}],
       metadataType: initialData?.metadataType || 'Class',
       triggerSObject: initialData?.triggerSObject || '',
+      mermaidDiagram: initialData?.mermaidDiagram || '',
       sampleCode: initialData?.sampleCode || '',
       testcases: initialData?.testcases || '',
       company: initialData?.company || '',
@@ -159,20 +160,36 @@ export function ProblemForm({ onSubmit, isLoading, categories, initialData, onCa
                 </div>
                 
                  {form.watch('metadataType') === 'Trigger' && (
-                    <FormField
-                        control={form.control}
-                        name="triggerSObject"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Trigger SObject</FormLabel>
-                            <FormControl>
-                            <Input placeholder="e.g. Account" {...field} />
-                            </FormControl>
-                            <FormDescription>The SObject API name the trigger will be on.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
+                    <div className="space-y-8">
+                        <FormField
+                            control={form.control}
+                            name="triggerSObject"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Trigger SObject</FormLabel>
+                                <FormControl>
+                                <Input placeholder="e.g. Account" {...field} />
+                                </FormControl>
+                                <FormDescription>The SObject API name the trigger will be on.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="mermaidDiagram"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Mermaid Diagram</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="graph TD; A-->B;" {...field} rows={5}/>
+                                </FormControl>
+                                <FormDescription>Optional Mermaid diagram syntax to visualize the trigger logic.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </div>
                 )}
                 
                 <FormField

@@ -25,6 +25,7 @@ const baseProblemSchema = z.object({
   hints: z.array(hintSchema).optional(),
   metadataType: z.enum(["Class", "Trigger", "Test Class"]),
   triggerSObject: z.string().optional(),
+  mermaidDiagram: z.string().optional(),
   sampleCode: z.string().min(1, "Sample code is required."),
   testcases: z.string().min(1, "Test cases are required."),
   company: z.string().optional(),
