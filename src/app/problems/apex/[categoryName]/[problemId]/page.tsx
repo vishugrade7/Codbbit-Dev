@@ -21,9 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book, Lightbulb, X } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Code, Play, RefreshCw, Send, Settings, Star, Menu, Search, Maximize, Minimize, XCircle, Award, Flame, FileText, Circle, Filter, Text, ZoomIn, ZoomOut, ArrowRight, TestTube2, Book, Lightbulb, X, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { submitApexSolution } from "@/app/salesforce/actions";
@@ -587,10 +587,10 @@ export default function ProblemWorkspacePage() {
     
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
-        case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
-        case 'medium': return 'bg-primary/20 text-primary border-primary/30';
-        case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
-        default: return 'bg-muted';
+        case 'easy': return 'text-green-500';
+        case 'medium': return 'text-yellow-500';
+        case 'hard': return 'text-red-500';
+        default: return 'text-muted-foreground';
         }
     };
     
@@ -626,10 +626,16 @@ export default function ProblemWorkspacePage() {
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 max-w-md flex flex-col">
-                        <SheetHeader className="p-4 border-b shrink-0">
-                            <SheetTitle>{categoryName}</SheetTitle>
-                        </SheetHeader>
+                    <SheetContent side="left" className="p-0 max-w-md w-full flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b">
+                            <SheetTitle className="flex items-center gap-2">
+                                Problem List <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </SheetTitle>
+                             <SheetClose asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2"><X className="h-4 w-4"/></Button>
+                             </SheetClose>
+                        </div>
+
                         <div className="p-4 border-b space-y-4 shrink-0">
                            <div className="flex items-center gap-2">
                                 <div className="relative flex-1">
@@ -680,28 +686,32 @@ export default function ProblemWorkspacePage() {
                            </div>
                         </div>
                         <ScrollArea className="py-2 flex-1">
-                            {filteredProblems.length > 0 ? filteredProblems.map((p) => (
-                                <Link
-                                    key={p.id}
-                                    href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
-                                    className={cn(
-                                        "flex items-center gap-3 w-full px-4 py-2 text-sm hover:bg-accent",
-                                        p.id === problemId && "bg-accent"
-                                    )}
-                                >
-                                    {userData?.solvedProblems?.[p.id] ? (
-                                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                    ) : (
-                                      <Circle className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
-                                    )}
-                                    <span className="truncate flex-1">{p.title}</span>
-                                    <Badge variant="outline" className={cn("w-20 justify-center shrink-0", getDifficultyClass(p.difficulty))}>
-                                        {p.difficulty}
-                                    </Badge>
-                                </Link>
-                            )) : (
-                                <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
-                            )}
+                             <div className="flex flex-col">
+                                {filteredProblems.length > 0 ? filteredProblems.map((p, index) => (
+                                    <Link
+                                        key={p.id}
+                                        href={`/problems/apex/${encodeURIComponent(categoryName || '')}/${p.id}`}
+                                        className={cn(
+                                            "flex items-center justify-between w-full px-4 py-2.5 text-sm",
+                                            p.id === problemId ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            {userData?.solvedProblems?.[p.id] ? (
+                                                <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                            ) : (
+                                                <span className="w-4 h-4" /> // Placeholder for alignment
+                                            )}
+                                            <span className="font-medium">{index + 1}. {p.title}</span>
+                                        </div>
+                                        <span className={cn("font-medium", getDifficultyClass(p.difficulty))}>
+                                            {p.difficulty === 'Medium' ? 'Med' : p.difficulty}
+                                        </span>
+                                    </Link>
+                                )) : (
+                                    <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
+                                )}
+                            </div>
                         </ScrollArea>
                     </SheetContent>
                 </Sheet>
