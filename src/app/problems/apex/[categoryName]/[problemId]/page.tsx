@@ -618,7 +618,7 @@ export default function ProblemWorkspacePage() {
                                             language="java"
                                             value={problem.sampleCode}
                                             theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                            options={{ readOnly: true, fontSize, minimap: { enabled: true }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                            options={{ readOnly: true, fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
                                         />
                                     </div>
                                 </ResizablePanel>
@@ -638,7 +638,7 @@ export default function ProblemWorkspacePage() {
                                             value={code}
                                             onChange={(v) => setCode(v || '')}
                                             theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                            options={{ fontSize, minimap: { enabled: true }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                            options={{ fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
                                         />
                                     </div>
                                 </ResizablePanel>
@@ -651,7 +651,7 @@ export default function ProblemWorkspacePage() {
                                     value={code}
                                     onChange={(newValue) => setCode(newValue || "")}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{ fontSize, minimap: { enabled: true }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                    options={{ fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
                                 />
                             </div>
                         )}
@@ -730,10 +730,10 @@ export default function ProblemWorkspacePage() {
                                         <TabsTrigger value="test">Test Code</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="apex" className="flex-1 overflow-auto mt-0">
-                                        <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
+                                        <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
                                     </TabsContent>
                                      <TabsContent value="test" className="flex-1 overflow-auto mt-0">
-                                        <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
+                                        <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
                                     </TabsContent>
                                 </Tabs>
                             ) : (
@@ -743,7 +743,7 @@ export default function ProblemWorkspacePage() {
                                     value={code}
                                     onChange={(newValue) => setCode(newValue || "")}
                                     theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                    options={{ fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)', }}
+                                    options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)', }}
                                 />
                             )}
                         </ResizablePanel>
