@@ -4,6 +4,7 @@
 
 
 
+
 'use server';
 
 import { doc, getDoc, updateDoc, runTransaction, serverTimestamp, Timestamp, collection, getDocs } from 'firebase/firestore';
@@ -366,7 +367,7 @@ async function runApexTest(
     auth: SfdcAuth,
     problem: Problem,
     userCode: string
-): Promise<{ success: boolean; message: string; details: string }> {
+): Promise<SubmissionResult> {
      try {
         log.push("--- Starting Submission ---");
         const isTestClassProblem = problem.metadataType === 'Test Class';
@@ -443,26 +444,28 @@ async function runApexTest(
         log.push(`> All ${testResults.length} test method(s) passed successfully.`);
 
         log.push("\n--- Checking Code Coverage ---");
-        const coverageQuery = `SELECT NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
+        const coverageQuery = `SELECT Coverage FROM ApexCodeCoverage WHERE ApexClassOrTriggerId = '${mainObjectId}'`;
         const coverageResult = await sfdcFetch(auth, `/services/data/v59.0/tooling/query/?q=${encodeURIComponent(coverageQuery)}`);
-        
+
         let percentage = 0;
+        let finalCoverage = null;
+
         if (coverageResult.records && coverageResult.records.length > 0) {
-            const coverage = coverageResult.records[0];
-            const covered = coverage.NumLinesCovered;
-            const total = coverage.NumLinesCovered + coverage.NumLinesUncovered;
+            const coverage = coverageResult.records[0].Coverage;
+            const covered = coverage.coveredLines.length;
+            const total = coverage.coveredLines.length + coverage.uncoveredLines.length;
             percentage = total > 0 ? ((covered / total) * 100) : 100;
+            finalCoverage = coverage;
             log.push(`> Coverage for ${mainObjectName}: ${percentage.toFixed(2)}% (${covered}/${total} lines covered).`);
         } else {
             log.push(`> Could not retrieve code coverage information for ${mainObjectName}.`);
         }
-
+        
         if (isTestClassProblem && percentage < 75) {
              throw new Error(`Code coverage for ${mainObjectName} is ${percentage.toFixed(2)}%, which is below the required 75%.`);
         }
 
-
-        return { success: true, message: 'All tests passed.', details: log.join('\n') };
+        return { success: true, message: 'All tests passed.', details: log.join('\n'), codeCoverage: finalCoverage };
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -485,10 +488,10 @@ export async function submitApexSolution(userId: string, problem: Problem, userC
 
             if (isAlreadySolved) {
                 log.push("\n> Problem already solved. Re-running tests without awarding points.");
-                return { success: true, message: "All tests passed! (Already solved)", details: log.join('\n') };
+                return { ...testRunResult, message: "All tests passed! (Already solved)" };
             } else {
                 const { message, awardedBadges } = await _awardPointsAndLogProgress(log, userId, problem);
-                return { success: true, message, details: log.join('\n'), awardedBadges };
+                return { ...testRunResult, success: true, message, details: log.join('\n'), awardedBadges };
             }
         } else {
             return testRunResult;

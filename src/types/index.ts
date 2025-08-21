@@ -1,10 +1,15 @@
 
 
+
 export type SubmissionResult = {
   success: boolean;
   message: string;
   details?: string;
   awardedBadges?: Omit<Achievement, 'date'>[];
+  codeCoverage?: {
+    coveredLines: number[];
+    uncoveredLines: number[];
+  } | null;
 };
 
 

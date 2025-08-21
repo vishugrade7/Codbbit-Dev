@@ -92,6 +92,12 @@
     @apply bg-background text-foreground;
     font-family: var(--font-body);
   }
+  .coverage-covered-line {
+      background-color: hsla(120, 100%, 50%, 0.1);
+  }
+  .coverage-uncovered-line {
+      background-color: hsla(0, 100%, 50%, 0.1);
+  }
 }
 
 @layer utilities {

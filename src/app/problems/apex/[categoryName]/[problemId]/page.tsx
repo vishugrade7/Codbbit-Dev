@@ -6,6 +6,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -16,7 +17,7 @@ import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { Problem, ApexProblemsData, Achievement } from "@/types";
 import type { ImperativePanelHandle } from "react-resizable-panels";
-import MonacoEditor from "@monaco-editor/react";
+import MonacoEditor, { type Monaco } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 import Image from "next/image";
@@ -249,9 +250,40 @@ export default function ProblemWorkspacePage() {
     const MIN_FONT_SIZE = 10;
     const MAX_FONT_SIZE = 24;
 
+    const editorRef = useRef<any>(null);
+    const monacoRef = useRef<Monaco | null>(null);
+
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    const applyCoverageHighlighting = (coverage: any) => {
+        if (!editorRef.current || !monacoRef.current || !coverage) return;
+        const editor = editorRef.current;
+        const monaco = monacoRef.current;
+
+        const decorations: any[] = [];
+        coverage.uncoveredLines.forEach((line: number) => {
+            decorations.push({
+                range: new monaco.Range(line, 1, line, 1),
+                options: { isWholeLine: true, className: 'coverage-uncovered-line' }
+            });
+        });
+        coverage.coveredLines.forEach((line: number) => {
+             decorations.push({
+                range: new monaco.Range(line, 1, line, 1),
+                options: { isWholeLine: true, className: 'coverage-covered-line' }
+            });
+        });
+
+        editor.deltaDecorations([], decorations);
+    };
+
+     const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+    };
+
 
     useEffect(() => {
         if (!categoryName || !problemId) return;
@@ -346,6 +378,11 @@ export default function ProblemWorkspacePage() {
             toast({ variant: "destructive", title: "No Problem Loaded", description: "Cannot submit without a problem." });
             return;
         }
+        
+        if (editorRef.current) {
+            // Clear previous decorations
+            editorRef.current.deltaDecorations(editorRef.current.getModel().getAllDecorations().map((d: any) => d.id), []);
+        }
 
         setIsSubmitting(true);
         setResults("");
@@ -353,6 +390,10 @@ export default function ProblemWorkspacePage() {
         const response = await submitApexSolution(user.uid, problem, code);
         
         setResults(response.details || response.message);
+        
+        if (response.codeCoverage) {
+            applyCoverageHighlighting(response.codeCoverage);
+        }
 
         if (response.success) {
             toast({ title: "Submission Successful!", description: response.message });
@@ -423,6 +464,10 @@ export default function ProblemWorkspacePage() {
       if (problem) {
         const initialCode = problem.metadataType === 'Test Class' ? problem.testcases : problem.sampleCode;
         setCode(initialCode);
+         if (editorRef.current) {
+            // Clear decorations on reset
+            editorRef.current.deltaDecorations(editorRef.current.getModel().getAllDecorations().map((d: any) => d.id), []);
+        }
       }
     }
 
@@ -617,6 +662,7 @@ export default function ProblemWorkspacePage() {
                                         language="java"
                                         value={problem.sampleCode}
                                         theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                        onMount={handleEditorDidMount}
                                         options={{ readOnly: true, fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
                                     />
                                 </div>
