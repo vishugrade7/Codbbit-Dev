@@ -11,6 +11,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -182,69 +183,71 @@ const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSo
         }
     };
     return (
-        <div className="p-4 h-full overflow-y-auto space-y-6">
-            <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
-            <div className="flex items-center gap-4 flex-wrap">
-               <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
-               <Badge variant="secondary">{problem.categoryName}</Badge>
-               {problem.company && (
-                    <div className="hidden sm:flex items-center gap-1.5">
-                        {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
-                        <span className="text-sm font-medium">{problem.company}</span>
+        <ScrollArea className="h-full">
+            <div className="p-4 space-y-6">
+                <h1 className="text-2xl font-bold font-headline">{problem.title}</h1>
+                <div className="flex items-center gap-4 flex-wrap">
+                <Badge variant="outline" className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</Badge>
+                <Badge variant="secondary">{problem.categoryName}</Badge>
+                {problem.company && (
+                        <div className="hidden sm:flex items-center gap-1.5">
+                            {problem.companyLogoUrl && <Image src={problem.companyLogoUrl} alt={problem.company} width={16} height={16} className="rounded-sm" />}
+                            <span className="text-sm font-medium">{problem.company}</span>
+                        </div>
+                    )}
+                {isSolved && (
+                    <div className="flex items-center gap-1.5 text-sm text-green-400">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Solved</span>
                     </div>
                 )}
-               {isSolved && (
-                <div className="flex items-center gap-1.5 text-sm text-green-400">
-                   <CheckCircle2 className="h-4 w-4" />
-                   <span>Solved</span>
                 </div>
-               )}
+                <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
+                
+                {problem.mermaidDiagram && (
+                    <div className="my-6">
+                        <MermaidDiagram chart={problem.mermaidDiagram} />
+                    </div>
+                )}
+
+                {problem.examples.map((example, index) => (
+                    <div key={index}>
+                        <h3 className="font-semibold mb-2">Example {index + 1}</h3>
+                        <Card className="bg-card/50">
+                            <CardContent className="p-4 font-code text-sm">
+                                {example.input && <p><strong>Input:</strong> {example.input}</p>}
+                                <p><strong>Output:</strong> {example.output}</p>
+                                {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
+                            </CardContent>
+                        </Card>
+                    </div>
+                ))}
+
+                {problem.hints && problem.hints.length > 0 && (
+                    <div>
+                        <Collapsible>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <Lightbulb className="mr-2 h-4 w-4" /> Show Hints
+                                </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-4">
+                                <Card className="bg-card/50">
+                                    <CardContent className="p-4">
+                                        <h3 className="font-semibold mb-2">Hints</h3>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                            {problem.hints.map((hint, index) => (
+                                                <li key={index}>{hint.value}</li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                </Card>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </div>
+                )}
             </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
-            
-            {problem.mermaidDiagram && (
-                <div className="my-6">
-                    <MermaidDiagram chart={problem.mermaidDiagram} />
-                </div>
-            )}
-
-            {problem.examples.map((example, index) => (
-                <div key={index}>
-                    <h3 className="font-semibold mb-2">Example {index + 1}</h3>
-                    <Card className="bg-card/50">
-                        <CardContent className="p-4 font-code text-sm">
-                            {example.input && <p><strong>Input:</strong> {example.input}</p>}
-                            <p><strong>Output:</strong> {example.output}</p>
-                            {example.explanation && <p className="mt-2 text-muted-foreground"><strong>Explanation:</strong> {example.explanation}</p>}
-                        </CardContent>
-                    </Card>
-                </div>
-            ))}
-
-             {problem.hints && problem.hints.length > 0 && (
-                <div>
-                     <Collapsible>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="outline" size="sm">
-                                <Lightbulb className="mr-2 h-4 w-4" /> Show Hints
-                            </Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-4">
-                            <Card className="bg-card/50">
-                                <CardContent className="p-4">
-                                     <h3 className="font-semibold mb-2">Hints</h3>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                        {problem.hints.map((hint, index) => (
-                                            <li key={index}>{hint.value}</li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                            </Card>
-                        </CollapsibleContent>
-                    </Collapsible>
-                </div>
-             )}
-        </div>
+        </ScrollArea>
     );
 }
 
@@ -682,7 +685,7 @@ export default function ProblemWorkspacePage() {
                                 </Popover>
                            </div>
                         </div>
-                        <div className="py-2 overflow-y-auto flex-1">
+                        <ScrollArea className="py-2 flex-1">
                             {filteredProblems.length > 0 ? filteredProblems.map((p) => (
                                 <Link
                                     key={p.id}
@@ -705,20 +708,18 @@ export default function ProblemWorkspacePage() {
                             )) : (
                                 <p className="text-muted-foreground text-center text-sm py-4">No problems found.</p>
                             )}
-                        </div>
+                        </ScrollArea>
                     </SheetContent>
                 </Sheet>
                  <Sheet>
                     <SheetTrigger asChild>
-                       <Button variant="outline" size="sm"><Book className="mr-2 h-4 w-4"/> View Problem</Button>
+                       <Button variant="outline" size="sm" className="lg:hidden"><Book className="mr-2 h-4 w-4"/> View Problem</Button>
                     </SheetTrigger>
                     <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col">
                         <SheetHeader className="p-4 border-b">
                             <SheetTitle>Problem Description</SheetTitle>
                         </SheetHeader>
-                        <div className="flex-1 overflow-y-auto">
-                            <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
-                        </div>
+                        <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
                     </SheetContent>
                 </Sheet>
             </div>
@@ -739,152 +740,114 @@ export default function ProblemWorkspacePage() {
             </div>
         </header>
 
-        {/* Desktop Layout */}
-        <div className="flex-1 hidden lg:flex flex-col">
-            <ResizablePanelGroup direction="vertical">
-                <ResizablePanel defaultSize={65} minSize={25}>
-                    {problem.metadataType === 'Test Class' ? (
-                            <ResizablePanelGroup direction="horizontal">
-                            <ResizablePanel defaultSize={50} minSize={30}>
+        <div className="flex-1 flex overflow-hidden pt-12 md:pt-0">
+            <ResizablePanelGroup direction="horizontal">
+                <ResizablePanel defaultSize={45} minSize={30} className="hidden lg:flex">
+                    <ProblemDescriptionPanel problem={problem} isSolved={isSolved} />
+                </ResizablePanel>
+                 <ResizableHandle withHandle className="hidden lg:flex"/>
+                <ResizablePanel defaultSize={55} minSize={40}>
+                    <ResizablePanelGroup direction="vertical">
+                        <ResizablePanel defaultSize={65} minSize={25}>
+                            {problem.metadataType === 'Test Class' ? (
+                                <ResizablePanelGroup direction="horizontal">
+                                    <ResizablePanel defaultSize={50} minSize={30}>
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex items-center justify-between p-1 px-2 border-b border-r">
+                                                <div className="flex items-center gap-2 font-semibold text-sm">
+                                                    <Book className="h-4 w-4" />
+                                                    <span>Apex Code (Read-only)</span>
+                                                </div>
+                                            </div>
+                                            <MonacoEditor
+                                                height="100%"
+                                                language="java"
+                                                value={problem.sampleCode}
+                                                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                                onMount={handleEditorDidMount}
+                                                options={{ readOnly: true, fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                            />
+                                        </div>
+                                    </ResizablePanel>
+                                    <ResizableHandle withHandle/>
+                                    <ResizablePanel defaultSize={50} minSize={30}>
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex items-center justify-between p-1 px-2 border-b">
+                                                <div className="flex items-center gap-2 font-semibold text-sm">
+                                                    <TestTube2 className="h-4 w-4" />
+                                                    <span>Your Test Code</span>
+                                                </div>
+                                            </div>
+                                            <MonacoEditor
+                                                height="100%"
+                                                language="java"
+                                                value={code}
+                                                onChange={(v) => setCode(v || '')}
+                                                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                                options={{ fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
+                                            />
+                                        </div>
+                                    </ResizablePanel>
+                                </ResizablePanelGroup>
+                            ) : (
                                 <div className="flex flex-col h-full">
-                                        <div className="flex items-center justify-between p-1 px-2 border-b border-r">
-                                        <div className="flex items-center gap-2 font-semibold text-sm">
-                                            <Book className="h-4 w-4" />
-                                            <span>Apex Code (Read-only)</span>
-                                        </div>
-                                        </div>
-                                    <MonacoEditor
-                                        height="100%"
-                                        language="java"
-                                        value={problem.sampleCode}
-                                        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                        onMount={handleEditorDidMount}
-                                        options={{ readOnly: true, fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
-                                    />
-                                </div>
-                            </ResizablePanel>
-                            <ResizableHandle withHandle/>
-                                <ResizablePanel defaultSize={50} minSize={30}>
-                                    <div className="flex flex-col h-full">
-                                        <div className="flex items-center justify-between p-1 px-2 border-b">
-                                        <div className="flex items-center gap-2 font-semibold text-sm">
-                                            <TestTube2 className="h-4 w-4" />
-                                            <span>Your Test Code</span>
-                                        </div>
-                                        {/* Toolbar here */}
-                                    </div>
                                     <MonacoEditor
                                         height="100%"
                                         language="java"
                                         value={code}
-                                        onChange={(v) => setCode(v || '')}
+                                        onChange={(newValue) => setCode(newValue || "")}
                                         theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                        onMount={handleEditorDidMount}
                                         options={{ fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
                                     />
                                 </div>
-                            </ResizablePanel>
-                                </ResizablePanelGroup>
-                    ) : (
-                        <div className="flex flex-col h-full">
-                            <MonacoEditor
-                                height="100%"
-                                language="java"
-                                value={code}
-                                onChange={(newValue) => setCode(newValue || "")}
-                                theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                                onMount={handleEditorDidMount}
-                                options={{ fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
-                            />
-                        </div>
-                    )}
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={35} minSize={15}>
-                    <div className="flex flex-col h-full">
-                        <div className="p-2 border-b flex items-center justify-between">
-                            <h3 className="font-semibold text-sm">Test Results</h3>
-                                <div className="flex items-center gap-1">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Text className="h-4 w-4"/></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => setFontSize(prev => Math.max(MIN_FONT_SIZE, prev - 1))}><ZoomOut className="mr-2 h-4 w-4" />Decrease Font Size</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setFontSize(prev => Math.min(MAX_FONT_SIZE, prev + 1))}><ZoomIn className="mr-2 h-4 w-4" />Increase Font Size</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setFontSize(14)}><RefreshCw className="mr-2 h-4 w-4" />Reset Font Size</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetCode}><RefreshCw className="h-4 w-4"/></Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Reset Code</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                    Run
-                                </Button>
+                            )}
+                        </ResizablePanel>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={35} minSize={15}>
+                            <div className="flex flex-col h-full">
+                                <div className="p-2 border-t border-b flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm">Test Results</h3>
+                                    <div className="flex items-center gap-1">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7"><Text className="h-4 w-4"/></Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => setFontSize(prev => Math.max(MIN_FONT_SIZE, prev - 1))}><ZoomOut className="mr-2 h-4 w-4" />Decrease Font Size</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setFontSize(prev => Math.min(MAX_FONT_SIZE, prev + 1))}><ZoomIn className="mr-2 h-4 w-4" />Increase Font Size</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setFontSize(14)}><RefreshCw className="mr-2 h-4 w-4" />Reset Font Size</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetCode}><RefreshCw className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Reset Code</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                            Run
+                                        </Button>
+                                    </div>
+                                </div>
+                                <ScrollArea className="flex-1">
+                                    <div className="p-4">
+                                        <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
+                                    </div>
+                                </ScrollArea>
                             </div>
-                        </div>
-                        <div className="flex-1 p-4 overflow-auto">
-                            <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
-                        </div>
-                    </div>
-                </ResizablePanel>
-                </ResizablePanelGroup>
-        </div>
-        
-        {/* Mobile Layout */}
-        <div className="flex-1 flex flex-col lg:hidden overflow-hidden pt-12">
-            <ResizablePanelGroup direction="vertical">
-                <ResizablePanel defaultSize={60} minSize={20}>
-                    {problem.metadataType === 'Test Class' ? (
-                        <Tabs defaultValue="test" className="flex flex-col h-full">
-                            <TabsList className="shrink-0 rounded-none bg-transparent justify-start px-2 grid grid-cols-2">
-                                <TabsTrigger value="apex">Apex Code</TabsTrigger>
-                                <TabsTrigger value="test">Test Code</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="apex" className="flex-1 overflow-auto mt-0">
-                                <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
-                            </TabsContent>
-                                <TabsContent value="test" className="flex-1 overflow-auto mt-0">
-                                <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
-                            </TabsContent>
-                        </Tabs>
-                    ) : (
-                            <MonacoEditor
-                            height="100%"
-                            language="java"
-                            value={code}
-                            onChange={(newValue) => setCode(newValue || "")}
-                            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
-                            onMount={handleEditorDidMount}
-                            options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)', }}
-                        />
-                    )}
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={40} minSize={15}>
-                    <div className="flex flex-col h-full">
-                        <div className="p-2 border-b border-t flex items-center justify-between">
-                            <h3 className="font-semibold text-sm">Test Results</h3>
-                            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                                Run
-                            </Button>
-                        </div>
-                        <div className="flex-1 p-4 overflow-auto">
-                            <SubmissionResultsView log={results} isSubmitting={isSubmitting} />
-                        </div>
-                    </div>
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
                 </ResizablePanel>
             </ResizablePanelGroup>
         </div>
     </div>
     )
 }
+
 
 
 
