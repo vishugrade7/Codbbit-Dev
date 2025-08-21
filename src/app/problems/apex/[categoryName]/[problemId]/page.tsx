@@ -8,6 +8,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -760,6 +761,7 @@ export default function ProblemWorkspacePage() {
                                 value={code}
                                 onChange={(newValue) => setCode(newValue || "")}
                                 theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                                onMount={handleEditorDidMount}
                                 options={{ fontSize, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16, bottom: 16 }, fontFamily: 'var(--font-source-code-pro)', }}
                             />
                         </div>
@@ -814,7 +816,7 @@ export default function ProblemWorkspacePage() {
                                 <TabsTrigger value="test">Test Code</TabsTrigger>
                             </TabsList>
                             <TabsContent value="apex" className="flex-1 overflow-auto mt-0">
-                                <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
+                                <MonacoEditor height="100%" language="java" value={problem.sampleCode} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} onMount={handleEditorDidMount} options={{ readOnly: true, fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
                             </TabsContent>
                                 <TabsContent value="test" className="flex-1 overflow-auto mt-0">
                                 <MonacoEditor height="100%" language="java" value={code} onChange={(v) => setCode(v || '')} theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)' }} />
@@ -827,6 +829,7 @@ export default function ProblemWorkspacePage() {
                             value={code}
                             onChange={(newValue) => setCode(newValue || "")}
                             theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+                            onMount={handleEditorDidMount}
                             options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, fontFamily: 'var(--font-source-code-pro)', }}
                         />
                     )}
@@ -851,4 +854,5 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
 
