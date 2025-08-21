@@ -172,6 +172,7 @@ function CreateProblemSheetClient() {
                     problemIds: problemIds,
                     createdBy: authUser.uid,
                     creatorName: userData.name,
+                    creatorUsername: userData.username,
                     creatorAvatarUrl: userData.avatarUrl,
                     createdAt: serverTimestamp(),
                     isPublic: true,

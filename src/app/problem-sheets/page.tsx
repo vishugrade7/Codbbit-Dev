@@ -181,7 +181,7 @@ export default function ProblemSheetsListPage() {
                                 <Separator className="bg-foreground/10 my-2" />
 
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="opacity-80">Created by {sheet.creatorName}</span>
+                                    <span className="opacity-80">Created by @{sheet.creatorUsername}</span>
                                     <div className="px-4 py-1.5 rounded-full bg-foreground/10 font-semibold hover:bg-foreground/20 transition-colors">
                                         View
                                     </div>
