@@ -7,6 +7,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -44,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BadgeUnlockedModal from "@/components/badge-unlocked-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
 
 
 const DefaultLine = ({ line, index }: { line: string, index: number }) => (
@@ -214,6 +216,63 @@ const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSo
     );
 }
 
+const NextProblemCard = ({
+  nextProblem,
+  categoryName,
+  categoryProgress,
+  onNext,
+  onClose,
+}: {
+  nextProblem: Problem | null;
+  categoryName: string;
+  categoryProgress: number;
+  onNext: () => void;
+  onClose: () => void;
+}) => {
+  const getDifficultyClass = (difficulty?: string) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy': return 'bg-green-400/20 text-green-400 border-green-400/30';
+      case 'medium': return 'bg-primary/20 text-primary border-primary/30';
+      case 'hard': return 'bg-destructive/20 text-destructive border-destructive/30';
+      default: return 'bg-muted';
+    }
+  };
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      <Card className="w-80 shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+             <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">{nextProblem ? "Next Up" : "Category Complete!"}</p>
+                <h4 className="font-semibold">{nextProblem ? nextProblem.title : categoryName}</h4>
+             </div>
+             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 -mr-2 -mt-2" onClick={onClose}><XCircle className="h-5 w-5"/></Button>
+          </div>
+           
+           {nextProblem && (
+               <Badge variant="outline" className={cn("mt-1", getDifficultyClass(nextProblem.difficulty))}>
+                   {nextProblem.difficulty}
+               </Badge>
+           )}
+
+          <div className="mt-3">
+              <div className="flex justify-between items-center text-xs text-muted-foreground mb-1">
+                  <span>Category Progress</span>
+                  <span>{Math.round(categoryProgress)}%</span>
+              </div>
+              <Progress value={categoryProgress} className="h-1.5" />
+          </div>
+
+          <Button onClick={onNext} className="w-full mt-4">
+             {nextProblem ? 'Next Problem' : 'Back to Category'} <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export default function ProblemWorkspacePage() {
     const router = useRouter();
     const params = useParams();
@@ -244,6 +303,7 @@ export default function ProblemWorkspacePage() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [awardedPoints, setAwardedPoints] = useState(0);
     const [unlockedBadge, setUnlockedBadge] = useState<Omit<Achievement, 'date'> | null>(null);
+    const [nextProblem, setNextProblem] = useState<Problem | null>(null);
 
 
     const [fontSize, setFontSize] = useState(14);
@@ -401,27 +461,21 @@ export default function ProblemWorkspacePage() {
             if (response.awardedBadges && response.awardedBadges.length > 0) {
                 setUnlockedBadge(response.awardedBadges[0]);
             }
-
+            
             const pointsMatch = response.message.match(/You've earned (\d+) points/);
-            const points = pointsMatch ? parseInt(pointsMatch[1], 10) : 0;
-            if (points > 0) {
+            if (pointsMatch) {
+              const points = parseInt(pointsMatch[1], 10);
+              if (points > 0) {
                 setAwardedPoints(points);
-                setShowSuccess(true);
+              }
             }
+            
+            // Set next problem for the success card
+            const currentIndex = allProblems.findIndex(p => p.id === problemId);
+            const next = allProblems[currentIndex + 1] || null;
+            setNextProblem(next);
+            setShowSuccess(true);
 
-            // Auto-navigate after a delay
-            setTimeout(() => {
-                setShowSuccess(false);
-                const currentIndex = allProblems.findIndex(p => p.id === problemId);
-                const nextProblem = allProblems[currentIndex + 1];
-
-                if (nextProblem) {
-                    router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${nextProblem.id}`);
-                } else {
-                    toast({ title: "Category Complete!", description: "You've finished all problems in this category." });
-                    router.push(`/apex-problems/${encodeURIComponent(categoryName || '')}`);
-                }
-            }, 3000); // 3-second delay for celebration
 
         } else {
             toast({ variant: "destructive", title: "Submission Failed", description: response.message, duration: 9000 });
@@ -471,6 +525,20 @@ export default function ProblemWorkspacePage() {
       }
     }
 
+    const handleNavigateToNext = () => {
+        if (nextProblem) {
+            router.push(`/problems/apex/${encodeURIComponent(categoryName || '')}/${nextProblem.id}`);
+        } else {
+            router.push(`/apex-problems/${encodeURIComponent(categoryName || '')}`);
+        }
+        setShowSuccess(false);
+    }
+    
+    const categoryProgress = useMemo(() => {
+        if (!userData || allProblems.length === 0) return 0;
+        const solvedInCategory = allProblems.filter(p => userData.solvedProblems?.[p.id]).length;
+        return (solvedInCategory / allProblems.length) * 100;
+    }, [userData, allProblems]);
 
     if (loading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -504,24 +572,20 @@ export default function ProblemWorkspacePage() {
     <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden">
         {isClient && <BadgeUnlockedModal badge={unlockedBadge} user={userData} onOpenChange={() => setUnlockedBadge(null)} />}
 
-        {showSuccess && isClient && !unlockedBadge && <ReactConfetti recycle={false} numberOfPieces={500} />}
-        {showSuccess && !unlockedBadge && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 pointer-events-none">
-                <div className="text-center">
-                    <div className="animate-points-animation">
-                        <div className="text-6xl font-bold text-yellow-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                            +{awardedPoints}
-                        </div>
-                        <div className="text-3xl font-semibold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                            Points!
-                        </div>
-                    </div>
-                     <div className="mt-8 text-white text-lg font-semibold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                        Moving to next problem...
-                    </div>
-                </div>
-            </div>
+        {isClient && !unlockedBadge && (
+            <ReactConfetti recycle={false} numberOfPieces={awardedPoints > 0 ? 500 : 0} />
         )}
+        
+        {showSuccess && isClient && (
+            <NextProblemCard 
+                nextProblem={nextProblem}
+                categoryName={categoryName || ''}
+                categoryProgress={categoryProgress}
+                onNext={handleNavigateToNext}
+                onClose={() => setShowSuccess(false)}
+            />
+        )}
+        
         <header className="fixed md:relative top-0 left-0 right-0 flex h-12 items-center justify-between gap-2 border-b bg-card px-4 shrink-0 z-40">
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
@@ -787,3 +851,4 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
