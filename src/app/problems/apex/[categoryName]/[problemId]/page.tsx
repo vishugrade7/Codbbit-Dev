@@ -9,6 +9,7 @@
 
 
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -23,6 +24,7 @@ import MonacoEditor, { type Monaco } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import ReactConfetti from 'react-confetti';
 import Image from "next/image";
+import mermaid from 'mermaid';
 
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -147,6 +149,32 @@ const SubmissionResultsView = ({ log, isSubmitting }: { log: string, isSubmittin
   );
 };
 
+const MermaidDiagram = ({ chart }: { chart: string }) => {
+    const { resolvedTheme } = useTheme();
+    const [isMounted, setIsMounted] = useState(false);
+    const id = useMemo(() => `mermaid-chart-${Math.random().toString(36).substr(2, 9)}`, []);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (isMounted) {
+            mermaid.initialize({ 
+                startOnLoad: false, 
+                theme: resolvedTheme === 'dark' ? 'dark' : 'neutral'
+            });
+            mermaid.run({
+                nodes: [document.getElementById(id)!],
+            });
+        }
+    }, [isMounted, chart, resolvedTheme, id]);
+
+    if (!isMounted) return null;
+
+    return <div id={id} className="mermaid w-full flex justify-center">{chart}</div>;
+};
+
 const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSolved: boolean }) => {
     const getDifficultyClass = (difficulty: string) => {
         switch (difficulty?.toLowerCase()) {
@@ -177,6 +205,12 @@ const ProblemDescriptionPanel = ({ problem, isSolved }: { problem: Problem, isSo
             </div>
             <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: problem.description.replace(/\n/g, '<br />') }} />
             
+            {problem.mermaidDiagram && (
+                <div className="my-6">
+                    <MermaidDiagram chart={problem.mermaidDiagram} />
+                </div>
+            )}
+
             {problem.examples.map((example, index) => (
                 <div key={index}>
                     <h3 className="font-semibold mb-2">Example {index + 1}</h3>
@@ -854,5 +888,6 @@ export default function ProblemWorkspacePage() {
     </div>
     )
 }
+
 
 
