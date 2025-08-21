@@ -929,7 +929,7 @@ const LessonForm = ({ form, lesson, moduleIndex, lessonIndex, control, removeLes
                                 <SortableContext items={blockFields.map(b => b.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-2">
                                         {blockFields.map((block, blockIndex) => (
-                                            <ContentBlockForm key={block.id} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} allProblems={allProblems} form={form} />
+                                            <ContentBlockForm key={block.id} form={form} block={block} moduleIndex={moduleIndex} lessonIndex={lessonIndex} blockIndex={blockIndex} control={control} removeBlock={removeBlock} allProblems={allProblems} />
                                         ))}
                                     </div>
                                 </SortableContext>
@@ -945,7 +945,7 @@ const LessonForm = ({ form, lesson, moduleIndex, lessonIndex, control, removeLes
     )
 };
 
-const ContentBlockForm = ({ block, moduleIndex, lessonIndex, blockIndex, control, removeBlock, allProblems, form }: { block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; allProblems: ProblemWithCategoryName[], form: any }) => {
+const ContentBlockForm = ({ form, block, moduleIndex, lessonIndex, blockIndex, control, removeBlock, allProblems }: { form: any; block: ContentBlock; moduleIndex: number; lessonIndex: number; blockIndex: number; control: any; removeBlock: (index: number) => void; allProblems: ProblemWithCategoryName[] }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const style = { transform: CSS.Transform.toString(transform), transition };
     const [isProblemSelectorOpen, setIsProblemSelectorOpen] = useState(false);
@@ -2105,4 +2105,5 @@ export const AdminDashboard = () => {
             return <ProblemList />;
     }
 };
+
 
