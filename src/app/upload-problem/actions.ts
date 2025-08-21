@@ -6,7 +6,7 @@ import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, arrayU
 import { db } from '@/lib/firebase';
 import type { Problem, Course, NavLink, Badge, ApexProblemsData, PricingPlan, Achievement } from '@/types';
 import { z } from 'zod';
-import { problemFormSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema } from '@/lib/admin-schemas';
+import { baseProblemSchema, courseFormSchema, navLinksSchema, badgeFormSchema, brandingSchema, pricingSettingsSchema } from '@/lib/admin-schemas';
 import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
@@ -24,11 +24,11 @@ async function getAdminUser(userId: string) {
 }
 
 // #region Problem Actions
-export async function upsertProblemToFirestore(userId: string, categoryName: string, problem: Omit<z.infer<typeof problemFormSchema>, 'categoryName'>) {
+export async function upsertProblemToFirestore(userId: string, categoryName: string, problem: Omit<z.infer<typeof baseProblemSchema>, 'categoryName'>) {
     await getAdminUser(userId);
     if (!db) return { success: false, error: 'DB not available' };
 
-    const validation = problemFormSchema.omit({ categoryName: true }).safeParse(problem);
+    const validation = baseProblemSchema.omit({ categoryName: true }).safeParse(problem);
     if (!validation.success) {
         return { success: false, error: validation.error.message };
     }

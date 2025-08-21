@@ -15,7 +15,7 @@ export const hintSchema = z.object({
 });
 
 // Base schema without refinement
-const baseProblemSchema = z.object({
+export const baseProblemSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   categoryName: z.string({ required_error: "Category is required."}).min(1, "Category is required."),
